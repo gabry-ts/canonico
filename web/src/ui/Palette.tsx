@@ -49,6 +49,18 @@ export default function Palette({ onClose }: { onClose: () => void }) {
   )
   const tags = useApi(() => call(client.GET('/tags', { params: { query: { project_id: app.pid } } })), [app.pid])
   const mems = useApi(() => members(), [])
+  const failed = Boolean((dq && search.error) || tags.error)
+  const retry = () => {
+    if (dq) void search.reload()
+    void tags.reload()
+  }
+  // The next keystroke re-queries: the search follows the typed text, the tags are reloaded here.
+  const reloadTags = tags.reload
+  const tagsFailed = Boolean(tags.error)
+  useEffect(() => {
+    if (tagsFailed) void reloadTags()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q])
 
   const items: Item[] = useMemo(() => {
     const ql = q.toLowerCase().trim()
@@ -196,6 +208,13 @@ export default function Palette({ onClose }: { onClose: () => void }) {
                 </button>,
               ]
             })
+          ) : failed ? (
+            <div className="px-4 py-10 text-center text-[13.5px] text-muted-foreground" role="alert">
+              <div>{t('memory.palette.error')}</div>
+              <button className="btn btn-outline btn-sm mt-3" onClick={retry}>
+                {t('common.retry')}
+              </button>
+            </div>
           ) : (
             <div className="px-4 py-10 text-center text-[13.5px] text-muted-foreground">{t('memory.palette.noResults', { q })}</div>
           )}

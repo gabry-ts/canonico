@@ -377,7 +377,35 @@ describe('Palette', () => {
       await settled()
       await user.type(box(), 'pricing')
       expect(screen.queryByText('Tags')).not.toBeInTheDocument()
-      expect(screen.getByText('No results for “pricing”.')).toBeInTheDocument()
+      expect(screen.getByText('Search is not available right now.')).toBeInTheDocument()
+      expect(screen.queryByText('No results for “pricing”.')).not.toBeInTheDocument()
+    })
+
+    it('shows an error with a retry button when the search fails, and recovers on retry or on the next keystroke', async () => {
+      let up = false
+      api.get('/search', (req) => (up ? found(...HITS)(req) : fail(500, 'index is rebuilding')))
+      const { user } = open()
+      await settled()
+      await user.type(box(), 'zebra')
+      expect(await screen.findByText('Search is not available right now.')).toBeInTheDocument()
+      expect(screen.queryByText('No results for “zebra”.')).not.toBeInTheDocument()
+
+      up = true
+      await user.click(screen.getByRole('button', { name: 'Try again' }))
+      expect(await screen.findByText('Facts')).toBeInTheDocument()
+      expect(screen.queryByText('Search is not available right now.')).not.toBeInTheDocument()
+    })
+
+    it('searches again on the next keystroke after a failure', async () => {
+      let up = false
+      api.get('/search', (req) => (up ? found(...HITS)(req) : fail(500, 'index is rebuilding')))
+      const { user } = open()
+      await settled()
+      await user.type(box(), 'zebr')
+      await screen.findByText('Search is not available right now.')
+      up = true
+      await user.type(box(), 'a')
+      expect(await screen.findByText('Facts')).toBeInTheDocument()
     })
   })
 
