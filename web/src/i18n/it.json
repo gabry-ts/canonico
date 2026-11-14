@@ -42,7 +42,8 @@
     "settings": "Impostazioni",
     "audit": "Registro attività",
     "admin": "Controllo demo",
-    "setup": "Configurazione"
+    "setup": "Configurazione",
+    "login": "Accedi"
   },
   "shell": {
     "product": "Canonico",
@@ -1198,5 +1199,28 @@
       "supersedes": "sostituisce",
       "keptEvidence": "Tenuto come prova. Il fatto vincolante non cambia."
     }
+  },
+  "auth": {
+    "title": "Accedi a Canonico",
+    "sub": "Usa l'email e la password del tuo account.",
+    "subOrg": "Usa l'email e la password del tuo account {org}.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Accedi",
+    "or": "oppure",
+    "demo": "Continua con l'account demo",
+    "demoHelp": "Non serve la password. Entri come proprietario dell'organizzazione demo.",
+    "demoOff": "L'accesso demo è disattivato su questo server.",
+    "errRequired": "Inserisci email e password.",
+    "errCredentials": "Email o password errate.",
+    "errNetwork": "Il backend non è raggiungibile. Riprova tra poco.",
+    "skip": "Continua senza accedere",
+    "alreadyTitle": "Hai già effettuato l'accesso",
+    "continue": "Vai all'app",
+    "signedInAs": "Accesso effettuato come",
+    "signIn": "Accedi",
+    "signOut": "Esci",
+    "signedOut": "Sei uscito",
+    "sessionEnded": "La sessione è terminata. Accedi di nuovo."
   }
 }

@@ -42,7 +42,8 @@
     "settings": "Settings",
     "audit": "Audit log",
     "admin": "Demo control",
-    "setup": "Setup"
+    "setup": "Setup",
+    "login": "Sign in"
   },
   "shell": {
     "product": "Canonico",
@@ -1198,5 +1199,28 @@
       "supersedes": "replaces",
       "keptEvidence": "Kept as evidence. The binding fact does not change."
     }
+  },
+  "auth": {
+    "title": "Sign in to Canonico",
+    "sub": "Use the email and password of your account.",
+    "subOrg": "Use the email and password of your {org} account.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "or": "or",
+    "demo": "Continue with the demo account",
+    "demoHelp": "No password needed. You enter as the owner of the demo organisation.",
+    "demoOff": "Demo sign-in is turned off on this server.",
+    "errRequired": "Enter your email and password.",
+    "errCredentials": "Wrong email or password.",
+    "errNetwork": "The backend is not reachable. Try again in a moment.",
+    "skip": "Continue without signing in",
+    "alreadyTitle": "You are signed in",
+    "continue": "Continue to the app",
+    "signedInAs": "Signed in as",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signedOut": "Signed out",
+    "sessionEnded": "Your session has ended. Sign in again."
   }
 }

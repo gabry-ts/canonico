@@ -24,6 +24,57 @@ export function setDemoActor(id: string | null) {
   }
 }
 
+/** A signed-in session: the bearer token of `POST /auth/login`, its expiry and the member it belongs to. */
+export type Session = { token: string; expiresAt: string; memberId: string }
+
+const SESSION_KEY = 'canonico-session'
+const alive = (s: Session) => Date.parse(s.expiresAt) > Date.now()
+
+function savedSession(): Session | null {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null') as Session | null
+    return s && typeof s.token === 'string' && typeof s.memberId === 'string' && alive(s) ? s : null
+  } catch {
+    return null
+  }
+}
+
+let session: Session | null = savedSession()
+const sessionListeners = new Set<() => void>()
+let sessionEnded: () => void = () => {}
+
+export const getSession = () => session
+export const subscribeSession = (cb: () => void) => {
+  sessionListeners.add(cb)
+  return () => {
+    sessionListeners.delete(cb)
+  }
+}
+
+/** Keep the session opened by a sign-in. Null forgets it: requests go back to the demo identity. */
+export function setSession(s: Session | null) {
+  session = s
+  try {
+    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s))
+    else localStorage.removeItem(SESSION_KEY)
+  } catch {
+    // storage unavailable
+  }
+  sessionListeners.forEach((l) => l())
+}
+
+/** The session stopped being valid without a sign-out: expired, revoked, or the backend restarted. */
+export function endSession() {
+  if (!session) return
+  setSession(null)
+  sessionEnded()
+}
+
+/** Called once each time a session ends on its own (see `endSession`). */
+export function onSessionEnded(cb: () => void) {
+  sessionEnded = cb
+}
+
 export const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:4010'
 
 export const client = createClient<paths>({ baseUrl: API_URL })
@@ -31,8 +82,17 @@ export const client = createClient<paths>({ baseUrl: API_URL })
 client.use({
   onRequest({ request }) {
     request.headers.set('Accept-Language', currentLocale())
-    if (demoActor) request.headers.set('X-Demo-Actor', demoActor)
+    if (session && !alive(session)) endSession()
+    // With a session the backend ignores the demo header: the signed-in member is the actor.
+    if (session) request.headers.set('Authorization', `Bearer ${session.token}`)
+    else if (demoActor) request.headers.set('X-Demo-Actor', demoActor)
     return request
+  },
+  onResponse({ request, response }) {
+    // A 401 for the token we still hold means the backend no longer knows it. A wrong password on sign-in is not that.
+    const sent = request.headers.get('Authorization')
+    if (response.status === 401 && session && sent === `Bearer ${session.token}` && !new URL(request.url).pathname.endsWith('/auth/login')) endSession()
+    return response
   },
 })
 

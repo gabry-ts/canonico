@@ -35,6 +35,14 @@ export type AppState = {
   actorName: string
   /** Switch demo identity (member id); null returns to the backend default. */
   setActor: (id: string | null) => void
+  /** True while a sign-in session is held: its member is the actor and the demo identity is ignored. */
+  signedIn: boolean
+  /** The backend answers only to signed-in members and there is no session: show the sign-in page. */
+  signInRequired: boolean
+  /** Keep the session returned by `POST /auth/login` or `POST /auth/demo-login`. */
+  signIn: (login: Schemas['LoginResponse']) => void
+  /** End the session on the backend and go back to the demo identity. */
+  signOut: () => Promise<void>
   /** Bumped after every mutation: screens put it in their useApi deps to refetch. */
   version: number
   /** Call after any write: refetches shell data and bumps `version`. */

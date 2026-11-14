@@ -23,6 +23,7 @@ const SCREENS: Record<RouteName, LazyExoticComponent<ComponentType>> = {
   audit: lazy(() => import('./screens/Audit')),
   admin: lazy(() => import('./admin/Admin')),
   setup: lazy(() => import('./screens/Setup')),
+  login: lazy(() => import('./screens/Login')),
 }
 
 class Boundary extends Component<{ children: ReactNode; fallback: (msg: string) => ReactNode }, { error: string | null }> {
@@ -50,7 +51,10 @@ export default function App() {
   const [navFor, setNavFor] = useState<string | null>(null)
   const navOpen = navFor === routeKey
   const [palette, setPalette] = useState(false)
-  const Screen = SCREENS[route.r]
+  // While the backend wants a session the sign-in page replaces every screen. The address stays as it is, so after
+  // signing in the person lands on the screen the link pointed to.
+  const page: RouteName = app.signInRequired ? 'login' : route.r
+  const Screen = SCREENS[page]
 
   // Leaving a screen closes the fact drawer; #/memory/<factId> opens it on purpose.
   const { openFact } = app
@@ -58,8 +62,8 @@ export default function App() {
     if (route.r !== 'memory' || !route.sub) openFact(null)
   }, [route.r, route.sub, openFact])
   useEffect(() => {
-    document.title = `${t('nav.' + route.r)} · Canonico`
-  }, [route.r, t])
+    document.title = `${t('nav.' + page)} · Canonico`
+  }, [page, t])
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -72,7 +76,7 @@ export default function App() {
   }, [])
 
   const screen = (
-    <Boundary key={route.r} fallback={(msg) => <Empty icon="alert" title={t('common.errorTitle')}>{msg}</Empty>}>
+    <Boundary key={page} fallback={(msg) => <Empty icon="alert" title={t('common.errorTitle')}>{msg}</Empty>}>
       <Suspense fallback={<Loading />}>
         <Screen />
       </Suspense>
@@ -87,6 +91,15 @@ export default function App() {
       <Tips />
     </>
   )
+
+  if (page === 'login')
+    return (
+      <div className="h-full">
+        {screen}
+        <Toaster />
+        <Tips />
+      </div>
+    )
 
   if (route.r === 'setup')
     return (

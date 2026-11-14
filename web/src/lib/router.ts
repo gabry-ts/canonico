@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 
 export const ROUTES = [
+  'login',
   'setup',
   'dashboard',
   'projects',
@@ -25,9 +26,14 @@ export function parseHash(hash: string = location.hash): Route {
   return { r: (ROUTES as readonly string[]).includes(r) ? (r as RouteName) : 'app', sub: sub || null }
 }
 
-export function nav(path: string) {
-  location.hash = '#/' + path
+/** Go to `path`. With `replace` the current history entry is replaced, so Back does not return to it. */
+export function nav(path: string, opts: { replace?: boolean } = {}) {
+  if (opts.replace) location.replace('#/' + path)
+  else location.hash = '#/' + path
 }
+
+/** Path of a route as `nav` takes it: "memory/M-106". */
+export const routePath = (route: Route) => (route.sub ? `${route.r}/${route.sub}` : route.r)
 
 const subscribe = (cb: () => void) => {
   window.addEventListener('hashchange', cb)
