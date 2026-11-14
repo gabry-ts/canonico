@@ -19,7 +19,7 @@ import { api, fail, offline, reply } from '../helpers/api'
 import { me } from '../helpers/fixtures'
 
 const inAnHour = () => new Date(Date.now() + 3600_000).toISOString()
-const session = (over: Partial<Session> = {}): Session => ({ token: 'tok-1', expiresAt: inAnHour(), memberId: 'mem-giulia', ...over })
+const session = (over: Partial<Session> = {}): Session => ({ expiresAt: inAnHour(), memberId: 'mem-giulia', ...over })
 
 describe('call', () => {
   it('returns the data of a successful request', async () => {
@@ -137,12 +137,18 @@ describe('session', () => {
     expect(cb).toHaveBeenCalledTimes(2)
   })
 
-  it('is sent as a bearer token, and replaces the demo identity', async () => {
+  it('never keeps a token, even when one is passed in', () => {
+    setSession({ ...session(), token: 'tok-abc' } as Session)
+    expect(getSession()).not.toHaveProperty('token')
+    expect(localStorage.getItem('canonico-session')).not.toContain('tok-abc')
+  })
+
+  it('travels in the cookie: no bearer header, and it replaces the demo identity', async () => {
     api.get('/me', me())
     setDemoActor('mem-sara')
-    setSession(session({ token: 'tok-abc' }))
+    setSession(session())
     await client.GET('/me')
-    expect(api.calls[0].headers.get('Authorization')).toBe('Bearer tok-abc')
+    expect(api.calls[0].headers.get('Authorization')).toBeNull()
     expect(api.calls[0].headers.get('X-Demo-Actor')).toBeNull()
   })
 
@@ -178,7 +184,7 @@ describe('session', () => {
     expect(api.calls[0].headers.get('X-Demo-Actor')).toBe('mem-sara')
   })
 
-  it('a 401 for the token we hold ends the session', async () => {
+  it('a 401 under the session we hold ends the session', async () => {
     api.get('/me', fail(401, 'Unknown token', 'unauthorized'))
     const ended = vi.fn()
     onSessionEnded(ended)
@@ -207,13 +213,13 @@ describe('session', () => {
     expect(ended).not.toHaveBeenCalled()
   })
 
-  it('a late 401 for an older token does not end the session opened meanwhile', async () => {
+  it('a late 401 for an older session does not end the session opened meanwhile', async () => {
     const ended = vi.fn()
     onSessionEnded(ended)
-    setSession(session({ token: 'tok-old' }))
-    const fresh = session({ token: 'tok-new' })
+    setSession(session({ memberId: 'mem-sara' }))
+    const fresh = session({ memberId: 'mem-marco' })
     api.get('/me', () => {
-      // The person signed in again while the request with the old token was on its way.
+      // The person signed in again while the request sent under the old session was on its way.
       setSession(fresh)
       return fail(401, 'Unknown token', 'unauthorized')
     })
@@ -259,6 +265,13 @@ describe('at start-up', () => {
     expect((await load()).getSession()).toEqual(s)
   })
 
+  it('forgets the token an older version saved, and keeps the session', async () => {
+    const s = session()
+    localStorage.setItem('canonico-session', JSON.stringify({ ...s, token: 'tok-1' }))
+    expect((await load()).getSession()).toEqual(s)
+    expect(JSON.parse(localStorage.getItem('canonico-session')!)).toEqual(s)
+  })
+
   it('drops a saved session that expired', async () => {
     localStorage.setItem('canonico-session', JSON.stringify(session({ expiresAt: '2020-01-01T00:00:00Z' })))
     expect((await load()).getSession()).toBeNull()
@@ -266,40 +279,37 @@ describe('at start-up', () => {
 
   it.each([
     ['not JSON', '{oops'],
-    ['no token', JSON.stringify({ expiresAt: inAnHour(), memberId: 'mem-giulia' })],
-    ['no member', JSON.stringify({ token: 'tok-1', expiresAt: inAnHour() })],
-    ['no expiry', JSON.stringify({ token: 'tok-1', memberId: 'mem-giulia' })],
-    ['an expiry that is not a date', JSON.stringify({ token: 'tok-1', memberId: 'mem-giulia', expiresAt: 'soon' })],
+    ['no member', JSON.stringify({ expiresAt: inAnHour() })],
+    ['no expiry', JSON.stringify({ memberId: 'mem-giulia' })],
+    ['an expiry that is not a date', JSON.stringify({ memberId: 'mem-giulia', expiresAt: 'soon' })],
     ['null', 'null'],
   ])('ignores a saved session that is broken: %s', async (_, saved) => {
     localStorage.setItem('canonico-session', saved)
     expect((await load()).getSession()).toBeNull()
   })
 
-  it('a restored session the backend no longer knows ends quietly, without the notice', async () => {
-    // Sessions live in the memory of the backend: after a restart the saved token is simply unknown.
-    localStorage.setItem('canonico-session', JSON.stringify(session({ token: 'tok-before-restart' })))
+  it('a restored session the backend no longer knows ends, with the notice', async () => {
+    // Sessions survive a restart of the backend: one it does not know was revoked or expired there.
+    localStorage.setItem('canonico-session', JSON.stringify(session()))
     const c = await load()
     const ended = vi.fn()
     c.onSessionEnded(ended)
-    api.get('/me', fail(401, 'Unknown token', 'unauthorized'))
+    api.get('/me', fail(401, 'Sign in', 'unauthorized'))
     await c.client.GET('/me')
-    expect(api.calls[0].headers.get('Authorization')).toBe('Bearer tok-before-restart')
+    expect(api.calls[0].headers.get('Authorization')).toBeNull()
     expect(c.getSession()).toBeNull()
     expect(localStorage.getItem('canonico-session')).toBeNull()
-    expect(ended).not.toHaveBeenCalled()
+    expect(ended).toHaveBeenCalledTimes(1)
   })
 
-  it('a session opened on this page does give the notice when it ends, also after an earlier quiet one', async () => {
-    localStorage.setItem('canonico-session', JSON.stringify(session({ token: 'tok-before-restart' })))
+  it('a first visit without a session gives no notice', async () => {
     const c = await load()
     const ended = vi.fn()
     c.onSessionEnded(ended)
+    api.get('/me', fail(401, 'Sign in', 'unauthorized'))
+    await c.client.GET('/me')
     c.endSession()
     expect(ended).not.toHaveBeenCalled()
-    c.setSession(session({ token: 'tok-new' }))
-    c.endSession()
-    expect(ended).toHaveBeenCalledTimes(1)
   })
 
   it('restores the saved demo identity', async () => {

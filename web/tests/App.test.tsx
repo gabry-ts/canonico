@@ -181,14 +181,21 @@ describe('App', () => {
   })
 
   describe('sign-in', () => {
-    /** A backend that only answers to signed-in members. */
+    /** A backend that only answers to signed-in members. The session is its cookie: the page sends no token. */
     const requireSignIn = () => {
-      api.get('/me', (req) => (req.headers.get('Authorization') === 'Bearer tok-marco' ? me({ as: MEMBERS.marco }) : fail(401, 'Sign in', 'unauthorized')))
+      let cookie = false
+      const answer = login({ member: MEMBERS.marco, token: 'tok-marco' })
+      api.get('/me', () => (cookie ? me({ as: MEMBERS.marco, session_expires_at: answer.expires_at }) : fail(401, 'Sign in', 'unauthorized')))
       api.post('/auth/login', (req) => {
         const { email, password } = req.body as { email: string; password: string }
-        return email === 'marco@meridianlabs.org' && password === 'right' ? login({ member: MEMBERS.marco, token: 'tok-marco' }) : fail(401, 'Invalid credentials', 'unauthorized')
+        if (email !== 'marco@meridianlabs.org' || password !== 'right') return fail(401, 'Invalid credentials', 'unauthorized')
+        cookie = true
+        return answer
       })
-      api.post('/auth/logout', () => undefined)
+      api.post('/auth/logout', () => {
+        cookie = false
+        return undefined
+      })
     }
 
     it('the sign-in page replaces every screen while the backend wants a session, and keeps the address', async () => {
@@ -212,7 +219,8 @@ describe('App', () => {
       expect(await screen.findByText('audit screen')).toBeInTheDocument()
       expect(location.hash).toBe('#/audit')
       expect(within(sidebar()!).getByRole('button', { name: /Marco Fiore/ })).toBeInTheDocument()
-      expect(getSession()).toMatchObject({ token: 'tok-marco', memberId: 'mem-marco' })
+      expect(getSession()).toMatchObject({ memberId: 'mem-marco' })
+      expect(localStorage.getItem('canonico-session')).not.toContain('tok-marco')
     })
 
     it('a wrong password keeps the sign-in page', async () => {
@@ -237,7 +245,7 @@ describe('App', () => {
       await user.click(within(sidebar()!).getByRole('button', { name: /Marco Fiore/ }))
       await user.click(screen.getByRole('menuitem', { name: 'Sign out' }))
       expect(await screen.findByRole('heading', { name: 'Sign in to Canonico' })).toBeInTheDocument()
-      expect(api.last('POST', '/auth/logout')!.headers.get('Authorization')).toBe('Bearer tok-marco')
+      expect(api.callsTo('POST', '/auth/logout')).toHaveLength(1)
       expect(getSession()).toBeNull()
       expect(await screen.findByText('Signed out')).toBeInTheDocument()
     })

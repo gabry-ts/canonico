@@ -248,61 +248,101 @@ describe('AppProvider', () => {
   })
 
   describe('sign-in', () => {
+    const inAnHour = () => new Date(Date.now() + 3600_000).toISOString()
+    /** `GET /me` as the backend answers it when a session cookie is behind the request. */
+    const meWithSession = (who = MEMBERS.giulia) => me({ as: who, session_expires_at: inAnHour() })
+
     it('asks for a sign-in when the backend answers 401 to /me', async () => {
       mockShell({ me: null })
       const app = await mount().ready()
       expect(app).toMatchObject({ ready: true, offline: null, me: null, signInRequired: true, signedIn: false })
-      expect(app.org?.name).toBe('Meridian Labs')
+      // Without a session nothing of the organisation is shown, even if the backend still answered for it.
+      expect(app.org).toBeNull()
+      expect(app.projects).toEqual([])
     })
 
-    it('signIn keeps the session, sends its token and reloads as that member', async () => {
+    it('asks for a sign-in when every read answers 401', async () => {
       mockShell({ me: null })
-      api.get('/me', (req) => (req.headers.get('Authorization') === 'Bearer tok-marco' ? me({ as: MEMBERS.marco }) : fail(401, 'Sign in', 'unauthorized')))
+      api.get('/org', fail(401, 'Sign in', 'unauthorized'))
+      api.get('/projects', fail(401, 'Sign in', 'unauthorized'))
+      api.get('/stats', fail(401, 'Sign in', 'unauthorized'))
+      const app = await mount().ready()
+      expect(app).toMatchObject({ ready: true, offline: null, me: null, org: null, signInRequired: true, signedIn: false })
+      expect(screen.queryByText('Your session has ended. Sign in again.')).not.toBeInTheDocument()
+    })
+
+    it('signIn keeps the session without its token and reloads as that member', async () => {
+      mockShell({ me: null })
+      // The cookie set by the sign-in is what the backend sees: the page sends no token of its own.
+      let cookie = false
+      api.get('/me', () => (cookie ? meWithSession(MEMBERS.marco) : fail(401, 'Sign in', 'unauthorized')))
       const { ref, ready } = mount()
       await ready()
+      cookie = true
       act(() => ref.app.signIn(login({ member: MEMBERS.marco, token: 'tok-marco' })))
       expect(ref.app.signedIn).toBe(true)
       await waitFor(() => expect(ref.app.me?.member.id).toBe('mem-marco'))
       expect(ref.app).toMatchObject({ signInRequired: false, version: 1 })
-      expect(getSession()).toMatchObject({ token: 'tok-marco', memberId: 'mem-marco' })
+      expect(getSession()).toMatchObject({ memberId: 'mem-marco' })
+      expect(getSession()).not.toHaveProperty('token')
+      expect(localStorage.getItem('canonico-session')).not.toContain('tok-marco')
+      expect(api.last('GET', '/me')!.headers.get('Authorization')).toBeNull()
     })
 
     it('starts signed in when a session is saved', async () => {
-      setSession({ token: 'tok-giulia', expiresAt: new Date(Date.now() + 3600_000).toISOString(), memberId: 'mem-giulia' })
-      mockShell()
+      setSession({ expiresAt: inAnHour(), memberId: 'mem-giulia' })
+      mockShell({ me: meWithSession() })
       const app = await mount().ready()
       expect(app.signedIn).toBe(true)
-      expect(api.last('GET', '/me')!.headers.get('Authorization')).toBe('Bearer tok-giulia')
+      expect(app.me?.member.id).toBe('mem-giulia')
+      expect(api.last('GET', '/me')!.headers.get('Authorization')).toBeNull()
     })
 
-    it('signOut revokes the token while it is still sent, then forgets the session', async () => {
-      setSession({ token: 'tok-giulia', expiresAt: new Date(Date.now() + 3600_000).toISOString(), memberId: 'mem-giulia' })
-      mockShell()
-      api.post('/auth/logout', () => undefined)
+    it('adopts a session the cookie carries and the page did not know about', async () => {
+      mockShell({ me: meWithSession(MEMBERS.marco) })
       const { ref, ready } = mount()
       await ready()
+      await waitFor(() => expect(ref.app.signedIn).toBe(true))
+      expect(getSession()).toMatchObject({ memberId: 'mem-marco' })
+      expect(screen.queryByText('Your session has ended. Sign in again.')).not.toBeInTheDocument()
+    })
+
+    it('signOut asks the backend to end the session, then forgets it', async () => {
+      setSession({ expiresAt: inAnHour(), memberId: 'mem-giulia' })
+      let cookie = true
+      mockShell()
+      api.get('/me', () => (cookie ? meWithSession() : me()))
+      api.post('/auth/logout', () => {
+        cookie = false
+        return undefined
+      })
+      const { ref, ready } = mount()
+      await ready()
+      const before = api.callsTo('GET', '/me').length
       await act(() => ref.app.signOut())
-      expect(api.last('POST', '/auth/logout')!.headers.get('Authorization')).toBe('Bearer tok-giulia')
+      expect(api.callsTo('POST', '/auth/logout')).toHaveLength(1)
       expect(getSession()).toBeNull()
       expect(ref.app).toMatchObject({ signedIn: false, version: 1 })
-      await waitFor(() => expect(api.last('GET', '/me')!.headers.get('Authorization')).toBeNull())
+      await waitFor(() => expect(api.callsTo('GET', '/me').length).toBeGreaterThan(before))
+      expect(ref.app.signedIn).toBe(false)
       expect(screen.queryByText('Your session has ended. Sign in again.')).not.toBeInTheDocument()
     })
 
     it('signOut forgets the session even when the backend is down', async () => {
-      setSession({ token: 'tok-giulia', expiresAt: new Date(Date.now() + 3600_000).toISOString(), memberId: 'mem-giulia' })
-      mockShell()
-      api.post('/auth/logout', offline)
+      setSession({ expiresAt: inAnHour(), memberId: 'mem-giulia' })
+      mockShell({ me: meWithSession() })
       const { ref, ready } = mount()
       await ready()
+      api.post('/auth/logout', offline)
+      api.get('/me', offline)
       await act(() => ref.app.signOut())
       expect(getSession()).toBeNull()
       expect(ref.app.signedIn).toBe(false)
     })
 
     it('ends a session the backend no longer knows: it answers with the demo identity instead', async () => {
-      // A backend that does not require sign-in ignores an unknown token and answers as the default member.
-      setSession({ token: 'tok-old', expiresAt: new Date(Date.now() + 3600_000).toISOString(), memberId: 'mem-marco' })
+      // A backend that does not require sign-in answers a request without a valid session as the default member.
+      setSession({ expiresAt: inAnHour(), memberId: 'mem-marco' })
       mockShell({ me: me({ as: MEMBERS.giulia }) })
       const { ref, ready } = mount()
       await ready()
@@ -311,8 +351,8 @@ describe('AppProvider', () => {
       expect(await screen.findByText('Your session has ended. Sign in again.')).toBeInTheDocument()
     })
 
-    it('ends the session and asks to sign in again when the token is refused', async () => {
-      setSession({ token: 'tok-old', expiresAt: new Date(Date.now() + 3600_000).toISOString(), memberId: 'mem-marco' })
+    it('ends the session and asks to sign in again when the session is refused', async () => {
+      setSession({ expiresAt: inAnHour(), memberId: 'mem-marco' })
       mockShell({ me: null })
       const { ref, ready } = mount()
       await ready()
@@ -321,8 +361,9 @@ describe('AppProvider', () => {
       expect(await screen.findByText('Your session has ended. Sign in again.')).toBeInTheDocument()
     })
 
-    it('a session restored from storage that the backend forgot ends without the notice', async () => {
-      localStorage.setItem('canonico-session', JSON.stringify({ token: 'tok-before-restart', expiresAt: new Date(Date.now() + 3600_000).toISOString(), memberId: 'mem-marco' }))
+    it('a session restored from storage that the backend refuses ends with the notice', async () => {
+      // Sessions survive a restart of the backend, so a restored one it refuses was revoked or expired there.
+      localStorage.setItem('canonico-session', JSON.stringify({ expiresAt: inAnHour(), memberId: 'mem-marco' }))
       vi.resetModules()
       const { AppProvider } = await import('../../src/lib/AppProvider')
       const { useApp: useFreshApp } = await import('../../src/lib/appContext')
@@ -344,13 +385,20 @@ describe('AppProvider', () => {
       )
       await waitFor(() => expect(screen.getByTestId('fresh')).toHaveTextContent('signed out'))
       expect(client.getSession()).toBeNull()
-      expect(screen.queryByText('Your session has ended. Sign in again.')).not.toBeInTheDocument()
+      expect(await screen.findByText('Your session has ended. Sign in again.')).toBeInTheDocument()
       vi.resetModules()
     })
 
+    it('a first visit without a session shows no notice', async () => {
+      mockShell({ me: null })
+      const app = await mount().ready()
+      expect(app.signInRequired).toBe(true)
+      expect(screen.queryByText('Your session has ended. Sign in again.')).not.toBeInTheDocument()
+    })
+
     it('keeps the session when the backend answers as its member', async () => {
-      setSession({ token: 'tok-marco', expiresAt: new Date(Date.now() + 3600_000).toISOString(), memberId: 'mem-marco' })
-      mockShell({ me: me({ as: MEMBERS.marco }) })
+      setSession({ expiresAt: inAnHour(), memberId: 'mem-marco' })
+      mockShell({ me: meWithSession(MEMBERS.marco) })
       const app = await mount().ready()
       expect(app.signedIn).toBe(true)
       expect(getSession()).not.toBeNull()
