@@ -2,16 +2,21 @@ import { act, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { getDemoActor, getSession, setSession } from '../../src/api/client'
 import { useApp, type AppState } from '../../src/lib/store'
+import { NO_FILTERS, setFilters, useFilters } from '../../src/screens/memory/api'
 import { Toaster } from '../../src/ui/toast'
 import { api, deferred, fail, offline } from '../helpers/api'
 import { login, me, MEMBERS, project, source, stats } from '../helpers/fixtures'
 import { mockShell, renderWithProviders } from '../helpers/render'
+
+let filtersNow = NO_FILTERS
+const currentFilters = () => filtersNow
 
 /** Renders the provider and hands back a live view of `useApp()`. */
 function mount() {
   const ref: { app: AppState } = { app: undefined as unknown as AppState }
   function Probe() {
     ref.app = useApp()
+    filtersNow = useFilters()
     return <div data-testid="state">{ref.app.ready ? (ref.app.offline ? 'offline' : 'ready') : 'loading'}</div>
   }
   renderWithProviders(
@@ -182,6 +187,15 @@ describe('AppProvider', () => {
       expect(api.last('GET', '/stats')!.query.get('project_id')).toBe('proj-internal')
     })
 
+    it('setProjectId clears the memory search and filters', async () => {
+      mockShell()
+      const { ref, ready } = mount()
+      await ready()
+      act(() => setFilters({ q: 'weeks', tag: 'sla' }))
+      act(() => ref.app.setProjectId('proj-internal'))
+      expect(currentFilters()).toEqual(NO_FILTERS)
+    })
+
     it('organisation scope sends no project and reloads the counters', async () => {
       mockShell()
       const { ref, ready } = mount()
@@ -265,6 +279,16 @@ describe('AppProvider', () => {
       await waitFor(() => expect(ref.app.me?.member.id).toBe('mem-marco'))
       expect(ref.app).toMatchObject({ signInRequired: false, version: 1 })
       expect(getSession()).toMatchObject({ token: 'tok-marco', memberId: 'mem-marco' })
+    })
+
+    it('signIn clears the memory search and filters', async () => {
+      mockShell({ me: null })
+      api.get('/me', (req) => (req.headers.get('Authorization') === 'Bearer tok-marco' ? me({ as: MEMBERS.marco }) : fail(401, 'Sign in', 'unauthorized')))
+      const { ref, ready } = mount()
+      await ready()
+      act(() => setFilters({ q: 'weeks' }))
+      act(() => ref.app.signIn(login({ member: MEMBERS.marco, token: 'tok-marco' })))
+      expect(currentFilters()).toEqual(NO_FILTERS)
     })
 
     it('starts signed in when a session is saved', async () => {
