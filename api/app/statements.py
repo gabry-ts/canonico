@@ -58,6 +58,12 @@ def _anchors(topic: dict) -> set[str]:
     return set(tokenize(" ".join([topic["label"], *extra.get("keywords", [])])))
 
 
+def _same_unit(state: dict, topic_id: str, short: str) -> bool:
+    """A topic that states quantities only takes a quantity of the same kind: "5 business days" is no onboarding time in weeks."""
+    units = {unit_of(f.get("x", {}).get("short") or f["value"]) for f in store.topic_facts(state, topic_id)} - {None}
+    return not units or unit_of(short) in units
+
+
 def sentences(text: str) -> list[str]:
     parts = [re.sub(r"^[\s#>*\-\d.)]+", "", part).strip() for part in _SENTENCE.split(text)]
     return [part for part in parts if len(part) >= 8]
@@ -95,7 +101,7 @@ def find(state: dict, text: str, project_id: str | None, prefer_topics: set[str]
         if prefer_topics:
             ranked = [t for t in ranked if t in prefer_topics] + [t for t in ranked if t not in prefer_topics]
         shared = {t: words & _anchors(state["topics"][t]) for t in ranked}
-        fitting = [t for t in ranked if len(shared[t]) >= 2 or (prefer_topics and t in prefer_topics and shared[t])]
+        fitting = [t for t in ranked if (len(shared[t]) >= 2 or (prefer_topics and t in prefer_topics and shared[t])) and _same_unit(state, t, short)]
         if not fitting:
             continue
         topic_id = fitting[0]

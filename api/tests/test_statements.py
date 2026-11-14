@@ -59,3 +59,11 @@ def test_a_sentence_starting_with_decision_is_a_decision(client):
     result = client.post("/projects/proj-clearpath/items", json=item).json()
     fact = client.get(f"/facts/{result['facts_created'][0]}").json()
     assert fact["type"] == "DECISION" and result["supersedes_created"][0]["supersedes"] == "M-106"
+
+
+def test_a_quantity_in_another_unit_is_not_filed_under_a_curated_topic(client):
+    text = "Alessia: Decision: the intake response SLA for new service requests is set at 5 business days, effective next month."
+    item = {"type": "meeting", "title": "Ops steering meeting", "date": "2026-11-13T10:00:00Z", "text": text}
+    result = client.post("/projects/proj-clearpath/items", json=item).json()
+    assert result["facts_created"] == []
+    assert binding(client)["id"] == "M-106"
