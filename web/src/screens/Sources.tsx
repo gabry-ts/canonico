@@ -10,7 +10,7 @@ import { Ic } from '../ui/Icon'
 import { SRC_ICON } from '../ui/srcIcon'
 import { Dialog, Empty } from '../ui/overlays'
 import { toast, toastError } from '../ui/toast'
-import { CardHead, FieldErr, Loading, PageHead, PageWrap } from './org/ui'
+import { CardHead, FieldErr, LoadErr, Loading, PageHead, PageWrap } from './org/ui'
 
 type Source = Schemas['Source']
 
@@ -328,6 +328,8 @@ function RulesCard({ pid }: { pid: string }) {
       />
       {q.loading && !q.data ? (
         <Loading />
+      ) : q.error || !q.data ? (
+        <LoadErr message={q.error ?? ''} onRetry={() => void q.reload()} />
       ) : (
         <table className="tbl">
           <thead>

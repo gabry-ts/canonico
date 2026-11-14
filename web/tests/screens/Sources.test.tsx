@@ -469,6 +469,20 @@ describe('Sources', () => {
       await mailCard().findByText('Inherited')
     })
 
+    it('shows the error instead of "no rules" when the rules cannot be loaded, and loads them again on retry', async () => {
+      api.get('/org/mail/rules', fail(500, 'database is locked'))
+      const { user } = renderSources()
+      expect(await rulesCard().findByText('Could not load this. database is locked')).toBeInTheDocument()
+      expect(rulesCard().queryByText('No routing rules. Emails stay in the organisation inbox.')).not.toBeInTheDocument()
+      expect(rulesCard().queryByRole('table')).not.toBeInTheDocument()
+
+      api.get('/org/mail/rules', { items: RULES, total: RULES.length })
+      await user.click(rulesCard().getByRole('button', { name: 'Try again' }))
+      expect(await rulesCard().findByText('@clearpath.com')).toBeInTheDocument()
+      expect(rulesCard().queryByText('Could not load this. database is locked')).not.toBeInTheDocument()
+      expect(api.callsTo('GET', '/org/mail/rules')).toHaveLength(2)
+    })
+
     it('shows no table while loading', async () => {
       const gate = deferred()
       api.get('/org/mail/rules', () => gate.promise)
