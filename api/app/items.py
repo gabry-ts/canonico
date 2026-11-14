@@ -121,7 +121,7 @@ def receive(state: dict, project_id: str, item: dict, *, routed_by: str, rule_id
             "version_of": None,
             "tags": tags,
         }
-        arrival = store.audit(state, "ingest", actor, None, f"{item['type'].capitalize()} “{item['title']}” received in {project_id} ({routed_by.replace('_', ' ')}).", x={"project": project_id, "document": doc_id}, bump=False)
+        arrival = store.audit(state, "ingest", actor, None, f"{item['type'].capitalize()} “{item['title']}” received in {project_id} ({routed_by.replace('_', ' ')}).", x={"project": project_id, "document": doc_id, "info": {"kind": "item", "type": item["type"], "title": item["title"], "project": project_id, "routed_by": routed_by}}, bump=False)
         created, links, event_id = apply_statements(state, statements.find(state, text, project_id, force_topic=forced_topic(state, tags, project_id)), doc_id=doc_id, date=date, name=name, item=item, tags=tags, actor=actor)
         event_id = event_id or arrival["id"]
     if source is not None:
@@ -176,7 +176,7 @@ def apply_statements(state: dict, found: list[dict], *, doc_id: str, date: str, 
         else:
             reason = f"{name[:1].upper() + name[1:]}: {statement['value']}."
         figures = bool(state["topics"][topic_id].get("x", {}).get("what"))
-        internal = {"short": statement["short"], "label": name, "source_label": name, "source_short": item["title"]}
+        internal = {"short": statement["short"], "label": name, "source_label": name, "source_short": item["title"], "src": {"kind": "item", "type": item["type"], "title": item["title"]}}
         if confirms:
             internal["confirms"] = confirms
         fact_id = store.next_fact_id(state)

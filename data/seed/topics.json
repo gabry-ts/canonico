@@ -39,7 +39,11 @@
         "What onboarding time target did Meridian Labs ultimately recommend, and how did that target shift from the client's original goal over the engagement?"
       ],
       "description": "How long onboarding of a new consultant takes: the client's goal, the requirement, the estimates, the recommended target and the final SLA.",
-      "what": "the onboarding time"
+      "what": "the onboarding time",
+      "it": {
+        "what": "il tempo di onboarding",
+        "subject": "Il tempo di onboarding"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -79,7 +83,10 @@
         "How long does a report spend in the audit queue?",
         "Why do the team leads disagree about how long a report spends in the audit queue, and was the discrepancy ever resolved with hard data?"
       ],
-      "description": "How long a report currently spends in the audit queue: the current-state estimates given by different people and whether it was ever measured. Not the future target for the audit queue."
+      "description": "How long a report currently spends in the audit queue: the current-state estimates given by different people and whether it was ever measured. Not the future target for the audit queue.",
+      "it": {
+        "subject": "Il tempo in coda di audit"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -1618,7 +1625,10 @@
       ],
       "questions": [
         "How many review steps before an audit report is released?"
-      ]
+      ],
+      "it": {
+        "subject": "La regola di rilascio degli audit"
+      }
     }
   },
   {
@@ -1640,7 +1650,10 @@
       ],
       "questions": [
         "Which expenses need approval?"
-      ]
+      ],
+      "it": {
+        "subject": "Il limite di approvazione delle spese"
+      }
     }
   },
   {
@@ -1662,7 +1675,10 @@
       ],
       "questions": [
         "How far in advance is travel booked?"
-      ]
+      ],
+      "it": {
+        "subject": "L'anticipo per la prenotazione dei viaggi"
+      }
     }
   },
   {
@@ -1687,7 +1703,10 @@
       ],
       "questions": [
         "What is the target time for onboarding new analysts?"
-      ]
+      ],
+      "it": {
+        "subject": "L'obiettivo di onboarding per gli analisti Meridian"
+      }
     }
   },
   {
@@ -1709,7 +1728,10 @@
       ],
       "questions": [
         "How is the onboarding target rolled out in the roadmap?"
-      ]
+      ],
+      "it": {
+        "subject": "Il rollout dell'onboarding"
+      }
     }
   },
   {
@@ -1735,7 +1757,11 @@
         "What does the onboarding standard say?",
         "What is the onboarding standard?"
       ],
-      "feeds": "onboarding-target"
+      "feeds": "onboarding-target",
+      "it": {
+        "what": "lo standard di onboarding",
+        "subject": "Lo standard di onboarding"
+      }
     }
   }
 ]

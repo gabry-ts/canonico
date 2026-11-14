@@ -10,7 +10,8 @@
     "detected_at": "2026-11-14T09:15:00Z",
     "resolution": null,
     "x": {
-      "curated": true
+      "curated": true,
+      "summary_it": "La presentazione finale indica ancora 4 settimane, il report finale fissa 3–4 settimane. La presentazione è stata superata ma è ancora attiva."
     }
   },
   {
@@ -30,7 +31,9 @@
         "M-205",
         "M-204"
       ],
-      "answer": "Three people gave different estimates and nobody measured it, so there is no single binding value."
+      "answer": "Three people gave different estimates and nobody measured it, so there is no single binding value.",
+      "summary_it": "Tre stime del tempo in coda di audit (2–3, 3–4 e 6–8 giorni), nessuno lo ha misurato.",
+      "answer_it": "Tre persone hanno dato stime diverse e nessuno lo ha misurato, quindi non esiste un unico valore vincolante."
     }
   },
   {

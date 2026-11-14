@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app import http, settings
+from app import http, i18n, settings
 from app.routers import (
     admin,
     answers,
@@ -42,6 +42,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(i18n.LocaleMiddleware)
 http.install(app)
 
 

@@ -2,26 +2,25 @@
 
 import copy
 
-from app import store
+from app import i18n, store, wording
 from app.text import BM25, best_passage, tokenize
 
-NO_ANSWER = "Memory holds nothing relevant to this question."
-VERBS = {
-    "retire": "retired",
-    "restore": "restored",
-    "patch": "corrected",
-    "pin": "marked as binding",
-    "unpin": "unpinned",
-    "supersede": "linked as superseded",
-    "unlink": "unlinked",
-    "resolve": "resolved the conflict on",
-    "create": "added",
-    "approve": "retired",
-    "undo": "undid a change to",
-    "delete_document": "deleted the source of",
-    "merge": "merged the topic of",
-    "classify": "re-classified",
-    "ingest": "added",
+CHANGE_CODES = {
+    "retire": "fact_retired",
+    "restore": "fact_restored",
+    "patch": "fact_corrected",
+    "pin": "fact_pinned",
+    "unpin": "fact_unpinned",
+    "supersede": "fact_linked",
+    "unlink": "fact_unlinked",
+    "resolve": "conflict_resolved",
+    "create": "fact_added",
+    "approve": "fact_retired",
+    "undo": "change_undone",
+    "delete_document": "document_deleted",
+    "merge": "topic_merged",
+    "classify": "fact_reclassified",
+    "ingest": "fact_added",
 }
 
 
@@ -220,43 +219,12 @@ def canonico_ranking(state: dict, query: str, top_k: int = 10, topics: int = 2, 
 # ---------------------------------------------------------------- answer
 
 
-def _x(fact: dict) -> dict:
-    return fact.get("x", {})
-
-
-def _label(fact: dict) -> str:
-    return _x(fact).get("label") or f"fact {fact['id']}"
-
-
-def _short(fact: dict) -> str:
-    return _x(fact).get("short") or fact["value"].rstrip(".")
-
-
-def _source(state: dict, fact: dict) -> str:
-    if _x(fact).get("source_label"):
-        return _x(fact)["source_label"]
-    doc = state["documents"].get(fact.get("doc_id") or "")
-    return f"“{doc['title']}”" if doc else "a manual entry"
-
-
-def _cap(text: str) -> str:
-    return text[:1].upper() + text[1:]
-
-
-def _target(fact: dict) -> str:
-    """Short way to name a fact: its value and where it comes from, for example "4 weeks (final presentation)"."""
-    extra = _x(fact)
-    if extra.get("short") and extra.get("source_short"):
-        return f"{extra['short']} ({extra['source_short']})"
-    return _label(fact)
-
-
-_MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
-
-
-def _long_date(value: str) -> str:
-    year, month, day = value.split("-")
-    return f"{int(day)} {_MONTHS[int(month) - 1]} {year}"
+_x = wording.extra
+_label = wording.label
+_short = wording.short
+_source = wording.source
+_cap = wording.cap
+_target = wording.target
 
 
 def focus_facts(state: dict, topic_id: str, tokens: list[str], threshold: float = 0.5) -> set[str] | None:
@@ -333,73 +301,77 @@ def topic_state(state: dict, topic_id: str, focus: set[str] | None = None) -> di
 
 
 def answer_topic(state: dict, topic_id: str, focus: set[str] | None = None) -> dict:
-    """Deterministic answer for a topic from the current memory."""
+    """Deterministic answer for a topic from the current memory, worded in the locale of the request."""
     topic = state["topics"][topic_id]
     ts = topic_state(state, topic_id, focus)
     binding, conflicts, superseded = ts["binding"], ts["conflicts"], ts["superseded"]
+    italian = i18n.current() == "it"
+    sig = [[f["id"] for f in ts["confirming"]], [f["id"] for f in ts["dropped"]], bool(binding and binding.get("pinned"))]
 
     if binding is not None:
         extra = topic.get("x", {})
+        local = (extra.get("it") or {}) if italian else {}
         stale = ts["stale"]
         disputed = [f for f in conflicts if f not in stale]
+        where = {"source": _source(state, binding), "source_in": wording.source_in(state, binding) if italian else ""}
         if extra.get("what") and _x(binding).get("short"):
-            lead = _x(binding).get("spoken") or _cap(_short(binding))
-            text = f"{lead}. That is {extra['what']} set in {_source(state, binding)} on {_long_date(binding['date'])}."
+            spoken = wording.italian(binding).get("spoken") if italian else _x(binding).get("spoken")
+            text = i18n.t("answer.figure", lead=spoken or _cap(_short(binding)), what=local.get("what") or extra["what"], date=i18n.long_date(binding["date"]), **where)
             if superseded:
-                text += f" It replaced {len(superseded)} earlier version{'s' if len(superseded) != 1 else ''}."
+                text += i18n.t("answer.replaced_one") if len(superseded) == 1 else i18n.t("answer.replaced_many", n=len(superseded))
         elif extra.get("subject") and _x(binding).get("short"):
-            text = f"{extra['subject']} is {_short(binding)}, set in {_source(state, binding)}."
+            text = i18n.t("answer.subject", subject=local.get("subject") or extra["subject"], short=_short(binding), **where)
         else:
-            text = f"{binding['value'].rstrip('.')}, according to {_source(state, binding)} ({binding['date']})."
+            text = i18n.t("answer.generic", value=binding["value"].rstrip("."), source=where["source"], date=binding["date"])
         if binding.get("pinned"):
-            text += " A person marked it as binding."
+            text += i18n.t("answer.pinned")
         if len(stale) == 1:
-            text += f" One superseded figure is still active: {_target(stale[0])}."
+            text += i18n.t("answer.stale_one", target=_target(stale[0]))
         elif stale:
-            text += f" {len(stale)} superseded figures are still active: {', '.join(_target(f) for f in stale)}."
+            text += i18n.t("answer.stale_many", n=len(stale), targets=", ".join(_target(f) for f in stale))
         if len(disputed) == 1:
-            text += f" One conflict remains, {_label(disputed[0])} still says {_short(disputed[0])}."
+            text += i18n.t("answer.conflict_one", label=_label(disputed[0]), short=_short(disputed[0]))
         elif disputed:
-            parts = "; ".join(f"{_label(c)} says {_short(c)}" for c in disputed)
-            text += f" {len(disputed)} conflicts remain: {parts}."
+            parts = "; ".join(i18n.t("answer.conflict_part", label=_label(c), short=_short(c)) for c in disputed)
+            text += i18n.t("answer.conflict_many", n=len(disputed), parts=parts)
         for fact in ts["dropped"]:
             if _x(fact).get("source_short"):
-                text += f" {_cap(_target(fact))} was retired{' by ' + fact['retired_by'] if fact.get('retired_by') else ''}."
+                key = "answer.retired_by" if fact.get("retired_by") else "answer.retired"
+                text += i18n.t(key, target=_cap(_target(fact)), actor=fact.get("retired_by") or "")
             else:
-                text += f" {_cap(_label(fact))} ({_short(fact)}) is no longer binding."
+                text += i18n.t("answer.dropped", label=_cap(_label(fact)), short=_short(fact))
         for fact in ts["confirming"]:
-            text += f" {_cap(_label(fact))} confirms it."
+            text += i18n.t("answer.confirms", label=_cap(_label(fact)))
         cited = [binding] + superseded + conflicts + ts["confirming"]
-        return _result("binding", text, binding, superseded, conflicts, cited, state)
+        return _result("binding", text, binding, superseded, conflicts, cited, state, sig)
 
     if conflicts:
         record = ts["open_records"][0]
         extra = record.get("x", {})
         live_ids = {f["id"] for f in conflicts}
         if len(ts["open_records"]) == 1 and extra.get("answer") and live_ids == set(record["fact_ids"]):
-            text = extra["answer"]
+            text = (extra.get("answer_it") if italian else None) or extra["answer"]
         else:
-            values = ", ".join(_short(f) for f in conflicts)
-            text = f"{len(conflicts)} sources give different values ({values}) and nothing in memory says which one is binding."
+            text = i18n.t("answer.contested", n=len(conflicts), values=", ".join(_short(f) for f in conflicts))
         cited = [state["facts"][i] for i in extra.get("explained_by", []) if i in state["facts"] and state["facts"][i]["status"] == "active"]
-        return _result("contested", text, None, [], conflicts, cited or conflicts, state)
+        return _result("contested", text, None, [], conflicts, cited or conflicts, state, sig)
 
     live = [f for f in ts["active"] if not store.is_superseded(state, f)]
-    for kind, lead in (("EVIDENCE", "No decision is recorded on this. The best supported fact"), ("HYPOTHESIS", "No decision is recorded on this, only an estimate")):
+    for kind, key in (("EVIDENCE", "answer.evidence"), ("HYPOTHESIS", "answer.hypothesis")):
         pool = [f for f in live if store.effective_type(state, f) == kind]
         if pool:
             best = max(pool, key=lambda f: (f["confidence"], f["date"], f["id"]))
-            text = f"{lead}: {best['value'].rstrip('.')}, from {_source(state, best)} ({best['date']})."
-            return _result("binding", text, best, [], [], [best], state)
+            text = i18n.t(key, value=best["value"].rstrip("."), source=_source(state, best), date=best["date"])
+            return _result("binding", text, best, [], [], [best], state, sig)
 
     opened = [f for f in live if f["type"] == "OPEN"]
     if opened:
-        text = f"This is still an open question: {opened[0]['value'].rstrip('.')}. Nothing binding is recorded."
-        return _result("no_answer", text, None, [], [], opened[:1], state)
-    return _result("no_answer", NO_ANSWER, None, [], [], [], state)
+        text = i18n.t("answer.open", value=opened[0]["value"].rstrip("."))
+        return _result("no_answer", text, None, [], [], opened[:1], state, sig)
+    return _result("no_answer", i18n.t("answer.none"), None, [], [], [], state, sig)
 
 
-def _result(status: str, text: str, binding, superseded, conflicts, cited, state: dict) -> dict:
+def _result(status: str, text: str, binding, superseded, conflicts, cited, state: dict, sig: list | None = None) -> dict:
     citations, seen = [], set()
     for fact in cited:
         key = (fact.get("doc_id") or "manual", fact["quote"])
@@ -413,59 +385,89 @@ def _result(status: str, text: str, binding, superseded, conflicts, cited, state
         "superseded": [store.view(state, f) for f in superseded],
         "conflicts": [store.view(state, f) for f in conflicts],
         "citations": citations,
+        "_sig": sig or [],
     }
 
 
-def _signature(response: dict) -> tuple:
+def _signature(response: dict) -> list:
+    """What an answer says, independent of the language it is worded in."""
     binding = response.get("binding")
-    return (
+    return [
         response["status"],
         binding["id"] if binding else None,
         binding["value"] if binding else None,
-        tuple(f["id"] for f in response["superseded"]),
-        tuple(f["id"] for f in response["conflicts"]),
-        response["answer"],
-    )
+        [f["id"] for f in response["superseded"]],
+        [f["id"] for f in response["conflicts"]],
+        response.get("_sig") or [],
+    ]
 
 
-def _describe(state: dict, events: list[dict]) -> str | None:
-    """Plain sentence for the changes that happened between two answers.
+def describe_changes(state: dict, events: list[dict]) -> list[dict]:
+    """The changes behind a list of audit events, each as a code with parameters and a sentence.
 
     Changes made by a person name that person: "Giulia retired 4 weeks (final presentation)".
     Changes that came in from a source (an email, a new document version) name the source.
     """
-    by_actor: dict[str, list[str]] = {}
-    arrived: list[str] = []
+    by_actor: dict[str, list[dict]] = {}
+    arrived: list[dict] = []
     replaced = {e["x"]["cause"] for e in events if e["x"].get("cause") and e["action"] == "supersede"}
     for event in events:
         fact = state["facts"].get(event.get("fact_id") or "")
-        target = _target(fact) if fact else "the memory"
+        target = _target(fact) if fact else i18n.t("label.memory")
+        params = {"actor": event.get("actor"), "fact_id": event.get("fact_id"), "value": (_x(fact).get("short") or fact["value"]) if fact else None, "source": _x(fact).get("source_short") if fact else None}
         cause = event["x"].get("cause")
         if cause:
+            src = event["x"].get("src")
+            params = {**params, "source_kind": (src or {}).get("kind"), "source": cause}
+            subject = i18n.cause(src, cause)
             old = state["facts"].get((event["x"].get("replaced") or [None])[0] or "")
             if event["action"] == "supersede":
-                phrase = f"{cause} replaced {_target(old) if old else target}"
+                change = {"code": "source_replaced", "params": {**params, "replaced_fact_id": old["id"] if old else None, "replaced_value": (_x(old).get("short") or old["value"]) if old else None}, "text": i18n.t("change.replaced", cause=subject, target=_target(old) if old else target)}
             elif cause not in replaced:
-                phrase = f"{cause} stated {_short(fact) if fact else target}"
+                change = {"code": "source_stated", "params": params, "text": i18n.t("change.stated", cause=subject, short=_short(fact) if fact else target)}
             else:
                 continue
-            if phrase not in arrived:
-                arrived.append(phrase)
+            if change["text"] not in [c["text"] for c in arrived]:
+                arrived.append(change)
             continue
-        verb = VERBS.get(event["action"])
-        if verb is None:
+        if event["action"] not in CHANGE_CODES:
             continue
-        phrases = by_actor.setdefault(event.get("actor") or "someone", [])
-        if f"{verb} {target}" not in phrases:
-            phrases.append(f"{verb} {target}")
-    clauses = []
-    for actor, phrases in by_actor.items():
-        joined = phrases[0] if len(phrases) == 1 else ", ".join(phrases[:-1]) + " and " + phrases[-1]
-        clauses.append(f"{actor} {joined}")
-    clauses += arrived
-    if not clauses:
-        return None
-    return clauses[0] if len(clauses) == 1 else ", ".join(clauses[:-1]) + " and " + clauses[-1]
+        phrase = f"{i18n.t('verb.' + event['action'])} {target}"
+        changes = by_actor.setdefault(event.get("actor") or "someone", [])
+        if phrase not in [c["phrase"] for c in changes]:
+            changes.append({"code": CHANGE_CODES[event["action"]], "params": params, "phrase": phrase})
+    out = []
+    for actor, changes in by_actor.items():
+        text = i18n.t("change.person", actor=actor, phrases=i18n.join([c["phrase"] for c in changes]))
+        out.append({"code": changes[0]["code"], "params": {**changes[0]["params"], "count": len(changes)}, "text": text})
+    return out + arrived
+
+
+def _describe(state: dict, events: list[dict]) -> str | None:
+    """Plain sentence for the changes that happened between two answers."""
+    changes = describe_changes(state, events)
+    return i18n.join([c["text"] for c in changes]) if changes else None
+
+
+def event_summary(state: dict, event: dict) -> dict:
+    """One audit event in plain words, with a code and parameters for clients that compose their own text."""
+    changes = describe_changes(state, [event]) if event.get("fact_id") in state["facts"] else []
+    if changes:
+        return {"summary": changes[0]["text"], "summary_code": changes[0]["code"], "summary_params": changes[0]["params"]}
+    info = event["x"].get("info") or {}
+    params = {"actor": event.get("actor"), "fact_id": event.get("fact_id"), **info}
+    if info.get("kind") == "email":
+        key = "audit.email" if info.get("project") else "audit.email_unrouted"
+        return {"summary": i18n.t(key, subject=info["subject"], sender=info["sender"], project=info.get("project"), rule=info.get("rule")), "summary_code": "email_received", "summary_params": params}
+    if info.get("kind") == "item":
+        return {"summary": i18n.t("audit.item", type=info["type"].capitalize(), title=info["title"], project=info["project"]), "summary_code": "item_received", "summary_params": params}
+    if info.get("kind") == "version":
+        return {"summary": i18n.t("audit.version", label=info["label"], title=info["title"]), "summary_code": "version_uploaded", "summary_params": params}
+    if event["action"] == "reset":
+        return {"summary": i18n.t("audit.reset"), "summary_code": "demo_reset", "summary_params": params}
+    if event["action"] == "ingest" and event.get("at") == store.settings.SEED_AT:
+        return {"summary": i18n.t("audit.seed"), "summary_code": "memory_seeded", "summary_params": params}
+    return {"summary": event.get("reason") or event["action"], "summary_code": CHANGE_CODES.get(event["action"], event["action"]), "summary_params": params}
 
 
 def _net_events(events: list[dict]) -> list[dict]:
@@ -480,11 +482,14 @@ def _net_events(events: list[dict]) -> list[dict]:
     return out
 
 
-def explain_change(state: dict, since_version: int, topic_id: str | None) -> str:
+def explain_change(state: dict, since_version: int, topic_id: str | None) -> dict:
     """Why an answer on a topic differs from the one given at an earlier memory version."""
     fact_ids = set(state["topics"][topic_id]["fact_ids"]) if topic_id in state["topics"] else set()
     events = [e for e in state["audit"] if e["x"].get("version", 0) > since_version and not e["x"].get("undone") and (e.get("fact_id") in fact_ids or (topic_id and e["x"].get("topic") == topic_id))]
-    return _describe(state, _net_events(events)) or "memory changed since the previous answer"
+    changes = describe_changes(state, _net_events(events))
+    if not changes:
+        return {"text": i18n.t("change.fallback"), "code": "memory_changed", "params": {}}
+    return {"text": i18n.join([c["text"] for c in changes]), "code": changes[0]["code"], "params": {**changes[0]["params"], "changes": len(changes)}}
 
 
 def ask(state: dict, question: str, topic_id: str | None = None, include_plain: bool = False, project_id: str | None = None, route: list[str] | None = None) -> tuple[dict, dict]:
@@ -499,19 +504,25 @@ def ask(state: dict, question: str, topic_id: str | None = None, include_plain: 
     matched = moved_topic(state, matched)
     focus = None
     if matched is None:
-        response = _result("no_answer", NO_ANSWER, None, [], [], [], state)
+        response = _result("no_answer", i18n.t("answer.none"), None, [], [], [], state)
     else:
         focus = focus_facts(state, matched, tokenize(question))
         response = answer_topic(state, matched, focus)
-    response = {"question": question, **response, "changed_because": None}
+    signature = _signature(response)
+    response.pop("_sig", None)
+    response = {"question": question, **response, "changed_because": None, "changed_because_code": None, "changed_because_params": None, "locale": i18n.current()}
     key = f"{project_id}|" + " ".join(tokenize(question)) if matched is None else matched + ("|" + ",".join(sorted(focus)) if focus else "")
 
     previous = next((a for a in reversed(state["answers"]) if a["x"]["key"] == key), None)
+    baseline = None
     if previous is not None:
         if previous["memory_version"] == state["version"]:
-            response["changed_because"] = previous["response"].get("changed_because")
-        elif _signature(previous["response"]) != _signature(response):
-            response["changed_because"] = explain_change(state, previous["memory_version"], matched)
+            baseline = previous["x"].get("baseline")
+        elif previous["x"].get("sig") != signature:
+            baseline = previous["memory_version"]
+    if baseline is not None:
+        why = explain_change(state, baseline, matched)
+        response.update(changed_because=why["text"], changed_because_code=why["code"], changed_because_params=why["params"])
 
     if include_plain:
         ranked = plain_retrieval(state, question, top_k=1, project_id=project_id)
@@ -527,7 +538,7 @@ def ask(state: dict, question: str, topic_id: str | None = None, include_plain: 
         "request": {"question": question, **({"topic": topic_id} if topic_id else {}), **({"project_id": project_id} if project_id else {}), "include_plain_retrieval": include_plain},
         "response": copy.deepcopy(response),
         "fact_snapshot": copy.deepcopy(used),
-        "x": {"key": key, "topic": matched, "project": project_id},
+        "x": {"key": key, "topic": matched, "project": project_id, "sig": signature, "baseline": baseline, "locale": i18n.current()},
     }
     state["answers"].append(record)
     return response, record

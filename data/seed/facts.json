@@ -21,7 +21,13 @@
       "note": "Older baseline, kept as history.",
       "base_type": "EVIDENCE",
       "source_short": "project brief",
-      "claim": "Baseline: about 6 weeks before a new consultant works independently"
+      "claim": "Baseline: about 6 weeks before a new consultant works independently",
+      "it": {
+        "label": "la baseline del brief di progetto",
+        "source_label": "il brief di progetto",
+        "source_in": "nel brief di progetto",
+        "source_short": "brief di progetto"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -47,7 +53,13 @@
       "base_type": "CONSTRAINT",
       "note": "Restated as requirement R1.1.",
       "source_short": "project brief",
-      "claim": "Client goal: below 3 weeks"
+      "claim": "Client goal: below 3 weeks",
+      "it": {
+        "label": "l'obiettivo iniziale del cliente",
+        "source_label": "il brief di progetto",
+        "source_in": "nel brief di progetto",
+        "source_short": "brief di progetto"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -73,7 +85,13 @@
       "note": "Restated by the final report.",
       "base_type": "CONSTRAINT",
       "source_short": "requirements",
-      "claim": "Requirement R1.1: 3 weeks or less"
+      "claim": "Requirement R1.1: 3 weeks or less",
+      "it": {
+        "label": "il requisito R1.1",
+        "source_label": "i requisiti",
+        "source_in": "nei requisiti",
+        "source_short": "requisiti"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -99,7 +117,13 @@
       "note": "An observed estimate, not a target.",
       "base_type": "HYPOTHESIS",
       "source_short": "interim review",
-      "claim": "Actual onboarding is closer to 6.5–7 weeks (estimate, not instrumented)"
+      "claim": "Actual onboarding is closer to 6.5–7 weeks (estimate, not instrumented)",
+      "it": {
+        "label": "la stima della revisione intermedia",
+        "source_label": "la revisione intermedia",
+        "source_in": "nella revisione intermedia",
+        "source_short": "revisione intermedia"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -124,7 +148,13 @@
       "source_label": "the final presentation",
       "note": "Verbal preview, replaced by the final report a week later, still active.",
       "source_short": "final presentation",
-      "claim": "Target recommendation: 4 weeks"
+      "claim": "Target recommendation: 4 weeks",
+      "it": {
+        "label": "il valore della presentazione finale",
+        "source_label": "la presentazione finale",
+        "source_in": "nella presentazione finale",
+        "source_short": "presentazione finale"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -150,7 +180,14 @@
       "note": "Latest decision document.",
       "spoken": "Three to four weeks",
       "source_short": "final report",
-      "claim": "Onboarding SLA: 3–4 weeks"
+      "claim": "Onboarding SLA: 3–4 weeks",
+      "it": {
+        "label": "lo SLA del report finale",
+        "spoken": "Da tre a quattro settimane",
+        "source_label": "il report finale",
+        "source_in": "nel report finale",
+        "source_short": "report finale"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -174,7 +211,13 @@
       "short": "3–4 weeks",
       "source_label": "the implementation roadmap",
       "note": "Corroborates M-106.",
-      "source_short": "implementation roadmap"
+      "source_short": "implementation roadmap",
+      "it": {
+        "label": "la roadmap di implementazione",
+        "source_label": "la roadmap di implementazione",
+        "source_in": "nella roadmap di implementazione",
+        "source_short": "roadmap di implementazione"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -196,7 +239,12 @@
       "curated": true,
       "label": "Marco Fiore's estimate",
       "short": "3–4 business days",
-      "source_label": "observation 003"
+      "source_label": "observation 003",
+      "it": {
+        "label": "la stima di Marco Fiore",
+        "source_label": "l'osservazione 003",
+        "source_in": "nell'osservazione 003"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -218,7 +266,12 @@
       "curated": true,
       "label": "Laura Galli's estimate",
       "short": "6–8 business days",
-      "source_label": "observation 003"
+      "source_label": "observation 003",
+      "it": {
+        "label": "la stima di Laura Galli",
+        "source_label": "l'osservazione 003",
+        "source_in": "nell'osservazione 003"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -240,7 +293,12 @@
       "curated": true,
       "label": "the junior auditor's estimate",
       "short": "2–3 days",
-      "source_label": "observation 003"
+      "source_label": "observation 003",
+      "it": {
+        "label": "la stima dell'auditor junior",
+        "source_label": "l'osservazione 003",
+        "source_in": "nell'osservazione 003"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -264,7 +322,13 @@
       "short": "unmeasured",
       "source_label": "the bottleneck analysis",
       "question": "What is the real audit queue time?",
-      "note": "No owner, no instrumentation recorded."
+      "note": "No owner, no instrumentation recorded.",
+      "it": {
+        "label": "il collo di bottiglia BN-002",
+        "short": "non misurato",
+        "source_label": "l'analisi dei colli di bottiglia",
+        "source_in": "nell'analisi dei colli di bottiglia"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -286,7 +350,13 @@
       "curated": true,
       "label": "observation 003",
       "short": "not measurable",
-      "source_label": "observation 003"
+      "source_label": "observation 003",
+      "it": {
+        "label": "l'osservazione 003",
+        "short": "non misurabile",
+        "source_label": "l'osservazione 003",
+        "source_in": "nell'osservazione 003"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -309,7 +379,12 @@
       "label": "the final report figure",
       "short": "5–8 days",
       "source_label": "the final report",
-      "note": "Restates the estimates, no measurement cited."
+      "note": "Restates the estimates, no measurement cited.",
+      "it": {
+        "label": "il valore del report finale",
+        "source_label": "il report finale",
+        "source_in": "nel report finale"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -332,7 +407,12 @@
       "label": "the final presentation figure",
       "short": "5–8 days",
       "source_label": "the final presentation preview",
-      "note": "Restates the estimates, no measurement cited."
+      "note": "Restates the estimates, no measurement cited.",
+      "it": {
+        "label": "il valore della presentazione finale",
+        "source_label": "la presentazione finale",
+        "source_in": "nella presentazione finale"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -355,7 +435,13 @@
       "label": "the project brief",
       "short": "never measured",
       "source_label": "the project brief",
-      "note": "Self-reported, before the engagement."
+      "note": "Self-reported, before the engagement.",
+      "it": {
+        "label": "il brief di progetto",
+        "short": "mai misurato",
+        "source_label": "il brief di progetto",
+        "source_in": "nel brief di progetto"
+      }
     },
     "project_id": "proj-clearpath"
   },
@@ -8770,7 +8856,13 @@
       "base_type": "EVIDENCE",
       "doc_version": 1,
       "note": "First version in the document library.",
-      "source_short": "onboarding standard v1"
+      "source_short": "onboarding standard v1",
+      "it": {
+        "label": "la versione 1 dello standard di onboarding",
+        "source_label": "la versione 1 dello standard di onboarding",
+        "source_in": "nella versione 1 dello standard di onboarding",
+        "source_short": "standard di onboarding v1"
+      }
     }
   },
   {
@@ -8795,7 +8887,13 @@
       "source_label": "version 2 of the onboarding standard",
       "doc_version": 2,
       "note": "Current version in the document library.",
-      "source_short": "onboarding standard v2"
+      "source_short": "onboarding standard v2",
+      "it": {
+        "label": "la versione 2 dello standard di onboarding",
+        "source_label": "la versione 2 dello standard di onboarding",
+        "source_in": "nella versione 2 dello standard di onboarding",
+        "source_short": "standard di onboarding v2"
+      }
     }
   },
   {
@@ -8818,7 +8916,13 @@
       "label": "the audit handbook rule",
       "short": "two-step review",
       "source_label": "the audit handbook",
-      "doc_version": 1
+      "doc_version": 1,
+      "it": {
+        "label": "la regola del manuale di audit",
+        "short": "revisione in due passaggi",
+        "source_label": "il manuale di audit",
+        "source_in": "nel manuale di audit"
+      }
     }
   },
   {
@@ -8840,7 +8944,12 @@
       "curated": true,
       "label": "the handbook expense rule",
       "short": "500 euro",
-      "source_label": "the analyst handbook"
+      "source_label": "the analyst handbook",
+      "it": {
+        "label": "la regola sulle spese del manuale",
+        "source_label": "il manuale degli analisti",
+        "source_in": "nel manuale degli analisti"
+      }
     }
   },
   {
@@ -8862,7 +8971,12 @@
       "curated": true,
       "label": "the handbook travel rule",
       "short": "5 working days",
-      "source_label": "the analyst handbook"
+      "source_label": "the analyst handbook",
+      "it": {
+        "label": "la regola sui viaggi del manuale",
+        "source_label": "il manuale degli analisti",
+        "source_in": "nel manuale degli analisti"
+      }
     }
   },
   {
@@ -8884,7 +8998,12 @@
       "curated": true,
       "label": "the handbook onboarding rule",
       "short": "2 weeks",
-      "source_label": "the analyst handbook"
+      "source_label": "the analyst handbook",
+      "it": {
+        "label": "la regola di onboarding del manuale",
+        "source_label": "il manuale degli analisti",
+        "source_in": "nel manuale degli analisti"
+      }
     }
   }
 ]

@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from app import settings
+from app import i18n, settings, wording
 
 PUBLIC_FACT_FIELDS = (
     "id",
@@ -382,12 +382,21 @@ def conflict_view(state: dict, conflict: dict) -> dict:
     resolution = conflict.get("resolution")
     if status == "resolved" and not resolution:
         resolution = conflict.get("x", {}).get("auto_resolution")
+    summary = conflict["summary"]
+    if i18n.current() == "it":
+        extra = conflict.get("x", {})
+        if extra.get("auto"):
+            members = [state["facts"][i] for i in conflict["fact_ids"] if i in state["facts"]]
+            parts = ", ".join(i18n.t("answer.conflict_part", label=wording.label(f), short=wording.short(f)) for f in members)
+            summary = wording.cap(i18n.t("conflict.auto", parts=parts))
+        else:
+            summary = extra.get("summary_it") or summary
     return {
         "id": conflict["id"],
         "topic": conflict["topic"],
         "project_id": project_of_topic(state, conflict["topic"]),
         "status": status,
-        "summary": conflict["summary"],
+        "summary": summary,
         "facts": [view(state, state["facts"][i]) for i in conflict["fact_ids"] if i in state["facts"]],
         "detected_at": conflict["detected_at"],
         "resolution": resolution if status == "resolved" else None,

@@ -1,6 +1,6 @@
 """Write operations on memory. Every one of them leaves an audit event."""
 
-from app import settings, store
+from app import i18n, settings, store
 from app.http import ApiError, not_found
 
 
@@ -237,6 +237,7 @@ def stats(state: dict, project_id: str | None = None) -> dict:
         "cost": {"spent_usd": round(state.get("cost_spent", 0.0), 4), "cap_usd": state["config"]["cost_cap_usd"]},
         "last_ingest_at": state.get("meta", {}).get("ingested_at"),
         "last_reset_at": state.get("meta", {}).get("last_reset_at"),
+        "locale": i18n.current(),
         "needs_attention": {
             "stale_active": sum(1 for f in facts if store.stale_active(state, f)),
             "conflicts_open": sum(1 for c in state["conflicts"].values() if c["topic"] in topics and store.conflict_status(state, c) == "open"),
@@ -290,8 +291,7 @@ def _recent_changes(state: dict, project_id: str | None, limit: int = 10) -> lis
             action = event["action"]
         else:
             continue
-        summary = engine._describe(state, [event]) if event.get("fact_id") in state["facts"] else None
-        rows.append({"at": event["at"], "actor": event["actor"], "action": action, "fact_id": event.get("fact_id"), "summary": summary or event.get("reason") or action})
+        rows.append({"at": event["at"], "actor": event["actor"], "action": action, "fact_id": event.get("fact_id"), "summary": engine.event_summary(state, event)["summary"]})
     return rows
 
 
@@ -424,7 +424,7 @@ def _days_between(older: str, newer: str) -> int:
 def sync_maintenance(state: dict) -> None:
     """Propose facts for retirement: superseded but still retrievable, stale, or low confidence."""
     threshold = state["config"]["low_confidence_threshold"]
-    wanted: dict[tuple[str, str], str] = {}
+    wanted: dict[tuple[str, str], dict] = {}
     bindings: dict[str, dict | None] = {}
     for fact in state["facts"].values():
         if fact["status"] != "active" or fact.get("pinned"):
@@ -436,11 +436,11 @@ def sync_maintenance(state: dict) -> None:
         newer = store.successor(state, fact)
         if newer is not None:
             if store.stale_active(state, fact):
-                wanted[(fact["id"], "superseded_still_retrievable")] = f"Superseded by {newer['id']} on {newer['date']} but still ranked in plain retrieval."
+                wanted[(fact["id"], "superseded_still_retrievable")] = {"by": newer["id"], "date": newer["date"]}
         elif binding is not None and binding is not fact and store.effective_type(state, fact) in store.BINDING_TYPES and _days_between(fact["date"], binding["date"]) > state["config"]["stale_after_days"]:
-            wanted[(fact["id"], "stale")] = f"More than {state['config']['stale_after_days']} days older than the latest decision on the same topic and not linked to it."
+            wanted[(fact["id"], "stale")] = {"days": state["config"]["stale_after_days"]}
         elif fact["confidence"] < threshold:
-            wanted[(fact["id"], "low_confidence")] = f"Confidence {fact['confidence']:.2f} is below the threshold {threshold:.2f}."
+            wanted[(fact["id"], "low_confidence")] = {"confidence": f"{fact['confidence']:.2f}", "threshold": f"{threshold:.2f}"}
     known = {(m["fact_id"], m["reason"]): m for m in state["maintenance"].values()}
     for key, item in known.items():
         if item["status"] == "pending" and key not in wanted:
@@ -454,7 +454,7 @@ def sync_maintenance(state: dict) -> None:
             "id": item_id,
             "fact_id": fact_id,
             "reason": reason,
-            "detail": wanted[(fact_id, reason)],
+            "params": wanted[(fact_id, reason)],
             "proposed_action": "retire",
             "status": "pending",
             "proposed_at": settings.PROPOSED_AT if state["version"] == 0 else store.now(),

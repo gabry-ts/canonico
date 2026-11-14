@@ -1,9 +1,10 @@
 from typing import Literal
 
 from fastapi import APIRouter, Query
+from fastapi.responses import JSONResponse
 
-from app import ops, store
-from app.http import ApiError, not_found, out
+from app import i18n, ops, store
+from app.http import ApiError, dump, not_found
 from app.models import MaintenanceDecision, MaintenanceItem, MaintenanceReason
 from app.store import STORE
 
@@ -15,11 +16,22 @@ def item_view(state: dict, item: dict) -> dict:
         "id": item["id"],
         "fact": store.view(state, state["facts"][item["fact_id"]]),
         "reason": item["reason"],
-        "detail": item["detail"],
+        "detail": i18n.t(f"maintenance.{item['reason']}", **item.get("params", {})),
+        "detail_code": item["reason"],
+        "detail_params": item.get("params", {}),
         "proposed_action": item["proposed_action"],
         "status": item["status"],
         "proposed_at": item["proposed_at"],
     }
+
+
+def respond(view):
+    """Validated maintenance items, with the code and parameters of the reason kept next to the sentence."""
+    rows = view if isinstance(view, list) else [view]
+    body = dump(list[MaintenanceItem], rows)
+    for row, source in zip(body, rows):
+        row.update(detail_code=source["detail_code"], detail_params=source["detail_params"])
+    return JSONResponse(body if isinstance(view, list) else body[0])
 
 
 def pending_item(state: dict, item_id: str) -> dict:
@@ -46,7 +58,7 @@ def get_maintenance_queue(
         if reason:
             items = [m for m in items if m["reason"] == reason.value]
         items.sort(key=lambda m: int(m["id"].split("-")[1]))
-        return out(list[MaintenanceItem], [item_view(state, m) for m in items[offset : offset + limit]])
+        return respond([item_view(state, m) for m in items[offset : offset + limit]])
 
 
 @router.post("/maintenance/{item_id}/approve", operation_id="approveMaintenanceItem", status_code=200, response_model=MaintenanceItem)
@@ -54,11 +66,11 @@ def approve_maintenance_item(item_id: str, body: MaintenanceDecision):
     with STORE.write() as state:
         item = pending_item(state, item_id)
         fact = state["facts"][item["fact_id"]]
-        note = body.note or item["detail"]
+        note = body.note or i18n.t(f"maintenance.{item['reason']}", **item.get("params", {}))
         store.audit(state, "approve", body.actor, fact["id"], note, x={"item": item_id}, bump=False)
         ops.retire(state, fact, note, body.actor)
         item["status"] = "approved"
-        return out(MaintenanceItem, item_view(state, item))
+        return respond(item_view(state, item))
 
 
 @router.post("/maintenance/{item_id}/dismiss", operation_id="dismissMaintenanceItem", status_code=200, response_model=MaintenanceItem)
@@ -67,4 +79,4 @@ def dismiss_maintenance_item(item_id: str, body: MaintenanceDecision):
         item = pending_item(state, item_id)
         item["status"] = "dismissed"
         store.audit(state, "dismiss", body.actor, item["fact_id"], body.note, x={"item": item_id, "undo": {"maintenance": item_id}}, bump=False)
-        return out(MaintenanceItem, item_view(state, item))
+        return respond(item_view(state, item))

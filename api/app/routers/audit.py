@@ -1,13 +1,20 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Query
+from fastapi.responses import JSONResponse
 
-from app import ops, store
-from app.http import ApiError, not_found, out
+from app import access, engine, ops, store
+from app.http import ApiError, dump, not_found, out
 from app.models import AuditAction, AuditEvent, UndoRequest
 from app.store import STORE
 
 router = APIRouter()
+
+
+def event_view(state: dict, event: dict) -> dict:
+    """Public audit event with a generated summary in the locale of the request."""
+    member = access.find_member(state, event.get("actor")) if event.get("actor") not in (None, "system", "mail", "webhook") else None
+    return {**store.public_event(event), **engine.event_summary(state, event), "actor_role": member["org_role"] if member else None}
 
 
 def _timestamp(value: str) -> float:
@@ -25,7 +32,7 @@ def list_audit(
 ):
     with STORE.read() as state:
         ops.scope(state, project_id)
-        events = [store.public_event(e) for e in reversed(state["audit"]) if store.in_scope(e.get("project_id"), project_id)]
+        events = [event_view(state, e) for e in reversed(state["audit"]) if store.in_scope(e.get("project_id"), project_id)]
     if actor:
         events = [e for e in events if e["actor"] == actor]
     if action:
@@ -35,7 +42,11 @@ def list_audit(
     if since:
         floor = (since if since.tzinfo else since.replace(tzinfo=timezone.utc)).timestamp()
         events = [e for e in events if _timestamp(e["at"]) >= floor]
-    return out(list[AuditEvent], events[:limit])
+    summaries = {e["id"]: e for e in events[:limit]}
+    body = dump(list[AuditEvent], events[:limit])
+    for row in body:
+        row.update({k: summaries[row["id"]][k] for k in ("summary", "summary_code", "summary_params", "actor_role")})
+    return JSONResponse(body)
 
 
 @router.post("/audit/{event_id}/undo", operation_id="undoAuditEvent", status_code=200, response_model=AuditEvent)
@@ -57,4 +68,5 @@ def undo_audit_event(event_id: str, body: UndoRequest):
         ops.apply_undo(state, event)
         event["x"]["undone"] = True
         created = store.audit(state, "undo", body.actor, event.get("fact_id"), body.reason, x={"ref": event_id, "topic": event["x"].get("topic")})
-        return out(AuditEvent, store.public_event(created))
+        view = event_view(state, created)
+        return JSONResponse({**dump(AuditEvent, view), **{k: view[k] for k in ("summary", "summary_code", "summary_params", "actor_role")}})

@@ -78,7 +78,8 @@ def receive(state: dict, email: dict) -> dict:
         "version_of": None,
     }
     where = f"routed to {project_id} by {rule['id']} ({reason})" if rule else "kept at organisation scope, no rule matched"
-    event = store.audit(state, "ingest", "mail", None, f"Email “{email['subject']}” from {sender} {where}.", x={"project": project_id, "document": doc_id}, bump=False)
+    info = {"kind": "email", "subject": email["subject"], "sender": sender, "project": project_id, "rule": rule["id"] if rule else None}
+    event = store.audit(state, "ingest", "mail", None, f"Email “{email['subject']}” from {sender} {where}.", x={"project": project_id, "document": doc_id, "info": info}, bump=False)
     body = "\n".join([email["text"]] + [a["text"] for a in email.get("attachments") or []])
     found = statements.find(state, body, project_id) if project_id else []
     created, links, change_id = apply_email_statements(state, found, doc_id=doc_id, date=date, sender=sender, subject=email["subject"])
@@ -149,7 +150,7 @@ def add_fact(state: dict, *, fact_id: str, topic_id: str, value: str, kind: str,
         actor,
         fact_id,
         reason,
-        x={"undo": {"created": fact_id, "restore": restore}, "cause": cause, "replaced": [o["id"] for o in olds], "topic": topic_id},
+        x={"undo": {"created": fact_id, "restore": restore}, "cause": cause, "src": internal.get("src"), "replaced": [o["id"] for o in olds], "topic": topic_id},
     )
     state["history"][fact_id] = [{"at": event["at"], "actor": actor, "action": "ingest", "changes": {}, "snapshot": store.view(state, fact)}]
     for old in olds:
@@ -197,7 +198,7 @@ def apply_email_statements(state: dict, found: list[dict], *, doc_id: str, date:
             quote=item["quote"],
             date=date,
             confidence=0.9,
-            internal={"short": item["short"], "label": f"the email from {sender}", "source_label": f"the email from {sender}", "source_short": f"email from {sender}"},
+            internal={"short": item["short"], "label": f"the email from {sender}", "source_label": f"the email from {sender}", "source_short": f"email from {sender}", "src": {"kind": "email", "sender": sender}},
             olds=olds,
             cause=f"an email from {sender}",
             reason=reason,
@@ -268,7 +269,7 @@ def new_version(state: dict, document: dict, *, text: str, label: str | None, ti
     document["versions"].append(entry)
     document.update(text=text, title=entry["title"], date=date, version=number, version_of=document["id"])
     name = f"version {number} of “{document['title']}”"
-    store.audit(state, "ingest", "system", None, f"{label} of “{document['title']}” uploaded to the document library.", x={"project": document.get("project_id"), "document": document["id"], "undo": {"document_version": {document["id"]: snapshot}}}, bump=False)
+    store.audit(state, "ingest", "system", None, f"{label} of “{document['title']}” uploaded to the document library.", x={"project": document.get("project_id"), "document": document["id"], "info": {"kind": "version", "label": label, "title": document["title"]}, "undo": {"document_version": {document["id"]: snapshot}}}, bump=False)
     library = any(f["id"].startswith("L-") for f in previous_facts) or (state["sources"].get(document.get("source_id") or "", {}).get("type") == "document_library")
     found = statements.find(state, text, document.get("project_id"), prefer_topics={f["topic"] for f in current})
     created, links = [], []
@@ -298,7 +299,7 @@ def new_version(state: dict, document: dict, *, text: str, label: str | None, ti
             quote=item["quote"],
             date=date,
             confidence=0.95,
-            internal={"short": item["short"], "label": name, "source_label": name, "source_short": f"{document['title'].lower()} {label}", "doc_version": number},
+            internal={"short": item["short"], "label": name, "source_label": name, "source_short": f"{document['title'].lower()} {label}", "doc_version": number, "src": {"kind": "version", "number": number, "title": document["title"], "label": label}},
             olds=olds,
             cause=name,
             reason=reason,

@@ -6,7 +6,7 @@ import re
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from app import engine, inbox, llm, store
+from app import engine, i18n, inbox, llm, store
 from app.http import ApiError, dump
 from app.models import AskRequest, AskResponse
 from app.store import STORE
@@ -55,14 +55,16 @@ def run_ask(state: dict, body: AskRequest, route: list[str] | None = None) -> di
     if body.topic and (body.topic not in state["topics"] or not store.in_scope(state["topics"][body.topic].get("project_id"), project_id)):
         raise ApiError(422, f"topic: unknown topic {body.topic}")
     response, record = engine.ask(state, body.question, body.topic, bool(body.include_plain_retrieval), project_id, route)
-    return {**dump(AskResponse, response), "answer_id": record["id"]}
+    extras = {k: response[k] for k in ("changed_because_code", "changed_because_params", "locale")}
+    return {**dump(AskResponse, response), **extras, "answer_id": record["id"]}
 
 
 @router.post("/ask", operation_id="ask", status_code=200, response_model=AskResponse)
 def ask(body: AskRequest):
-    route = plan_route(body)
-    with STORE.write() as state:
-        return JSONResponse(run_ask(state, body, route))
+    with i18n.using(getattr(body, "locale", None)):
+        route = plan_route(body)
+        with STORE.write() as state:
+            return JSONResponse(run_ask(state, body, route))
 
 
 def _event(name: str, data: dict) -> str:
@@ -71,11 +73,14 @@ def _event(name: str, data: dict) -> str:
 
 @router.post("/ask/stream", operation_id="askStream", status_code=200, response_model=None)
 async def ask_stream(body: AskRequest):
+    locale = i18n.current()
+
     async def events():
         try:
-            route = await asyncio.to_thread(plan_route, body)
-            with STORE.write() as state:
-                response = run_ask(state, body, route)
+            with i18n.using(getattr(body, "locale", None) or locale):
+                route = await asyncio.to_thread(plan_route, body)
+                with STORE.write() as state:
+                    response = run_ask(state, body, route)
         except ApiError as exc:
             yield _event("error", {"code": exc.code, "message": exc.message})
             return

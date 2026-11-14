@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Query
+from fastapi.responses import JSONResponse
 
-from app import engine
-from app.http import not_found, out
+from app import engine, i18n
+from app.http import dump, not_found, out
 from app.models import AnswerRecord, AnswerSummary, ReplayDiff
 from app.store import STORE
 
@@ -55,5 +56,7 @@ def replay_answer(answer_id: str):
             before, after = _comparable(field, original["response"][field]), _comparable(field, response[field])
             if before != after:
                 diffs.append({"field": field, "before": before, "after": after})
-        because = engine.explain_change(state, original["memory_version"], record["x"]["topic"]) if diffs else None
-        return out(ReplayDiff, {"answer_id": answer_id, "new_answer_id": record["id"], "changed": bool(diffs), "changed_because": because, "diffs": diffs})
+        why = engine.explain_change(state, original["memory_version"], record["x"]["topic"]) if diffs else None
+        body = dump(ReplayDiff, {"answer_id": answer_id, "new_answer_id": record["id"], "changed": bool(diffs), "changed_because": why["text"] if why else None, "diffs": diffs})
+        body.update(changed_because_code=why["code"] if why else None, changed_because_params=why["params"] if why else None, locale=i18n.current())
+        return JSONResponse(body)

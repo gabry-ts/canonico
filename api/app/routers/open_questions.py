@@ -3,7 +3,7 @@ from typing import Literal
 
 from fastapi import APIRouter
 
-from app import ops, store
+from app import i18n, ops, store
 from app.http import ApiError, not_found, out
 from app.models import OpenQuestion, OpenQuestionClose
 from app.store import STORE
@@ -11,11 +11,18 @@ from app.store import STORE
 router = APIRouter()
 
 
+def question_view(question: dict) -> dict:
+    view = dict(question)
+    if i18n.current() == "it" and question.get("question_it"):
+        view["question"] = question["question_it"]
+    return view
+
+
 @router.get("/open-questions", operation_id="listOpenQuestions", status_code=200, response_model=list[OpenQuestion])
 def list_open_questions(status: Literal["open", "closed"] = "open", topic: str | None = None, project_id: str | None = None):
     with STORE.read() as state:
         ops.scope(state, project_id)
-        items = [dict(q) for q in state["open_questions"].values() if store.in_scope(store.project_of_topic(state, q["topic"]), project_id)]
+        items = [question_view(q) for q in state["open_questions"].values() if store.in_scope(store.project_of_topic(state, q["topic"]), project_id)]
     items = [q for q in items if q["status"] == status and (not topic or q["topic"] == topic)]
     return out(list[OpenQuestion], items)
 
@@ -39,4 +46,4 @@ def close_open_question(question_id: str, body: OpenQuestionClose):
             note=request.note,
         )
         store.audit(state, "close", request.actor, question["fact_id"], request.note or f"Answered by {request.answer_fact_id}.", x={"undo": {"question": before}})
-        return out(OpenQuestion, question)
+        return out(OpenQuestion, question_view(question))

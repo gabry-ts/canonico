@@ -9,6 +9,7 @@
     "opened_at": "2025-10-02",
     "closed_at": null,
     "answer_fact_id": null,
-    "note": null
+    "note": null,
+    "question_it": "Qual è il tempo reale in coda di audit?"
   }
 ]
