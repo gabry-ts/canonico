@@ -121,6 +121,7 @@
     "actions": "Actions",
     "move": "move",
     "open": "open",
+    "error": "Search is not available right now.",
     "noResults": "No results for “{q}”.",
     "tagFacts_one": "{count} fact",
     "tagFacts_other": "{count} facts",

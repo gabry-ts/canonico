@@ -121,6 +121,7 @@
     "actions": "Azioni",
     "move": "sposta",
     "open": "apri",
+    "error": "La ricerca non è disponibile in questo momento.",
     "noResults": "Nessun risultato per “{q}”.",
     "tagFacts_one": "{count} fatto",
     "tagFacts_other": "{count} fatti",
