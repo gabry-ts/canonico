@@ -18,7 +18,18 @@ export default function Maintenance() {
   const audit = useAuditActions()
   const [tab, setTab] = useState<'pending' | 'approved' | 'dismissed'>('pending')
   const [busy, setBusy] = useState<string | null>(null)
-  const { data, error, loading, reload } = useApi(() => call(client.GET('/maintenance/queue', { params: { query: { project_id: pid, limit: 200 } } })), [pid, version])
+  const { data, error, loading, reload } = useApi(
+    // The API returns one status per call (default: pending), so load all three for the tabs.
+    async () =>
+      (
+        await Promise.all(
+          (['pending', 'approved', 'dismissed'] as const).map((status) =>
+            call(client.GET('/maintenance/queue', { params: { query: { project_id: pid, limit: 200, status } } })),
+          ),
+        )
+      ).flat(),
+    [pid, version],
+  )
 
   const items = data ?? []
   const list = items.filter((m) => m.status === tab)

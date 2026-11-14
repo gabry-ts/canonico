@@ -93,7 +93,16 @@ export default function OpenQuestions() {
   const audit = useAuditActions()
   const [tab, setTab] = useState<'open' | 'closed'>('open')
   const [dlg, setDlg] = useState<OQ | null>(null)
-  const { data, error, loading, reload } = useApi(() => call(client.GET('/open-questions', { params: { query: { project_id: pid } } })), [pid, version])
+  const { data, error, loading, reload } = useApi(
+    // The API returns one status per call (default: open), so load both for the two tabs.
+    async () =>
+      (
+        await Promise.all(
+          (['open', 'closed'] as const).map((status) => call(client.GET('/open-questions', { params: { query: { project_id: pid, status } } }))),
+        )
+      ).flat(),
+    [pid, version],
+  )
 
   const all = data ?? []
   const list = all.filter((o) => o.status === tab)

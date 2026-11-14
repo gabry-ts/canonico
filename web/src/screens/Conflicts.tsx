@@ -21,7 +21,16 @@ export default function Conflicts() {
   const audit = useAuditActions()
   const [tab, setTab] = useState<'open' | 'resolved'>('open')
   const [dlg, setDlg] = useState<{ cid: string; fact: Fact; others: Fact[] } | null>(null)
-  const { data, error, loading, reload } = useApi(() => call(client.GET('/conflicts', { params: { query: { project_id: pid } } })), [pid, version])
+  const { data, error, loading, reload } = useApi(
+    // The API returns one status per call (default: open), so load both for the two tabs.
+    async () =>
+      (
+        await Promise.all(
+          (['open', 'resolved'] as const).map((status) => call(client.GET('/conflicts', { params: { query: { project_id: pid, status } } }))),
+        )
+      ).flat(),
+    [pid, version],
+  )
 
   const all = data ?? []
   const list = all.filter((c) => c.status === tab)
@@ -41,7 +50,8 @@ export default function Conflicts() {
   const undoResolved = async (facts: Fact[]) => {
     try {
       const ev: AuditEvent[] = await audit.list()
-      const mine = ev.filter((e) => e.action === 'resolve' && e.fact_id && facts.some((f) => f.id === e.fact_id))
+      // A conflict also closes when one side is retired from Memory or Ask, so look for both kinds of event.
+      const mine = ev.filter((e) => (e.action === 'resolve' || e.action === 'retire') && e.fact_id && facts.some((f) => f.id === e.fact_id))
       if (!mine.length) return toastError(t('review.conflicts.noEvent'))
       const newest = Math.max(...mine.map((e) => Date.parse(e.at)))
       const ids = mine.filter((e) => newest - Date.parse(e.at) < 5000).map((e) => e.id)
