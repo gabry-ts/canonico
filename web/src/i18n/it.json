@@ -250,6 +250,8 @@
       "overrideTitle": "Personalizza la posta del progetto",
       "overrideSub": "Dai al progetto un indirizzo in ingresso suo. Il resto resta come impostato nell'organizzazione.",
       "modeImap": "Casella IMAP",
+      "modeImapReal": "Casella reale",
+      "modeImapRealSub": "IMAP reale, letta a intervalli",
       "modeImapSub": "Simulata, letta a intervalli",
       "modeWebhook": "Webhook in ingresso",
       "modeWebhookSub": "Inviata dal provider di posta",

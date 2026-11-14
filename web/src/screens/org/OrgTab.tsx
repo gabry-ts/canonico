@@ -76,7 +76,9 @@ export function OrgMailCard() {
       </div>
     )
   const cur: Mail = { ...mail.data, ...edit }
-  const imap = cur.mode === 'imap_mock'
+  const imap = cur.mode === 'imap_mock' || cur.mode === 'imap'
+  const modes = (mail.data.mode === 'imap' ? ['imap', 'imap_mock', 'webhook'] : ['imap_mock', 'webhook']) as Mail['mode'][]
+  const modeKey = (m: Mail['mode']) => (m === 'imap' ? 'org.mail.modeImapReal' : m === 'imap_mock' ? 'org.mail.modeImap' : 'org.mail.modeWebhook')
   const set = (p: Partial<Mail>) => setEdit((e) => ({ ...e, ...p }))
   const save = async () => {
     try {
@@ -97,13 +99,13 @@ export function OrgMailCard() {
     <div className="card overflow-hidden">
       <CardHead title={t('org.orgmail.title')} right={<span className="badge">{t('org.orgmail.badge')}</span>} />
       <div className="p-5 space-y-4">
-        <div className="grid grid-cols-2 gap-2">
-          {(['imap_mock', 'webhook'] as const).map((m) => (
+        <div className={'grid gap-2 ' + (modes.length === 3 ? 'grid-cols-3' : 'grid-cols-2')}>
+          {modes.map((m) => (
             <button key={m} type="button" className={'radio-card ' + (cur.mode === m ? 'on' : '')} onClick={() => set({ mode: m })}>
               <span className="radio-dot"></span>
               <span>
-                <span className="block text-[13.5px] font-medium">{t(m === 'imap_mock' ? 'org.mail.modeImap' : 'org.mail.modeWebhook')}</span>
-                <span className="block text-[12.5px] text-muted-foreground">{t(m === 'imap_mock' ? 'org.mail.modeImapSub' : 'org.mail.modeWebhookSub')}</span>
+                <span className="block text-[13.5px] font-medium">{t(modeKey(m))}</span>
+                <span className="block text-[12.5px] text-muted-foreground">{t(modeKey(m) + 'Sub')}</span>
               </span>
             </button>
           ))}
