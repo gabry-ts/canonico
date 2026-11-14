@@ -6,4 +6,4 @@ Source: https://github.com/kakashi-ventures/oida-evaluation-corpora (corpora/off
 
 License: Creative Commons Attribution 4.0 International (see LICENSE). Files `corpus.jsonl`, `queries.jsonl` and `qrels/` are copied unchanged. The `raw/` sources are not included.
 
-Used as the mocked chat source of the project `proj-office`.
+Not used by the application.

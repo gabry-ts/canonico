@@ -52,6 +52,22 @@ Backend notes:
 - `cd api && .venv/bin/python -m app.ingest` re-extracts the 46 documents and rewrites `data/seed/` (facts, topics, conflicts, `meta.json` with tokens and cost). A fact is kept only if its quote is a verbatim span of its document. The two demo topics stay hand-curated.
 - CORS origins come from `CORS_ORIGINS` (comma-separated) and `CORS_ORIGIN_REGEX` (default allows `*.vercel.app` previews).
 
+## Demo path
+
+The seeded memory answers `POST /ask {"question": "How long does onboarding take?"}` without any model call:
+
+- binding: M-106, 3–4 weeks, final report of 28 November 2025
+- `superseded`: the four earlier versions it replaced (M-101 to M-104)
+- `conflicts`: M-105, 4 weeks from the final presentation. It was superseded by the final report but is still active, so the answer flags it and `GET /maintenance/queue` proposes it for retirement
+- `POST /facts/M-105/retire` with a reason and an actor: the next answer has no conflict and says why it changed (`changed_because`), `GET /facts/M-105` shows who retired it and when
+- `POST /demo/reset` restores this state
+
+`GET /topics/{topic_id}/chain` returns the facts of a topic oldest first, each with `doc_title`, plus `changes`: the number of rows whose value differs from the row before it. For the onboarding time the six rows give `changes: 5`.
+
+`GET /me` returns the demo identity (Giulia, owner). The `X-Demo-Actor` header or the `actor` query parameter switch to another member. There is no real authentication.
+
+Other flows that work offline: `POST /demo/send-email` (a client email confirms 5 weeks and supersedes the final report figure), `POST /documents/{doc_id}/versions` (a new version of a library document supersedes what the previous version said on the same topic), `POST /mail/poll` on the mocked inbox in `data/seed/mail/`. Values are found by a deterministic rule (a sentence that states a quantity on a known topic), so these flows need no model. `PATCH /config {"offline_mode": true}` blocks every live model call.
+
 ## License
 
 MIT
