@@ -28,6 +28,7 @@ Rules:
 - `date` is the day the fact was stated, format YYYY-MM-DD. Use the document date unless the text gives another one for that statement.
 - `confidence` between 0 and 1: how clearly the document states the fact.
 - When two people or two passages in the same document give different values for the same thing, extract each as its own fact.
+- A sentence that only recalls a value that no longer applies ("4 weeks was the old plan", "we used to", "no longer") is EVIDENCE about the past, never a DECISION or CONSTRAINT.
 - Extract between 4 and 14 facts, the most important first. Skip greetings, logistics and boilerplate."""
 
 EXTRACT_SCHEMA = {
