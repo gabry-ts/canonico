@@ -1,7 +1,0 @@
-pyproject.toml
-app/__init__.py
-canonico_api.egg-info/PKG-INFO
-canonico_api.egg-info/SOURCES.txt
-canonico_api.egg-info/dependency_links.txt
-canonico_api.egg-info/requires.txt
-canonico_api.egg-info/top_level.txt
