@@ -50,6 +50,11 @@ export default function App() {
   const Screen = SCREENS[route.r]
 
   useEffect(() => setNavOpen(false), [route.r, route.sub])
+  // Leaving a screen closes the fact drawer; #/memory/<factId> opens it on purpose.
+  const { openFact } = app
+  useEffect(() => {
+    if (route.r !== 'memory' || !route.sub) openFact(null)
+  }, [route.r, route.sub, openFact])
   useEffect(() => {
     document.title = `${t('nav.' + route.r)} · Canonico`
   }, [route.r, t])
