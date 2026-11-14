@@ -235,7 +235,82 @@ def stats(state: dict, project_id: str | None = None) -> dict:
         "maintenance_pending": sum(1 for m in state["maintenance"].values() if m["status"] == "pending" and m["fact_id"] in ids),
         "cost": {"spent_usd": round(state.get("cost_spent", 0.0), 4), "cap_usd": state["config"]["cost_cap_usd"]},
         "last_ingest_at": state.get("meta", {}).get("ingested_at"),
+        "last_reset_at": state.get("meta", {}).get("last_reset_at"),
+        "needs_attention": {
+            "stale_active": sum(1 for f in facts if store.stale_active(state, f)),
+            "conflicts_open": sum(1 for c in state["conflicts"].values() if c["topic"] in topics and store.conflict_status(state, c) == "open"),
+            "open_questions": sum(1 for q in state["open_questions"].values() if q["status"] == "open" and q["fact_id"] in ids),
+        },
+        "facts_by_type": dict(by_type),
+        "facts_by_status": dict(by_status),
+        "answers": _answer_counts(state, project_id, topics),
+        "sources": [
+            {"source_id": s["id"], "type": s["type"], "label": s["label"], "status": s.get("status", "idle"), "last_synced_at": s.get("last_synced_at")}
+            for s in state["sources"].values()
+            if store.in_scope(s["project_id"], project_id)
+        ],
+        "recent_changes": _recent_changes(state, project_id),
+        "time_to_fix_seconds": _time_to_fix(state, ids),
     }
+
+
+def _answer_counts(state: dict, project_id: str | None, topics: set[str]) -> dict:
+    counts = {"binding": 0, "contested": 0, "no_answer": 0}
+    for answer in state["answers"]:
+        scope = answer.get("x", {})
+        if project_id is not None and scope.get("project") != project_id and scope.get("topic") not in topics:
+            continue
+        counts[answer["response"]["status"]] += 1
+    meta = state.get("meta", {})
+    return {**counts, "since": meta.get("last_reset_at") or meta.get("started_at") or settings.SEED_AT}
+
+
+def _recent_changes(state: dict, project_id: str | None, limit: int = 10) -> list[dict]:
+    """Latest changes for a dashboard, newest first, in plain words."""
+    from app import engine
+
+    rows = []
+    events = state["audit"]
+    for index in range(len(events) - 1, -1, -1):
+        if len(rows) >= limit:
+            break
+        event = events[index]
+        if not store.in_scope(event.get("project_id"), project_id) or event["x"].get("undone"):
+            continue
+        cause = event["x"].get("cause") or ""
+        arrival = event["x"].get("document") is not None and event.get("fact_id") is None
+        if arrival and index + 1 < len(events) and events[index + 1]["x"].get("cause"):
+            continue
+        if cause.startswith("an email") or (arrival and event["actor"] == "mail"):
+            action = "inbound_email"
+        elif cause.startswith("version") or (arrival and "document_version" in (event["x"].get("undo") or {})):
+            action = "new_version"
+        elif event["action"] in ("retire", "restore", "resolve", "ingest"):
+            action = event["action"]
+        else:
+            continue
+        summary = engine._describe(state, [event]) if event.get("fact_id") in state["facts"] else None
+        rows.append({"at": event["at"], "actor": event["actor"], "action": action, "fact_id": event.get("fact_id"), "summary": summary or event.get("reason") or action})
+    return rows
+
+
+def _time_to_fix(state: dict, fact_ids: set[str]) -> dict:
+    """Seconds between the first answer that flagged a fact and the moment a person retired it."""
+    from datetime import datetime
+    from statistics import median
+
+    def seconds(value: str) -> float:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+
+    samples, last = [], None
+    for event in state["audit"]:
+        if event["action"] not in ("retire", "resolve") or event["x"].get("undone") or event.get("fact_id") not in fact_ids:
+            continue
+        seen = [a["asked_at"] for a in state["answers"] if a["asked_at"] <= event["at"] and any(f["id"] == event["fact_id"] for f in a["response"]["conflicts"])]
+        if seen:
+            samples.append(max(0.0, seconds(event["at"]) - seconds(min(seen))))
+            last = event["at"]
+    return {"median": round(median(samples), 1) if samples else None, "samples": len(samples), "measured_at": last}
 
 
 def undo_targets(undo: dict) -> set[str]:

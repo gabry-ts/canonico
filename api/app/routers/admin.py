@@ -3,7 +3,7 @@ from typing import Literal
 
 from fastapi import APIRouter
 
-from app import ops, settings, store
+from app import access, llm, ops, settings, store
 from app.http import ApiError, dump, out
 from app.models import Config, ConfigPatch, ExportBundle, Stats
 from app.routers.answers import record_view
@@ -38,7 +38,9 @@ def patch_config(body: ConfigPatch):
 
 
 @router.post("/demo/reset", operation_id="resetDemo", status_code=200, response_model=Stats)
-def reset_demo():
+def reset_demo(demo_actor: str | None = access.Actor):
+    with STORE.read() as state:
+        access.allow(state, demo_actor, "admin_demo")
     state = STORE.reset()
     return out(Stats, ops.stats(state))
 

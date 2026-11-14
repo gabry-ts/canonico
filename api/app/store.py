@@ -538,6 +538,7 @@ class Store:
             self.state = build_seed()
             audit(self.state, "ingest", "system", None, "Seeded demo memory from the ClearPath corpus.", bump=False)
             self.state["audit"][-1]["at"] = settings.SEED_AT
+            self.state["meta"]["last_reset_at"] = now()
             audit(self.state, "reset", actor, None, "Demo state restored from the seed.", bump=False)
             self._derive()
             self._save()

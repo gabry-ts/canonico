@@ -12,10 +12,18 @@ from app.store import STORE
 router = APIRouter()
 
 
-def doc_view(doc: dict, with_text: bool = False) -> dict:
+def doc_view(state: dict, doc: dict, with_text: bool = False) -> dict:
     keys = ("id", "title", "date", "path") + (("text",) if with_text else ())
     view = {k: doc[k] for k in keys}
-    view.update(project_id=doc.get("project_id"), source_id=doc.get("source_id"), version=doc.get("version", 1), version_of=doc.get("version_of"))
+    source = state["sources"].get(doc.get("source_id") or "")
+    view.update(
+        project_id=doc.get("project_id"),
+        source_id=doc.get("source_id"),
+        source_type=source["type"] if source else None,
+        version=doc.get("version", 1),
+        version_of=doc.get("version_of"),
+        current_version=doc.get("version", 1),
+    )
     return view
 
 
@@ -64,10 +72,15 @@ async def _parse(request: Request) -> DocumentCreate:
 
 
 @router.get("/documents", operation_id="listDocuments", status_code=200, response_model=list[Document])
-def list_documents(project_id: str | None = None):
+def list_documents(project_id: str | None = None, source_id: str | None = None, source_type: str | None = None):
     with STORE.read() as state:
         ops.scope(state, project_id)
-        return out(list[Document], [doc_view(d) for d in state["documents"].values() if store.in_scope(d.get("project_id"), project_id)])
+        rows = [doc_view(state, d) for d in state["documents"].values() if store.in_scope(d.get("project_id"), project_id)]
+    if source_id:
+        rows = [d for d in rows if d["source_id"] == source_id]
+    if source_type:
+        rows = [d for d in rows if d["source_type"] == source_type]
+    return out(list[Document], rows)
 
 
 @router.post("/documents", operation_id="createDocument", status_code=201, response_model=DocumentCreated)
@@ -91,7 +104,7 @@ async def create_document(request: Request):
             job = ingest.new_job(state, "ingest")
             if not inbox.can_use_model(state):
                 job["status"] = "error"
-        view = {"document": doc_view(document), "ingest_job": ingest.job_view(job) if job else None}
+        view = {"document": doc_view(state, document), "ingest_job": ingest.job_view(job) if job else None}
     if job and job["status"] == "queued":
         ingest.start(ingest.run_document_job, job["id"], doc_id)
     return out(DocumentCreated, view, 201)
@@ -131,7 +144,7 @@ def list_document_facts(doc_id: str):
 @router.get("/documents/{doc_id:path}", operation_id="getDocument", status_code=200, response_model=Document)
 def get_document(doc_id: str):
     with STORE.read() as state:
-        return out(Document, doc_view(require_doc(state, doc_id), with_text=True))
+        return out(Document, doc_view(state, require_doc(state, doc_id), with_text=True))
 
 
 @router.delete("/documents/{doc_id:path}", operation_id="deleteDocument", status_code=200, response_model=DocumentDeleted)

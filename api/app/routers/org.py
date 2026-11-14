@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app import inbox, ops, sources, store
+from app import access, github, inbox, ops, sources, store
 from app.http import ApiError, dump, not_found, out
 from app.models import (
     Organisation,
@@ -124,9 +124,10 @@ def list_sources(project_id: str):
 
 
 @router.post("/projects/{project_id}/sources", operation_id="createSource", status_code=201, response_model=Source)
-def create_source(project_id: str, body: SourceCreate):
+def create_source(project_id: str, body: SourceCreate, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         ops.require_project(state, project_id)
+        access.allow(state, demo_actor, "manage_sources", project_id)
         kind = body.type.value
         config = sources.check_config(kind, body.config.model_dump(mode="json", exclude_none=True) if body.config else {})
         for existing in state["sources"].values():
@@ -144,9 +145,10 @@ def get_source(source_id: str):
 
 
 @router.patch("/sources/{source_id}", operation_id="patchSource", status_code=200, response_model=Source)
-def patch_source(source_id: str, body: SourcePatch):
+def patch_source(source_id: str, body: SourcePatch, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         source = sources.require(state, source_id)
+        access.allow(state, demo_actor, "manage_sources", source["project_id"])
         if body.label:
             source["label"] = body.label
         if body.config is not None:
@@ -155,9 +157,10 @@ def patch_source(source_id: str, body: SourcePatch):
 
 
 @router.delete("/sources/{source_id}", operation_id="deleteSource", status_code=200, response_model=None)
-def delete_source(source_id: str):
+def delete_source(source_id: str, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         source = sources.require(state, source_id)
+        access.allow(state, demo_actor, "manage_sources", source["project_id"])
         if source.get("status") == "syncing":
             raise ApiError(409, f"Source {source_id} is syncing.")
         for document in state["documents"].values():
@@ -168,9 +171,10 @@ def delete_source(source_id: str):
 
 
 @router.post("/sources/{source_id}/sync", operation_id="syncSource", status_code=202, response_model=SyncJob)
-def sync_source(source_id: str):
+def sync_source(source_id: str, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         source = sources.require(state, source_id)
+        access.allow(state, demo_actor, "manage_sources", source["project_id"])
         job = sources.start_sync(state, source)
         view = sources.job_view(job)
     sources.launch(job["id"])
@@ -184,3 +188,35 @@ def get_sync_job(job_id: str):
         if job is None:
             raise not_found(f"Sync job {job_id}")
         return out(SyncJob, sources.job_view(job))
+
+
+@router.get("/sources/{source_id}/documents", operation_id="listSourceDocuments", status_code=200, response_model=None)
+def list_source_documents(source_id: str, limit: int = Query(50, ge=1, le=500), offset: int = Query(0, ge=0)):
+    """Documents of a source, newest first. A versioned document is one row at its current version."""
+    from app.models import Document
+    from app.routers.documents import doc_view
+
+    with STORE.read() as state:
+        sources.require(state, source_id)
+        rows = [doc_view(state, d) for d in state["documents"].values() if d.get("source_id") == source_id]
+    rows.sort(key=lambda d: (d["date"], d["id"]), reverse=True)
+    return JSONResponse(dump(list[Document], rows[offset : offset + limit]))
+
+
+@router.post("/sources/github/preview", operation_id="previewGithubSource", status_code=200, response_model=None)
+def preview_github_source(body: dict):
+    """Look up a public repository before adding it as a source."""
+    from app.models import GithubPreview
+
+    url = str((body or {}).get("repo_url") or "")
+    try:
+        owner, repo = github.parse_repo(url)
+    except github.GithubError as exc:
+        raise ApiError(422, f"repo_url: {exc}") from exc
+    with STORE.read() as state:
+        offline = bool(state["config"].get("offline_mode"))
+    try:
+        preview = github.preview(owner, repo, offline)
+    except github.GithubError as exc:
+        raise not_found(f"Repository {owner}/{repo} ({exc})") from exc
+    return out(GithubPreview, preview)

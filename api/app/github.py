@@ -120,3 +120,40 @@ def fetch(repo_url: str, include: list[str] | None = None, limit: int = 30, offl
         if snapshot.exists():
             return json.loads(snapshot.read_text(encoding="utf-8"))
         raise
+
+
+def preview(owner: str, repo: str, offline: bool = False) -> dict:
+    """Public facts about a repository, to show before it is added as a source."""
+    try:
+        info = _get(f"/repos/{owner}/{repo}", offline)
+    except GithubError:
+        if not snapshot_path(owner, repo).exists():
+            raise
+        documents = json.loads(snapshot_path(owner, repo).read_text(encoding="utf-8"))
+        return {
+            "repo_url": f"https://github.com/{owner}/{repo}",
+            "full_name": f"{owner}/{repo}",
+            "public": True,
+            "description": None,
+            "default_branch": "main",
+            "open_issues": sum(1 for d in documents if "/issues/" in d["id"] and "State: open" in d["text"]),
+            "has_readme": any(d["id"].endswith("/readme") for d in documents),
+            "last_pushed_at": None,
+        }
+    if not isinstance(info, dict) or info.get("private"):
+        raise GithubError("not public")
+    has_readme = True
+    try:
+        _get(f"/repos/{owner}/{repo}/readme", offline)
+    except GithubError:
+        has_readme = False
+    return {
+        "repo_url": f"https://github.com/{owner}/{repo}",
+        "full_name": info.get("full_name") or f"{owner}/{repo}",
+        "public": True,
+        "description": info.get("description"),
+        "default_branch": info.get("default_branch") or "main",
+        "open_issues": int(info.get("open_issues_count") or 0),
+        "has_readme": has_readme,
+        "last_pushed_at": info.get("pushed_at"),
+    }
