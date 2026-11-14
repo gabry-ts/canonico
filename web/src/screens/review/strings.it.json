@@ -90,7 +90,7 @@
   "noPick": "Togli la scelta",
   "noCandidates": "Non ci sono altri fatti attivi su questo argomento. Scrivi la risposta qui sotto.",
   "noteLabel": "Risposta o nota",
-  "notePh": "La risposta, in una frase che altri possano riusare, o come lo sai.",
+  "noteRequired": "Aggiungi una risposta o una nota.", "notePh": "La risposta, in una frase che altri possano riusare, o come lo sai.",
   "closeConfirm": "Chiudi la domanda",
   "answeredBy": "Risposta data da",
   "closedOn": "Chiusa il {date}",

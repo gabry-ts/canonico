@@ -11,7 +11,7 @@
     "subOrg_one": "{org} · {count} project. What needs a person, and what changed.",
     "subOrg_other": "{org} · all {count} projects. What needs a person, and what changed."
   },
-  "status": { "ok": "Synced", "syncing": "Syncing…", "error": "Failed", "idle": "Not synced yet" },
+  "status": { "ok": "Synced", "syncing": "Syncing…", "error": "Failed", "idle": "Not synced yet", "waiting": "Waiting for first event" },
   "unit": {
     "documents_one": "document", "documents_other": "documents",
     "document_library_one": "document", "document_library_other": "documents",

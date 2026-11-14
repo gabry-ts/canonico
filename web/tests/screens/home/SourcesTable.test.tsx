@@ -157,7 +157,7 @@ describe('SourcesTable', () => {
       expect(cells(LIB)).toEqual(['Not synced yet', '1 document', 'never'])
       expect(cells(GH)).toEqual(['Failed', '12 items', '08:05'])
       expect(cells(MAIL)).toEqual(['Syncing…', '1 email', '…'])
-      expect(cells(HOOK)).toEqual(['Synced', '0 items', 'never'])
+      expect(cells(HOOK)).toEqual(['Waiting for first event', '0 items', 'never'])
     })
 
     it('counts a source without a number of items as zero', async () => {

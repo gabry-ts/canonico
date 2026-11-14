@@ -140,7 +140,7 @@ describe('OpenQuestions', () => {
       const { user, dialog } = await openDialog()
       await dialog.findByRole('radio', { name: /8 consultants/ })
       await user.click(dialog.getByRole('button', { name: 'Close question' }))
-      expect(dialog.getByText('Add a reason so others can see why.')).toBeInTheDocument()
+      expect(dialog.getByText('Add an answer or a note.')).toBeInTheDocument()
       expect(api.callsTo('POST', '/open-questions/:id/close')).toHaveLength(0)
     })
 
@@ -185,7 +185,7 @@ describe('OpenQuestions', () => {
       expect(dialog.getByRole('radio', { name: /8 consultants/ })).not.toBeChecked()
       expect(dialog.queryByRole('button', { name: 'Clear selection' })).not.toBeInTheDocument()
       await user.click(dialog.getByRole('button', { name: 'Close question' }))
-      expect(dialog.getByText('Add a reason so others can see why.')).toBeInTheDocument()
+      expect(dialog.getByText('Add an answer or a note.')).toBeInTheDocument()
       expect(api.callsTo('POST', '/open-questions/:id/close')).toHaveLength(0)
     })
 

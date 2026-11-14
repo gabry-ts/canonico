@@ -11,7 +11,7 @@
     "subOrg_one": "{org} · {count} progetto. Cosa richiede una persona e cosa è cambiato.",
     "subOrg_other": "{org} · tutti i {count} progetti. Cosa richiede una persona e cosa è cambiato."
   },
-  "status": { "ok": "Sincronizzata", "syncing": "Sincronizzazione…", "error": "Non riuscita", "idle": "Mai sincronizzata" },
+  "status": { "ok": "Sincronizzata", "syncing": "Sincronizzazione…", "error": "Non riuscita", "idle": "Mai sincronizzata", "waiting": "In attesa del primo evento" },
   "unit": {
     "documents_one": "documento", "documents_other": "documenti",
     "document_library_one": "documento", "document_library_other": "documenti",

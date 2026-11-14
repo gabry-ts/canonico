@@ -90,7 +90,7 @@
   "noPick": "Clear selection",
   "noCandidates": "No other active facts on this topic. Write the answer below.",
   "noteLabel": "Answer or note",
-  "notePh": "The answer, as a sentence people can reuse, or how you know.",
+  "noteRequired": "Add an answer or a note.", "notePh": "The answer, as a sentence people can reuse, or how you know.",
   "closeConfirm": "Close question",
   "answeredBy": "Answered by",
   "closedOn": "Closed {date}",
