@@ -23,6 +23,7 @@ def doc_view(state: dict, doc: dict, with_text: bool = False) -> dict:
         version=doc.get("version", 1),
         version_of=doc.get("version_of"),
         current_version=doc.get("version", 1),
+        tags=list(doc.get("tags") or []),
     )
     return view
 
@@ -72,7 +73,7 @@ async def _parse(request: Request) -> DocumentCreate:
 
 
 @router.get("/documents", operation_id="listDocuments", status_code=200, response_model=list[Document])
-def list_documents(project_id: str | None = None, source_id: str | None = None, source_type: str | None = None):
+def list_documents(project_id: str | None = None, source_id: str | None = None, source_type: str | None = None, tag: str | None = None):
     with STORE.read() as state:
         ops.scope(state, project_id)
         rows = [doc_view(state, d) for d in state["documents"].values() if store.in_scope(d.get("project_id"), project_id)]
@@ -80,6 +81,8 @@ def list_documents(project_id: str | None = None, source_id: str | None = None, 
         rows = [d for d in rows if d["source_id"] == source_id]
     if source_type:
         rows = [d for d in rows if d["source_type"] == source_type]
+    if tag:
+        rows = [d for d in rows if tag in d["tags"]]
     return out(list[Document], rows)
 
 

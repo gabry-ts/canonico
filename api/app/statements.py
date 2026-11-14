@@ -49,16 +49,29 @@ def sentences(text: str) -> list[str]:
     return [part for part in parts if len(part) >= 8]
 
 
-def find(state: dict, text: str, project_id: str | None, prefer_topics: set[str] | None = None) -> list[dict]:
+def find(state: dict, text: str, project_id: str | None, prefer_topics: set[str] | None = None, force_topic: str | None = None) -> list[dict]:
     """Statements of a quantity on a known topic, one per topic, in order of appearance.
 
     A sentence is assigned to the best matching topic that shares at least two anchor words
-    (label and keywords) with it. Topics in `prefer_topics` are tried first.
+    (label and keywords) with it. Topics in `prefer_topics` are tried first. With `force_topic`
+    the first sentence that states a quantity is filed under that topic.
     """
     found: dict[str, dict] = {}
     for sentence in sentences(text):
         short = short_of(sentence)
         if short is None:
+            continue
+        if force_topic is not None:
+            if force_topic not in found:
+                topic = state["topics"][force_topic]
+                found[force_topic] = {
+                    "topic": force_topic,
+                    "value": f"{topic['label']}: {short}",
+                    "short": short,
+                    "type": "DECISION" if DECISION_WORDS.search(sentence) else "EVIDENCE",
+                    "quote": sentence,
+                    "confidence": 0.9,
+                }
             continue
         words = set(tokenize(sentence))
         ranked = [t for t, _, _ in engine.rank_topics(state, sentence, project_id)]

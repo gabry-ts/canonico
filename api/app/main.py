@@ -14,6 +14,7 @@ from app.routers import (
     documents,
     eval,
     facts,
+    hooks,
     ingest,
     mail,
     maintenance,
@@ -66,5 +67,6 @@ for module in (
     org,
     mail,
     members,
+    hooks,
 ):
     app.include_router(module.router)

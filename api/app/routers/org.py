@@ -135,6 +135,12 @@ def create_source(project_id: str, body: SourceCreate, demo_actor: str | None = 
                 raise ApiError(409, f"Source {existing['id']} already uses these settings.")
         source_id = sources.new_id(state, project_id, kind)
         state["sources"][source_id] = {"id": source_id, "project_id": project_id, "type": kind, "label": body.label, "status": "idle", "last_synced_at": None, "config": config, "x": {}}
+        if kind == "webhook":
+            from app import items
+
+            issued = items.rotate(state["sources"][source_id]["x"], "secret")
+            view = dump(Source, sources.view(state, state["sources"][source_id]))
+            return JSONResponse({**view, "secret": issued["secret"]}, status_code=201)
         return out(Source, sources.view(state, state["sources"][source_id]), 201)
 
 

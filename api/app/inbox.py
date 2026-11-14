@@ -98,7 +98,7 @@ def receive(state: dict, email: dict) -> dict:
     }
 
 
-def add_fact(state: dict, *, fact_id: str, topic_id: str, value: str, kind: str, doc_id: str, quote: str, date: str, confidence: float, internal: dict, olds: list[dict], cause: str, reason: str) -> dict:
+def add_fact(state: dict, *, fact_id: str, topic_id: str, value: str, kind: str, doc_id: str, quote: str, date: str, confidence: float, internal: dict, olds: list[dict], cause: str, reason: str, actor: str = "system", tags: list[str] | None = None) -> dict:
     """Add one fact that arrived from a source and link the facts it replaces, as a single audit event.
 
     Undoing that event removes the new fact and puts the replaced ones back as they were.
@@ -118,6 +118,7 @@ def add_fact(state: dict, *, fact_id: str, topic_id: str, value: str, kind: str,
         "retired_reason": None,
         "pinned": False,
         "project_id": store.project_of_topic(state, topic_id),
+        "tags": list(tags or []),
         "x": {"manual": False, "seq": state["seq"]["audit"] + 1, **internal},
     }
     restore, befores = [], {}
@@ -145,16 +146,16 @@ def add_fact(state: dict, *, fact_id: str, topic_id: str, value: str, kind: str,
     event = store.audit(
         state,
         "supersede" if olds else "ingest",
-        "system",
+        actor,
         fact_id,
         reason,
         x={"undo": {"created": fact_id, "restore": restore}, "cause": cause, "replaced": [o["id"] for o in olds], "topic": topic_id},
     )
-    state["history"][fact_id] = [{"at": event["at"], "actor": "system", "action": "ingest", "changes": {}, "snapshot": store.view(state, fact)}]
+    state["history"][fact_id] = [{"at": event["at"], "actor": actor, "action": "ingest", "changes": {}, "snapshot": store.view(state, fact)}]
     for old in olds:
         after = store.view(state, old)
         changes = {k: {"from": befores[old["id"]][k], "to": after[k]} for k in store.PUBLIC_FACT_FIELDS if befores[old["id"]][k] != after[k]}
-        state["history"][old["id"]].append({"at": event["at"], "actor": "system", "action": "supersede", "changes": changes, "snapshot": after})
+        state["history"][old["id"]].append({"at": event["at"], "actor": actor, "action": "supersede", "changes": changes, "snapshot": after})
     return event
 
 
@@ -167,9 +168,10 @@ def replaced_by_decision(state: dict, topic_id: str, short: str, date: str) -> l
     library = {s["id"] for s in state["sources"].values() if s["type"] == "document_library"}
     for fact in store.topic_facts(state, topic_id):
         document = state["documents"].get(fact.get("doc_id") or "")
-        if fact is binding or document is None or document.get("source_id") not in library:
+        if fact is binding or fact["date"] > date or not statements.live(state, fact) or store.value_key(fact) != store.value_key(binding):
             continue
-        if statements.live(state, fact) and store.value_key(fact) == store.value_key(binding) and fact["date"] <= date:
+        from_library = document is not None and document.get("source_id") in library
+        if from_library or store.effective_type(state, fact) in store.BINDING_TYPES:
             olds.append(fact)
     return olds
 

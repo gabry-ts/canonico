@@ -4,11 +4,11 @@ import copy
 import re
 import threading
 
-from app import extract, github, inbox, llm, ops, store
+from app import extract, github, inbox, llm, ops, settings, store
 from app.http import ApiError, not_found
 from app.store import STORE
 
-SHORT = {"documents": "docs", "document_library": "library", "github": "gh", "mail": "mail"}
+SHORT = {"documents": "docs", "document_library": "library", "github": "gh", "mail": "mail", "webhook": "hook"}
 
 
 def require(state: dict, source_id: str) -> dict:
@@ -19,6 +19,10 @@ def require(state: dict, source_id: str) -> dict:
 
 
 def view(state: dict, source: dict) -> dict:
+    config = source.get("config") or {}
+    if source["type"] == "webhook":
+        secret = source.get("x", {}).get("secret") or {}
+        config = {"url": f"{settings.public_url()}/hooks/projects/{source['project_id']}", "secret_last4": secret.get("last4", ""), "default_tags": list(config.get("default_tags") or [])}
     return {
         "id": source["id"],
         "project_id": source["project_id"],
@@ -27,7 +31,7 @@ def view(state: dict, source: dict) -> dict:
         "status": source.get("status", "idle"),
         "last_synced_at": source.get("last_synced_at"),
         "items": sum(1 for d in state["documents"].values() if d.get("source_id") == source["id"]),
-        "config": source.get("config") or {},
+        "config": config,
     }
 
 
@@ -48,6 +52,11 @@ def check_config(kind: str, config: dict) -> dict:
             raise ApiError(422, "config.provider: only local_mock is implemented.")
         if not config.get("root_path"):
             raise ApiError(422, "config.root_path: field required")
+    elif kind == "webhook":
+        tags = config.get("default_tags") or []
+        if not isinstance(tags, list) or not all(isinstance(t, str) for t in tags):
+            raise ApiError(422, "config.default_tags: a list of strings is required")
+        config = {"default_tags": tags}
     elif kind == "mail":
         if config.get("mode") not in ("imap_mock", "webhook") or not config.get("mailbox"):
             raise ApiError(422, "config: a mail source needs mode and mailbox.")

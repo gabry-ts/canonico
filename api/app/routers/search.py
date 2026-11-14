@@ -19,6 +19,7 @@ def search(
     status: FactStatus | None = None,
     topic: str | None = None,
     project_id: str | None = None,
+    tag: str | None = None,
     limit: int = Query(50, ge=1, le=500),
 ):
     tokens = tokenize(q)
@@ -37,6 +38,8 @@ def search(
                     continue
                 if topic and fact["topic"] != topic:
                     continue
+                if tag and tag not in fact["tags"]:
+                    continue
                 results.append(
                     {"kind": "fact", "id": fact_id, "score": round(score / top, 3), "snippet": fact["quote"], "doc_id": fact["doc_id"], "topic": fact["topic"], "type": fact["type"]}
                 )
@@ -44,6 +47,8 @@ def search(
             ranked = engine.docs_index(state, project_id).rank(tokens)
             top = ranked[0][1] if ranked else 1.0
             for doc_id, score in ranked:
+                if tag and tag not in (state["documents"][doc_id].get("tags") or []):
+                    continue
                 snippet = best_passage(state["documents"][doc_id]["text"], tokens)
                 results.append({"kind": "document", "id": doc_id, "score": round(score / top * 0.95, 3), "snippet": snippet, "doc_id": doc_id, "topic": None, "type": None})
     results.sort(key=lambda r: (-r["score"], r["kind"] != "fact", r["id"]))

@@ -28,6 +28,7 @@ def list_facts(
     status: FactStatus | None = None,
     doc_id: str | None = None,
     project_id: str | None = None,
+    tag: str | None = None,
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
@@ -42,6 +43,8 @@ def list_facts(
         items = [f for f in items if f["status"] == status.value]
     if doc_id:
         items = [f for f in items if f["doc_id"] == doc_id]
+    if tag:
+        items = [f for f in items if tag in f["tags"]]
     items.sort(key=lambda f: (f["date"], f["id"]), reverse=True)
     return out(FactPage, {"items": items[offset : offset + limit], "total": len(items), "limit": limit, "offset": offset})
 
@@ -170,7 +173,8 @@ def get_fact_dependents(fact_id: str):
     with STORE.read() as state:
         fact = ops.get_fact(state, fact_id)
         linked = {fact.get("supersedes"), fact.get("superseded_by")}
-        linked |= {f["id"] for f in state["facts"].values() if fact_id in (f.get("supersedes"), f.get("superseded_by"))}
+        linked |= {f["id"] for f in state["facts"].values() if fact_id in (f.get("supersedes"), f.get("superseded_by"), f.get("x", {}).get("confirms"))}
+        linked.add(fact.get("x", {}).get("confirms"))
         conflicts = [c for c in state["conflicts"].values() if fact_id in c["fact_ids"] and store.conflict_status(state, c) == "open"]
         for conflict in conflicts:
             linked |= set(conflict["fact_ids"])
