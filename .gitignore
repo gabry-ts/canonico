@@ -20,3 +20,9 @@ web/dist/
 *.egg-info/
 .runtime/
 .cache/
+
+# ios
+ios/build/
+xcuserdata/
+*.xcresult
+DerivedData/
