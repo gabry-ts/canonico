@@ -1,0 +1,22 @@
+{
+  "ingested_at": "2026-11-14T09:12:00Z",
+  "corpus": "org-consulting-clearpath",
+  "documents": 46,
+  "facts": 426,
+  "topics": 59,
+  "conflicts": 21,
+  "extracted_facts": 435,
+  "links": 84,
+  "models": {
+    "extraction": "claude-haiku-5-5",
+    "classification": "claude-sonnet-5-5",
+    "answer": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "calls": 96,
+    "cached_calls": 1,
+    "input_tokens": 277922,
+    "output_tokens": 66045,
+    "cost_usd": 0.4001
+  }
+}

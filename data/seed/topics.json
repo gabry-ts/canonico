@@ -33,7 +33,8 @@
       "questions": [
         "What is the target time for onboarding new consultants?",
         "What onboarding time target did Meridian Labs ultimately recommend, and how did that target shift from the client's original goal over the engagement?"
-      ]
+      ],
+      "description": "The target time for a new consultant to become independent: the client's goal, the requirement, the recommended target and the baseline it is compared with. Not the problems observed in the onboarding process."
     }
   },
   {
@@ -71,6 +72,1467 @@
       "questions": [
         "How long does a report spend in the audit queue?",
         "Why do the team leads disagree about how long a report spends in the audit queue, and was the discrepancy ever resolved with hard data?"
+      ],
+      "description": "How long a report currently spends in the audit queue: the current-state estimates given by different people and whether it was ever measured. Not the future target for the audit queue."
+    }
+  },
+  {
+    "id": "onboarding-current-duration",
+    "label": "Current onboarding duration",
+    "fact_ids": [
+      "M-301",
+      "M-302",
+      "M-303",
+      "M-304",
+      "M-305",
+      "M-306",
+      "M-307",
+      "M-308",
+      "M-309",
+      "M-310"
+    ],
+    "x": {
+      "keywords": [
+        "onboarding duration",
+        "six weeks",
+        "6-8 weeks",
+        "current onboarding",
+        "autonomy",
+        "cycle time"
+      ],
+      "questions": [
+        "How long does onboarding currently take?"
+      ]
+    }
+  },
+  {
+    "id": "headcount-target",
+    "label": "Headcount growth target",
+    "fact_ids": [
+      "M-311",
+      "M-312",
+      "M-313",
+      "M-314",
+      "M-315",
+      "M-316"
+    ],
+    "x": {
+      "keywords": [
+        "headcount target",
+        "150-200",
+        "growth target",
+        "18 months",
+        "revenue target",
+        "scaling"
+      ],
+      "questions": [
+        "What headcount and revenue is ClearPath targeting and over what horizon?"
+      ]
+    }
+  },
+  {
+    "id": "engagement-duration",
+    "label": "Engagement duration and timeline",
+    "fact_ids": [
+      "M-317",
+      "M-318",
+      "M-319",
+      "M-320",
+      "M-321",
+      "M-322",
+      "M-323",
+      "M-324",
+      "M-325"
+    ],
+    "x": {
+      "keywords": [
+        "12 weeks",
+        "engagement timeline",
+        "kickoff",
+        "September 8",
+        "duration",
+        "go-live"
+      ],
+      "questions": [
+        "How long is the engagement and when does it run?"
+      ]
+    }
+  },
+  {
+    "id": "engagement-fee",
+    "label": "Engagement fee",
+    "fact_ids": [
+      "M-326",
+      "M-327",
+      "M-328"
+    ],
+    "x": {
+      "keywords": [
+        "fee",
+        "€85,000",
+        "day rates",
+        "budget"
+      ],
+      "questions": [
+        "What is the project fee?"
+      ]
+    }
+  },
+  {
+    "id": "travel-expense",
+    "label": "Travel expense cap",
+    "fact_ids": [
+      "M-329",
+      "M-330"
+    ],
+    "x": {
+      "keywords": [
+        "travel",
+        "expenses",
+        "Florence",
+        "cap",
+        "on-site days"
+      ],
+      "questions": [
+        "What is the travel expense cap?"
+      ]
+    }
+  },
+  {
+    "id": "roadmap-and-implementation",
+    "label": "Roadmap and implementation scope",
+    "fact_ids": [
+      "M-331",
+      "M-332",
+      "M-333",
+      "M-334",
+      "M-335",
+      "M-336"
+    ],
+    "x": {
+      "keywords": [
+        "roadmap",
+        "implementation",
+        "out of scope",
+        "6 months",
+        "person-weeks",
+        "specification"
+      ],
+      "questions": [
+        "What is the roadmap horizon and is implementation in scope?"
+      ]
+    }
+  },
+  {
+    "id": "engagement-schedule-plan",
+    "label": "Engagement work schedule",
+    "fact_ids": [
+      "M-337",
+      "M-338",
+      "M-339",
+      "M-340",
+      "M-341",
+      "M-342",
+      "M-343",
+      "M-344",
+      "M-345",
+      "M-346",
+      "M-347",
+      "M-348",
+      "M-349",
+      "M-350",
+      "M-351",
+      "M-352",
+      "M-353",
+      "M-354",
+      "M-355",
+      "M-356",
+      "M-357",
+      "M-358",
+      "M-359",
+      "M-360",
+      "M-361",
+      "M-362",
+      "M-363",
+      "M-364",
+      "M-365"
+    ],
+    "x": {
+      "keywords": [
+        "schedule",
+        "observation schedule",
+        "methodology",
+        "preliminary findings",
+        "phases",
+        "steering committee"
+      ],
+      "questions": [
+        "What are the planned schedule activities and milestones?"
+      ]
+    }
+  },
+  {
+    "id": "market-size-growth",
+    "label": "Market size and growth",
+    "fact_ids": [
+      "M-366",
+      "M-367",
+      "M-368",
+      "M-369",
+      "M-370",
+      "M-371",
+      "M-372",
+      "M-373",
+      "M-374",
+      "M-375",
+      "M-376"
+    ],
+    "x": {
+      "keywords": [
+        "market size",
+        "CAGR",
+        "mid-market",
+        "ESG",
+        "Germany",
+        "survey",
+        "growth"
+      ],
+      "questions": [
+        "How large and fast-growing is the compliance documentation market?"
+      ]
+    }
+  },
+  {
+    "id": "company-headcount",
+    "label": "Current headcount",
+    "fact_ids": [
+      "M-377",
+      "M-378"
+    ],
+    "x": {
+      "keywords": [
+        "headcount",
+        "employees",
+        "company size",
+        "78",
+        "120",
+        "80 employees"
+      ],
+      "questions": [
+        "How many employees does ClearPath currently have?"
+      ]
+    }
+  },
+  {
+    "id": "company-financials",
+    "label": "Revenue and growth",
+    "fact_ids": [
+      "M-379"
+    ],
+    "x": {
+      "keywords": [
+        "revenue",
+        "FY2024",
+        "CAGR",
+        "€12M"
+      ],
+      "questions": [
+        "What is ClearPath's revenue and growth rate?"
+      ]
+    }
+  },
+  {
+    "id": "it-budget",
+    "label": "IT budget constraint",
+    "fact_ids": [
+      "M-380",
+      "M-381"
+    ],
+    "x": {
+      "keywords": [
+        "IT budget",
+        "€380K",
+        "technology investment",
+        "budget"
+      ],
+      "questions": [
+        "What is the IT budget available for changes?"
+      ]
+    }
+  },
+  {
+    "id": "board-presentation-date",
+    "label": "Board presentation date",
+    "fact_ids": [
+      "M-382",
+      "M-383",
+      "M-384",
+      "M-385",
+      "M-386",
+      "M-387",
+      "M-388",
+      "M-389",
+      "M-390",
+      "M-391",
+      "M-392",
+      "M-393",
+      "M-394",
+      "M-395",
+      "M-396",
+      "M-397",
+      "M-398",
+      "M-399"
+    ],
+    "x": {
+      "keywords": [
+        "board presentation",
+        "board meeting",
+        "December",
+        "November 20",
+        "deadline",
+        "November 28",
+        "board roadmap"
+      ],
+      "questions": [
+        "When is the board presentation?"
+      ]
+    }
+  },
+  {
+    "id": "internal-communication",
+    "label": "Internal communication objective",
+    "fact_ids": [
+      "M-400"
+    ],
+    "x": {
+      "keywords": [
+        "internal communication",
+        "discovery",
+        "objective"
+      ],
+      "questions": [
+        "What is the scope of improving internal communication?"
+      ]
+    }
+  },
+  {
+    "id": "primary-contact",
+    "label": "Client primary contact",
+    "fact_ids": [
+      "M-401",
+      "M-402",
+      "M-403",
+      "M-404",
+      "M-405"
+    ],
+    "x": {
+      "keywords": [
+        "Priya Anand",
+        "point of contact",
+        "liaison",
+        "Thomas Reed",
+        "decision authority",
+        "Head of Operations"
+      ],
+      "questions": [
+        "Who is the client's primary contact and decision authority?"
+      ]
+    }
+  },
+  {
+    "id": "report-assembly-time",
+    "label": "Senior report assembly time",
+    "fact_ids": [
+      "M-406",
+      "M-407"
+    ],
+    "x": {
+      "keywords": [
+        "report assembly",
+        "manual reports",
+        "15-20%",
+        "senior staff",
+        "time share"
+      ],
+      "questions": [
+        "How much senior staff time goes into manual report assembly?"
+      ]
+    }
+  },
+  {
+    "id": "audit-bottleneck-stage",
+    "label": "Audit bottleneck location",
+    "fact_ids": [
+      "M-408",
+      "M-409",
+      "M-410",
+      "M-411"
+    ],
+    "x": {
+      "keywords": [
+        "bottleneck",
+        "review-and-sign-off",
+        "unverified",
+        "audit root cause",
+        "process design"
+      ],
+      "questions": [
+        "Where is the audit bottleneck?"
+      ]
+    }
+  },
+  {
+    "id": "data-availability",
+    "label": "Historical data availability",
+    "fact_ids": [
+      "M-412",
+      "M-413",
+      "M-414",
+      "M-415",
+      "M-416",
+      "M-417",
+      "M-418",
+      "M-419",
+      "M-420",
+      "M-421",
+      "M-422",
+      "M-423",
+      "M-424",
+      "M-425",
+      "M-426",
+      "M-427"
+    ],
+    "x": {
+      "keywords": [
+        "historical data",
+        "data limitations",
+        "data gaps",
+        "log window",
+        "database migration",
+        "data quality"
+      ],
+      "questions": [
+        "How much historical data is available and of what quality?"
+      ]
+    }
+  },
+  {
+    "id": "research-methods-counts",
+    "label": "Interviews and observation counts",
+    "fact_ids": [
+      "M-428",
+      "M-429",
+      "M-430",
+      "M-431",
+      "M-432",
+      "M-433",
+      "M-434",
+      "M-435",
+      "M-436",
+      "M-437",
+      "M-438"
+    ],
+    "x": {
+      "keywords": [
+        "interviews",
+        "observation sessions",
+        "stakeholder interviews",
+        "six interviews",
+        "15-20"
+      ],
+      "questions": [
+        "How many interviews and observation sessions are planned and done?"
+      ]
+    }
+  },
+  {
+    "id": "deliverable-review",
+    "label": "Deliverable review period",
+    "fact_ids": [
+      "M-439"
+    ],
+    "x": {
+      "keywords": [
+        "review period",
+        "acceptance",
+        "10 business days",
+        "deliverable"
+      ],
+      "questions": [
+        "What is the deliverable review period?"
+      ]
+    }
+  },
+  {
+    "id": "document-versioning",
+    "label": "Document and regulatory guide currency",
+    "fact_ids": [
+      "M-440",
+      "M-441",
+      "M-442",
+      "M-443",
+      "M-444",
+      "M-445",
+      "M-446",
+      "M-447",
+      "M-448",
+      "M-449"
+    ],
+    "x": {
+      "keywords": [
+        "versioning",
+        "regulatory guides",
+        "outdated",
+        "templates",
+        "standards updates",
+        "rework"
+      ],
+      "questions": [
+        "How are documents, versions and regulatory guides kept current?"
+      ]
+    }
+  },
+  {
+    "id": "david-park-availability",
+    "label": "David Park availability and sessions",
+    "fact_ids": [
+      "M-450",
+      "M-451",
+      "M-452",
+      "M-453",
+      "M-454",
+      "M-455",
+      "M-456",
+      "M-457",
+      "M-458",
+      "M-459",
+      "M-460"
+    ],
+    "x": {
+      "keywords": [
+        "David Park",
+        "availability",
+        "architecture session",
+        "scheduling",
+        "delay"
+      ],
+      "questions": [
+        "Is David Park available for sessions and what is the impact?"
+      ]
+    }
+  },
+  {
+    "id": "milan-office-scope",
+    "label": "Milan office scope",
+    "fact_ids": [
+      "M-461",
+      "M-462",
+      "M-463",
+      "M-464",
+      "M-465",
+      "M-466",
+      "M-467",
+      "M-468",
+      "M-469",
+      "M-470",
+      "M-471",
+      "M-472",
+      "M-473",
+      "M-474",
+      "M-475",
+      "M-476",
+      "M-477",
+      "M-478",
+      "M-479"
+    ],
+    "x": {
+      "keywords": [
+        "Milan",
+        "satellite office",
+        "light-touch",
+        "deep-dive",
+        "appendix",
+        "scope"
+      ],
+      "questions": [
+        "Is the Milan satellite office in scope and at what depth?"
+      ]
+    }
+  },
+  {
+    "id": "milan-office-profile",
+    "label": "Milan office headcount",
+    "fact_ids": [
+      "M-480",
+      "M-481",
+      "M-482",
+      "M-483"
+    ],
+    "x": {
+      "keywords": [
+        "Milan headcount",
+        "8 people",
+        "administrative",
+        "compliance work",
+        "client-facing"
+      ],
+      "questions": [
+        "How big is the Milan office and what does it do?"
+      ]
+    }
+  },
+  {
+    "id": "observation-scope-dates",
+    "label": "Observation sessions scope and dates",
+    "fact_ids": [
+      "M-484",
+      "M-485",
+      "M-486",
+      "M-487",
+      "M-488",
+      "M-489",
+      "M-490",
+      "M-491",
+      "M-492",
+      "M-493",
+      "M-494",
+      "M-495"
+    ],
+    "x": {
+      "keywords": [
+        "observation",
+        "on-site",
+        "October 13",
+        "confidentiality",
+        "not an audit",
+        "system access"
+      ],
+      "questions": [
+        "When and how were on-site observations conducted?"
+      ]
+    }
+  },
+  {
+    "id": "interview-lineup",
+    "label": "Interview lineup and timing",
+    "fact_ids": [
+      "M-496",
+      "M-497",
+      "M-498",
+      "M-499",
+      "M-500"
+    ],
+    "x": {
+      "keywords": [
+        "interview lineup",
+        "CEO interview",
+        "CTO interview",
+        "team leads",
+        "timing"
+      ],
+      "questions": [
+        "Who is interviewed and when?"
+      ]
+    }
+  },
+  {
+    "id": "intake-process-findings",
+    "label": "Intake process performance",
+    "fact_ids": [
+      "M-501",
+      "M-502",
+      "M-503",
+      "M-504",
+      "M-505",
+      "M-506",
+      "M-507",
+      "M-508",
+      "M-509",
+      "M-510",
+      "M-511",
+      "M-512",
+      "M-513"
+    ],
+    "x": {
+      "keywords": [
+        "intake",
+        "9 days",
+        "3-5 day target",
+        "manual email",
+        "lead finding",
+        "automation",
+        "intake ownership"
+      ],
+      "questions": [
+        "How long does intake take versus target and how significant is it?"
+      ]
+    }
+  },
+  {
+    "id": "it-provisioning-time",
+    "label": "IT provisioning time",
+    "fact_ids": [
+      "M-514",
+      "M-515",
+      "M-516",
+      "M-517",
+      "M-518",
+      "M-519",
+      "M-520",
+      "M-521",
+      "M-522",
+      "M-523",
+      "M-524"
+    ],
+    "x": {
+      "keywords": [
+        "IT provisioning",
+        "system access",
+        "credentials",
+        "laptop",
+        "3-5 days",
+        "tool setup",
+        "provisioning target"
+      ],
+      "questions": [
+        "How long does IT provisioning/system access take for new hires?"
+      ]
+    }
+  },
+  {
+    "id": "onboarding-process-problems",
+    "label": "Onboarding process observations",
+    "fact_ids": [
+      "M-525",
+      "M-526",
+      "M-527",
+      "M-528",
+      "M-529",
+      "M-530",
+      "M-531",
+      "M-532"
+    ],
+    "x": {
+      "keywords": [
+        "Elena",
+        "mentoring",
+        "checklist",
+        "Michele",
+        "shadowing",
+        "onboarding scalability",
+        "single person"
+      ],
+      "questions": [
+        "What problems were observed in the onboarding process?"
+      ]
+    }
+  },
+  {
+    "id": "team-leader-count",
+    "label": "Number of team leaders",
+    "fact_ids": [
+      "M-533",
+      "M-534",
+      "M-535",
+      "M-536",
+      "M-537",
+      "M-538"
+    ],
+    "x": {
+      "keywords": [
+        "team leaders",
+        "team leads",
+        "six",
+        "four",
+        "org matrix",
+        "team structure"
+      ],
+      "questions": [
+        "How many team leaders does ClearPath have?"
+      ]
+    }
+  },
+  {
+    "id": "knowledge-loss-data",
+    "label": "Knowledge loss cost data",
+    "fact_ids": [
+      "M-539",
+      "M-540",
+      "M-541",
+      "M-542",
+      "M-543",
+      "M-544",
+      "M-545"
+    ],
+    "x": {
+      "keywords": [
+        "knowledge loss",
+        "departures",
+        "turnover",
+        "18%",
+        "tenure",
+        "recovery cost"
+      ],
+      "questions": [
+        "Is there data on cost of consultant departures and turnover?"
+      ]
+    }
+  },
+  {
+    "id": "audit-cycle-time-current",
+    "label": "Audit cycle time current",
+    "fact_ids": [
+      "M-546",
+      "M-547",
+      "M-548",
+      "M-549",
+      "M-550",
+      "M-551",
+      "M-552",
+      "M-553"
+    ],
+    "x": {
+      "keywords": [
+        "audit cycle time",
+        "cycle time",
+        "8-10 days",
+        "7-16 days",
+        "variance",
+        "review duration",
+        "engagement cycle"
+      ],
+      "questions": [
+        "What is the current end-to-end audit cycle time?"
+      ]
+    }
+  },
+  {
+    "id": "audit-cycle-target",
+    "label": "Cycle time target",
+    "fact_ids": [
+      "M-554"
+    ],
+    "x": {
+      "keywords": [
+        "turnaround target",
+        "3-5 days",
+        "standard audits",
+        "cycle target"
+      ],
+      "questions": [
+        "What turnaround is targeted for audits?"
+      ]
+    }
+  },
+  {
+    "id": "finserve-engagement",
+    "label": "FinServe engagement details",
+    "fact_ids": [
+      "M-555",
+      "M-556",
+      "M-557",
+      "M-558",
+      "M-559",
+      "M-560",
+      "M-561",
+      "M-562",
+      "M-563",
+      "M-564"
+    ],
+    "x": {
+      "keywords": [
+        "FinServe",
+        "budget €45K",
+        "audit-ready",
+        "scope",
+        "engagement letter",
+        "3-4 months"
+      ],
+      "questions": [
+        "What are the budget, timeline, scope and deadline of the FinServe engagement?"
+      ]
+    }
+  },
+  {
+    "id": "intake-meeting-efficiency",
+    "label": "Intake meeting duration and efficiency",
+    "fact_ids": [
+      "M-565",
+      "M-566",
+      "M-567",
+      "M-568",
+      "M-569",
+      "M-570"
+    ],
+    "x": {
+      "keywords": [
+        "intake meeting",
+        "2.5 hours",
+        "45 minutes",
+        "template",
+        "context-building"
+      ],
+      "questions": [
+        "How long does an intake meeting take and how short could it be?"
+      ]
+    }
+  },
+  {
+    "id": "marco-client-load",
+    "label": "Marco Fiore client load",
+    "fact_ids": [
+      "M-571",
+      "M-572",
+      "M-573",
+      "M-574"
+    ],
+    "x": {
+      "keywords": [
+        "Marco Fiore",
+        "active clients",
+        "workload",
+        "3 clients",
+        "5 clients"
+      ],
+      "questions": [
+        "How many active clients does Marco manage?"
+      ]
+    }
+  },
+  {
+    "id": "review-capacity",
+    "label": "Audit review capacity",
+    "fact_ids": [
+      "M-575",
+      "M-576"
+    ],
+    "x": {
+      "keywords": [
+        "review queue",
+        "team leads",
+        "capacity",
+        "queue items",
+        "15-20 items"
+      ],
+      "questions": [
+        "What capacity exists for audit review and what queue sizes occur?"
+      ]
+    }
+  },
+  {
+    "id": "legacy-system",
+    "label": "Legacy system and database",
+    "fact_ids": [
+      "M-577",
+      "M-578"
+    ],
+    "x": {
+      "keywords": [
+        "legacy system",
+        "database replacement",
+        "cost",
+        "8 years"
+      ],
+      "questions": [
+        "What is the state and replacement cost of the legacy system?"
+      ]
+    }
+  },
+  {
+    "id": "audit-queue-target",
+    "label": "Audit queue target",
+    "fact_ids": [
+      "M-579",
+      "M-580",
+      "M-581"
+    ],
+    "x": {
+      "keywords": [
+        "audit queue target",
+        "2 days",
+        "backlog reduction",
+        "2-3 days",
+        "audit cycle target"
+      ],
+      "questions": [
+        "What is the target for the audit queue time?"
+      ]
+    }
+  },
+  {
+    "id": "david-park-signoff-load",
+    "label": "David Park sign-off share and queue",
+    "fact_ids": [
+      "M-582",
+      "M-583",
+      "M-584",
+      "M-585",
+      "M-586",
+      "M-587",
+      "M-588",
+      "M-589",
+      "M-590"
+    ],
+    "x": {
+      "keywords": [
+        "David Park",
+        "sign-off",
+        "CTO queue",
+        "14 items",
+        "40%",
+        "sign-off duration"
+      ],
+      "questions": [
+        "How much sign-off work sits with David Park/CTO and how many items wait?"
+      ]
+    }
+  },
+  {
+    "id": "kickoff-lead-time",
+    "label": "Client kickoff lead time",
+    "fact_ids": [
+      "M-591"
+    ],
+    "x": {
+      "keywords": [
+        "kickoff lead time",
+        "client contact",
+        "3-4 weeks",
+        "2 weeks"
+      ],
+      "questions": [
+        "How long from client contact to kickoff?"
+      ]
+    }
+  },
+  {
+    "id": "competitor-landscape",
+    "label": "Competitor landscape",
+    "fact_ids": [
+      "M-592",
+      "M-593",
+      "M-594",
+      "M-595",
+      "M-596",
+      "M-597",
+      "M-598",
+      "M-599",
+      "M-600",
+      "M-601"
+    ],
+    "x": {
+      "keywords": [
+        "ComplianceCare",
+        "Docure",
+        "Tessera",
+        "RegulaFlow",
+        "Kontrol",
+        "competitors",
+        "acquisition"
+      ],
+      "questions": [
+        "Who are the competitors and what are their positions?"
+      ]
+    }
+  },
+  {
+    "id": "regulation-markets",
+    "label": "Regulation-specific markets",
+    "fact_ids": [
+      "M-602",
+      "M-603",
+      "M-604",
+      "M-605",
+      "M-606",
+      "M-607",
+      "M-608",
+      "M-609",
+      "M-610",
+      "M-611",
+      "M-612",
+      "M-613"
+    ],
+    "x": {
+      "keywords": [
+        "NIS2",
+        "DORA",
+        "CSRD",
+        "AI Act",
+        "GDPR",
+        "penalties",
+        "transposition"
+      ],
+      "questions": [
+        "What are the markets and obligations for NIS2, DORA, CSRD, AI Act and GDPR?"
+      ]
+    }
+  },
+  {
+    "id": "scope-change-process",
+    "label": "Scope change process",
+    "fact_ids": [
+      "M-614",
+      "M-615",
+      "M-616",
+      "M-617"
+    ],
+    "x": {
+      "keywords": [
+        "change request",
+        "scope changes",
+        "SOW",
+        "22%"
+      ],
+      "questions": [
+        "How are scope changes handled and how frequent are they?"
+      ]
+    }
+  },
+  {
+    "id": "internal-wiki",
+    "label": "Internal wiki status",
+    "fact_ids": [
+      "M-618",
+      "M-619",
+      "M-620",
+      "M-621"
+    ],
+    "x": {
+      "keywords": [
+        "wiki",
+        "Confluence",
+        "defunct",
+        "March 2023",
+        "trust"
+      ],
+      "questions": [
+        "Is the internal wiki current and trusted?"
+      ]
+    }
+  },
+  {
+    "id": "client-data-turnaround",
+    "label": "Client data provision turnaround",
+    "fact_ids": [
+      "M-622",
+      "M-623",
+      "M-624",
+      "M-625",
+      "M-626",
+      "M-627",
+      "M-628"
+    ],
+    "x": {
+      "keywords": [
+        "client data",
+        "follow-up rounds",
+        "SOW approval",
+        "turnaround",
+        "5-15 days",
+        "legal contracting"
+      ],
+      "questions": [
+        "How long does client data provision and approval take?"
+      ]
+    }
+  },
+  {
+    "id": "data-collection-approach",
+    "label": "Data collection approach conflict",
+    "fact_ids": [
+      "M-629"
+    ],
+    "x": {
+      "keywords": [
+        "data collection",
+        "Laura Galli",
+        "Marco Fiore",
+        "methodology"
+      ],
+      "questions": [
+        "Do auditors agree on the standard data collection approach?"
+      ]
+    }
+  },
+  {
+    "id": "operational-kpis",
+    "label": "Utilization, invoice and rework rates",
+    "fact_ids": [
+      "M-630",
+      "M-631",
+      "M-632",
+      "M-633",
+      "M-634",
+      "M-635"
+    ],
+    "x": {
+      "keywords": [
+        "utilization",
+        "68%",
+        "invoice error",
+        "18%",
+        "rework rate",
+        "8-12%"
+      ],
+      "questions": [
+        "What are current utilization, invoice error and rework rates?"
+      ]
+    }
+  },
+  {
+    "id": "report-assembly-observation",
+    "label": "Report assembly observation",
+    "fact_ids": [
+      "M-636",
+      "M-637",
+      "M-638",
+      "M-639",
+      "M-640",
+      "M-641",
+      "M-642",
+      "M-643",
+      "M-644",
+      "M-645",
+      "M-646",
+      "M-647"
+    ],
+    "x": {
+      "keywords": [
+        "Riccardo Boni",
+        "copy-paste",
+        "60%",
+        "Excel formulas",
+        "template version",
+        "report assembly"
+      ],
+      "questions": [
+        "What was observed in the client report assembly session?"
+      ]
+    }
+  },
+  {
+    "id": "report-deliverable-dates",
+    "label": "Interim and final report dates",
+    "fact_ids": [
+      "M-648",
+      "M-649",
+      "M-650",
+      "M-651",
+      "M-652",
+      "M-653",
+      "M-654",
+      "M-655",
+      "M-656",
+      "M-657",
+      "M-658",
+      "M-659",
+      "M-660",
+      "M-661",
+      "M-662",
+      "M-663",
+      "M-664"
+    ],
+    "x": {
+      "keywords": [
+        "final report",
+        "interim report",
+        "December 1",
+        "November 25",
+        "delivery date",
+        "report structure"
+      ],
+      "questions": [
+        "When are the interim and final reports due and delivered?"
+      ]
+    }
+  },
+  {
+    "id": "resequencing",
+    "label": "Work resequencing and progress",
+    "fact_ids": [
+      "M-665",
+      "M-666",
+      "M-667",
+      "M-668",
+      "M-669",
+      "M-670",
+      "M-671",
+      "M-672",
+      "M-673",
+      "M-674",
+      "M-675",
+      "M-676",
+      "M-677"
+    ],
+    "x": {
+      "keywords": [
+        "resequencing",
+        "behind schedule",
+        "audit trail analysis",
+        "buffer",
+        "weeks 8-9",
+        "midpoint"
+      ],
+      "questions": [
+        "How was the work resequenced and how is progress?"
+      ]
+    }
+  },
+  {
+    "id": "board-presentation-format",
+    "label": "Board presentation format and deck",
+    "fact_ids": [
+      "M-678",
+      "M-679",
+      "M-680",
+      "M-681",
+      "M-682"
+    ],
+    "x": {
+      "keywords": [
+        "board Q&A",
+        "presentation format",
+        "deck",
+        "owner",
+        "present internally"
+      ],
+      "questions": [
+        "What is the format and ownership of the board presentation?"
+      ]
+    }
+  },
+  {
+    "id": "draft-analysis-confidence",
+    "label": "Draft severity ratings",
+    "fact_ids": [
+      "M-683",
+      "M-684",
+      "M-685",
+      "M-686",
+      "M-687",
+      "M-688",
+      "M-689",
+      "M-690",
+      "M-691",
+      "M-692",
+      "M-693"
+    ],
+    "x": {
+      "keywords": [
+        "severity ratings",
+        "risks 7 and 9",
+        "draft",
+        "synthesis",
+        "confidence",
+        "documentation standards"
+      ],
+      "questions": [
+        "How confident are the severity ratings in the bottleneck analysis?"
+      ]
+    }
+  },
+  {
+    "id": "audit-review-design",
+    "label": "Tiered audit review design",
+    "fact_ids": [
+      "M-694",
+      "M-695",
+      "M-696",
+      "M-697",
+      "M-698",
+      "M-699"
+    ],
+    "x": {
+      "keywords": [
+        "tiered review",
+        "peer review",
+        "pilot",
+        "audit review approach",
+        "quality gate"
+      ],
+      "questions": [
+        "What audit review approach was decided?"
+      ]
+    }
+  },
+  {
+    "id": "benchmark-data",
+    "label": "Compliance documentation benchmark",
+    "fact_ids": [
+      "M-700",
+      "M-701"
+    ],
+    "x": {
+      "keywords": [
+        "benchmark",
+        "Nora Chen",
+        "attachment"
+      ],
+      "questions": [
+        "Was the industry benchmark shared with figures?"
+      ]
+    }
+  },
+  {
+    "id": "coordinator-role",
+    "label": "Operations coordinator role",
+    "fact_ids": [
+      "M-702",
+      "M-703"
+    ],
+    "x": {
+      "keywords": [
+        "coordinator",
+        "Riccardo",
+        "cost",
+        "hire"
+      ],
+      "questions": [
+        "Who will be the operations excellence coordinator and at what cost?"
+      ]
+    }
+  },
+  {
+    "id": "utilization-target",
+    "label": "Utilization target",
+    "fact_ids": [
+      "M-704"
+    ],
+    "x": {
+      "keywords": [
+        "utilization target",
+        "75%",
+        "June 2026"
+      ],
+      "questions": [
+        "What is the utilization target?"
+      ]
+    }
+  },
+  {
+    "id": "future-initiatives",
+    "label": "Roadmap pilots and playbooks",
+    "fact_ids": [
+      "M-705",
+      "M-706",
+      "M-707",
+      "M-708",
+      "M-709",
+      "M-710",
+      "M-711"
+    ],
+    "x": {
+      "keywords": [
+        "AI-assisted",
+        "pilot",
+        "continuous monitoring",
+        "playbook",
+        "repository",
+        "audit procedures",
+        "AI governance"
+      ],
+      "questions": [
+        "What pilots and playbooks are planned in the roadmap?"
       ]
     }
   }
