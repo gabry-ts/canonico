@@ -37,6 +37,17 @@ def short_of(text: str) -> str | None:
     return f"{amount} {unit.lower()}" if unit not in ("%", "€") else f"{amount}{unit}"
 
 
+_PRIOR = re.compile(r"\b(from|old|previous|former|original|instead of|rather than|replac\w*|was|were)(\s+(the|an?|old|previous|former|original|current))?\s*$", re.IGNORECASE)
+
+
+def stated_short(sentence: str) -> str | None:
+    """Quantity a sentence states. In "from 3–4 weeks to 6 weeks" that is the new one, not the one it leaves."""
+    for match in QUANTITY.finditer(sentence):
+        if not _PRIOR.search(sentence[max(0, match.start() - 40) : match.start()]):
+            return short_of(match.group(0))
+    return short_of(sentence)
+
+
 def amount_of(text: str) -> str | None:
     match = QUANTITY.search(text or "")
     return f"{match.group(1)}-{match.group(2) or ''}" if match else None
@@ -61,7 +72,7 @@ def find(state: dict, text: str, project_id: str | None, prefer_topics: set[str]
     """
     found: dict[str, dict] = {}
     for sentence in sentences(text):
-        short = short_of(sentence)
+        short = stated_short(sentence)
         if short is None or (RETROSPECTIVE.search(sentence) and not CHANGE_WORDS.search(sentence)):
             continue
         if force_topic is not None:

@@ -26,6 +26,14 @@ def test_a_passing_mention_of_the_old_target_does_not_supersede_the_binding_fact
     assert binding(client)["id"] == "M-106"
 
 
+def test_a_change_from_one_value_to_another_files_the_new_value(client):
+    text = "After the steering committee we moved the onboarding target from 3–4 weeks to 6 weeks."
+    result = client.post("/mail/inbound", json=email("moved", text)).json()
+    assert [link["supersedes"] for link in result["supersedes_created"]] == ["M-106"]
+    now = binding(client)
+    assert now["value"] == "6 weeks" and now["doc_id"] == result["document_id"]
+
+
 def test_a_decision_naming_the_steering_committee_is_filed_under_the_onboarding_time(client):
     text = "The steering committee confirmed the onboarding target at 6 weeks."
     result = client.post("/mail/inbound", json=email("committee", text)).json()
