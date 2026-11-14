@@ -239,13 +239,17 @@ export function Answer({ res, time, titles }: { res: AskResponse; time: string; 
 export function Pending() {
   const { t } = useI18n()
   return (
-    <div className="fade-in max-w-[600px]">
+    <div className="fade-in max-w-[600px]" role="status" aria-live="polite">
       <div className="flex items-center gap-2 mb-2 text-[12.5px]">
         <Logo size={24} />
         <span className="font-medium text-foreground">{t('shell.product')}</span>
-        <span className="text-muted-foreground">{t('ask.thinking')}</span>
       </div>
-      <div className="skel h-[104px] !rounded-[12px]" aria-hidden="true" />
+      <div className="inline-flex items-center gap-1.5 bg-muted rounded-[12px] rounded-tl-[4px] px-4 py-3.5">
+        <span className="typing-dot" />
+        <span className="typing-dot" style={{ animationDelay: '.15s' }} />
+        <span className="typing-dot" style={{ animationDelay: '.3s' }} />
+        <span className="sr-only">{t('ask.thinking')}</span>
+      </div>
     </div>
   )
 }

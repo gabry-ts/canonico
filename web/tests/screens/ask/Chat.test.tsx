@@ -252,7 +252,7 @@ describe('Pending', () => {
   it('says the memory is being read', () => {
     renderI18n(<Pending />)
     expect(screen.getByText('Canonico')).toBeInTheDocument()
-    expect(screen.getByText('Looking in memory…')).toBeInTheDocument()
+    expect(screen.getByText('Canonico is typing…')).toBeInTheDocument()
   })
 })
 
