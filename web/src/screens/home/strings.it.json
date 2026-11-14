@@ -248,7 +248,9 @@
     "docs": {
       "drop": "Scegli uno o più file",
       "help": "Ogni file diventa un documento del progetto. I fatti vengono estratti in background.",
-      "needFile": "Scegli almeno un file."
+      "needFile": "Scegli almeno un file.",
+      "noText_one": "Il file scelto non contiene testo.",
+      "noText_other": "Nessuno dei {count} file scelti contiene testo."
     },
     "mail": {
       "inherit": "Usa la casella dell'organizzazione",

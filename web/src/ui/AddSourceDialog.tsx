@@ -147,6 +147,7 @@ export default function AddSourceDialog({ projectId, onClose, onCreated }: { pro
         finish()
       } else if (kind === 'documents') {
         if (!file.length) return setErr({ file: t('home.add.docs.needFile') })
+        if (!file.some((f) => f.text.trim())) return setErr({ file: t('home.add.docs.noText', { count: file.length }) })
         if (!sources.data?.some((s) => s.type === 'documents'))
           await call(client.POST('/projects/{project_id}/sources', { params: { path: { project_id: projectId } }, body: { type: 'documents', label: t('shell.sourceTypes.documents') } }))
         let n = 0

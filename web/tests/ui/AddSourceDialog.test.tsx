@@ -803,6 +803,25 @@ describe('AddSourceDialog', () => {
       expect(documentBodies()[0]).toMatchObject({ title: 'notes' })
     })
 
+    it.each([
+      ['the chosen file has no text', [textFile('blank.txt', '  \n')], '1 file', 'The chosen file has no text.'],
+      ['none of the chosen files has text', [textFile('blank.txt', '  \n'), textFile('empty.md', '', 'text/markdown')], '2 files', 'None of the 2 chosen files has any text.'],
+    ])('refuses to upload when %s, and creates nothing', async (_, files, shown, error) => {
+      api.post('/projects/:project_id/sources', source())
+      api.post('/documents', created())
+      const { user, app, onCreated } = open()
+      await configure(user, 'documents')
+      await user.upload(picker(), files)
+      await screen.findByText(files.length === 1 ? files[0].name : shown)
+      await user.click(button('Upload and sync'))
+
+      expect(await screen.findByText(error)).toBeInTheDocument()
+      expect(mutations()).toEqual([])
+      expect(screen.getByText('ClearPath engagement · step 2 of 3')).toBeInTheDocument()
+      expect(onCreated).not.toHaveBeenCalled()
+      expect(app.refresh).not.toHaveBeenCalled()
+    })
+
     it('takes twenty files at most', async () => {
       const { user } = open()
       await configure(user, 'documents')
