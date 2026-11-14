@@ -7,8 +7,8 @@ deployed build before the slot.
 One problem, one flow. Do not list features on stage. If asked, the answers are in Q&A below.
 
 BEFORE THE SLOT (T minus 10 min)
-- Reset the demo state:  curl -X POST [DEMO_URL]/api/demo/reset
-- Open two tabs: [DEMO_URL] on Ask, the same on Demo control (for the optional email beat).
+- Reset the demo state:  curl -X POST https://canonico.magikarp.uk/api/demo/reset
+- Open two tabs: https://canonico.magikarp.uk on Ask, the same on Demo control (for the optional email beat).
 - Acting as Giulia (owner, the default demo identity, no real login). Language EN.
 - Ask the onboarding question once and check that "4 weeks" (final presentation) shows
   as still active under the binding answer, then reset again.
@@ -67,10 +67,10 @@ internal assistant, introduce us. Thank you."
 ----------------------------------------------------------------
 FALLBACK, IF SOMETHING BREAKS
 - Answer looks wrong or already fixed (someone clicked before us):
-  curl -X POST [DEMO_URL]/api/demo/reset , reload the tab, repeat the step.
+  curl -X POST https://canonico.magikarp.uk/api/demo/reset , reload the tab, repeat the step.
   SAY: "Let me put the memory back to this morning."
 - Model provider slow or down:
-  curl -X PATCH [DEMO_URL]/api/config -H 'content-type: application/json' -d '{"offline_mode": true}'
+  curl -X PATCH https://canonico.magikarp.uk/api/config -H 'content-type: application/json' -d '{"offline_mode": true}'
   The whole demo path is seeded and makes no model calls, so nothing changes on screen.
   The [Demo control] page also shows and switches offline mode [check on the deployed build].
 - Server or network down: switch to the submitted video.

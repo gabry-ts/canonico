@@ -1,6 +1,6 @@
 PLATFORM DOCS, DRAFT
 Publish with upsert_document. The jury card shows the first 700 characters of each page.
-Replace [DEMO_URL] before publishing. Lines marked [team: ...] need a fact only the team has.
+Demo URL filled in (https://canonico.magikarp.uk). Lines marked [team: ...] need a fact only the team has.
 
 ================================================================
 SECTION 1
@@ -14,7 +14,7 @@ Live: Giulia opens what the AI believes. Three to four weeks is binding, quoted 
 
 First test, 5 evolving-decision questions from KVA's ClearPath corpus: binding version found 3/5 (model router), plain retrieval 0/5.
 
-Demo: [DEMO_URL]
+Demo: https://canonico.magikarp.uk
 Code: https://github.com/gabry-ts/canonico
 
 Track: Making memory visible to people
@@ -43,7 +43,7 @@ Works live: Giulia, the operations lead, sees the binding version with its verba
 
 First test on 5 evolving-decision questions from KVA's ClearPath corpus: binding version found 3/5 (model router, 2/5 offline), plain retrieval 0/5. A first signal.
 
-Demo: [DEMO_URL]
+Demo: https://canonico.magikarp.uk
 Code: https://github.com/gabry-ts/canonico
 
 Riskiest assumption: AI programme leads will pay for a binding-fact layer next to their assistant [declared]. What we learned today: [team: fill in, or write "not tested with a buyer yet"].
