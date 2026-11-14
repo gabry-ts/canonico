@@ -8018,7 +8018,7 @@ export interface operations {
                      *         {
                      *           "id": "mem-giulia-ferri",
                      *           "name": "Giulia Ferri",
-                     *           "email": "giulia.ferri@meridianlabs.example",
+                     *           "email": "giulia.ferri@meridianlabs.org",
                      *           "org_role": "owner",
                      *           "created_at": "2026-11-14T09:00:00Z",
                      *           "status": "active"
@@ -8026,7 +8026,7 @@ export interface operations {
                      *         {
                      *           "id": "mem-sara-conti",
                      *           "name": "Sara Conti",
-                     *           "email": "sara.conti@meridianlabs.example",
+                     *           "email": "sara.conti@meridianlabs.org",
                      *           "org_role": "editor",
                      *           "created_at": "2026-11-14T09:10:00Z",
                      *           "status": "active"
@@ -8034,7 +8034,7 @@ export interface operations {
                      *         {
                      *           "id": "mem-luca-bassi",
                      *           "name": "Luca Bassi",
-                     *           "email": "luca.bassi@meridianlabs.example",
+                     *           "email": "luca.bassi@meridianlabs.org",
                      *           "org_role": "viewer",
                      *           "created_at": "2026-11-14T09:20:00Z",
                      *           "status": "invited"
@@ -8059,7 +8059,7 @@ export interface operations {
                 /**
                  * @example {
                  *       "name": "Luca Bassi",
-                 *       "email": "luca.bassi@meridianlabs.example",
+                 *       "email": "luca.bassi@meridianlabs.org",
                  *       "org_role": "viewer"
                  *     }
                  */
@@ -8077,7 +8077,7 @@ export interface operations {
                      * @example {
                      *       "id": "mem-luca-bassi",
                      *       "name": "Luca Bassi",
-                     *       "email": "luca.bassi@meridianlabs.example",
+                     *       "email": "luca.bassi@meridianlabs.org",
                      *       "org_role": "viewer",
                      *       "created_at": "2026-11-14T09:20:00Z",
                      *       "status": "invited"
@@ -8114,7 +8114,7 @@ export interface operations {
                      * @example {
                      *       "id": "mem-sara-conti",
                      *       "name": "Sara Conti",
-                     *       "email": "sara.conti@meridianlabs.example",
+                     *       "email": "sara.conti@meridianlabs.org",
                      *       "org_role": "editor",
                      *       "created_at": "2026-11-14T09:10:00Z",
                      *       "status": "active"
@@ -8181,7 +8181,7 @@ export interface operations {
                      * @example {
                      *       "id": "mem-sara-conti",
                      *       "name": "Sara Conti",
-                     *       "email": "sara.conti@meridianlabs.example",
+                     *       "email": "sara.conti@meridianlabs.org",
                      *       "org_role": "admin",
                      *       "created_at": "2026-11-14T09:10:00Z",
                      *       "status": "active"
@@ -8427,7 +8427,7 @@ export interface operations {
                      *       "member": {
                      *         "id": "mem-giulia-ferri",
                      *         "name": "Giulia Ferri",
-                     *         "email": "giulia.ferri@meridianlabs.example",
+                     *         "email": "giulia.ferri@meridianlabs.org",
                      *         "org_role": "owner",
                      *         "created_at": "2026-11-14T09:00:00Z",
                      *         "status": "active"
@@ -8467,17 +8467,17 @@ export interface operations {
                 /**
                  * @example {
                  *       "organisation_name": "Meridian Labs",
-                 *       "primary_email_domain": "meridianlabs.example",
+                 *       "primary_email_domain": "meridianlabs.org",
                  *       "mail_config": {
                  *         "mode": "imap_mock",
-                 *         "imap_host": "mock.meridianlabs.example",
-                 *         "imap_user": "brain@meridianlabs.example",
-                 *         "inbound_address": "brain@inbound.meridianlabs.example",
+                 *         "imap_host": "mock.meridianlabs.org",
+                 *         "imap_user": "brain@meridianlabs.org",
+                 *         "inbound_address": "brain@inbound.meridianlabs.org",
                  *         "poll_interval_s": 60
                  *       },
                  *       "first_admin": {
                  *         "name": "Giulia Ferri",
-                 *         "email": "giulia.ferri@meridianlabs.example"
+                 *         "email": "giulia.ferri@meridianlabs.org"
                  *       }
                  *     }
                  */
@@ -8497,9 +8497,9 @@ export interface operations {
                      *       "name": "Meridian Labs",
                      *       "mail_config": {
                      *         "mode": "imap_mock",
-                     *         "imap_host": "mock.meridianlabs.example",
-                     *         "imap_user": "brain@meridianlabs.example",
-                     *         "inbound_address": "brain@inbound.meridianlabs.example",
+                     *         "imap_host": "mock.meridianlabs.org",
+                     *         "imap_user": "brain@meridianlabs.org",
+                     *         "inbound_address": "brain@inbound.meridianlabs.org",
                      *         "poll_interval_s": 60
                      *       }
                      *     }

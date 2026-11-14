@@ -18,9 +18,9 @@ def test_roles_matrix_matches_the_contract(client, spec):
 def test_members_can_be_invited_changed_and_removed(client, spec):
     page = assert_contract(client.get("/org/members"), "GET", "/org/members")
     assert_matches(page, spec["paths"]["/org/members"]["get"]["responses"]["200"]["content"]["application/json"]["example"])
-    invited = assert_contract(client.post("/org/members", json={"name": "Marta Riva", "email": "marta.riva@meridianlabs.example", "org_role": "viewer"}), "POST", "/org/members", 201)
+    invited = assert_contract(client.post("/org/members", json={"name": "Marta Riva", "email": "marta.riva@meridianlabs.org", "org_role": "viewer"}), "POST", "/org/members", 201)
     assert invited["id"] == "mem-marta-riva" and invited["status"] == "invited" and invited["org_role"] == "viewer"
-    assert_contract(client.post("/org/members", json={"name": "Marta Riva", "email": "other@meridianlabs.example", "org_role": "viewer"}), "POST", "/org/members", 409)
+    assert_contract(client.post("/org/members", json={"name": "Marta Riva", "email": "other@meridianlabs.org", "org_role": "viewer"}), "POST", "/org/members", 409)
     assert_contract(client.post("/org/members", json={"name": "Marta"}), "POST", "/org/members", 422)
     assert assert_contract(client.get("/org/members/mem-marta-riva"), "GET", "/org/members/{member_id}") == invited
     promoted = assert_contract(client.patch("/org/members/mem-marta-riva", json={"org_role": "admin"}), "PATCH", "/org/members/{member_id}")
@@ -76,7 +76,7 @@ def test_writes_are_refused_without_the_permission(client):
 def test_setup_status_and_first_run(client):
     status = assert_contract(client.get("/org/setup/status"), "GET", "/org/setup/status")
     assert status == {"completed": True, "steps": {"org": "done", "mail": "done", "first_project": "done", "first_source": "done"}}
-    body = {"organisation_name": "Meridian Labs", "primary_email_domain": "meridianlabs.example", "first_admin": {"name": "Giulia Ferri", "email": "giulia.ferri@meridianlabs.example"}}
+    body = {"organisation_name": "Meridian Labs", "primary_email_domain": "meridianlabs.org", "first_admin": {"name": "Giulia Ferri", "email": "giulia.ferri@meridianlabs.org"}}
     assert_contract(client.post("/org/setup", json=body), "POST", "/org/setup", 409)
     assert_contract(client.post("/org/setup", json={}), "POST", "/org/setup", 422)
 
