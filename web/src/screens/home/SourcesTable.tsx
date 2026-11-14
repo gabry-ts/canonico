@@ -127,7 +127,7 @@ export function SourcesTable({
                     </button>
                   </td>
                   <td>
-                    <SrcStatus status={status} />
+                    <SrcStatus status={status} waiting={x.type === 'webhook' && !x.last_synced_at} />
                   </td>
                   <td className="text-right whitespace-nowrap">
                     <span className="mono">{x.items ?? 0}</span>{' '}
@@ -250,7 +250,7 @@ function SourceDetail({
   return (
     <>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3">
-        {stat(t('home.src.colStatus'), <SrcStatus status={status} />)}
+        {stat(t('home.src.colStatus'), <SrcStatus status={status} waiting={x.type === 'webhook' && !x.last_synced_at} />)}
         {stat(
           t('home.src.colLastSync'),
           <span className="mono text-[13px]">{status === 'syncing' ? t('home.src.inProgress') : x.last_synced_at ? fmtWhen(x.last_synced_at) : t('home.src.never')}</span>,

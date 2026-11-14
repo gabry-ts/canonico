@@ -228,7 +228,8 @@
       "unit_emails": "email",
       "unit_items": "elementi",
       "never": "mai",
-      "comingSoon": "I collegamenti reali a posta, SharePoint e Google Drive arrivano presto. Questa demo usa dati di esempio."
+      "comingSoon": "I collegamenti reali a posta, SharePoint e Google Drive arrivano presto. Questa demo usa dati di esempio.",
+      "st_waiting": "In attesa del primo evento"
     },
     "mail": {
       "title": "Impostazioni posta",
@@ -850,7 +851,8 @@
       "ok": "Sincronizzata",
       "syncing": "Sincronizzazione…",
       "error": "Non riuscita",
-      "idle": "Mai sincronizzata"
+      "idle": "Mai sincronizzata",
+      "waiting": "In attesa del primo evento"
     },
     "unit": {
       "documents_one": "documento",

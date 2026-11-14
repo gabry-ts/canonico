@@ -137,8 +137,15 @@ export function ChipsInput({ value, onChange, id }: { value: string[]; onChange:
   )
 }
 
-export function SrcStatus({ status }: { status: string }) {
+export function SrcStatus({ status, waiting = false }: { status: string; waiting?: boolean }) {
   const { t } = useI18n()
+  if (waiting && status !== 'syncing' && status !== 'error')
+    return (
+      <span className="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
+        <span className="dot !bg-muted-foreground/50" />
+        {t('home.status.waiting')}
+      </span>
+    )
   if (status === 'syncing')
     return (
       <span className="inline-flex items-center gap-2 text-[13px]">

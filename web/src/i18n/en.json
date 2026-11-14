@@ -228,7 +228,8 @@
       "unit_emails": "emails",
       "unit_items": "items",
       "never": "never",
-      "comingSoon": "Real mail, SharePoint and Google Drive connectors are coming soon. This demo uses sample data."
+      "comingSoon": "Real mail, SharePoint and Google Drive connectors are coming soon. This demo uses sample data.",
+      "st_waiting": "Waiting for first event"
     },
     "mail": {
       "title": "Mail settings",
@@ -850,7 +851,8 @@
       "ok": "Synced",
       "syncing": "Syncing…",
       "error": "Failed",
-      "idle": "Not synced yet"
+      "idle": "Not synced yet",
+      "waiting": "Waiting for first event"
     },
     "unit": {
       "documents_one": "document",
