@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useI18n } from '../../i18n'
 import { usePerm } from '../../lib/perm'
 import { useApp } from '../../lib/store'
@@ -175,8 +176,15 @@ function StillActiveCard(p: Props & { fact: ChainFact; bindingDoc: string }) {
   const perm = usePerm()
   const f = p.fact
   const form = p.form && p.form.id === f.id ? p.form : null
+  // On short screens keep the card, and the confirm button once the form opens, inside the scrolling panel.
+  const ref = useRef<HTMLDivElement>(null)
+  const formOpen = !!form
+  useEffect(() => {
+    const tm = setTimeout(() => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80)
+    return () => clearTimeout(tm)
+  }, [formOpen])
   return (
-    <div className="rounded-[12px] px-4 py-3.5 bg-warning-soft/60 shadow-[inset_0_0_0_1px_hsl(var(--warning)/.45)]">
+    <div ref={ref} className="rounded-[12px] px-4 py-3.5 bg-warning-soft/60 shadow-[inset_0_0_0_1px_hsl(var(--warning)/.45)]">
       <div className="flex items-start gap-3">
         <FactHead fact={f} strong />
         <span className="badge conflict">

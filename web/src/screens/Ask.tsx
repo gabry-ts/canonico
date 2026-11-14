@@ -345,7 +345,7 @@ export default function Ask() {
 
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] xl:grid-cols-[minmax(0,1fr)_540px]">
         <section className="flex flex-col min-h-0" aria-label={t('ask.chatAria')}>
-          <div ref={chatRef} className="flex-1 min-h-0 overflow-y-auto scroll px-6 xl:px-12 py-8">
+          <div ref={chatRef} className="flex-1 min-h-0 overflow-y-auto scroll px-6 2xl:px-12 py-8">
             <div className="max-w-[720px] mx-auto space-y-6">
               <Divider>{t('ask.lastMonday')}</Divider>
               <UserMsg text={QS} time={t('ask.monTime')} />
@@ -365,7 +365,7 @@ export default function Ask() {
               )}
             </div>
           </div>
-          <div className="shrink-0 px-6 xl:px-12 pb-5 pt-2">
+          <div className="shrink-0 px-6 2xl:px-12 pb-5 pt-2">
             <div className="max-w-[720px] mx-auto">
               <form
                 className="flex items-center gap-3 rounded-[12px] bg-card shadow-[inset_0_0_0_1px_hsl(var(--input))] px-4 h-12 focus-within:shadow-[inset_0_0_0_1px_hsl(var(--ring)),0_0_0_3px_hsl(var(--ring)/.15)]"
@@ -381,7 +381,7 @@ export default function Ask() {
                   onChange={(e) => setInput(e.target.value)}
                   aria-label={t('ask.composerAria')}
                 />
-                <span className="hidden md:inline text-[12px] text-muted-foreground shrink-0">
+                <span className="hidden md:inline-block max-w-[45%] truncate text-[12px] text-muted-foreground">
                   {t('ask.asking')} <span className="text-foreground font-medium">{scopeName}</span>
                 </span>
                 <button type="submit" className="btn btn-primary btn-icon btn-sm" aria-label={t('ask.askAria')} disabled={!input.trim()}>
