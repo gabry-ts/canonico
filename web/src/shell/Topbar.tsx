@@ -1,17 +1,15 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useI18n } from '../i18n'
 import type { Route } from '../lib/router'
 import { useApp } from '../lib/store'
 import { Avatar, Ic } from '../ui/Icon'
 import { IdentityMenu, LanguageSwitch, ThemeMenu } from './menus'
-
-const SLOT_ID = 'topbar-actions'
+import { setTopbarSlot, useTopbarSlot } from './topbarSlot'
 
 /** Renders its children in the top bar, left of the theme button. Use for a screen's primary action (Export, Add source…). */
 export function TopbarActions({ children }: { children: ReactNode }) {
-  const [el, setEl] = useState<HTMLElement | null>(null)
-  useEffect(() => setEl(document.getElementById(SLOT_ID)), [])
+  const el = useTopbarSlot()
   return el ? createPortal(children, el) : null
 }
 
@@ -53,7 +51,7 @@ export default function Topbar({ route, onNav }: { route: Route; onNav: () => vo
             </button>
           </div>
         )}
-        <div id={SLOT_ID} className="flex items-center gap-2" />
+        <div ref={setTopbarSlot} className="flex items-center gap-2" />
         <LanguageSwitch />
         <ThemeMenu />
         <span className="w-px h-5 bg-border mx-1" />

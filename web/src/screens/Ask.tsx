@@ -33,19 +33,20 @@ export default function Ask() {
   const todayShown = useRef(false)
   const chatRef = useRef<HTMLDivElement>(null)
 
-  const chainApi = useApi(() => call(client.GET('/topics/{topic_id}/chain', { params: { path: { topic_id: topic } } })), [topic, app.version])
-  const chain = chainApi.data && chainApi.data.topic.id === topic ? chainApi.data : undefined
-  const view = useMemo(() => viewOf(chain), [chain])
-
-  useEffect(() => {
-    if (!chain) return
-    if (chain.topic.id === DEMO.topic) setOldFact(chain.facts.find((f) => f.id === DEMO.oldFact) ?? undefined)
+  const chainApi = useApi(async () => {
+    const c = await call(client.GET('/topics/{topic_id}/chain', { params: { path: { topic_id: topic } } }))
+    // Keep what later steps still need once the panel moves to another topic:
+    // the old fact shown under "Last Monday" and the document titles seen so far.
+    if (c.topic.id === DEMO.topic) setOldFact(c.facts.find((f) => f.id === DEMO.oldFact) ?? undefined)
     setTitles((prev) => {
       const next = { ...prev }
-      for (const f of chain.facts) if (f.doc_title) next[f.doc_id] = f.doc_title
+      for (const f of c.facts) if (f.doc_title) next[f.doc_id] = f.doc_title
       return next
     })
-  }, [chain])
+    return c
+  }, [topic, app.version])
+  const chain = chainApi.data && chainApi.data.topic.id === topic ? chainApi.data : undefined
+  const view = useMemo(() => viewOf(chain), [chain])
 
   useEffect(() => {
     const el = chatRef.current
@@ -254,7 +255,9 @@ export default function Ask() {
   }
 
   const keys = useRef({ next, back })
-  keys.current = { next, back }
+  useEffect(() => {
+    keys.current = { next, back }
+  })
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return
@@ -321,7 +324,7 @@ export default function Ask() {
               aria-label={t('ask.restart')}
               {...perm.attrs('admin_demo')}
               data-tip={perm.can('admin_demo') ? t('ask.restartTip') : perm.attrs('admin_demo')['data-tip']}
-              onClick={perm.guard('admin_demo', () => void reset())}
+              onClick={() => perm.guard('admin_demo', () => void reset())()}
             >
               <Ic n="restore" className="sm" />
             </button>

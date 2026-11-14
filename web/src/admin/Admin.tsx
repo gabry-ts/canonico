@@ -277,12 +277,10 @@ function routing(t: T, r: Routed, projects: Schemas['Project'][]): ReactNode {
 
 function MailCard({ results, busy, run, t, inbound, projects }: Common & { inbound: string; projects: Schemas['Project'][] }) {
   const [from, setFrom] = useState('client@meridianlabs.org')
-  const [to, setTo] = useState('')
+  const [toEdited, setTo] = useState<string | null>(null)
+  const to = toEdited ?? inbound
   const [subject, setSubject] = useState('Onboarding target, final check')
   const [text, setText] = useState('We keep the onboarding target at 5 weeks, as agreed.')
-  useEffect(() => {
-    if (inbound && !to) setTo(inbound)
-  }, [inbound, to])
   return (
     <Card title={t('admin.mail')}>
       <Row

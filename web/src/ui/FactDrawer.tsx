@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ApiError, call, client, errMsg, type Schemas } from '../api/client'
 import { useI18n } from '../i18n'
 import { bindingOf, docLabel, factState, heldByPin } from '../lib/facts'
@@ -44,8 +44,6 @@ export default function FactDrawer({ id, onClose }: { id: string; onClose: () =>
   }, [id, app.version])
   const deps = useApi(() => call(client.GET('/facts/{fact_id}/dependents', { params: { path: { fact_id: id } } })), [id, app.version])
   const mems = useApi(() => members(), [])
-
-  useEffect(() => setAct(null), [id])
 
   const nameOf = (actor: string | null | undefined) => {
     if (!actor || actor === 'system') return t('memory.drawer.system')
@@ -326,17 +324,17 @@ export default function FactDrawer({ id, onClose }: { id: string; onClose: () =>
         </dl>
 
         <div className="mt-5 flex items-center gap-1.5 flex-wrap">
-          <button className="btn btn-outline btn-sm" onClick={perm.guard('correct_fact', () => startAct('correct'))} {...perm.attrs('correct_fact')}>
+          <button className="btn btn-outline btn-sm" onClick={() => perm.guard('correct_fact', () => startAct('correct'))()} {...perm.attrs('correct_fact')}>
             <Ic n="edit" className="sm" />
             {t('memory.drawer.correct')}
           </button>
           {isRet ? (
-            <button className="btn btn-outline btn-sm" onClick={perm.guard('restore_fact', () => startAct('restore'))} {...perm.attrs('restore_fact')}>
+            <button className="btn btn-outline btn-sm" onClick={() => perm.guard('restore_fact', () => startAct('restore'))()} {...perm.attrs('restore_fact')}>
               <Ic n="restore" className="sm" />
               {t('memory.drawer.restore')}
             </button>
           ) : (
-            <button className="btn btn-outline btn-sm" onClick={perm.guard('retire_fact', () => startAct('retire'))} {...perm.attrs('retire_fact')}>
+            <button className="btn btn-outline btn-sm" onClick={() => perm.guard('retire_fact', () => startAct('retire'))()} {...perm.attrs('retire_fact')}>
               <Ic n="retire" className="sm" />
               {t('memory.drawer.retire')}
             </button>
@@ -349,7 +347,7 @@ export default function FactDrawer({ id, onClose }: { id: string; onClose: () =>
           ) : (
             <button
               className="btn btn-outline btn-sm"
-              onClick={perm.guard('correct_fact', () => startAct(f.pinned ? 'unpin' : 'pin'))}
+              onClick={() => perm.guard('correct_fact', () => startAct(f.pinned ? 'unpin' : 'pin'))()}
               {...perm.attrs('correct_fact')}
             >
               <Ic n="pin" className="sm" />

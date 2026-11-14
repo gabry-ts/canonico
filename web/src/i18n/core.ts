@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext } from 'react'
 import en from './en.json'
 import it from './it.json'
 
@@ -52,10 +52,19 @@ function detect(): Locale {
 let current: Locale = detect()
 /** Current UI locale, readable outside React (used for the Accept-Language header). */
 export const currentLocale = () => current
+/** Remember the chosen locale (module state and localStorage). The provider calls this. */
+export function storeLocale(l: Locale) {
+  current = l
+  try {
+    localStorage.setItem(STORAGE_KEY, l)
+  } catch {
+    // storage unavailable
+  }
+}
 
 const dateOnly = (iso: string) => (/^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(iso + 'T12:00:00') : new Date(iso))
 
-function makeFormatters(locale: Locale) {
+export function makeFormatters(locale: Locale) {
   const tag = INTL[locale]
   const fmt = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(tag, o)
   const safe = (iso: string | null | undefined, f: Intl.DateTimeFormat) => {
@@ -94,42 +103,16 @@ function makeFormatters(locale: Locale) {
   }
 }
 
-type I18n = ReturnType<typeof makeFormatters> & {
+export type I18n = ReturnType<typeof makeFormatters> & {
   locale: Locale
   setLocale: (l: Locale) => void
   t: (key: string, params?: Params) => string
 }
 
-const Ctx = createContext<I18n | null>(null)
-
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(current)
-  const setLocale = useCallback((l: Locale) => {
-    current = l
-    try {
-      localStorage.setItem(STORAGE_KEY, l)
-    } catch {
-      // storage unavailable
-    }
-    setLocaleState(l)
-  }, [])
-  useEffect(() => {
-    document.documentElement.lang = locale
-  }, [locale])
-  const value = useMemo<I18n>(
-    () => ({
-      locale,
-      setLocale,
-      t: (key, params) => translate(locale, key, params),
-      ...makeFormatters(locale),
-    }),
-    [locale, setLocale],
-  )
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
-}
+export const I18nContext = createContext<I18n | null>(null)
 
 export function useI18n(): I18n {
-  const v = useContext(Ctx)
+  const v = useContext(I18nContext)
   if (!v) throw new Error('useI18n outside I18nProvider')
   return v
 }

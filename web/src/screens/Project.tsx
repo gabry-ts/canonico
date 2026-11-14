@@ -29,9 +29,10 @@ export default function Project() {
   const [openItem, setOpenItem] = useState<string | null>(null)
   const [filter, setFilter] = useState<ItemFilter>({ type: 'all', tag: 'all' })
 
+  const { projectId: currentPid, projects, setProjectId } = app
   useEffect(() => {
-    if (routePid && routePid !== app.projectId && app.projects.some((p) => p.id === routePid)) app.setProjectId(routePid)
-  }, [routePid, app.projectId, app.projects, app.setProjectId])
+    if (routePid && routePid !== currentPid && projects.some((p) => p.id === routePid)) setProjectId(routePid)
+  }, [routePid, currentPid, projects, setProjectId])
 
   const proj = useApi(() => call(client.GET('/projects/{project_id}', { params: { path: { project_id: pid } } })), [pid, app.version])
   const stats = useApi(() => call(client.GET('/stats', { params: { query: { project_id: pid } } })), [pid, app.version])

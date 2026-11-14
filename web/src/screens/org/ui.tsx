@@ -3,7 +3,6 @@ import { useI18n } from '../../i18n'
 import { Ic } from '../../ui/Icon'
 import { toast } from '../../ui/toast'
 
-export const ROLE_ORDER = ['owner', 'admin', 'editor', 'viewer'] as const
 
 export function PageWrap({ children, max = 1120 }: { children: ReactNode; max?: number }) {
   return (

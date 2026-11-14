@@ -7,7 +7,8 @@ import { usePerm } from '../../lib/perm'
 import { Avatar, Ic } from '../../ui/Icon'
 import { Dialog } from '../../ui/overlays'
 import { toast, toastError } from '../../ui/toast'
-import { FieldErr, Loading, ROLE_ORDER } from './ui'
+import { ROLE_ORDER } from './roles'
+import { FieldErr, Loading } from './ui'
 
 type Role = Schemas['Role']
 const ROLES_DESC = [...ROLE_ORDER] as Role[]

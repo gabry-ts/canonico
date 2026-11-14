@@ -45,11 +45,13 @@ export default function App() {
   const route = useRoute()
   const app = useApp()
   const { t } = useI18n()
-  const [navOpen, setNavOpen] = useState(false)
+  // The mobile navigation is open only for the route it was opened on, so navigating closes it.
+  const routeKey = `${route.r}/${route.sub ?? ''}`
+  const [navFor, setNavFor] = useState<string | null>(null)
+  const navOpen = navFor === routeKey
   const [palette, setPalette] = useState(false)
   const Screen = SCREENS[route.r]
 
-  useEffect(() => setNavOpen(false), [route.r, route.sub])
   // Leaving a screen closes the fact drawer; #/memory/<factId> opens it on purpose.
   const { openFact } = app
   useEffect(() => {
@@ -79,7 +81,7 @@ export default function App() {
 
   const overlays = (
     <>
-      {app.factId && <FactDrawer id={app.factId} onClose={() => app.openFact(null)} />}
+      {app.factId && <FactDrawer key={app.factId} id={app.factId} onClose={() => app.openFact(null)} />}
       {palette && <Palette onClose={() => setPalette(false)} />}
       <Toaster />
       <Tips />
@@ -96,10 +98,10 @@ export default function App() {
 
   return (
     <div className="h-full flex overflow-hidden">
-      {navOpen && <div className="scrim lg:hidden" onClick={() => setNavOpen(false)} />}
+      {navOpen && <div className="scrim lg:hidden" onClick={() => setNavFor(null)} />}
       <Sidebar route={route} open={navOpen} onPalette={() => setPalette(true)} />
       <div className="flex-1 min-w-0 flex flex-col">
-        <Topbar route={route} onNav={() => setNavOpen(true)} />
+        <Topbar route={route} onNav={() => setNavFor(routeKey)} />
         <main className="flex-1 min-h-0 relative" tabIndex={-1}>
           {app.ready && app.offline ? (
             <Empty icon="wifioff" title={t('shell.backendDown')}>

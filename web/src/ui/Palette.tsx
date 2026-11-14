@@ -118,7 +118,6 @@ export default function Palette({ onClose }: { onClose: () => void }) {
   }, [q, search.data, tags.data, mems.data, t, app, onClose])
 
   const cur = Math.min(i, Math.max(0, items.length - 1))
-  useEffect(() => setI(0), [q])
   useEffect(() => {
     list.current?.querySelector('.menu-item.active')?.scrollIntoView({ block: 'nearest' })
   }, [cur])
@@ -161,7 +160,10 @@ export default function Palette({ onClose }: { onClose: () => void }) {
             className="flex-1 bg-transparent outline-none text-[15px] placeholder:text-muted-foreground"
             placeholder={t('memory.palette.placeholder')}
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              setQ(e.target.value)
+              setI(0)
+            }}
             onKeyDown={onKey}
             role="combobox"
             aria-expanded="true"
