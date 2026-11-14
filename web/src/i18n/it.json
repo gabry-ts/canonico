@@ -1203,7 +1203,6 @@
   "auth": {
     "title": "Accedi a Canonico",
     "sub": "Usa l'email e la password del tuo account.",
-    "subOrg": "Usa l'email e la password del tuo account {org}.",
     "email": "Email",
     "password": "Password",
     "submit": "Accedi",

@@ -24,7 +24,6 @@ export default function Login() {
 
   // Where to go afterwards. Null when this page replaced another screen: the address is already the right one.
   const target = route.r === 'login' ? (route.sub && !route.sub.startsWith('login') ? route.sub : 'app') : null
-  const orgName = app.org?.name
 
   const enter = (login: Schemas['LoginResponse']) => {
     app.signIn(login)
@@ -106,7 +105,7 @@ export default function Login() {
           ) : (
             <>
               <h1 className="text-[24px] font-semibold tracking-tight">{t('auth.title')}</h1>
-              <p className="mt-1.5 text-[14.5px] text-muted-foreground leading-relaxed">{orgName ? t('auth.subOrg', { org: orgName }) : t('auth.sub')}</p>
+              <p className="mt-1.5 text-[14.5px] text-muted-foreground leading-relaxed">{t('auth.sub')}</p>
               <form className="mt-8 space-y-4" onSubmit={submit} noValidate>
                 <div>
                   <label className="label" htmlFor="login-email">
