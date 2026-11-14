@@ -50,6 +50,7 @@ Backend notes:
 - Run it as a single process: state is not shared between workers or serverless instances.
 - Model calls go through `api/app/llm.py`: `LLM_PROVIDER=anthropic` (Messages API, `ANTHROPIC_API_KEY`) or `LLM_PROVIDER=gateway` (Vercel AI Gateway, `AI_GATEWAY_API_KEY`). Output is schema-constrained JSON, responses are cached on disk in `api/.cache/` and every run is capped by `CANONICO_COST_CAP_USD` (default 2.00).
 - `cd api && .venv/bin/python -m app.ingest` re-extracts the 46 documents and rewrites `data/seed/` (facts, topics, conflicts, `meta.json` with tokens and cost). A fact is kept only if its quote is a verbatim span of its document. Hand-curated facts and topics are kept as they are.
+- `POST /ask` finds the topic of a question in three steps: a known phrasing of a topic (the demo questions), then the model router (one small cached call that picks a topic from the list of topics, 8 second timeout), then keyword matching. The model router is skipped without a provider, in offline mode and with `CANONICO_ROUTER=lexical`; any failure falls back to keywords. The answer itself is always composed from the facts without a model.
 - CORS origins come from `CORS_ORIGINS` (comma-separated) and `CORS_ORIGIN_REGEX` (default allows `*.vercel.app` previews).
 - State survives a restart. Call `POST /demo/reset` before a demo to start from the seed.
 - `render.yaml` describes a single-instance web service for Render (build `pip install ./api`, start `uvicorn` from `api/`). It has not been deployed from this repository yet.

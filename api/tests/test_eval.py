@@ -44,3 +44,46 @@ def test_eval_run_uses_the_current_memory(client):
     assert assert_contract(client.get("/eval/runs"), "GET", "/eval/runs")[0]["id"] == run["id"]
     assert client.get("/eval/latest").json()["measured_at"] == done["result"]["measured_at"]
     assert_contract(client.get("/eval/runs/eval-nope"), "GET", "/eval/runs/{run_id}", 404)
+
+
+def test_model_router_picks_the_topic_of_a_free_question(client, monkeypatch):
+    from app import llm
+
+    calls = []
+
+    def fake(model, system, user, schema, meter, name="result", max_tokens=8000, effort="low", timeout=240.0, retries=4):
+        calls.append((name, timeout))
+        meter.settle(0.0, 0.0002, 2000, 20)
+        return {"topics": ["audit-queue-time", "not-a-topic"]}
+
+    monkeypatch.setattr(llm, "available", lambda: True)
+    monkeypatch.setattr(llm, "complete_json", fake)
+    routed = client.post("/ask", json={"question": "Is the Milan office in scope?"}).json()
+    assert routed["status"] == "contested" and [f["id"] for f in routed["conflicts"]] == ["M-201", "M-202", "M-203"]
+    assert calls == [("route", 8.0)] and client.get("/stats").json()["cost"]["spent_usd"] > 0
+
+    calls.clear()
+    assert client.post("/ask", json={"question": "How long does onboarding take?"}).json()["binding"]["id"] == "M-106"
+    assert client.post("/ask", json={"question": "anything", "topic": "onboarding-target"}).json()["binding"]["id"] == "M-106"
+    assert calls == []
+
+    client.patch("/config", json={"offline_mode": True})
+    assert client.post("/ask", json={"question": "Is the Milan office in scope?"}).json()["binding"]["topic"] == "milan-office-scope"
+    assert calls == []
+    client.patch("/config", json={"offline_mode": False})
+
+    def failing(*args, **kwargs):
+        raise llm.LLMError("Model provider is unreachable.")
+
+    monkeypatch.setattr(llm, "complete_json", failing)
+    assert client.post("/ask", json={"question": "Is the Milan office in scope?"}).json()["binding"]["topic"] == "milan-office-scope"
+    monkeypatch.setenv("CANONICO_ROUTER", "lexical")
+    monkeypatch.setattr(llm, "complete_json", fake)
+    assert client.post("/ask", json={"question": "Is the Milan office in scope?"}).json()["binding"]["topic"] == "milan-office-scope"
+    assert calls == []
+
+
+def test_latest_eval_says_which_router_produced_it(client):
+    latest = client.get("/eval/latest").json()
+    assert latest["router"] in ("model", "keywords")
+    assert latest["metrics"]["binding_accuracy_canonico"] > latest["metrics"]["binding_accuracy_plain"]
