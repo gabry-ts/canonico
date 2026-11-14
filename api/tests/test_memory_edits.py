@@ -170,6 +170,19 @@ def test_maintenance_queue_approve_and_dismiss(client):
     assert_contract(client.post("/maintenance/MQ-999/dismiss", json=WHO), "POST", "/maintenance/{item_id}/dismiss", 404)
 
 
+def test_undo_of_an_approved_maintenance_item_restores_fact_and_queue(client):
+    queue = client.get("/maintenance/queue", params={"limit": 500}).json()
+    item = next(m["id"] for m in queue if m["fact"]["id"] == "M-105")
+    client.post(f"/maintenance/{item}/approve", json=WHO)
+    events = client.get("/audit", params={"fact_id": "M-105"}).json()
+    assert [e["action"] for e in events] == ["retire", "approve"]
+    for event in events:
+        assert_contract(client.post(f"/audit/{event['id']}/undo", json={**WHO, "reason": "Approved by mistake."}), "POST", "/audit/{event_id}/undo")
+    assert client.get("/facts/M-105").json()["status"] == "active"
+    pending = {m["fact"]["id"]: m for m in client.get("/maintenance/queue", params={"limit": 500}).json()}
+    assert pending["M-105"]["status"] == "pending"
+
+
 def test_undo_reverts_a_retire_and_refuses_what_cannot_be_undone(client):
     client.post("/facts/M-105/retire", json={"reason": "Replaced.", **WHO})
     event = client.get("/audit", params={"fact_id": "M-105"}).json()[0]

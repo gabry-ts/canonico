@@ -67,7 +67,7 @@ def approve_maintenance_item(item_id: str, body: MaintenanceDecision):
         item = pending_item(state, item_id)
         fact = state["facts"][item["fact_id"]]
         note = body.note or i18n.t(f"maintenance.{item['reason']}", **item.get("params", {}))
-        store.audit(state, "approve", body.actor, fact["id"], note, x={"item": item_id}, bump=False)
+        store.audit(state, "approve", body.actor, fact["id"], note, x={"item": item_id, "undo": {"maintenance": item_id}}, bump=False)
         ops.retire(state, fact, note, body.actor)
         item["status"] = "approved"
         return respond(item_view(state, item))
