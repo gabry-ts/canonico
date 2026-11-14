@@ -1,10 +1,9 @@
-import io
 import json
 
 from fastapi import APIRouter, Query, Request
 from pydantic import ValidationError
 
-from app import inbox, ingest, llm, ops, store
+from app import files, inbox, ingest, ops, store
 from app.http import ApiError, not_found, out
 from app.models import Document, DocumentCreate, DocumentCreated, DocumentDeleted, DocumentVersion, DocumentVersionCreate, DocumentVersionResult, Fact
 from app.store import STORE
@@ -35,15 +34,6 @@ def require_doc(state: dict, doc_id: str) -> dict:
     return doc
 
 
-def _pdf_text(data: bytes) -> str:
-    try:
-        from pypdf import PdfReader
-
-        return "\n\n".join((page.extract_text() or "") for page in PdfReader(io.BytesIO(data)).pages).strip()
-    except Exception as exc:
-        raise ApiError(422, "file: the PDF could not be read.") from exc
-
-
 async def _parse(request: Request) -> DocumentCreate:
     content_type = request.headers.get("content-type", "")
     try:
@@ -54,9 +44,9 @@ async def _parse(request: Request) -> DocumentCreate:
                 raise ApiError(422, "file: field required")
             data = await upload.read()
             name = (getattr(upload, "filename", "") or "").lower()
-            is_pdf = name.endswith(".pdf") or data[:5] == b"%PDF-"
-            text = _pdf_text(data) if is_pdf else data.decode("utf-8", errors="replace")
-            fields = {"title": form.get("title"), "date": form.get("date"), "text": text, "format": "text" if is_pdf or name.endswith(".txt") else "markdown"}
+            text = files.text_of(name, getattr(upload, "content_type", "") or "", data)
+            plain = name.endswith((".pdf", ".docx", ".txt"))
+            fields = {"title": form.get("title"), "date": form.get("date"), "text": text, "format": "text" if plain else "markdown"}
             if form.get("id"):
                 fields["id"] = form.get("id")
             if form.get("ingest") is not None:

@@ -85,7 +85,7 @@ def receive(state: dict, project_id: str, item: dict, *, routed_by: str, rule_id
             return {**seen["result"], "duplicate": True}
     text = (item.get("text") or "").strip()
     if not text:
-        raise ApiError(422, "text: the item has no text. Send `text` or upload the file; fetching `file_url` is not enabled on this server.")
+        raise ApiError(422, "text: the item has no text. Send `text`, a `file_url` or upload the file.")
     tags = list(dict.fromkeys([*(item.get("tags") or []), *((source or {}).get("config", {}).get("default_tags") or [])]))
     date = str(item["date"])[:10]
     name = f"the {item['type']} “{item['title']}”"

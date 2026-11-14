@@ -1,11 +1,10 @@
-import io
 import json
 
 from fastapi import APIRouter, Header, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from app import access, items, ops, settings, sources, store
+from app import access, files, items, ops, settings, sources, store
 from app.http import ApiError, dump, not_found, out
 from app.models import InboundItem, InboundItemResult, ItemDetail, ItemPage, OrgHookConfig, RotateSecretResult, TagCount, TagRule, TagRuleCreate, TagRulePatch, TagRuleTestResult
 from app.store import STORE
@@ -36,30 +35,44 @@ def rule_view(rule: dict) -> dict:
     return {k: rule[k] for k in ("id", "tag", "project_id", "priority")}
 
 
+def _project_hook(state: dict, project_id: str, token: str | None) -> dict:
+    ops.require_project(state, project_id)
+    source = next((s for s in state["sources"].values() if s["project_id"] == project_id and s["type"] == "webhook" and items.token_matches(s["x"].get("secret"), token)), None)
+    if source is None:
+        raise UNAUTHORIZED
+    return source
+
+
 @router.post("/hooks/projects/{project_id}", operation_id="receiveProjectHook", status_code=202, response_model=InboundItemResult)
 def receive_project_hook(project_id: str, body: InboundItem, x_canonico_token: str | None = Header(None)):
+    with STORE.read() as state:
+        _project_hook(state, project_id, x_canonico_token)
+    item = files.with_linked_text(item_dict(body))
     with STORE.write() as state:
-        ops.require_project(state, project_id)
-        source = next((s for s in state["sources"].values() if s["project_id"] == project_id and s["type"] == "webhook" and items.token_matches(s["x"].get("secret"), x_canonico_token)), None)
-        if source is None:
-            raise UNAUTHORIZED
-        result = items.receive(state, project_id, item_dict(body), routed_by="url", rule_id=None, source=source, actor="webhook")
+        source = _project_hook(state, project_id, x_canonico_token)
+        result = items.receive(state, project_id, item, routed_by="url", rule_id=None, source=source, actor="webhook")
     return finish(result)
+
+
+def _org_route(state: dict, item: dict, token: str | None) -> tuple[str, str, str | None]:
+    if not items.token_matches(state["hooks"].get("org"), token):
+        raise UNAUTHORIZED
+    if item.get("project_id"):
+        return ops.require_project(state, item["project_id"])["id"], "project_id", None
+    rule = items.route_by_tags(state, item.get("tags") or [])
+    if rule is None:
+        raise ApiError(422, "No project_id and no tag rule matched the item.", "unroutable")
+    return rule["project_id"], "tag_rule", rule["id"]
 
 
 @router.post("/hooks/org", operation_id="receiveOrgHook", status_code=202, response_model=InboundItemResult)
 def receive_org_hook(body: InboundItem, x_canonico_token: str | None = Header(None)):
+    item = item_dict(body)
+    with STORE.read() as state:
+        _org_route(state, item, x_canonico_token)
+    item = files.with_linked_text(item)
     with STORE.write() as state:
-        if not items.token_matches(state["hooks"].get("org"), x_canonico_token):
-            raise UNAUTHORIZED
-        item = item_dict(body)
-        if item.get("project_id"):
-            project_id, routed_by, rule_id = ops.require_project(state, item["project_id"])["id"], "project_id", None
-        else:
-            rule = items.route_by_tags(state, item.get("tags") or [])
-            if rule is None:
-                raise ApiError(422, "No project_id and no tag rule matched the item.", "unroutable")
-            project_id, routed_by, rule_id = rule["project_id"], "tag_rule", rule["id"]
+        project_id, routed_by, rule_id = _org_route(state, item, x_canonico_token)
         result = items.receive(state, project_id, item, routed_by=routed_by, rule_id=rule_id, source=items.webhook_source(state, project_id), actor="webhook")
     return finish(result)
 
@@ -146,29 +159,6 @@ def delete_tag_rule(rule_id: str, demo_actor: str | None = access.Actor):
     return JSONResponse({"id": rule_id, "deleted": True})
 
 
-def _file_text(filename: str, content_type: str, data: bytes) -> str:
-    """Text of an uploaded file. Plain text and markdown always, PDF and DOCX when a reader is installed."""
-    name = (filename or "").lower()
-    if name.endswith((".txt", ".md", ".markdown")) or content_type.startswith("text/"):
-        return data.decode("utf-8", errors="replace")
-    if name.endswith(".pdf") or content_type == "application/pdf" or data[:5] == b"%PDF-":
-        try:
-            from pypdf import PdfReader
-        except ImportError as exc:
-            raise ApiError(415, "PDF files cannot be read on this server. Send a .txt or .md file, or the text in the JSON body.") from exc
-        try:
-            return "\n\n".join((page.extract_text() or "") for page in PdfReader(io.BytesIO(data)).pages).strip()
-        except Exception as exc:
-            raise ApiError(422, "file: the PDF could not be read.") from exc
-    if name.endswith(".docx"):
-        try:
-            import docx
-        except ImportError as exc:
-            raise ApiError(415, "DOCX files cannot be read on this server. Send a .txt, .md or .pdf file, or the text in the JSON body.") from exc
-        return "\n".join(p.text for p in docx.Document(io.BytesIO(data)).paragraphs)
-    raise ApiError(415, f"Files of type {content_type or name or 'unknown'} are not supported. Send .txt, .md or .pdf.")
-
-
 async def _parse_upload(request: Request) -> dict:
     try:
         if request.headers.get("content-type", "").startswith("multipart/form-data"):
@@ -180,7 +170,7 @@ async def _parse_upload(request: Request) -> dict:
                 fields = json.loads(metadata)
             except ValueError as exc:
                 raise ApiError(422, "metadata: not valid JSON") from exc
-            text = _file_text(getattr(upload, "filename", "") or "", getattr(upload, "content_type", "") or "", await upload.read())
+            text = files.text_of(getattr(upload, "filename", "") or "", getattr(upload, "content_type", "") or "", await upload.read())
             return item_dict(InboundItem.model_validate({**fields, "text": text}))
         try:
             payload = json.loads(await request.body() or b"")
@@ -199,7 +189,7 @@ async def upload_project_item(project_id: str, request: Request, demo_actor: str
         access.allow(state, demo_actor, "ask", project_id)
         member = access.find_member(state, demo_actor) or access.default_member(state)
         actor = (member or {}).get("display_name") or (member or {}).get("name") or "anonymous"
-    item = await _parse_upload(request)
+    item = files.with_linked_text(await _parse_upload(request))
     with STORE.write() as state:
         ops.require_project(state, project_id)
         result = items.receive(state, project_id, item, routed_by="project_id", rule_id=None, source=None, actor=actor)
