@@ -11,7 +11,7 @@
     <script>
       (function () {
         var mode = 'system';
-        try { mode = localStorage.getItem('theme') || 'system'; } catch (e) {}
+        try { mode = localStorage.getItem('canonico-theme') || 'system'; } catch (e) {}
         var dark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.classList.toggle('dark', dark);
       })();
