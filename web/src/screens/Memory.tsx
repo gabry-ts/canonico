@@ -123,7 +123,7 @@ export default function Memory() {
 
   const matches = useMemo(() => {
     const ql = qs.toLowerCase()
-    return all.filter((f) => {
+    const list = all.filter((f) => {
       if (m.topic !== 'all' && f.topic !== m.topic) return false
       if (m.type !== 'all' && f.type !== m.type) return false
       if (m.status !== 'all' && states.get(f.id)?.key !== m.status) return false
@@ -136,6 +136,10 @@ export default function Memory() {
       }
       return true
     })
+    if (!ql) return list
+    // Facts that contain the exact phrase come before looser search matches (sort is stable).
+    const exact = (f: Fact) => ((f.value + ' ' + f.quote).toLowerCase().includes(ql) ? 0 : 1)
+    return list.sort((a, b) => exact(a) - exact(b))
   }, [all, m, qs, states, search.data, tagged.data])
 
   const groups = useMemo(() => {
