@@ -1492,6 +1492,229 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/hooks/projects/{project_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive an inbound item for one project
+         * @description Inbound webhook. Authenticated with the project webhook secret in `X-Canonico-Token`, not with the demo actor. The item is stored as a document, facts are extracted, and the call is audited. Re-sending the same `external_id` returns the first result with `duplicate` true.
+         */
+        post: operations["receiveProjectHook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/hooks/org": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive an inbound item for the organisation
+         * @description Inbound webhook authenticated with the organisation secret in `X-Canonico-Token`. Routing uses `project_id` when given, otherwise the tag rules by ascending priority. When nothing matches the response is 422 with Error code `unroutable`.
+         */
+        post: operations["receiveOrgHook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/hooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the organisation webhook config
+         * @description The secret is never returned here, only its last four characters.
+         */
+        get: operations["getOrgHooks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/hooks/rotate-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate the organisation webhook secret
+         * @description The new secret is returned once, here only. Requires manage_sources.
+         */
+        post: operations["rotateOrgHookSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sources/{source_id}/rotate-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate the secret of a webhook source
+         * @description Only for sources of type `webhook`. The new secret is returned once, here only. Requires manage_sources.
+         */
+        post: operations["rotateSourceSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/tag-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List tag routing rules
+         * @description Rules are evaluated by ascending `priority`, first match wins.
+         */
+        get: operations["listTagRules"];
+        put?: never;
+        /**
+         * Create a tag routing rule
+         * @description Requires manage_sources.
+         */
+        post: operations["createTagRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/tag-rules/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test which project and rule would match a set of tags
+         * @description Dry run, nothing is stored.
+         */
+        post: operations["testTagRules"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/tag-rules/{rule_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a tag routing rule
+         * @description Requires manage_sources.
+         */
+        delete: operations["deleteTagRule"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a tag routing rule
+         * @description Requires manage_sources.
+         */
+        patch: operations["patchTagRule"];
+        trace?: never;
+    };
+    "/projects/{project_id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List items received by a project */
+        get: operations["listProjectItems"];
+        put?: never;
+        /**
+         * Upload an item from the UI
+         * @description Manual upload. Send JSON, or multipart with a `file` and a `metadata` JSON part. Allowed for actors with the ask permission or above. The item is attributed to the actor.
+         */
+        post: operations["uploadProjectItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/items/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one item with a text excerpt */
+        get: operations["getItem"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tags with usage counts */
+        get: operations["listTags"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1549,6 +1772,8 @@ export interface components {
              * @default false
              */
             pinned: boolean;
+            /** @description Free tags. `topic:<topic-id>` forces the topic. */
+            tags?: string[];
         };
         FactPage: {
             items: components["schemas"]["Fact"][];
@@ -1575,7 +1800,9 @@ export interface components {
             /** @description Latest version number of the document's version chain. */
             current_version?: number | null;
             /** @enum {string|null} */
-            source_type?: "documents" | "document_library" | "github" | "mail" | null;
+            source_type?: "documents" | "document_library" | "github" | "mail" | "webhook" | null;
+            /** @description Free tags. `topic:<topic-id>` forces the topic. */
+            tags?: string[];
         };
         Citation: {
             doc_id: string;
@@ -2213,7 +2440,7 @@ export interface components {
             mail_config_override?: components["schemas"]["MailConfig"] | null;
         };
         /** @enum {string} */
-        SourceType: "documents" | "document_library" | "github" | "mail";
+        SourceType: "documents" | "document_library" | "github" | "mail" | "webhook";
         /** @enum {string} */
         SourceStatus: "idle" | "syncing" | "ok" | "error";
         GithubSourceConfig: {
@@ -2241,7 +2468,7 @@ export interface components {
         /** @description No settings, documents are uploaded or ingested directly. */
         DocumentsSourceConfig: Record<string, never>;
         /** @description Shape depends on the source `type`. */
-        SourceConfig: components["schemas"]["GithubSourceConfig"] | components["schemas"]["MailSourceConfig"] | components["schemas"]["DocumentLibraryConfig"] | components["schemas"]["DocumentsSourceConfig"];
+        SourceConfig: components["schemas"]["GithubSourceConfig"] | components["schemas"]["MailSourceConfig"] | components["schemas"]["DocumentLibraryConfig"] | components["schemas"]["DocumentsSourceConfig"] | components["schemas"]["WebhookSourceConfig"];
         Source: {
             id: string;
             project_id: string;
@@ -2526,8 +2753,177 @@ export interface components {
                 first_source: components["schemas"]["SetupStepState"];
             };
         };
+        /** @enum {string} */
+        InboundItemType: "meeting" | "document" | "note" | "ticket";
+        /** @enum {string} */
+        RoutedBy: "url" | "project_id" | "tag_rule";
+        WebhookSourceConfig: {
+            /**
+             * Format: uri
+             * @description Inbound URL for this source.
+             * @example https://api.canonico.app/hooks/projects/proj-clearpath
+             */
+            readonly url?: string;
+            /**
+             * @description Last four characters of the secret. The full secret is only returned by the rotate-secret operations.
+             * @example 9f2a
+             */
+            readonly secret_last4?: string;
+            /** @description Tags added to every item received by this source. */
+            default_tags: string[];
+        };
+        OrgHookConfig: {
+            /**
+             * Format: uri
+             * @example https://api.canonico.app/hooks/org
+             */
+            url: string;
+            /** @example 9f2a */
+            secret_last4: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        RotateSecretResult: {
+            /**
+             * @description The new secret. Shown once, store it now.
+             * @example whsec_x7Kq2demo9f2a
+             */
+            secret: string;
+            /** @example 9f2a */
+            secret_last4: string;
+            /** Format: date-time */
+            rotated_at: string;
+        };
+        /**
+         * @example {
+         *       "type": "meeting",
+         *       "title": "Steering committee 12 Nov",
+         *       "date": "2026-11-12T10:00:00Z",
+         *       "text": "We agreed the onboarding target stays at 3–4 weeks.",
+         *       "tags": [
+         *         "clearpath",
+         *         "topic:onboarding-target"
+         *       ],
+         *       "participants": [
+         *         "Sara Conti",
+         *         "Marco Bianchi"
+         *       ]
+         *     }
+         */
+        InboundItem: {
+            type: components["schemas"]["InboundItemType"];
+            title: string;
+            /** Format: date-time */
+            date: string;
+            /** @description Item body. Optional when `file_url` is given. */
+            text?: string;
+            /**
+             * Format: uri
+             * @description Location of the file to fetch when there is no `text`.
+             */
+            file_url?: string;
+            /** @description Free tags. A tag `topic:<topic-id>` forces the topic, for example `topic:onboarding-target`. */
+            tags?: string[];
+            /** @description People present, for meetings. */
+            participants?: string[];
+            /** @description Idempotency key. The same value is processed once. */
+            external_id?: string;
+            /** @description Id of a document in the library. The item becomes a new version of it. */
+            version_of?: string;
+            /** @description Target project. Only used by the organisation endpoint. */
+            project_id?: string;
+        };
+        InboundItemUpload: {
+            /** Format: binary */
+            file: string;
+            /**
+             * @description JSON of an InboundItem. `text` and `file_url` may be omitted, the file is the body.
+             * @example {"type":"document","title":"Onboarding plan v2","date":"2026-11-13T09:00:00Z","tags":["clearpath"]}
+             */
+            metadata: string;
+        };
+        InboundItemResult: {
+            item_id: string;
+            project_id: string;
+            routed_by: components["schemas"]["RoutedBy"];
+            /** @description Tag rule that routed the item, null otherwise. */
+            rule_id: string | null;
+            document_id: string;
+            facts_created: string[];
+            supersedes_created: components["schemas"]["SupersedeLink"][];
+            audit_event_id: string | null;
+            /** @description True when `external_id` was already processed and nothing new was created. */
+            duplicate: boolean;
+        };
+        Item: {
+            id: string;
+            project_id: string;
+            type: components["schemas"]["InboundItemType"];
+            title: string;
+            /** Format: date-time */
+            date: string;
+            tags?: string[];
+            participants?: string[];
+            source_id: string | null;
+            document_id: string;
+            facts_count: number;
+            /** Format: date-time */
+            received_at: string;
+            routed_by?: components["schemas"]["RoutedBy"];
+        };
+        ItemDetail: components["schemas"]["Item"] & {
+            /** @description First part of the item text. */
+            text_excerpt?: string;
+        };
+        ItemPage: {
+            items: components["schemas"]["Item"][];
+            total: number;
+            limit: number;
+            offset: number;
+        };
+        TagRule: {
+            id: string;
+            tag: string;
+            project_id: string;
+            /** @description Lower runs first. */
+            priority: number;
+        };
+        TagRuleCreate: {
+            tag: string;
+            project_id: string;
+            /** @default 100 */
+            priority: number;
+        };
+        TagRulePatch: {
+            tag?: string;
+            project_id?: string;
+            priority?: number;
+        };
+        TagRuleTestResult: {
+            project_id: string | null;
+            rule_id: string | null;
+        };
+        TagCount: {
+            tag: string;
+            count: number;
+        };
     };
     responses: {
+        /** @description Missing or invalid webhook token. */
+        Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "code": "unauthorized",
+                 *       "message": "Invalid X-Canonico-Token."
+                 *     }
+                 */
+                "application/json": components["schemas"]["Error"];
+            };
+        };
         /** @description Malformed request. */
         BadRequest: {
             headers: {
@@ -2631,6 +3027,16 @@ export interface components {
         /** @example mem-sara-conti */
         MemberId: string;
         /**
+         * @description Webhook secret of the project or of the organisation.
+         * @example whsec_x7Kq2demo9f2a
+         */
+        CanonicoToken: string;
+        /**
+         * @description Only rows carrying this tag.
+         * @example clearpath
+         */
+        TagQuery: string;
+        /**
          * @description Demo only, no real authentication. Member id or name of the acting demo identity.
          * @example mem-sara-conti
          */
@@ -2706,6 +3112,11 @@ export interface operations {
                  * @example proj-clearpath
                  */
                 project_id?: components["parameters"]["ProjectIdQuery"];
+                /**
+                 * @description Only rows carrying this tag.
+                 * @example clearpath
+                 */
+                tag?: components["parameters"]["TagQuery"];
                 /**
                  * @description Topic id.
                  * @example onboarding-target
@@ -3233,10 +3644,15 @@ export interface operations {
                  * @example proj-clearpath
                  */
                 project_id?: components["parameters"]["ProjectIdQuery"];
+                /**
+                 * @description Only rows carrying this tag.
+                 * @example clearpath
+                 */
+                tag?: components["parameters"]["TagQuery"];
                 /** @description Only documents from this source. */
                 source_id?: string;
                 /** @description Only documents from sources of this type. */
-                source_type?: "documents" | "document_library" | "github" | "mail";
+                source_type?: "documents" | "document_library" | "github" | "mail" | "webhook";
             };
             header?: never;
             path?: never;
@@ -4755,6 +5171,11 @@ export interface operations {
                  * @example proj-clearpath
                  */
                 project_id?: components["parameters"]["ProjectIdQuery"];
+                /**
+                 * @description Only rows carrying this tag.
+                 * @example clearpath
+                 */
+                tag?: components["parameters"]["TagQuery"];
                 /** @example onboarding */
                 q: string;
                 kind?: "fact" | "document" | "all";
@@ -7850,6 +8271,647 @@ export interface operations {
                      *     }
                      */
                     "application/json": components["schemas"]["SetupStatus"];
+                };
+            };
+        };
+    };
+    receiveProjectHook: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Webhook secret of the project or of the organisation.
+                 * @example whsec_x7Kq2demo9f2a
+                 */
+                "X-Canonico-Token": components["parameters"]["CanonicoToken"];
+            };
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "type": "meeting",
+                 *       "title": "Steering committee 12 Nov",
+                 *       "date": "2026-11-12T10:00:00Z",
+                 *       "text": "We agreed the onboarding target stays at 3–4 weeks.",
+                 *       "tags": [
+                 *         "clearpath",
+                 *         "topic:onboarding-target"
+                 *       ],
+                 *       "participants": [
+                 *         "Sara Conti",
+                 *         "Marco Bianchi"
+                 *       ],
+                 *       "external_id": "meet-2026-11-12-steerco"
+                 *     }
+                 */
+                "application/json": components["schemas"]["InboundItem"];
+            };
+        };
+        responses: {
+            /** @description Item accepted and processed. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "item_id": "itm-0001",
+                     *       "project_id": "proj-clearpath",
+                     *       "routed_by": "url",
+                     *       "rule_id": null,
+                     *       "document_id": "hooks/meeting-2026-11-12-steering-committee",
+                     *       "facts_created": [
+                     *         "M-201"
+                     *       ],
+                     *       "supersedes_created": [
+                     *         {
+                     *           "fact_id": "M-201",
+                     *           "supersedes": "M-103"
+                     *         }
+                     *       ],
+                     *       "audit_event_id": "A-0301",
+                     *       "duplicate": false
+                     *     }
+                     */
+                    "application/json": components["schemas"]["InboundItemResult"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    receiveOrgHook: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Webhook secret of the project or of the organisation.
+                 * @example whsec_x7Kq2demo9f2a
+                 */
+                "X-Canonico-Token": components["parameters"]["CanonicoToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "type": "meeting",
+                 *       "title": "Steering committee 12 Nov",
+                 *       "date": "2026-11-12T10:00:00Z",
+                 *       "text": "We agreed the onboarding target stays at 3–4 weeks.",
+                 *       "tags": [
+                 *         "clearpath",
+                 *         "topic:onboarding-target"
+                 *       ],
+                 *       "participants": [
+                 *         "Sara Conti",
+                 *         "Marco Bianchi"
+                 *       ]
+                 *     }
+                 */
+                "application/json": components["schemas"]["InboundItem"];
+            };
+        };
+        responses: {
+            /** @description Item accepted and processed. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "item_id": "itm-0001",
+                     *       "project_id": "proj-clearpath",
+                     *       "routed_by": "tag_rule",
+                     *       "rule_id": "tr-001",
+                     *       "document_id": "hooks/meeting-2026-11-12-steering-committee",
+                     *       "facts_created": [
+                     *         "M-201"
+                     *       ],
+                     *       "supersedes_created": [],
+                     *       "audit_event_id": "A-0301",
+                     *       "duplicate": false
+                     *     }
+                     */
+                    "application/json": components["schemas"]["InboundItemResult"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            /** @description Validation failed, or no project could be resolved (`unroutable`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "unroutable",
+                     *       "message": "No project_id and no tag rule matched the item."
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getOrgHooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Organisation webhook config. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "url": "https://api.canonico.app/hooks/org",
+                     *       "secret_last4": "9f2a",
+                     *       "created_at": "2026-11-01T09:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["OrgHookConfig"];
+                };
+            };
+        };
+    };
+    rotateOrgHookSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description New secret. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "secret": "whsec_x7Kq2demo9f2a",
+                     *       "secret_last4": "9f2a",
+                     *       "rotated_at": "2026-11-14T15:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RotateSecretResult"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    rotateSourceSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example src-clearpath-mail */
+                source_id: components["parameters"]["SourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description New secret. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "secret": "whsec_x7Kq2demo9f2a",
+                     *       "secret_last4": "9f2a",
+                     *       "rotated_at": "2026-11-14T15:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RotateSecretResult"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    listTagRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rules. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "id": "tr-001",
+                     *           "tag": "clearpath",
+                     *           "project_id": "proj-clearpath",
+                     *           "priority": 10
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": {
+                        items: components["schemas"]["TagRule"][];
+                    };
+                };
+            };
+        };
+    };
+    createTagRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "tag": "clearpath",
+                 *       "project_id": "proj-clearpath",
+                 *       "priority": 10
+                 *     }
+                 */
+                "application/json": components["schemas"]["TagRuleCreate"];
+            };
+        };
+        responses: {
+            /** @description Created rule. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "tr-001",
+                     *       "tag": "clearpath",
+                     *       "project_id": "proj-clearpath",
+                     *       "priority": 10
+                     *     }
+                     */
+                    "application/json": components["schemas"]["TagRule"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    testTagRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "tags": [
+                 *         "clearpath",
+                 *         "topic:onboarding-target"
+                 *       ]
+                 *     }
+                 */
+                "application/json": {
+                    tags: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Match result. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "project_id": "proj-clearpath",
+                     *       "rule_id": "tr-001"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["TagRuleTestResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    deleteTagRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example rule-001 */
+                rule_id: components["parameters"]["RuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "tr-001",
+                     *       "deleted": true
+                     *     }
+                     */
+                    "application/json": {
+                        id: string;
+                        deleted: boolean;
+                    };
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    patchTagRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example rule-001 */
+                rule_id: components["parameters"]["RuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "priority": 5
+                 *     }
+                 */
+                "application/json": components["schemas"]["TagRulePatch"];
+            };
+        };
+        responses: {
+            /** @description Updated rule. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "tr-001",
+                     *       "tag": "clearpath",
+                     *       "project_id": "proj-clearpath",
+                     *       "priority": 5
+                     *     }
+                     */
+                    "application/json": components["schemas"]["TagRule"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    listProjectItems: {
+        parameters: {
+            query?: {
+                type?: components["schemas"]["InboundItemType"];
+                /**
+                 * @description Only items carrying this tag.
+                 * @example clearpath
+                 */
+                tag?: string;
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page of items, newest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "id": "itm-0001",
+                     *           "project_id": "proj-clearpath",
+                     *           "type": "meeting",
+                     *           "title": "Steering committee 12 Nov",
+                     *           "date": "2026-11-12T10:00:00Z",
+                     *           "tags": [
+                     *             "clearpath",
+                     *             "topic:onboarding-target"
+                     *           ],
+                     *           "participants": [
+                     *             "Sara Conti",
+                     *             "Marco Bianchi"
+                     *           ],
+                     *           "source_id": "src-clearpath-hook",
+                     *           "document_id": "hooks/meeting-2026-11-12-steering-committee",
+                     *           "facts_count": 1,
+                     *           "received_at": "2026-11-12T10:05:00Z",
+                     *           "routed_by": "tag_rule"
+                     *         }
+                     *       ],
+                     *       "total": 1,
+                     *       "limit": 50,
+                     *       "offset": 0
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ItemPage"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    uploadProjectItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "type": "note",
+                 *       "title": "Call with ClearPath ops",
+                 *       "date": "2026-11-13T16:00:00Z",
+                 *       "text": "ClearPath ops confirmed the onboarding target is 3–4 weeks.",
+                 *       "tags": [
+                 *         "clearpath"
+                 *       ]
+                 *     }
+                 */
+                "application/json": components["schemas"]["InboundItem"];
+                "multipart/form-data": components["schemas"]["InboundItemUpload"];
+            };
+        };
+        responses: {
+            /** @description Item accepted and processed. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "item_id": "itm-0002",
+                     *       "project_id": "proj-clearpath",
+                     *       "routed_by": "project_id",
+                     *       "rule_id": null,
+                     *       "document_id": "hooks/note-2026-11-13-call-with-clearpath-ops",
+                     *       "facts_created": [
+                     *         "M-202"
+                     *       ],
+                     *       "supersedes_created": [],
+                     *       "audit_event_id": "A-0302",
+                     *       "duplicate": false
+                     *     }
+                     */
+                    "application/json": components["schemas"]["InboundItemResult"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example itm-0001 */
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The item. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "itm-0001",
+                     *       "project_id": "proj-clearpath",
+                     *       "type": "meeting",
+                     *       "title": "Steering committee 12 Nov",
+                     *       "date": "2026-11-12T10:00:00Z",
+                     *       "tags": [
+                     *         "clearpath",
+                     *         "topic:onboarding-target"
+                     *       ],
+                     *       "participants": [
+                     *         "Sara Conti",
+                     *         "Marco Bianchi"
+                     *       ],
+                     *       "source_id": "src-clearpath-hook",
+                     *       "document_id": "hooks/meeting-2026-11-12-steering-committee",
+                     *       "facts_count": 1,
+                     *       "received_at": "2026-11-12T10:05:00Z",
+                     *       "routed_by": "tag_rule",
+                     *       "text_excerpt": "We agreed the onboarding target stays at 3–4 weeks."
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ItemDetail"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listTags: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tags in use. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "tag": "clearpath",
+                     *         "count": 12
+                     *       },
+                     *       {
+                     *         "tag": "topic:onboarding-target",
+                     *         "count": 4
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["TagCount"][];
                 };
             };
         };

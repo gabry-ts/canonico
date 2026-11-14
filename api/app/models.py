@@ -56,6 +56,9 @@ class Fact(BaseModel):
     pinned: bool | None = Field(
         False, description='True when a person marked this fact as binding.'
     )
+    tags: list[str] | None = Field(
+        None, description='Free tags. `topic:<topic-id>` forces the topic.'
+    )
 
 
 class FactPage(BaseModel):
@@ -70,6 +73,7 @@ class SourceType(Enum):
     document_library = 'document_library'
     github = 'github'
     mail = 'mail'
+    webhook = 'webhook'
     NoneType_None = None
 
 
@@ -93,6 +97,9 @@ class Document(BaseModel):
         None, description="Latest version number of the document's version chain."
     )
     source_type: SourceType | None = None
+    tags: list[str] | None = Field(
+        None, description='Free tags. `topic:<topic-id>` forces the topic.'
+    )
 
 
 class Citation(BaseModel):
@@ -771,6 +778,7 @@ class SourceType1(StrEnum):
     document_library = 'document_library'
     github = 'github'
     mail = 'mail'
+    webhook = 'webhook'
 
 
 class SourceStatus(StrEnum):
@@ -825,47 +833,6 @@ class DocumentLibraryConfig(BaseModel):
 
 class DocumentsSourceConfig(RootModel[dict[str, Any]]):
     root: dict[str, Any] = Field(..., max_length=0)
-
-
-class SourceConfig(
-    RootModel[
-        GithubSourceConfig
-        | MailSourceConfig
-        | DocumentLibraryConfig
-        | DocumentsSourceConfig
-    ]
-):
-    root: (
-        GithubSourceConfig
-        | MailSourceConfig
-        | DocumentLibraryConfig
-        | DocumentsSourceConfig
-    ) = Field(..., description='Shape depends on the source `type`.')
-
-
-class Source(BaseModel):
-    id: str
-    project_id: str
-    type: SourceType1
-    label: str
-    status: SourceStatus
-    last_synced_at: AwareDatetime | None = None
-    items: int | None = Field(
-        None,
-        description='Number of items (documents, issues, messages) ingested from this source.',
-    )
-    config: SourceConfig | None = None
-
-
-class SourceCreate(BaseModel):
-    type: SourceType1
-    label: str
-    config: SourceConfig | None = None
-
-
-class SourcePatch(BaseModel):
-    label: str | None = None
-    config: SourceConfig | None = None
 
 
 class SyncJob(BaseModel):
@@ -1122,6 +1089,163 @@ class SetupStatus(BaseModel):
     steps: Steps
 
 
+class InboundItemType(StrEnum):
+    meeting = 'meeting'
+    document = 'document'
+    note = 'note'
+    ticket = 'ticket'
+
+
+class RoutedBy(StrEnum):
+    url = 'url'
+    project_id = 'project_id'
+    tag_rule = 'tag_rule'
+
+
+class WebhookSourceConfig(BaseModel):
+    url: AnyUrl | None = Field(
+        None,
+        description='Inbound URL for this source.',
+        examples=['https://api.canonico.app/hooks/projects/proj-clearpath'],
+    )
+    secret_last4: str | None = Field(
+        None,
+        description='Last four characters of the secret. The full secret is only returned by the rotate-secret operations.',
+        examples=['9f2a'],
+    )
+    default_tags: list[str] = Field(
+        ..., description='Tags added to every item received by this source.'
+    )
+
+
+class OrgHookConfig(BaseModel):
+    url: AnyUrl = Field(..., examples=['https://api.canonico.app/hooks/org'])
+    secret_last4: str = Field(..., examples=['9f2a'])
+    created_at: AwareDatetime
+
+
+class RotateSecretResult(BaseModel):
+    secret: str = Field(
+        ...,
+        description='The new secret. Shown once, store it now.',
+        examples=['whsec_x7Kq2demo9f2a'],
+    )
+    secret_last4: str = Field(..., examples=['9f2a'])
+    rotated_at: AwareDatetime
+
+
+class InboundItem(BaseModel):
+    type: InboundItemType
+    title: str
+    date: AwareDatetime
+    text: str | None = Field(
+        None, description='Item body. Optional when `file_url` is given.'
+    )
+    file_url: AnyUrl | None = Field(
+        None, description='Location of the file to fetch when there is no `text`.'
+    )
+    tags: list[str] | None = Field(
+        None,
+        description='Free tags. A tag `topic:<topic-id>` forces the topic, for example `topic:onboarding-target`.',
+    )
+    participants: list[str] | None = Field(
+        None, description='People present, for meetings.'
+    )
+    external_id: str | None = Field(
+        None, description='Idempotency key. The same value is processed once.'
+    )
+    version_of: str | None = Field(
+        None,
+        description='Id of a document in the library. The item becomes a new version of it.',
+    )
+    project_id: str | None = Field(
+        None, description='Target project. Only used by the organisation endpoint.'
+    )
+
+
+class InboundItemUpload(BaseModel):
+    file: bytes
+    metadata: str = Field(
+        ...,
+        description='JSON of an InboundItem. `text` and `file_url` may be omitted, the file is the body.',
+        examples=[
+            '{"type":"document","title":"Onboarding plan v2","date":"2026-11-13T09:00:00Z","tags":["clearpath"]}'
+        ],
+    )
+
+
+class InboundItemResult(BaseModel):
+    item_id: str
+    project_id: str
+    routed_by: RoutedBy
+    rule_id: str | None = Field(
+        ..., description='Tag rule that routed the item, null otherwise.'
+    )
+    document_id: str
+    facts_created: list[str]
+    supersedes_created: list[SupersedeLink]
+    audit_event_id: str | None
+    duplicate: bool = Field(
+        ...,
+        description='True when `external_id` was already processed and nothing new was created.',
+    )
+
+
+class Item(BaseModel):
+    id: str
+    project_id: str
+    type: InboundItemType
+    title: str
+    date: AwareDatetime
+    tags: list[str] | None = None
+    participants: list[str] | None = None
+    source_id: str | None
+    document_id: str
+    facts_count: int = Field(..., ge=0)
+    received_at: AwareDatetime
+    routed_by: RoutedBy | None = None
+
+
+class ItemDetail(Item):
+    text_excerpt: str | None = Field(None, description='First part of the item text.')
+
+
+class ItemPage(BaseModel):
+    items: list[Item]
+    total: int
+    limit: int
+    offset: int
+
+
+class TagRule(BaseModel):
+    id: str
+    tag: str
+    project_id: str
+    priority: int = Field(..., description='Lower runs first.')
+
+
+class TagRuleCreate(BaseModel):
+    tag: str
+    project_id: str
+    priority: int | None = 100
+
+
+class TagRulePatch(BaseModel):
+    tag: str | None = None
+    project_id: str | None = None
+    priority: int | None = None
+
+
+class TagRuleTestResult(BaseModel):
+    project_id: str | None
+    rule_id: str | None
+
+
+class TagCount(BaseModel):
+    tag: str
+    count: int = Field(..., ge=0)
+
+
 class AuditEvent(BaseModel):
     project_id: str | None = Field(
         None, description='Owning project. Null or absent means organisation scope.'
@@ -1208,3 +1332,46 @@ class ExportBundle(BaseModel):
     facts: list[Fact]
     audit: list[AuditEvent]
     answers: list[AnswerRecord]
+
+
+class SourceConfig(
+    RootModel[
+        GithubSourceConfig
+        | MailSourceConfig
+        | DocumentLibraryConfig
+        | DocumentsSourceConfig
+        | WebhookSourceConfig
+    ]
+):
+    root: (
+        GithubSourceConfig
+        | MailSourceConfig
+        | DocumentLibraryConfig
+        | DocumentsSourceConfig
+        | WebhookSourceConfig
+    ) = Field(..., description='Shape depends on the source `type`.')
+
+
+class Source(BaseModel):
+    id: str
+    project_id: str
+    type: SourceType1
+    label: str
+    status: SourceStatus
+    last_synced_at: AwareDatetime | None = None
+    items: int | None = Field(
+        None,
+        description='Number of items (documents, issues, messages) ingested from this source.',
+    )
+    config: SourceConfig | None = None
+
+
+class SourceCreate(BaseModel):
+    type: SourceType1
+    label: str
+    config: SourceConfig | None = None
+
+
+class SourcePatch(BaseModel):
+    label: str | None = None
+    config: SourceConfig | None = None
