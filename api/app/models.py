@@ -9,6 +9,11 @@ from typing import Any
 from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, RootModel
 
 
+class Locale(StrEnum):
+    en = 'en'
+    it = 'it'
+
+
 class FactType(StrEnum):
     DECISION = 'DECISION'
     CONSTRAINT = 'CONSTRAINT'
@@ -131,6 +136,7 @@ class TopicChain(BaseModel):
 
 
 class AskRequest(BaseModel):
+    locale: Locale | None = None
     project_id: str | None = Field(
         None,
         description='Restrict the answer to one project. Absence of project_id means organisation scope (all projects).',
@@ -155,6 +161,16 @@ class Status(StrEnum):
 
 
 class AskResponse(BaseModel):
+    locale: Locale | None = None
+    changed_because_code: str | None = Field(
+        None,
+        description='Machine code of the first change behind `changed_because`: fact_retired, fact_restored, fact_corrected, fact_pinned, fact_unpinned, fact_linked, fact_unlinked, conflict_resolved, fact_added, fact_reclassified, change_undone, document_deleted, topic_merged, source_replaced, source_stated, memory_changed.',
+        examples=['fact_retired'],
+    )
+    changed_because_params: dict[str, Any] | None = Field(
+        None,
+        description='Parameters of that change, language neutral. `actor`, `fact_id`, `value` and `source` of the fact, `changes` (how many changes are summarised) and, for changes that came from a source, `source_kind`, `replaced_fact_id` and `replaced_value`.',
+    )
     question: str
     status: Status
     answer: str = Field(..., description='Plain-language sentence.')
@@ -356,6 +372,11 @@ class Status4(StrEnum):
 
 
 class MaintenanceItem(BaseModel):
+    detail_code: MaintenanceReason | None = None
+    detail_params: dict[str, Any] | None = Field(
+        None,
+        description='Values used in `detail`, for example `by` and `date` of the superseding fact.',
+    )
     id: str = Field(..., examples=['MQ-001'])
     fact: Fact
     reason: MaintenanceReason
@@ -508,6 +529,9 @@ class Diff(BaseModel):
 
 
 class ReplayDiff(BaseModel):
+    locale: Locale | None = None
+    changed_because_code: str | None = None
+    changed_because_params: dict[str, Any] | None = None
     answer_id: str
     new_answer_id: str
     changed: bool
@@ -1247,6 +1271,17 @@ class TagCount(BaseModel):
 
 
 class AuditEvent(BaseModel):
+    summary: str | None = Field(
+        None,
+        description='The event in plain words, in the locale of the request. `reason` stays as it was written.',
+    )
+    summary_code: str | None = Field(
+        None,
+        description='Machine code of the summary, same vocabulary as `changed_because_code` plus email_received, item_received, version_uploaded, demo_reset and memory_seeded.',
+    )
+    summary_params: dict[str, Any] | None = Field(
+        None, description='Parameters of the summary, language neutral.'
+    )
     project_id: str | None = Field(
         None, description='Owning project. Null or absent means organisation scope.'
     )
@@ -1295,6 +1330,7 @@ class Conflict(BaseModel):
 
 
 class Stats(BaseModel):
+    locale: Locale | None = None
     documents: int
     topics: int
     facts_total: int
