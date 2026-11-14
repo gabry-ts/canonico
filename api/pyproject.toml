@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["datamodel-code-generator"]
+dev = ["datamodel-code-generator", "pytest", "jsonschema", "pyyaml", "rfc3339-validator"]
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -18,3 +18,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["app", "app.routers"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

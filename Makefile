@@ -1,4 +1,4 @@
-.PHONY: install api web mock types
+.PHONY: install api web mock types test
 
 install:
 	uv venv api/.venv 2>/dev/null || python3 -m venv api/.venv
@@ -7,6 +7,9 @@ install:
 
 api:
 	cd api && .venv/bin/uvicorn app.main:app --reload --port 8000
+
+test:
+	cd api && .venv/bin/python -m pytest -q
 
 web:
 	cd web && npm run dev
