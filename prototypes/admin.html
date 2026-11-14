@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canonico · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  try { const t = localStorage.getItem('canonico-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Geist', 'system-ui', 'sans-serif'], mono: ['"Geist Mono"', 'ui-monospace', 'monospace'] },
+        colors: {
+          background: 'hsl(var(--background))', foreground: 'hsl(var(--foreground))',
+          card: 'hsl(var(--card))',
+          muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
+          border: 'hsl(var(--border))', ring: 'hsl(var(--ring))',
+          primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))', soft: 'hsl(var(--primary-soft))' },
+          secondary: { DEFAULT: 'hsl(var(--secondary))', foreground: 'hsl(var(--secondary-foreground))' },
+        }
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    color-scheme: light;
+    --background: 0 0% 99%;
+    --foreground: 220 13% 13%;
+    --card: 0 0% 100%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 46%;
+    --border: 220 13% 91%;
+    --ring: 229 72% 46%;
+    --primary: 229 72% 46%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 229 85% 97%;
+    --secondary: 220 13% 18%;
+    --secondary-foreground: 0 0% 100%;
+    --ok: 152 38% 45%;
+    --radius: 0.75rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --background: 224 14% 8%;
+      --foreground: 220 13% 92%;
+      --card: 224 13% 10.5%;
+      --muted: 223 12% 15.5%;
+      --muted-foreground: 220 8% 63%;
+      --border: 223 12% 19%;
+      --ring: 229 85% 68%;
+      --primary: 229 85% 68%;
+      --primary-foreground: 224 30% 10%;
+      --primary-soft: 229 35% 17%;
+      --secondary: 220 13% 90%;
+      --secondary-foreground: 224 14% 10%;
+      --ok: 152 40% 52%;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --background: 224 14% 8%;
+    --foreground: 220 13% 92%;
+    --card: 224 13% 10.5%;
+    --muted: 223 12% 15.5%;
+    --muted-foreground: 220 8% 63%;
+    --border: 223 12% 19%;
+    --ring: 229 85% 68%;
+    --primary: 229 85% 68%;
+    --primary-foreground: 224 30% 10%;
+    --primary-soft: 229 35% 17%;
+    --secondary: 220 13% 90%;
+    --secondary-foreground: 224 14% 10%;
+    --ok: 152 40% 52%;
+  }
+  html, body { background: hsl(var(--background)); color: hsl(var(--foreground)); }
+  body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .mono { font-family: 'Geist Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .hair { border-color: hsl(var(--border)); }
+  .card { background: hsl(var(--card)); border-radius: 16px; box-shadow: 0 0 0 1px hsl(var(--border)); padding: 28px; min-width: 0; }
+  .card h2 { font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+  .card .lead { font-size: 14px; color: hsl(var(--muted-foreground)); margin-top: 4px; }
+  .sub { font-size: 13px; font-weight: 500; color: hsl(var(--muted-foreground)); margin-bottom: 10px; }
+  .action { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 1px solid hsl(var(--border)); }
+  .action:first-of-type { border-top: 0; }
+  .action .t { font-size: 15px; font-weight: 500; }
+  .action .d { font-size: 14px; color: hsl(var(--muted-foreground)); margin-top: 2px; }
+  .ep { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: hsl(var(--muted-foreground)); white-space: nowrap; }
+  .eps { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 6px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; font-size: 14px; font-weight: 500; height: 36px; padding: 0 14px; border-radius: 10px; transition: background .15s, opacity .15s; white-space: nowrap; flex-shrink: 0; }
+  .btn.dark { background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
+  .btn.dark:hover { opacity: .9; }
+  .btn.line { box-shadow: inset 0 0 0 1px hsl(var(--border)); color: hsl(var(--foreground)); }
+  .btn.line:hover { background: hsl(var(--muted)); }
+  .btn.ghost { color: hsl(var(--muted-foreground)); }
+  .btn.ghost:hover { background: hsl(var(--muted)); color: hsl(var(--foreground)); }
+  .btn.sm { height: 30px; padding: 0 10px; font-size: 13px; border-radius: 8px; }
+  .btn.lg { height: 44px; padding: 0 20px; font-size: 15px; border-radius: 12px; }
+  .btn[disabled] { opacity: .45; pointer-events: none; }
+  .badge { font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 999px; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); white-space: nowrap; line-height: 18px; }
+  .badge.binding { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+  .badge.strong { background: transparent; color: hsl(var(--foreground)); box-shadow: inset 0 0 0 1px hsl(var(--foreground) / .35); }
+  .result { margin-top: 10px; border-radius: 10px; background: hsl(var(--muted)); padding: 10px 14px; font-size: 13px; line-height: 1.6; }
+  .result .k { color: hsl(var(--muted-foreground)); }
+  .result.empty { background: transparent; box-shadow: inset 0 0 0 1px hsl(var(--border)); color: hsl(var(--muted-foreground)); }
+  .fade-in { animation: fi .3s ease-out both; } @keyframes fi { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .field { display: block; }
+  .field span { display: block; font-size: 13px; color: hsl(var(--muted-foreground)); margin-bottom: 4px; }
+  .input { width: 100%; height: 36px; padding: 0 12px; border-radius: 10px; background: hsl(var(--background)); box-shadow: inset 0 0 0 1px hsl(var(--border)); font-size: 14px; outline: none; color: hsl(var(--foreground)); }
+  textarea.input { height: auto; padding: 8px 12px; resize: vertical; line-height: 1.5; }
+  .input:focus { box-shadow: inset 0 0 0 1.5px hsl(var(--ring)); }
+  select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, hsl(var(--muted-foreground)) 50%), linear-gradient(135deg, hsl(var(--muted-foreground)) 50%, transparent 50%); background-position: calc(100% - 16px) 15px, calc(100% - 11px) 15px; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 28px; }
+  .switch { width: 30px; height: 18px; border-radius: 999px; background: hsl(var(--border)); position: relative; transition: background .15s; flex-shrink: 0; }
+  .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 999px; background: white; box-shadow: 0 1px 2px rgb(0 0 0 / .2); transition: transform .15s; }
+  .switch.on { background: hsl(var(--secondary)); } .switch.on::after { transform: translateX(12px); }
+  :root[data-theme="dark"] .switch.on::after { background: hsl(var(--card)); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .switch.on::after { background: hsl(var(--card)); } }
+  .dot { width: 6px; height: 6px; border-radius: 999px; background: hsl(var(--ok)); flex-shrink: 0; display: inline-block; }
+  .dot.idle { background: transparent; box-shadow: inset 0 0 0 1.2px hsl(var(--muted-foreground) / .7); }
+  .dot.syncing { background: hsl(var(--muted-foreground)); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .tbl { width: 100%; font-size: 14px; border-collapse: collapse; }
+  .tbl th { text-align: left; font-size: 12px; font-weight: 500; color: hsl(var(--muted-foreground)); padding: 0 8px 8px 0; }
+  .tbl td { padding: 9px 8px 9px 0; border-top: 1px solid hsl(var(--border)); vertical-align: middle; }
+  .seg { display: inline-flex; padding: 2px; border-radius: 9px; background: hsl(var(--muted)); }
+  .seg button { font-size: 12px; height: 24px; padding: 0 9px; border-radius: 7px; color: hsl(var(--muted-foreground)); }
+  .seg button.on { background: hsl(var(--card)); color: hsl(var(--foreground)); box-shadow: 0 0 0 1px hsl(var(--border)); }
+  .meter { height: 6px; border-radius: 999px; background: hsl(var(--muted)); overflow: hidden; }
+  .meter > i { display: block; height: 100%; background: hsl(var(--foreground) / .7); border-radius: 999px; transition: width .4s; }
+  .confirm { margin-top: 12px; border-radius: 12px; box-shadow: inset 0 0 0 1px hsl(var(--foreground) / .25); padding: 14px 16px; font-size: 14px; }
+  .linkish { color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-color: hsl(var(--border)); text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
+  .linkish:hover { color: hsl(var(--foreground)); text-decoration-color: hsl(var(--foreground) / .5); }
+  .struck { color: hsl(var(--muted-foreground)); text-decoration: line-through; }
+</style>
+</head>
+<body class="text-[16px] min-h-screen flex flex-col">
+
+<!-- prototype strip -->
+<div class="h-9 shrink-0 flex items-center justify-between px-4 sm:px-6 border-b hair text-[13px] gap-3">
+  <a href="b2.html" class="text-muted-foreground hover:text-foreground truncate">← Back to app (b2.html)</a>
+  <span class="text-[12px] text-muted-foreground bg-muted rounded-full px-2.5 py-0.5 shrink-0">Static prototype</span>
+</div>
+
+<header class="shrink-0 px-4 sm:px-6 py-4 flex items-center gap-4 border-b hair">
+  <div class="flex items-center gap-2.5 min-w-0">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true" class="shrink-0"><rect x="1.5" y="1.5" width="13" height="13" rx="3.5" stroke="hsl(var(--primary))" stroke-width="1.4"/><path d="M5 8h6M8 5v6" stroke="hsl(var(--primary))" stroke-width="1.4"/></svg>
+    <span class="font-semibold text-[17px] tracking-tight shrink-0">Canonico</span>
+    <span class="text-muted-foreground text-[15px] truncate">Admin · Demo control</span>
+  </div>
+  <div class="flex-1"></div>
+  <span class="hidden md:inline text-[13px] text-muted-foreground">Meridian Labs</span>
+  <div class="seg" id="themeSeg" role="group" aria-label="Theme">
+    <button data-theme-set="light">Light</button><button data-theme-set="dark">Dark</button><button data-theme-set="system">System</button>
+  </div>
+</header>
+
+<main class="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 py-8 grid grid-cols-1 min-[1100px]:grid-cols-2 gap-6 items-start">
+
+  <div class="flex flex-col gap-6 min-w-0">
+    <!-- 1. demo state -->
+    <section class="card" id="sec-state"></section>
+    <!-- 2. mail -->
+    <section class="card" id="sec-mail"></section>
+    <!-- 5. projects & sources -->
+    <section class="card" id="sec-projects"></section>
+  </div>
+  <div class="flex flex-col gap-6 min-w-0">
+    <!-- 6. audit (kept near the top so undo is one glance away) -->
+    <section class="card" id="sec-audit"></section>
+    <!-- 3. document library -->
+    <section class="card" id="sec-library"></section>
+    <!-- 4. github -->
+    <section class="card" id="sec-github"></section>
+    <!-- 7. members (demo actor) -->
+    <section class="card" id="sec-members"></section>
+  </div>
+</main>
+
+<footer class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-1 px-4 sm:px-6 py-3 border-t hair text-[12px] text-muted-foreground">
+  <span>Data: OIDA Benchmark Corpora (Bottino, Ferrero, Dosio, Beneventano), CC BY 4.0</span>
+  <span>Sample data. Every action is scripted in the page, nothing is sent to a backend. Ids, times, rules, emails and library versions are sample UI state.</span>
+</footer>
+
+<div id="toast" class="fixed bottom-14 right-4 sm:right-6 max-w-[calc(100vw-32px)] text-[14px] bg-secondary text-secondary-foreground rounded-xl px-4 py-2.5 shadow-lg opacity-0 pointer-events-none transition-opacity"></div>
+
+<script>
+const PROJECTS = { 'proj-clearpath': 'ClearPath engagement', 'proj-internal': 'Internal' };
+const SRC_LABEL = { documents:'Documents', document_library:'Document library', github:'GitHub', mail:'Mail' };
+const ORG_MAIL = { mode:'imap_mock', imap_host:'mock.meridianlabs.org', imap_user:'brain@meridianlabs.org', inbound_address:'brain@inbound.meridianlabs.org', poll_interval_s:60 };
+const DEMO_EMAIL = { from:'client@meridianlabs.org', to:'brain@inbound.meridianlabs.org', subject:'Onboarding target confirmed', text:'Following our call, we confirm the onboarding target at 5 weeks.' };
+
+function seed() {
+  return {
+    lastReset: '09:00:00',
+    health: { status:'ok', version:'0.1.0', at:'09:00:02' },
+    offline: false,
+    cost: { spent: 2.31, cap: 10 },
+    confirmReset: false,
+    results: {},
+    demoEmailSent: false,
+    imapQueue: [{ from:'pm@meridianlabs.org', subject:'Weekly status, week 46', text:'Rollout of the new onboarding checklist starts Monday.' }],
+    onboardingBinding: 'M-106',
+    factSeq: 301,
+    projectMail: {
+      'proj-clearpath': null,
+      'proj-internal': { mode:'webhook', imap_host:null, imap_user:null, inbound_address:'internal@inbound.meridianlabs.org', poll_interval_s:60 }
+    },
+    mailProject: 'proj-clearpath',
+    rules: [
+      { id:'rule-001', match_type:'sender_domain', value:'@meridianlabs.org', project_id:'proj-clearpath', priority:10 },
+      { id:'rule-002', match_type:'sender_domain', value:'@team.meridianlabs.org', project_id:'proj-internal', priority:20 }
+    ],
+    ruleSeq: 3, addingRule: false, confirmDeleteRule: null,
+    docs: [
+      { id:'library/onboarding-standard', title:'Onboarding standard', project:'proj-clearpath', versions:[
+        { version:1, version_label:'v1', uploaded_at:'2025-12-04', facts_superseded:[], fact:'L-400', claim:'4 weeks to autonomy' },
+        { version:2, version_label:'v2', uploaded_at:'2026-01-12', facts_superseded:['L-400'], fact:'L-401', claim:'3–4 weeks to autonomy' }
+      ]},
+      { id:'library/audit-handbook', title:'Audit handbook', project:'proj-clearpath', versions:[
+        { version:1, version_label:'v1', uploaded_at:'2025-10-20', facts_superseded:[], fact:'L-410', claim:'Two-step review before release' }
+      ]}
+    ],
+    openDoc: 'library/onboarding-standard',
+    github: { source_id:'src-internal-gh', repo:'gabry-ts/canonico', include:['issues','readme'], status:'ok', last:'09:00:40', items:12, synced:false, job:null, jobSeq:1 },
+    sources: [
+      { id:'src-clearpath-docs', project_id:'proj-clearpath', type:'documents', label:'ClearPath documents', status:'ok', items:46, last:'09:00:20' },
+      { id:'src-clearpath-library', project_id:'proj-clearpath', type:'document_library', label:'ClearPath library', status:'ok', items:2, last:'09:00:20' },
+      { id:'src-clearpath-mail', project_id:'proj-clearpath', type:'mail', label:'ClearPath mailbox', status:'ok', items:0, last:'09:00:30' },
+      { id:'src-internal-docs', project_id:'proj-internal', type:'documents', label:'Internal documents', status:'ok', items:9, last:'09:00:35' },
+      { id:'src-internal-gh', project_id:'proj-internal', type:'github', label:'gabry-ts/canonico', status:'ok', items:12, last:'09:00:40' }
+    ],
+    addingSource: false, newSourceType: 'github', actor: 'mem-sara-conti',
+    audit: [
+      { id:'a-0042', at:'09:14:12', actor:'gabriele', action:'retire', fact_id:'M-103', reason:'Replaced by the final report, which sets 3–4 weeks.' },
+      { id:'a-0041', at:'09:10:03', actor:'emanuele', action:'pin', fact_id:'M-106', reason:'Binding SLA for the demo question.' },
+      { id:'a-0040', at:'09:06:41', actor:'gabriele', action:'resolve', fact_id:'M-201', reason:'Kept as contested, no measurement exists.' },
+      { id:'a-0039', at:'09:03:10', actor:'system', action:'classify', fact_id:'M-206', reason:null },
+      { id:'a-0038', at:'09:02:55', actor:'emanuele', action:'patch', fact_id:'M-104', reason:'Marked as estimate, not instrumented.' },
+      { id:'a-0037', at:'09:01:20', actor:'system', action:'ingest', fact_id:null, reason:'46 documents, ClearPath engagement.' },
+      { id:'a-0036', at:'09:00:40', actor:'system', action:'ingest', fact_id:null, reason:'gabry-ts/canonico, issues and README.' },
+      { id:'a-0035', at:'09:00:20', actor:'system', action:'ingest', fact_id:null, reason:'Document library, 2 documents.' }
+    ],
+    auditSeq: 43, undone: {}
+  };
+}
+let S = seed();
+
+const now = () => new Date().toTimeString().slice(0, 8);
+function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+const ep = (e) => `<span class="ep">→ ${e}</span>`;
+const eps = (...list) => `<div class="eps">${list.map(ep).join('')}</div>`;
+const kv = (k, v) => `<div><span class="k">${k}</span> <span class="mono">${v}</span></div>`;
+function result(key, empty) {
+  const r = S.results[key];
+  if (!r) return empty ? `<div class="result empty">${empty}</div>` : '';
+  return `<div class="result fade-in"><div class="flex items-center justify-between gap-3 mb-1"><span class="mono text-[12px] text-muted-foreground">${esc(r.ep)}</span><span class="mono text-[12px] text-muted-foreground">${r.at} · ${r.code}</span></div>${r.html}</div>`;
+}
+function setResult(key, epStr, code, html) { S.results[key] = { ep: epStr, code, html, at: now() }; }
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = '1'; clearTimeout(toast.h); toast.h = setTimeout(() => t.style.opacity = '0', 2400); }
+function addAudit(action, fact_id, reason, actor) { const e = { id:'a-' + String(S.auditSeq++).padStart(4,'0'), at: now(), actor: actor || 'presenter', action, fact_id, reason }; S.audit.unshift(e); return e; }
+const srcOf = (id) => S.sources.find(s => s.id === id);
+
+/* ---------- 1. demo state ---------- */
+function renderState() {
+  const pct = Math.min(100, S.cost.spent / S.cost.cap * 100);
+  document.getElementById('sec-state').innerHTML = `
+    <h2>Demo state</h2>
+    <p class="lead">Restore the seeded memory before the show, check the service and keep an eye on spend.</p>
+
+    <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+      <button class="btn dark lg" data-act="reset-ask" data-endpoint="POST /demo/reset">Reset demo</button>
+      <div class="min-w-0">
+        <div class="text-[14px]">Last reset <span class="mono">${S.lastReset}</span></div>
+        <div class="text-[13px] text-muted-foreground">q01 with conflict R1.1 active, q02 contested. No model calls.</div>
+      </div>
+    </div>
+    <div class="mt-2">${ep('POST /demo/reset')}</div>
+    ${S.confirmReset ? `<div class="confirm fade-in">
+      <div class="font-medium">Reset to the seeded state?</div>
+      <div class="text-muted-foreground mt-1">Memory, audit log, stored answers and eval runs are replaced. Changes made on this page are lost.</div>
+      <div class="mt-3 flex justify-end gap-2"><button class="btn ghost sm" data-act="reset-cancel">Cancel</button><button class="btn dark sm" data-act="reset-confirm" data-endpoint="POST /demo/reset">Confirm reset</button></div>
+    </div>` : ''}
+    ${result('reset')}
+
+    <div class="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div>
+        <div class="sub">Health</div>
+        <div class="flex items-center gap-2 text-[15px]"><span class="dot"></span><span class="font-medium">${S.health.status}</span><span class="mono text-[13px] text-muted-foreground">v${S.health.version}</span></div>
+        <div class="text-[13px] text-muted-foreground mt-1">Checked at <span class="mono">${S.health.at}</span></div>
+        <div class="mt-3 flex items-center gap-3"><button class="btn line sm" data-act="health" data-endpoint="GET /health">Check now</button>${ep('GET /health')}</div>
+      </div>
+      <div>
+        <div class="sub">Provider and models</div>
+        <div class="text-[14px] leading-relaxed">
+          <div class="flex justify-between gap-3"><span class="text-muted-foreground">Provider</span><span class="mono">${S.offline ? 'offline (replay)' : 'hosted'}</span></div>
+          <div class="flex justify-between gap-3"><span class="text-muted-foreground">Extraction</span><span class="mono">model-extract-v1</span></div>
+          <div class="flex justify-between gap-3"><span class="text-muted-foreground">Answer</span><span class="mono">model-answer-v1</span></div>
+        </div>
+        <div class="eps">${ep('GET /config')}</div>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <div class="flex items-baseline justify-between gap-3 text-[14px]"><span class="sub !mb-0">Cost spent</span><span><span class="mono font-medium">$${S.cost.spent.toFixed(2)}</span> <span class="text-muted-foreground">of <span class="mono">$${S.cost.cap.toFixed(2)}</span> cap</span></span></div>
+      <div class="meter mt-2"><i style="width:${pct}%"></i></div>
+      <div class="eps">${ep('GET /stats')}</div>
+    </div>
+
+    <div class="action mt-5 !border-t hair">
+      <div class="min-w-0">
+        <div class="t">Offline demo mode</div>
+        <div class="d">Answers come from stored runs, no model calls and no spend. Use it if the network drops.</div>
+        <div class="eps">${ep('PATCH /config')}</div>
+      </div>
+      <button class="switch ${S.offline ? 'on' : ''} mt-1" role="switch" aria-checked="${S.offline}" aria-label="Offline demo mode" data-act="offline" data-endpoint="PATCH /config"></button>
+    </div>
+    ${result('config')}`;
+}
+
+/* ---------- 2. mail ---------- */
+function route(from) {
+  const dom = '@' + String(from).split('@')[1];
+  const r = [...S.rules].sort((a, b) => a.priority - b.priority).find(x => x.match_type === 'sender_domain' && dom.toLowerCase() === x.value.toLowerCase());
+  return r ? { matched:true, rule:r } : { matched:false };
+}
+function processEmail(mail) {
+  const m = route(mail.from);
+  if (!m.matched) return { routed:null };
+  const fid = 'E-' + (S.factSeq++);
+  const out = { routed:m.rule.project_id, rule:m.rule.id, facts:[fid], supersedes:[] };
+  if (m.rule.project_id === 'proj-clearpath' && /\b\d+\s*weeks?\b/i.test(mail.text) && /onboarding/i.test(mail.subject + ' ' + mail.text)) {
+    out.supersedes.push({ fact_id:fid, supersedes:S.onboardingBinding });
+    S.onboardingBinding = fid;
+  }
+  const mailSrc = S.sources.find(s => s.project_id === m.rule.project_id && s.type === 'mail');
+  if (mailSrc) { mailSrc.items++; mailSrc.last = now(); }
+  addAudit('create', fid, `Email from ${mail.from}: “${mail.subject}”`, 'system');
+  out.supersedes.forEach(x => addAudit('supersede', x.fact_id, `${x.fact_id} supersedes ${x.supersedes}`, 'system'));
+  out.event = S.audit[0].id;
+  return out;
+}
+function routingHtml(r) {
+  if (!r.routed) return `<div>No rule matched. The email is kept in the organisation inbox and no facts are created.</div>`;
+  return `<div class="grid grid-cols-[110px_1fr] gap-x-3">
+    <span class="k">Project</span><span>${PROJECTS[r.routed]} <span class="mono text-muted-foreground">${r.routed}</span></span>
+    <span class="k">Rule</span><span class="mono">${r.rule}</span>
+    <span class="k">Facts created</span><span class="mono">${r.facts.join(', ')}</span>
+    <span class="k">Superseded</span><span>${r.supersedes.length ? r.supersedes.map(x => `<span class="mono struck">${x.supersedes}</span> <span class="text-muted-foreground">→</span> <span class="badge binding">${x.fact_id} binding</span>`).join(' ') : '<span class="text-muted-foreground">none</span>'}</span>
+  </div>`;
+}
+function renderMail() {
+  const pm = S.projectMail[S.mailProject];
+  const eff = pm || ORG_MAIL;
+  const rules = [...S.rules].sort((a, b) => a.priority - b.priority);
+  document.getElementById('sec-mail').innerHTML = `
+    <h2>Mail</h2>
+    <p class="lead">Emails are routed to a project by sender domain. The config lives on the organisation and a project can override it.</p>
+
+    <div class="mt-5">
+      <div class="action">
+        <div class="min-w-0"><div class="t">Send demo email</div><div class="d">From client@meridianlabs.org, “Onboarding target confirmed”, 5 weeks. Supersedes 3–4 weeks in ClearPath.</div>${eps('POST /demo/send-email')}</div>
+        <button class="btn dark" data-act="demo-email" data-endpoint="POST /demo/send-email">Send</button>
+      </div>
+      ${result('demoEmail')}
+      <div class="action">
+        <div class="min-w-0"><div class="t">Poll IMAP mailbox</div><div class="d">Reads the mocked inbox of the organisation and routes anything new.</div>${eps('POST /mail/poll')}</div>
+        <button class="btn line" data-act="poll" data-endpoint="POST /mail/poll">Poll now</button>
+      </div>
+      ${result('poll')}
+    </div>
+
+    <div class="mt-6 pt-5 border-t hair">
+      <div class="sub">Compose an email</div>
+      <form id="composeForm" class="grid grid-cols-1 sm:grid-cols-2 gap-3" data-endpoint="POST /mail/inbound">
+        <label class="field"><span>From</span><input class="input mono" name="from" value="${esc(DEMO_EMAIL.from)}"></label>
+        <label class="field"><span>To</span><input class="input mono" name="to" value="${esc(DEMO_EMAIL.to)}"></label>
+        <label class="field sm:col-span-2"><span>Subject</span><input class="input" name="subject" value="Onboarding target, final check"></label>
+        <label class="field sm:col-span-2"><span>Text</span><textarea class="input" name="text" rows="2">We keep the onboarding target at 5 weeks, as agreed.</textarea></label>
+        <div class="sm:col-span-2 flex items-center justify-between gap-3"><span>${ep('POST /mail/inbound')}</span><button class="btn dark" type="submit">Send to webhook</button></div>
+      </form>
+      ${result('inbound')}
+    </div>
+
+    <div class="mt-6 pt-5 border-t hair">
+      <div class="flex items-center justify-between gap-3 mb-2"><div class="sub !mb-0">Organisation mail config</div><span class="badge">Meridian Labs</span></div>
+      <div class="grid grid-cols-[130px_1fr] gap-x-3 gap-y-1 text-[14px]">
+        <span class="text-muted-foreground">Mode</span><span class="mono">${ORG_MAIL.mode}</span>
+        <span class="text-muted-foreground">IMAP host</span><span class="mono truncate">${ORG_MAIL.imap_host}</span>
+        <span class="text-muted-foreground">IMAP user</span><span class="mono truncate">${ORG_MAIL.imap_user}</span>
+        <span class="text-muted-foreground">Inbound address</span><span class="mono truncate">${ORG_MAIL.inbound_address}</span>
+        <span class="text-muted-foreground">Poll interval</span><span class="mono">${ORG_MAIL.poll_interval_s} s</span>
+      </div>
+      <div class="mt-3 flex items-center justify-between gap-3"><span class="eps !mt-0">${ep('GET /org/mail')}${ep('PUT /org/mail')}</span><button class="btn line sm" data-act="org-mail-save" data-endpoint="PUT /org/mail">Save</button></div>
+      ${result('orgMail')}
+    </div>
+
+    <div class="mt-6 pt-5 border-t hair">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <div class="sub !mb-0">Project override</div>
+        <select class="input !w-auto !h-8 text-[13px]" data-act="mail-project">${Object.entries(PROJECTS).map(([id, n]) => `<option value="${id}" ${id === S.mailProject ? 'selected' : ''}>${n}</option>`).join('')}</select>
+      </div>
+      <div class="flex items-center gap-2 text-[14px]">${pm ? '<span class="badge strong">overridden</span>' : '<span class="badge">inherited</span>'}<span class="text-muted-foreground">${pm ? 'This project uses its own mail config.' : 'This project uses the organisation config.'}</span></div>
+      <div class="mt-3 grid grid-cols-[130px_1fr] gap-x-3 gap-y-1 text-[14px]">
+        <span class="text-muted-foreground">Mode</span><span class="mono">${eff.mode}</span>
+        <span class="text-muted-foreground">Inbound address</span><span class="mono truncate">${eff.inbound_address}</span>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <span class="eps !mt-0">${ep(`GET /projects/{project_id}/mail`)}${ep(pm ? 'DELETE /projects/{project_id}/mail' : 'PUT /projects/{project_id}/mail')}</span>
+        ${pm ? `<button class="btn line sm" data-act="mail-inherit" data-endpoint="DELETE /projects/{project_id}/mail">Back to inherited</button>`
+             : `<button class="btn line sm" data-act="mail-override" data-endpoint="PUT /projects/{project_id}/mail">Override with webhook</button>`}
+      </div>
+      ${result('projMail')}
+    </div>
+
+    <div class="mt-6 pt-5 border-t hair">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div class="sub !mb-0">Routing rules <span class="font-normal">· first match wins, lowest priority first</span></div>
+        <button class="btn ghost sm" data-act="rule-add-open">Add rule</button>
+      </div>
+      <div class="overflow-x-auto">
+      <table class="tbl">
+        <thead><tr><th>Sender domain</th><th>Project</th><th class="w-[84px]">Priority</th><th></th></tr></thead>
+        <tbody>${rules.map(r => `<tr>
+          <td><span class="mono">${esc(r.value)}</span> <span class="mono text-[12px] text-muted-foreground ml-1">${r.id}</span></td>
+          <td>${PROJECTS[r.project_id]}</td>
+          <td><input class="input mono !h-8 !w-[68px] text-[13px]" type="number" value="${r.priority}" data-rule-prio="${r.id}" data-endpoint="PATCH /org/mail/rules/{rule_id}" aria-label="Priority of ${esc(r.value)}"></td>
+          <td class="text-right">${S.confirmDeleteRule === r.id
+            ? `<span class="inline-flex gap-1"><button class="btn ghost sm" data-act="rule-del-cancel">Keep</button><button class="btn dark sm" data-act="rule-del" data-id="${r.id}" data-endpoint="DELETE /org/mail/rules/{rule_id}">Delete</button></span>`
+            : `<button class="btn ghost sm" data-act="rule-del-ask" data-id="${r.id}">Delete</button>`}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+      </div>
+      ${S.addingRule ? `<form id="ruleForm" class="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr_80px_auto] gap-2 items-end fade-in" data-endpoint="POST /org/mail/rules">
+        <label class="field"><span>Sender domain</span><input class="input mono" name="value" value="@clearpath.example"></label>
+        <label class="field"><span>Project</span><select class="input" name="project_id">${Object.entries(PROJECTS).map(([id, n]) => `<option value="${id}">${n}</option>`).join('')}</select></label>
+        <label class="field"><span>Priority</span><input class="input mono" name="priority" type="number" value="30"></label>
+        <div class="flex gap-1"><button type="button" class="btn ghost" data-act="rule-add-cancel">Cancel</button><button class="btn dark" type="submit">Add</button></div>
+      </form>` : ''}
+      <div class="eps">${ep('GET /org/mail/rules')}${ep('POST /org/mail/rules')}${ep('PATCH /org/mail/rules/{rule_id}')}${ep('DELETE /org/mail/rules/{rule_id}')}</div>
+      ${result('rules')}
+
+      <form id="testForm" class="mt-5 flex flex-col sm:flex-row sm:items-end gap-2" data-endpoint="POST /org/mail/rules/test">
+        <label class="field flex-1"><span>Test an email, dry run</span><input class="input mono" name="from" value="ops@team.meridianlabs.org" aria-label="Sender address"></label>
+        <button class="btn line" type="submit">Test</button>
+      </form>
+      <div class="eps">${ep('POST /org/mail/rules/test')}</div>
+      ${result('ruleTest')}
+    </div>`;
+}
+
+/* ---------- 3. document library ---------- */
+function renderLibrary() {
+  const ob = S.docs[0];
+  const hasV3 = ob.versions.length >= 3;
+  document.getElementById('sec-library').innerHTML = `
+    <h2>Document library</h2>
+    <p class="lead">Versioned documents of ClearPath engagement. A new version supersedes the facts it restates with a different value.</p>
+    <div class="mt-2 text-[13px] text-muted-foreground">Provider <span class="mono">local_mock</span>. SharePoint and Google Drive: coming soon.</div>
+
+    <div class="mt-5">
+      ${S.docs.map(d => {
+        const cur = d.versions[d.versions.length - 1];
+        const open = S.openDoc === d.id;
+        return `<div class="py-3 border-t hair first:border-t-0">
+          <button class="w-full flex items-center justify-between gap-3 text-left" data-act="doc-toggle" data-id="${d.id}" data-endpoint="GET /documents/{doc_id}/versions">
+            <span class="min-w-0"><span class="text-[15px] font-medium">${d.title}</span> <span class="mono text-[12px] text-muted-foreground ml-1">${d.id}</span></span>
+            <span class="flex items-center gap-2 shrink-0"><span class="badge">${d.versions.length} version${d.versions.length > 1 ? 's' : ''}</span><span class="text-muted-foreground text-[13px]">${open ? 'Hide' : 'History'}</span></span>
+          </button>
+          <div class="text-[14px] text-muted-foreground mt-1">Current ${cur.version_label}: ${cur.claim}</div>
+          ${open ? `<ol class="mt-3 space-y-2 fade-in">${[...d.versions].reverse().map((v, i) => `<li class="flex items-start gap-3 text-[14px]">
+            <span class="mono w-7 shrink-0 ${i === 0 ? 'font-medium' : 'text-muted-foreground'}">${v.version_label}</span>
+            <span class="min-w-0 flex-1"><span class="${i === 0 ? '' : 'struck'}">${v.claim}</span> <span class="mono text-[12px] text-muted-foreground">${v.fact}</span>
+              ${v.facts_superseded.length ? `<span class="block text-[13px] text-muted-foreground">supersedes <span class="mono">${v.facts_superseded.join(', ')}</span></span>` : ''}</span>
+            <span class="mono text-[12px] text-muted-foreground shrink-0">${v.uploaded_at}</span>
+          </li>`).join('')}</ol><div class="eps">${ep('GET /documents/{doc_id}/versions')}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="action !border-t hair mt-2">
+      <div class="min-w-0"><div class="t">Upload new version</div><div class="d">Onboarding standard v3, canned text “Onboarding target: 5 weeks to autonomy.”</div>${eps('POST /documents/{doc_id}/versions')}</div>
+      <button class="btn dark" data-act="upload-v3" data-endpoint="POST /documents/{doc_id}/versions" ${hasV3 ? 'disabled' : ''}>${hasV3 ? 'v3 uploaded' : 'Upload v3'}</button>
+    </div>
+    ${result('library')}`;
+}
+
+/* ---------- 4. github ---------- */
+function renderGithub() {
+  const g = S.github, j = g.job;
+  document.getElementById('sec-github').innerHTML = `
+    <h2>GitHub</h2>
+    <p class="lead">Public repositories only, no keys. Issues and README become facts of the project.</p>
+    <div class="mt-5 flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2"><span class="dot ${g.status === 'syncing' ? 'syncing' : ''}"></span><a class="text-[15px] font-medium hover:underline truncate" href="https://github.com/${g.repo}" target="_blank" rel="noopener">${g.repo}</a></div>
+        <div class="text-[13px] text-muted-foreground mt-1">Internal · <span class="mono">${g.source_id}</span> · ${g.include.join(' and ')} · ${g.items} items · last sync <span class="mono">${g.last}</span></div>
+      </div>
+      <button class="btn dark" data-act="gh-sync" data-endpoint="POST /sources/{source_id}/sync" ${g.status === 'syncing' ? 'disabled' : ''}>${g.status === 'syncing' ? 'Syncing…' : 'Sync now'}</button>
+    </div>
+    <div class="eps">${ep('POST /sources/{source_id}/sync')}${ep('GET /sync-jobs/{job_id}')}</div>
+    ${j ? `<div class="result fade-in">
+      <div class="flex items-center justify-between gap-3 mb-1"><span class="mono text-[12px] text-muted-foreground">GET /sync-jobs/${j.id}</span><span class="mono text-[12px] text-muted-foreground">${j.at}</span></div>
+      <div class="grid grid-cols-[110px_1fr] gap-x-3">
+        <span class="k">Status</span><span class="mono">${j.status}</span>
+        <span class="k">Items added</span><span class="mono">${j.items_added}</span>
+        <span class="k">Facts created</span><span class="mono">${j.facts_created}</span>
+        <span class="k">Cost</span><span class="mono">$${j.cost.toFixed(3)}</span>
+      </div></div>` : '<div class="result empty">No sync started from this page yet.</div>'}`;
+}
+
+/* ---------- 5. projects & sources ---------- */
+function renderProjects() {
+  document.getElementById('sec-projects').innerHTML = `
+    <div class="flex items-start justify-between gap-3">
+      <div><h2>Projects and sources</h2><p class="lead">Each project sees only its own sources. The organisation sees all of them.</p></div>
+      <button class="btn ghost sm" data-act="src-add-open">Add source</button>
+    </div>
+    <div class="eps">${ep('GET /projects')}${ep('GET /projects/{project_id}/sources')}</div>
+    ${Object.entries(PROJECTS).map(([pid, name]) => `<div class="mt-5">
+      <div class="flex items-baseline justify-between gap-3"><span class="text-[15px] font-medium">${name}</span><span class="mono text-[12px] text-muted-foreground">${pid}</span></div>
+      <ul class="mt-2">${S.sources.filter(s => s.project_id === pid).map(s => `<li class="flex items-center gap-3 py-2 border-t hair text-[14px]">
+        <span class="dot ${s.status === 'idle' ? 'idle' : s.status === 'syncing' ? 'syncing' : ''}"></span>
+        <span class="w-[128px] shrink-0">${SRC_LABEL[s.type]}</span>
+        <span class="flex-1 min-w-0 truncate text-muted-foreground">${esc(s.label)}</span>
+        <span class="mono text-[12px] text-muted-foreground shrink-0 hidden sm:inline">${s.items} · ${s.status}${s.last ? ' · ' + s.last : ''}</span>
+      </li>`).join('')}</ul>
+    </div>`).join('')}
+    ${S.addingSource ? `<form id="sourceForm" class="mt-5 pt-5 border-t hair grid grid-cols-1 sm:grid-cols-2 gap-3 fade-in" data-endpoint="POST /projects/{project_id}/sources">
+      <label class="field"><span>Project</span><select class="input" name="project_id">${Object.entries(PROJECTS).map(([id, n]) => `<option value="${id}">${n}</option>`).join('')}</select></label>
+      <label class="field"><span>Type</span><select class="input" name="type" data-act="src-type">${Object.entries(SRC_LABEL).map(([t, n]) => `<option value="${t}" ${t === S.newSourceType ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label class="field"><span>Label</span><input class="input" name="label" value="${S.newSourceType === 'github' ? 'ClearPath tooling repo' : 'New ' + SRC_LABEL[S.newSourceType].toLowerCase()}"></label>
+      <label class="field"><span>${{ github:'Public repo URL', mail:'Mailbox', document_library:'Root path', documents:'Settings' }[S.newSourceType]}</span>
+        <input class="input mono" name="config" ${S.newSourceType === 'documents' ? 'disabled value="none, upload directly"' : `value="${{ github:'https://github.com/gabry-ts/canonico', mail:'brain@meridianlabs.org', document_library:'/corpus/org-consulting-clearpath' }[S.newSourceType]}"`}></label>
+      <div class="sm:col-span-2 flex items-center justify-between gap-3"><span>${ep('POST /projects/{project_id}/sources')}</span><span class="flex gap-1"><button type="button" class="btn ghost" data-act="src-add-cancel">Cancel</button><button class="btn dark" type="submit">Add source</button></span></div>
+    </form>` : ''}
+    ${result('sources')}`;
+}
+
+/* ---------- 7. members ---------- */
+const MEMBERS = [
+  { id:'mem-giulia-ferri', name:'Giulia Ferri', email:'giulia.ferri@meridianlabs.example', org_role:'owner', status:'active' },
+  { id:'mem-sara-conti', name:'Sara Conti', email:'sara.conti@meridianlabs.example', org_role:'editor', status:'active' },
+  { id:'mem-luca-bassi', name:'Luca Bassi', email:'luca.bassi@meridianlabs.example', org_role:'viewer', status:'invited' }
+];
+const ROLES = {
+  viewer: ['ask','read_facts'],
+  editor: ['ask','read_facts','retire_fact','restore_fact','correct_fact','resolve_conflict'],
+  admin: ['ask','read_facts','retire_fact','restore_fact','correct_fact','resolve_conflict','manage_sources','manage_mail','manage_members'],
+  owner: ['ask','read_facts','retire_fact','restore_fact','correct_fact','resolve_conflict','manage_sources','manage_mail','manage_members']
+};
+function renderMembers() {
+  const me = MEMBERS.find(m => m.id === S.actor);
+  document.getElementById('sec-members').innerHTML = `
+    <h2>Members</h2>
+    <p class="lead">Demo only, no real sign-in. Pick who the app acts as to show what each role can do.</p>
+    <div class="eps">${ep('GET /org/members')}${ep('GET /roles')}${ep('GET /me')}</div>
+    <ul class="mt-4">${MEMBERS.map(m => `<li class="flex items-center gap-3 py-2.5 border-t hair first:border-t-0 text-[14px]">
+      <span class="min-w-0 flex-1"><span class="font-medium">${m.name}</span> <span class="text-muted-foreground">· ${m.org_role}</span>${m.status === 'invited' ? ' <span class="badge ml-1">invited</span>' : ''}
+        <span class="block mono text-[12px] text-muted-foreground truncate">${m.email}</span></span>
+      ${m.id === S.actor ? '<span class="badge strong shrink-0">acting as</span>' : `<button class="btn ghost sm shrink-0" data-act="act-as" data-id="${m.id}" data-endpoint="GET /me">Act as</button>`}
+    </li>`).join('')}</ul>
+    <div class="result"><div class="flex items-center justify-between gap-3 mb-1"><span class="mono text-[12px] text-muted-foreground">GET /me · X-Demo-Actor: ${me.id}</span></div>
+      <div><span class="k">Role</span> <span class="mono">${me.org_role}</span></div>
+      <div class="mt-1 flex flex-wrap gap-1">${ROLES[me.org_role].map(p => `<span class="mono text-[12px] px-1.5 rounded bg-card">${p}</span>`).join('')}</div>
+    </div>`;
+}
+
+/* ---------- 6. audit ---------- */
+const UNDOABLE = (e) => !['ingest','classify','undo'].includes(e.action) && !S.undone[e.id];
+function renderAudit() {
+  document.getElementById('sec-audit').innerHTML = `
+    <div class="flex items-start justify-between gap-3">
+      <div><h2>Recent audit</h2><p class="lead">Last 8 changes, newest first. Undo writes a new event, nothing is deleted.</p></div>
+      <button class="btn ghost sm" data-act="audit-refresh" data-endpoint="GET /audit">Refresh</button>
+    </div>
+    <div class="eps">${ep('GET /audit?limit=8')}${ep('POST /audit/{event_id}/undo')}</div>
+    <ul class="mt-4">${S.audit.slice(0, 8).map(e => `<li class="flex items-start gap-3 py-2.5 border-t hair first:border-t-0 text-[14px] fade-in">
+      <span class="mono text-[12px] text-muted-foreground w-[62px] shrink-0 pt-0.5">${e.at}</span>
+      <span class="min-w-0 flex-1">
+        <span class="font-medium">${e.action}</span>${e.fact_id ? ` <span class="mono text-[13px]">${e.fact_id}</span>` : ''} <span class="text-muted-foreground">· ${e.actor}</span>
+        ${e.reason ? `<span class="block text-muted-foreground truncate ${S.undone[e.id] ? 'line-through' : ''}">${esc(e.reason)}</span>` : ''}
+      </span>
+      ${S.undone[e.id] ? `<span class="badge shrink-0">undone</span>` : UNDOABLE(e) ? `<button class="btn ghost sm shrink-0" data-act="undo" data-id="${e.id}" data-endpoint="POST /audit/{event_id}/undo">Undo</button>` : '<span class="w-[52px] shrink-0"></span>'}
+    </li>`).join('')}</ul>
+    ${result('audit')}`;
+}
+
+function render() { renderState(); renderAudit(); renderMail(); renderLibrary(); renderGithub(); renderProjects(); renderMembers(); renderTheme(); }
+
+/* ---------- actions ---------- */
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-act]'); if (!el || el.tagName === 'SELECT') return;
+  const a = el.dataset.act;
+  if (a === 'reset-ask') S.confirmReset = true;
+  else if (a === 'reset-cancel') S.confirmReset = false;
+  else if (a === 'reset-confirm') {
+    const t = now(); S = seed(); S.lastReset = t; S.health.at = t;
+    setResult('reset', 'POST /demo/reset', '200', `<div>Seeded state restored. <span class="mono">312</span> facts active, <span class="mono">2</span> open conflicts, <span class="mono">22</span> open questions, cost <span class="mono">$0.00</span>.</div>`);
+    S.cost.spent = 0; toast('Demo reset');
+  }
+  else if (a === 'health') { S.health.at = now(); toast('Service is up · v0.1.0'); }
+  else if (a === 'offline') {
+    S.offline = !S.offline;
+    setResult('config', 'PATCH /config', '200', `<div>Offline demo mode <span class="font-medium">${S.offline ? 'on' : 'off'}</span>. ${S.offline ? 'Answers are replayed from stored runs, no spend.' : 'Live model calls, spend counts against the cap.'}</div>`);
+    toast(S.offline ? 'Offline demo mode on' : 'Offline demo mode off');
+  }
+  else if (a === 'demo-email') {
+    if (S.demoEmailSent) setResult('demoEmail', 'POST /demo/send-email', '409', `<div>Already sent in this demo state. Reset the demo to send it again.</div>`);
+    else { S.demoEmailSent = true; const r = processEmail(DEMO_EMAIL); S.cost.spent += .004; setResult('demoEmail', 'POST /demo/send-email', '200', routingHtml(r)); toast('Demo email routed to ClearPath engagement'); }
+  }
+  else if (a === 'poll') {
+    const q = S.imapQueue.splice(0);
+    const rs = q.map(processEmail);
+    setResult('poll', 'POST /mail/poll', '200', q.length ? `<div class="mb-1"><span class="k">Polled</span> <span class="mono">${q.length}</span> · “${esc(q[0].subject)}” from <span class="mono">${q[0].from}</span></div>${routingHtml(rs[0])}` : `<div><span class="k">Polled</span> <span class="mono">0</span> · no new messages.</div>`);
+    toast(q.length ? `${q.length} new message routed` : 'No new messages');
+  }
+  else if (a === 'org-mail-save') { setResult('orgMail', 'PUT /org/mail', '200', `<div>Saved. Inherited by every project without an override. The password is write-only and never returned.</div>`); }
+  else if (a === 'mail-override') {
+    const pid = S.mailProject; S.projectMail[pid] = { mode:'webhook', inbound_address: pid.replace('proj-', '') + '@inbound.meridianlabs.org', poll_interval_s:60 };
+    setResult('projMail', `PUT /projects/${pid}/mail`, '200', `<div>${PROJECTS[pid]} now <span class="font-medium">overrides</span> the organisation config: <span class="mono">webhook</span>.</div>`);
+  }
+  else if (a === 'mail-inherit') {
+    const pid = S.mailProject; S.projectMail[pid] = null;
+    setResult('projMail', `DELETE /projects/${pid}/mail`, '200', `<div>Override removed. ${PROJECTS[pid]} <span class="font-medium">inherits</span> <span class="mono">${ORG_MAIL.mode}</span> from the organisation.</div>`);
+  }
+  else if (a === 'rule-add-open') S.addingRule = true;
+  else if (a === 'rule-add-cancel') S.addingRule = false;
+  else if (a === 'rule-del-ask') S.confirmDeleteRule = el.dataset.id;
+  else if (a === 'rule-del-cancel') S.confirmDeleteRule = null;
+  else if (a === 'rule-del') {
+    const id = el.dataset.id; S.rules = S.rules.filter(r => r.id !== id); S.confirmDeleteRule = null;
+    setResult('rules', `DELETE /org/mail/rules/${id}`, '200', `<div><span class="mono">${id}</span> deleted.</div>`);
+  }
+  else if (a === 'doc-toggle') S.openDoc = S.openDoc === el.dataset.id ? null : el.dataset.id;
+  else if (a === 'upload-v3') {
+    const d = S.docs[0];
+    d.versions.push({ version:3, version_label:'v3', uploaded_at:'2026-11-14', facts_superseded:['L-401'], fact:'L-402', claim:'5 weeks to autonomy' });
+    S.openDoc = d.id; const lib = srcOf('src-clearpath-library'); lib.last = now();
+    addAudit('supersede', 'L-402', 'Onboarding standard v3 supersedes v2.', 'system'); S.cost.spent += .006;
+    setResult('library', 'POST /documents/library%2Fonboarding-standard/versions', '201', `<div class="grid grid-cols-[110px_1fr] gap-x-3">
+      <span class="k">Version</span><span class="mono">v3</span>
+      <span class="k">Facts created</span><span class="mono">L-402</span>
+      <span class="k">Superseded</span><span><span class="mono struck">L-401</span> <span class="text-muted-foreground">3–4 weeks →</span> <span class="badge binding">L-402 binding</span></span></div>`);
+    toast('v3 uploaded, L-401 superseded');
+  }
+  else if (a === 'gh-sync') {
+    const g = S.github; const first = !g.synced;
+    const id = 'sync-' + String(g.jobSeq++).padStart(4, '0');
+    g.status = 'syncing'; srcOf(g.source_id).status = 'syncing';
+    g.job = { id, status:'queued', items_added:0, facts_created:0, cost:0, at: now() };
+    setTimeout(() => { g.job = { ...g.job, status:'running', at: now() }; renderGithub(); }, 700);
+    setTimeout(() => {
+      const add = first ? 3 : 0, facts = first ? 5 : 0;
+      g.synced = true; g.status = 'ok'; g.items += add; g.last = now();
+      const s = srcOf(g.source_id); s.status = 'ok'; s.items = g.items; s.last = g.last;
+      g.job = { id, status:'done', items_added:add, facts_created:facts, cost: first ? .012 : 0, at: now() };
+      S.cost.spent += g.job.cost;
+      if (first) addAudit('ingest', null, `gabry-ts/canonico: ${add} new issues, ${facts} facts.`, 'system');
+      render(); toast(first ? `Sync done · ${add} items, ${facts} facts` : 'Sync done · nothing new');
+    }, 2000);
+  }
+  else if (a === 'src-add-open') S.addingSource = true;
+  else if (a === 'src-add-cancel') S.addingSource = false;
+  else if (a === 'audit-refresh') toast('Audit refreshed');
+  else if (a === 'act-as') { S.actor = el.dataset.id; toast('Acting as ' + MEMBERS.find(m => m.id === S.actor).name); }
+  else if (a === 'undo') {
+    const e = S.audit.find(x => x.id === el.dataset.id); S.undone[e.id] = true;
+    if (e.action === 'supersede' && e.fact_id && e.fact_id.startsWith('E-')) S.onboardingBinding = 'M-106';
+    const u = addAudit('undo', e.fact_id, `Undo of ${e.id} (${e.action}).`);
+    setResult('audit', `POST /audit/${e.id}/undo`, '200', `<div>Reverted <span class="mono">${e.id}</span> ${e.action}${e.fact_id ? ' on <span class="mono">' + e.fact_id + '</span>' : ''}. New event <span class="mono">${u.id}</span>.</div>`);
+    toast(`${e.action} undone`);
+  }
+  else if (el.dataset.themeSet) return;
+  render();
+});
+
+document.addEventListener('change', (ev) => {
+  const t = ev.target;
+  if (t.dataset.act === 'mail-project') { S.mailProject = t.value; delete S.results.projMail; render(); }
+  else if (t.dataset.act === 'src-type') { S.newSourceType = t.value; renderProjects(); }
+  else if (t.dataset.rulePrio) {
+    const r = S.rules.find(x => x.id === t.dataset.rulePrio); r.priority = +t.value || 0;
+    setResult('rules', `PATCH /org/mail/rules/${r.id}`, '200', `<div><span class="mono">${r.id}</span> priority set to <span class="mono">${r.priority}</span>.</div>`); renderMail();
+  }
+});
+
+document.addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const f = ev.target, d = Object.fromEntries(new FormData(f));
+  if (f.id === 'composeForm') {
+    const r = processEmail({ from:d.from, to:d.to, subject:d.subject, text:d.text });
+    S.cost.spent += r.routed ? .004 : 0;
+    setResult('inbound', 'POST /mail/inbound', r.routed ? '200' : '200 · unrouted', routingHtml(r));
+    toast(r.routed ? `Routed to ${PROJECTS[r.routed]}` : 'No rule matched');
+  } else if (f.id === 'testForm') {
+    const m = route(d.from);
+    setResult('ruleTest', 'POST /org/mail/rules/test', '200', m.matched
+      ? `<div><span class="k">Matched</span> <span class="mono">${m.rule.id}</span> → ${PROJECTS[m.rule.project_id]} <span class="text-muted-foreground">· sender_domain ${esc(m.rule.value)} · nothing stored</span></div>`
+      : `<div><span class="k">No match</span> for <span class="mono">${esc(d.from)}</span>. Nothing stored.</div>`);
+  } else if (f.id === 'ruleForm') {
+    const v = d.value.startsWith('@') ? d.value : '@' + d.value;
+    const id = 'rule-' + String(S.ruleSeq++).padStart(3, '0');
+    S.rules.push({ id, match_type:'sender_domain', value:v, project_id:d.project_id, priority:+d.priority || 0 }); S.addingRule = false;
+    setResult('rules', 'POST /org/mail/rules', '201', `<div>Created <span class="mono">${id}</span>: <span class="mono">${esc(v)}</span> → ${PROJECTS[d.project_id]}.</div>`);
+  } else if (f.id === 'sourceForm') {
+    const type = S.newSourceType, pid = d.project_id;
+    const id = 'src-' + pid.replace('proj-', '') + '-' + { github:'gh', mail:'mail', document_library:'library', documents:'docs' }[type] + '-' + (S.sources.length + 1);
+    S.sources.push({ id, project_id:pid, type, label:d.label, status:'idle', items:0, last:null }); S.addingSource = false;
+    setResult('sources', `POST /projects/${pid}/sources`, '201', `<div>Added <span class="mono">${id}</span> to ${PROJECTS[pid]}, status <span class="mono">idle</span>. Run a sync to fill it.</div>`);
+  }
+  render();
+});
+
+/* ---------- theme ---------- */
+function getTheme() { try { return localStorage.getItem('canonico-theme') || 'system'; } catch (e) { return document.documentElement.dataset.theme || 'system'; } }
+function setTheme(t) {
+  if (t === 'system') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  try { t === 'system' ? localStorage.removeItem('canonico-theme') : localStorage.setItem('canonico-theme', t); } catch (e) {}
+  renderTheme();
+}
+function renderTheme() { const cur = document.documentElement.dataset.theme || 'system'; document.querySelectorAll('[data-theme-set]').forEach(b => b.classList.toggle('on', b.dataset.themeSet === cur)); }
+document.getElementById('themeSeg').addEventListener('click', (e) => { const b = e.target.closest('[data-theme-set]'); if (b) setTheme(b.dataset.themeSet); });
+
+render();
+</script>
+</body>
+</html>
