@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app import http, settings
 from app.routers import (
     admin,
     answers,
@@ -20,7 +21,7 @@ from app.routers import (
     topics,
 )
 
-VERSION = "0.1.0"
+VERSION = settings.VERSION
 
 
 class Health(BaseModel):
@@ -32,10 +33,12 @@ app = FastAPI(title="Canonico API", version=VERSION)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=settings.cors_origins(),
+    allow_origin_regex=settings.cors_origin_regex(),
     allow_methods=["*"],
     allow_headers=["*"],
 )
+http.install(app)
 
 
 @app.get("/health", operation_id="getHealth", response_model=Health)
