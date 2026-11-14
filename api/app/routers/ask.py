@@ -20,7 +20,8 @@ def router_enabled(state: dict) -> bool:
 
 
 def plan_route(body: AskRequest) -> list[str] | None:
-    """Ask the model which topic a free question is about. None means: use the keyword matcher.
+    """Ask the model which topic a free question is about. None means: use the keyword matcher,
+    an empty list means the model abstained and the answer is no_answer.
 
     Skipped when the request names a topic or uses a known phrasing, so the demo question never waits.
     The call runs outside the store lock with a short timeout, any failure falls back to keywords.
@@ -44,7 +45,7 @@ def plan_route(body: AskRequest) -> list[str] | None:
     if meter.spent:
         with STORE.write() as state:
             state["cost_spent"] = round(state.get("cost_spent", 0.0) + meter.spent, 6)
-    return route or None
+    return route
 
 
 def run_ask(state: dict, body: AskRequest, route: list[str] | None = None) -> dict:
