@@ -2,7 +2,7 @@
   "corpus": "org-consulting-clearpath",
   "metrics": {
     "ndcg_at_10_plain": 0.7082,
-    "ndcg_at_10_canonico": 0.7007,
+    "ndcg_at_10_canonico": 0.6932,
     "binding_accuracy_plain": 0.0,
     "binding_accuracy_canonico": 0.4
   },
@@ -42,10 +42,10 @@
       "text": "Is the 18% junior-consultant turnover rate a verified figure, and what recommendations depend on it?",
       "tests": "turnover_unverified",
       "plain_top_doc": "05-meetings/meeting-005-final-presentation",
-      "canonico_top_doc": "05-meetings/meeting-005-final-presentation",
+      "canonico_top_doc": "07-documents/report-final",
       "gold_doc": "07-documents/report-final",
       "pass_plain": false,
-      "pass_canonico": false
+      "pass_canonico": true
     },
     {
       "query_id": "q05",
@@ -62,7 +62,7 @@
       "text": "What was the early hypothesis that ClearPath's intake process was worse than expected, and was it later confirmed?",
       "tests": "intake_worse_than_expected",
       "plain_top_doc": "03-internal-comms/email/email-internal-003",
-      "canonico_top_doc": "03-internal-comms/email/email-internal-003",
+      "canonico_top_doc": "03-internal-comms/email/email-internal-006",
       "gold_doc": "03-internal-comms/email/email-internal-004",
       "pass_plain": false,
       "pass_canonico": false
@@ -82,7 +82,7 @@
       "text": "What was the observed end-to-end intake cycle time and how did it compare to ClearPath's internal target?",
       "tests": "intake_cycle_time_finding",
       "plain_top_doc": "07-documents/presentation-interim",
-      "canonico_top_doc": "07-documents/report-final",
+      "canonico_top_doc": "03-internal-comms/email/email-internal-006",
       "gold_doc": "03-internal-comms/email/email-internal-003",
       "pass_plain": false,
       "pass_canonico": false
@@ -102,17 +102,17 @@
       "text": "Which bottleneck severity ratings was the analyst not fully confident in, and why?",
       "tests": "severity_rating_confidence",
       "plain_top_doc": "03-internal-comms/email/email-internal-007",
-      "canonico_top_doc": "03-internal-comms/email/email-internal-007",
+      "canonico_top_doc": "03-internal-comms/slack/project-clearpath",
       "gold_doc": "03-internal-comms/email/email-internal-007",
       "pass_plain": true,
-      "pass_canonico": true
+      "pass_canonico": false
     },
     {
       "query_id": "q11",
       "text": "How did David Park's limited availability constrain the audit-trail analysis?",
       "tests": "david_park_availability",
       "plain_top_doc": "03-internal-comms/email/email-internal-005",
-      "canonico_top_doc": "03-internal-comms/email/email-internal-005",
+      "canonico_top_doc": "03-internal-comms/email/email-internal-006",
       "gold_doc": "03-internal-comms/email/email-internal-004",
       "pass_plain": false,
       "pass_canonico": false
@@ -132,10 +132,10 @@
       "text": "What problems were observed with IT provisioning on a new consultant's first day?",
       "tests": "onboarding_it_provisioning",
       "plain_top_doc": "02-subject/observation-001-onboarding",
-      "canonico_top_doc": "02-subject/observation-001-onboarding",
+      "canonico_top_doc": "07-documents/implementation-roadmap",
       "gold_doc": "02-subject/observation-001-onboarding",
       "pass_plain": true,
-      "pass_canonico": true
+      "pass_canonico": false
     },
     {
       "query_id": "q14",
@@ -162,7 +162,7 @@
       "text": "How many team leaders does ClearPath actually have, and where does the information conflict?",
       "tests": "team_leader_count",
       "plain_top_doc": "01-scope/requirements",
-      "canonico_top_doc": "01-scope/requirements",
+      "canonico_top_doc": "05-meetings/meeting-002-discovery-ops",
       "gold_doc": "02-subject/observation-005-knowledge-sharing",
       "pass_plain": false,
       "pass_canonico": false
@@ -172,7 +172,7 @@
       "text": "What quick-win recommendations did Meridian propose for the first phase, and who owns them?",
       "tests": "quick_wins_roadmap",
       "plain_top_doc": "05-meetings/meeting-005-final-presentation",
-      "canonico_top_doc": "05-meetings/meeting-001-kickoff",
+      "canonico_top_doc": "03-internal-comms/email/email-internal-008",
       "gold_doc": "07-documents/implementation-roadmap",
       "pass_plain": false,
       "pass_canonico": false
@@ -182,17 +182,17 @@
       "text": "What new role did Meridian recommend to own the onboarding process, and who was suggested for it?",
       "tests": "coordinator_role",
       "plain_top_doc": "05-meetings/meeting-005-final-presentation",
-      "canonico_top_doc": "05-meetings/meeting-005-final-presentation",
+      "canonico_top_doc": "07-documents/report-final",
       "gold_doc": "05-meetings/meeting-005-final-presentation",
       "pass_plain": true,
-      "pass_canonico": true
+      "pass_canonico": false
     },
     {
       "query_id": "q19",
       "text": "What audit queue target did Meridian commit to, given that the preview meeting and the final report state slightly different numbers?",
       "tests": "audit_queue_target_value",
       "plain_top_doc": "05-meetings/meeting-005-final-presentation",
-      "canonico_top_doc": "05-meetings/meeting-003-interim-review",
+      "canonico_top_doc": "04-external-comms/email/email-external-012",
       "gold_doc": "07-documents/report-final",
       "pass_plain": false,
       "pass_canonico": false
@@ -268,5 +268,5 @@
       "pass_canonico": false
     }
   ],
-  "measured_at": "2026-11-14T11:24:55Z"
+  "measured_at": "2026-11-14T11:51:25Z"
 }
