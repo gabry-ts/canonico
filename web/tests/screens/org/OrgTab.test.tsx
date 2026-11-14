@@ -477,6 +477,22 @@ describe('HooksRow', () => {
       expect(screen.getAllByRole('row')).toHaveLength(2)
     })
 
+    it('shows the error instead of "no rules" when the rules cannot be loaded, and loads them again on retry', async () => {
+      mockOrgTab()
+      api.get('/org/tag-rules', fail(500, 'database is locked'))
+      const { user } = renderWithApp(<HooksRow />)
+      expect(await screen.findByText('Could not load this. database is locked')).toBeInTheDocument()
+      expect(screen.queryByText(/No tag rules/)).not.toBeInTheDocument()
+      expect(screen.queryByRole('table')).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Rotate secret' })).toBeInTheDocument()
+
+      api.get('/org/tag-rules', { items: RULES })
+      await user.click(screen.getByRole('button', { name: 'Try again' }))
+      expect(await screen.findByText('clearpath', { selector: '.tag' })).toBeInTheDocument()
+      expect(screen.queryByText('Could not load this. database is locked')).not.toBeInTheDocument()
+      expect(api.callsTo('GET', '/org/tag-rules')).toHaveLength(2)
+    })
+
     it('deletes a rule, says so and refreshes', async () => {
       mockOrgTab({ rules: RULES })
       api.delete('/org/tag-rules/:rule_id', () => undefined)

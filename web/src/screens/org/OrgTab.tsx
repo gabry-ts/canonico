@@ -7,7 +7,7 @@ import { usePerm } from '../../lib/perm'
 import { Ic } from '../../ui/Icon'
 import { Dialog } from '../../ui/overlays'
 import { toast, toastError } from '../../ui/toast'
-import { CardHead, CopyField, FieldErr, Loading } from './ui'
+import { CardHead, CopyField, FieldErr, LoadErr, Loading } from './ui'
 
 type Mail = Schemas['MailConfig']
 
@@ -308,6 +308,8 @@ export function HooksRow() {
         />
         {rules.loading && !rules.data ? (
           <Loading />
+        ) : rules.error || !rules.data ? (
+          <LoadErr message={rules.error ?? ''} onRetry={() => void rules.reload()} />
         ) : (
           <table className="tbl">
             <thead>
