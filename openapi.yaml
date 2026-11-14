@@ -2475,6 +2475,41 @@ paths:
                   cap_usd: 10.0
                 last_ingest_at: '2026-11-14T09:12:00Z'
                 last_reset_at: null
+                needs_attention:
+                  stale_active: 1
+                  conflicts_open: 2
+                  open_questions: 22
+                facts_by_type:
+                  DECISION: 38
+                  CONSTRAINT: 31
+                  EVIDENCE: 140
+                  HYPOTHESIS: 52
+                  SUPERSEDED: 29
+                  OPEN: 22
+                facts_by_status:
+                  active: 310
+                  retired: 2
+                answers:
+                  binding: 18
+                  contested: 3
+                  no_answer: 2
+                  since: '2026-11-14T08:00:00Z'
+                sources:
+                - source_id: src-drive-01
+                  type: drive
+                  label: Clearpath shared drive
+                  status: synced
+                  last_synced_at: '2026-11-14T09:12:00Z'
+                recent_changes:
+                - at: '2026-11-14T09:30:00Z'
+                  actor: Giulia
+                  action: retire
+                  fact_id: M-105
+                  summary: Giulia retired 4 weeks (final presentation)
+                time_to_fix_seconds:
+                  median: 95.0
+                  samples: 4
+                  measured_at: '2026-11-14T09:30:00Z'
   /config:
     get:
       tags:
@@ -5610,6 +5645,99 @@ components:
           - 'null'
           format: date-time
           description: When the demo was last reset. Null if never.
+        needs_attention:
+          type: object
+          description: Counts of items needing attention, for a dashboard.
+          properties:
+            stale_active:
+              type: integer
+              description: Superseded facts that are still active.
+            conflicts_open:
+              type: integer
+            open_questions:
+              type: integer
+        facts_by_type:
+          type: object
+          description: Count per FactType.
+          additionalProperties:
+            type: integer
+        facts_by_status:
+          type: object
+          description: Count per FactStatus.
+          additionalProperties:
+            type: integer
+        answers:
+          type: object
+          properties:
+            binding:
+              type: integer
+            contested:
+              type: integer
+            no_answer:
+              type: integer
+            since:
+              type: string
+              format: date-time
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatsSource'
+        recent_changes:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            properties:
+              at:
+                type: string
+                format: date-time
+              actor:
+                type: string
+              action:
+                type: string
+                enum:
+                - retire
+                - restore
+                - new_version
+                - inbound_email
+                - resolve
+                - ingest
+              fact_id:
+                type:
+                - string
+                - 'null'
+              summary:
+                type: string
+        time_to_fix_seconds:
+          type: object
+          properties:
+            median:
+              type:
+              - number
+              - 'null'
+            samples:
+              type: integer
+            measured_at:
+              type:
+              - string
+              - 'null'
+              format: date-time
+    StatsSource:
+      type: object
+      properties:
+        source_id:
+          type: string
+        type:
+          type: string
+        label:
+          type: string
+        status:
+          type: string
+        last_synced_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
     Config:
       type: object
       required:
