@@ -1,4 +1,4 @@
-.PHONY: install api web mock types test test-docker docker-up docker-down docker-logs
+.PHONY: install api web mock types test test-live test-docker docker-up docker-down docker-logs
 
 install:
 	uv venv api/.venv 2>/dev/null || python3 -m venv api/.venv
@@ -10,6 +10,10 @@ api:
 
 test:
 	cd api && .venv/bin/python -m pytest -q
+
+# live end-to-end suite with the real model, see api/tests_live (CANONICO_LIVE_BASE_URL targets a running server)
+test-live:
+	cd api && CANONICO_LIVE_TESTS=1 .venv/bin/python -m pytest tests_live -m live -q -rfE
 
 # real SMTP and IMAP round trip against a throwaway GreenMail container (needs docker)
 test-docker:
