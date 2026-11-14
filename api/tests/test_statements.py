@@ -52,3 +52,10 @@ def test_a_quantity_on_an_extracted_topic_is_left_to_the_model(client):
     item = {"type": "note", "title": "Delivery sync", "date": "2026-11-13T10:00:00Z", "text": text}
     result = client.post("/projects/proj-clearpath/items", json=item).json()
     assert result["facts_created"] == []
+
+
+def test_a_sentence_starting_with_decision_is_a_decision(client):
+    item = {"type": "ticket", "title": "Change request 9", "date": "2026-11-13T09:00:00Z", "text": "Decision: onboarding of new consultants takes 6 weeks.", "tags": ["topic:onboarding-target"]}
+    result = client.post("/projects/proj-clearpath/items", json=item).json()
+    fact = client.get(f"/facts/{result['facts_created'][0]}").json()
+    assert fact["type"] == "DECISION" and result["supersedes_created"][0]["supersedes"] == "M-106"
