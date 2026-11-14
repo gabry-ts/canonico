@@ -61,7 +61,8 @@ function makeFormatters(locale: Locale) {
   const safe = (iso: string | null | undefined, f: Intl.DateTimeFormat) => {
     if (!iso) return '—'
     const d = dateOnly(iso)
-    return Number.isNaN(d.getTime()) ? String(iso) : f.format(d)
+    // en-GB abbreviates September as "Sept"; keep three-letter months like the prototype.
+    return Number.isNaN(d.getTime()) ? String(iso) : f.format(d).replace('Sept', 'Sep')
   }
   const full = fmt({ day: 'numeric', month: 'short', year: 'numeric' })
   const short = fmt({ day: 'numeric', month: 'short' })

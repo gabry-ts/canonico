@@ -28,7 +28,7 @@ export type AppState = {
   /** Sources of the current project (sidebar). */
   sources: Source[]
   can: (perm: string) => boolean
-  /** Value for the `actor` field of write requests (member id). */
+  /** Value for the `actor` field of write requests (display name, shown back as "retired by …"). */
   actor: string
   /** Short display name of the current identity. */
   actorName: string
@@ -140,7 +140,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       stats,
       sources,
       can: (perm: string) => (me ? (me.permissions as string[]).includes(perm) : false),
-      actor: me?.member.id ?? 'mem-giulia-ferri',
+      // The backend stores `actor` as given and shows it back ("retired by Giulia"), so send the display name.
+      actor: me?.name || me?.member.name.split(' ')[0] || 'Giulia',
       actorName: me?.name || me?.member.name.split(' ')[0] || '',
       setActor,
       version,
