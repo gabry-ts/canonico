@@ -1,0 +1,180 @@
+CANONICO, 3-MINUTE LIVE DEMO SCRIPT (DRAFT)
+Slot: 5:00 total. 3:00 demo and pitch, about 1:30 questions, rest is changeover.
+Presenter: Davide (speaks). Driver: [team: name] (clicks). Spare: [team: name] watches the
+server and runs the fallback commands.
+Labels in square brackets are screen names in the app; check the exact button wording on the
+deployed build before the slot.
+
+BEFORE THE SLOT (T minus 10 min)
+- Reset the demo state:  curl -X POST [DEMO_URL]/api/demo/reset
+- Open three tabs: [DEMO_URL] on Ask, the same on Maintenance, the same on Audit.
+- Logged in as Giulia (owner, the default demo identity). Language EN.
+- Ask the onboarding question once in a private tab and check the answer is the stale one
+  with the conflict flag, then reset again.
+- Have the submitted video open and paused at the start, as backup.
+- Phone hotspot ready in case the venue network drops.
+
+----------------------------------------------------------------
+0:00 to 0:25  PROBLEM AND OWNER   (no clicks, Ask screen visible)
+SAY: "A new hire at ClearPath asks the company assistant how long onboarding takes.
+It says four weeks. That number was changed. The final report says three to four
+weeks, and there are four older versions in the files. The only way to find out why the
+assistant is wrong is a ticket to an engineer. Giulia runs operations there.
+She knows the right answer. She just can't fix it."
+Note: ClearPath is the case in KVA's own OIDA corpus, not a real customer. Say so if asked.
+
+0:25 to 1:20  DEMO, EARLY
+1. CLICK [Ask], type "How long does onboarding take?", Enter.
+   SAY: "Here is what the assistant sees. The binding answer is three to four weeks, from
+   the final report of 28 November, and this is the sentence it comes from, word for word."
+2. CLICK to open the history under the answer (the four replaced versions).
+   SAY: "These are the four versions it replaced. And this one, four weeks from the final
+   presentation, is still active. That is why the assistant said four weeks."
+3. CLICK on the flagged "4 weeks" fact, then [Retire], reason "superseded by final report".
+   SAY: "Giulia retires it. She writes why."
+4. CLICK [Ask] again, same question.
+   SAY: "Same question. Three to four weeks, and it says why it changed. No ticket, no
+   engineer."   <-- THE MOMENT. Pause one second here.
+5. CLICK [Audit].
+   SAY: "Everything she did is logged with her name, and she can undo it."
+
+1:20 to 1:55  EVIDENCE
+SAY: "We ran it on ClearPath, forty-six documents from KVA's own benchmark. On five
+questions where a decision changed over time, Canonico picked the binding version three
+times. Plain retrieval got zero. It's a first test on five queries, so it's a signal, not
+a result. The two misses are a known bug: on a broad topic we take a later email instead
+of the one with the decision."
+
+1:55 to 2:15  WHY IT IS HARD TO COPY
+SAY: "Memory tools for developers decide by themselves what to keep. Personal memory in
+Claude or ChatGPT has no sources and no versions. We keep a fact only if its quote is a
+verbatim sentence of its document, we link every fact to the one it replaced, and the
+people who own the decision can change what the assistant says. It works across
+documents, a versioned library, GitHub, mail and webhooks for meetings and tickets."
+
+2:15 to 2:35  BUSINESS CASE
+SAY: "We sell to the person rolling out the company assistant. A paid pilot on one process
+is six thousand euros for eight weeks, then fifteen thousand a year. Those are our
+estimates, not quotes from buyers yet. With one founder selling, a licensed customer
+costs about fourteen thousand to win and pays back in about a year, or four months if
+you count the pilot fee."
+(Numbers must match the saved economic model. If the team changes the model, change this.)
+
+2:35 to 2:45  METHOD AND AI TOOLS
+SAY: "We built it today with Claude Code. Inside the product, Claude Haiku extracts and
+routes, Sonnet groups topics; about forty cents of model cost so far. Whisper for
+transcription. The demo you just saw needs no model at all, it runs offline."
+
+2:45 to 3:00  NEXT TEST
+SAY: "Next week we put five people from outside the team in front of it and time how long
+they take to find and fix a wrong fact alone. And we ask five AI programme leads if
+they'd pay for this. If three say their vendor already does it, we stop and look at
+compliance teams instead. Thank you."
+
+----------------------------------------------------------------
+FALLBACK, IF SOMETHING BREAKS
+- Answer looks wrong or already fixed (someone clicked before us):
+  curl -X POST [DEMO_URL]/api/demo/reset , reload the tab, repeat the step.
+  SAY: "Let me put the memory back to this morning."
+- Model provider slow or down:
+  curl -X PATCH [DEMO_URL]/api/config -H 'content-type: application/json' -d '{"offline_mode": true}'
+  The whole demo path is seeded and makes no model calls, so nothing changes on screen.
+  The [Admin] page also shows and switches offline mode [check on the deployed build].
+- Server or network down: switch to the submitted video.
+  SAY: "Here is the same flow, recorded on our server." Keep narrating
+  from the step where it broke.
+- Do not debug on stage. Spare teammate fixes while the presenter keeps talking.
+
+----------------------------------------------------------------
+Q&A PREP (about 1:30, answer in two sentences, then stop)
+
+1. Why not OIDA itself?
+   OIDA is KVA's benchmark and the paper that says retrieval is not enough. We used its
+   data to test; Canonico is the tool a process owner uses to see and fix the binding fact.
+
+2. Why not Glean or Copilot?
+   They find documents and answer from them; deciding which version still binds is left to
+   the reader [unverified: we did not test them today]. Canonico can sit under them through
+   its API and hand them the binding fact with its source.
+
+3. Why not Mem0 or Zep?
+   Mem0's model decides by itself what to add, and its open-source extraction only adds, so
+   old facts pile up [verified: KVA track research]. Zep keeps fact history but has no screen
+   where an operations lead retires a fact; we are that screen and the rules behind it.
+
+4. Who pays?
+   The AI programme lead of a company rolling out an internal assistant. Process owners and
+   compliance are in the room because they own the facts [declared].
+
+5. How much?
+   A paid pilot of six thousand euros for eight weeks, then fifteen thousand a year per
+   company. Our estimate, to check with the first buyers [declared].
+
+6. What happens with real company data?
+   The connectors are there: document uploads, a versioned library, GitHub, mail and webhooks
+   for meetings and tickets. We have not run it on a real customer's data, and the demo has no
+   real login yet; single sign-on comes before any pilot.
+
+7. GDPR: is retire the same as erasure?
+   No. Retire keeps the history, which is right for a superseded procedure. Personal data
+   under Article 17 must leave the memory and the audit must not keep its content. That is
+   not built yet and is the next feature for the compliance buyer.
+
+8. Isn't five queries too few?
+   Yes, it is a first signal. Three of five against zero of five, on KVA's own corpus, and we
+   know why the two misses fail. Next step is the full ClearPath set.
+
+9. How does it scale?
+   Today it is one process with state in a file, one replica on our server, and every
+   organisation has isolated projects. For a pilot we move state to a database. Model cost is
+   small: about forty cents of model calls so far for the whole build and corpus.
+
+10. Why this team?
+    Emanuele comes from banking and finance, where which decision binds is a regulatory
+    question every day. Together we built a backend with 112 API operations, about 95 tests
+    and the full interface during the event.
+
+11. What happens after the hackathon?
+    Timed test with five outside people, five conversations with AI programme leads, then a
+    first paid pilot on one process. The repo stays public.
+
+12. Prize: option A (EUR 1,500 cash) or option B (a company with KVA investing EUR 1,500 for 15%)?
+    [team: decide before the slot and give one reason.] Do not improvise this on stage.
+
+Also ready if asked: "Did an AI write the pitch?" We used Claude Code to build and we said
+so; the claims and numbers are ours and each one has its marker.
+"What did the model get wrong?" [team: one real example, e.g. a quote that was not word
+for word and was dropped by the verbatim check; confirm before using it.]
+
+----------------------------------------------------------------
+RUBRIC SELF-CHECK (gate 2, track 3b-memory-for-people weights; one reading, not the jury's)
+
+Criterion                         Weight  Score  Why
+Technical feasibility               12      6    Core built: supersession chain, verbatim quote
+                                                 check, retire changes next answer [verified: README, tests]
+Financial sustainability            13      1    No economic model saved in Control8 yet
+                                                 [verified: get_economic_model returns no_model]
+Build quality                       14      6    Runs end to end, public repo, eval prints a score
+                                                 [verified: README, eval/README]
+Fidelity to the 12:30 proposal      10      6    Demo is the submitted video flow [declared]
+Selling story                       16      5    Problem first, demo early; no real buyer quote, no
+                                                 outside-person test yet [verified: drafts]
+Frictionless adoption and deploy    17      5    Deployed with Docker, one command; no login, single
+                                                 replica, own sources need setup [verified: README]
+Demo or reality                     18      5    Runs live on KVA's corpus; onboarding topic is
+                                                 hand-curated seed, say so [verified: README]
+
+Total now: (12x6 + 13x1 + 14x6 + 10x6 + 16x5 + 17x5 + 18x5) / 100 = 4.84
+           (4.84 - 1) / 6 x 100 = 64.0 / 100
+With the economic model published (financial 4, all numbers declared):
+           sum 523 / 100 = 5.23 ; (5.23 - 1) / 6 x 100 = 70.5 / 100
+
+Weakest: Financial sustainability, 13.0 points to win back now ((7 - 1) x 13 / 6).
+Do now (before the 16:30 financial validation): publish pitch/economic-model.json with
+update_economic_model, then read it back with get_economic_model and copy its CAC and
+payback into the pitch. Even after that it stays the weakest (6.5 points, then Demo or
+reality at 6.0): the one move left is a sourced anchor for the EUR 15,000 price, a public
+price list or one AI programme lead's quote.
+
+Hand-in: pitch draft (not published) . repo public . economic model draft (not saved) .
+AI tools declared in pitch . deck [team: check]
