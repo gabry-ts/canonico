@@ -3,7 +3,7 @@ from typing import Literal
 
 from fastapi import APIRouter
 
-from app import access, llm, ops, settings, store
+from app import access, library_s3, llm, ops, settings, store
 from app.http import ApiError, dump, out
 from app.models import Config, ConfigPatch, ExportBundle, Stats
 from app.routers.answers import record_view
@@ -42,6 +42,7 @@ def reset_demo(demo_actor: str | None = access.Actor):
     with STORE.read() as state:
         access.allow(state, demo_actor, "admin_demo")
     state = STORE.reset()
+    library_s3.start()
     return out(Stats, ops.stats(state))
 
 

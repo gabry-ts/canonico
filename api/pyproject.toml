@@ -12,10 +12,11 @@ dependencies = [
   "pypdf",
   "python-docx",
   "email-validator",
+  "boto3",
 ]
 
 [project.optional-dependencies]
-dev = ["datamodel-code-generator", "pytest", "jsonschema", "pyyaml", "rfc3339-validator"]
+dev = ["datamodel-code-generator", "pytest", "moto[s3]", "jsonschema", "pyyaml", "rfc3339-validator"]
 
 [build-system]
 requires = ["setuptools>=68"]

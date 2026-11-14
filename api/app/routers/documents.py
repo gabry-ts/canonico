@@ -3,7 +3,7 @@ import json
 from fastapi import APIRouter, Query, Request
 from pydantic import ValidationError
 
-from app import files, inbox, ingest, ops, store
+from app import files, inbox, ingest, library_s3, ops, store
 from app.http import ApiError, not_found, out
 from app.models import Document, DocumentCreate, DocumentCreated, DocumentDeleted, DocumentVersion, DocumentVersionCreate, DocumentVersionResult, Fact
 from app.store import STORE
@@ -106,7 +106,8 @@ async def create_document(request: Request):
 @router.get("/documents/{doc_id:path}/versions", operation_id="listDocumentVersions", status_code=200, response_model=list[DocumentVersion])
 def list_document_versions(doc_id: str):
     with STORE.read() as state:
-        return out(list[DocumentVersion], inbox.versions_view(require_doc(state, doc_id)))
+        document = require_doc(state, doc_id)
+        return out(list[DocumentVersion], library_s3.versions(state, document) or inbox.versions_view(document))
 
 
 @router.post("/documents/{doc_id:path}/versions", operation_id="uploadDocumentVersion", status_code=201, response_model=DocumentVersionResult)

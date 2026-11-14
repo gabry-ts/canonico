@@ -3,7 +3,7 @@
 import re
 from email.utils import parseaddr
 
-from app import llm, ops, statements, store
+from app import library_s3, llm, ops, statements, store
 from app.http import ApiError
 
 
@@ -267,6 +267,7 @@ def new_version(state: dict, document: dict, *, text: str, label: str | None, ti
     snapshot["versions"] = [dict(v) for v in document["versions"]]
     entry = {"version": number, "version_label": label, "uploaded_at": store.now(), "title": title or document["title"], "date": date, "text": text, "facts_superseded": []}
     document["versions"].append(entry)
+    library_s3.store_version(state, document, entry)
     document.update(text=text, title=entry["title"], date=date, version=number, version_of=document["id"])
     name = f"version {number} of “{document['title']}”"
     store.audit(state, "ingest", "system", None, f"{label} of “{document['title']}” uploaded to the document library.", x={"project": document.get("project_id"), "document": document["id"], "info": {"kind": "version", "label": label, "title": document["title"]}, "undo": {"document_version": {document["id"]: snapshot}}}, bump=False)

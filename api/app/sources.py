@@ -51,8 +51,8 @@ def check_config(kind: str, config: dict) -> dict:
         if "discussions" in config["include"]:
             raise ApiError(422, "config.include: discussions are not available without authentication.")
     elif kind == "document_library":
-        if config.get("provider") != "local_mock":
-            raise ApiError(422, "config.provider: only local_mock is implemented.")
+        if config.get("provider") not in ("local_mock", "s3"):
+            raise ApiError(422, "config.provider: only local_mock and s3 are implemented.")
         if not config.get("root_path"):
             raise ApiError(422, "config.root_path: field required")
     elif kind == "webhook":
@@ -107,6 +107,12 @@ def run_sync(job_id: str) -> None:
                 job = next(j for j in state["sync_jobs"] if j["id"] == job_id)
                 job["items_added"] = len(result["results"])
                 job["facts_created"] = sum(len(r["facts_created"]) for r in result["results"])
+        elif source["type"] == "document_library" and source["config"].get("provider") == "s3":
+            from app import library_s3
+
+            changed = library_s3.sync(source)
+            with STORE.write() as state:
+                next(j for j in state["sync_jobs"] if j["id"] == job_id)["items_added"] = len(changed)
         elif source["type"] == "github":
             documents = github.fetch(source["config"]["repo_url"], source["config"].get("include"), offline=offline)
             _add_github_documents(job_id, source, documents)

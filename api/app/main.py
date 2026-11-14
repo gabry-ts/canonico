@@ -8,7 +8,7 @@ import logging
 import os
 
 from app import auth as session_auth
-from app import http, i18n, llm, settings
+from app import http, i18n, library_s3, llm, settings
 from app.routers import (
     admin,
     answers,
@@ -53,6 +53,7 @@ app.add_middleware(
 )
 app.add_middleware(i18n.LocaleMiddleware)
 http.install(app)
+library_s3.start()
 
 
 @app.get("/health", operation_id="getHealth", response_model=Health)
