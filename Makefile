@@ -1,4 +1,4 @@
-.PHONY: install api web mock types test test-live test-docker docker-up docker-down docker-logs
+.PHONY: install api web mock types test test-web test-live test-docker docker-up docker-down docker-logs
 
 install:
 	uv venv api/.venv 2>/dev/null || python3 -m venv api/.venv
@@ -10,6 +10,10 @@ api:
 
 test:
 	cd api && .venv/bin/python -m pytest -q
+
+# frontend tests (vitest, jsdom): no backend needed, the API is faked in web/tests/helpers/api.ts
+test-web:
+	cd web && npm test
 
 # live end-to-end suite with the real model, see api/tests_live (CANONICO_LIVE_BASE_URL targets a running server)
 test-live:

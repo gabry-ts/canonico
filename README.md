@@ -41,6 +41,7 @@ prototypes/    static UI prototypes
 make install   # python venv + npm install
 make api       # backend on :8000
 make test      # backend tests (contract, demo flow, verbatim quotes)
+make test-web  # frontend tests (vitest and Testing Library, no backend needed)
 make web       # frontend on :5173
 make mock      # Prism mock of openapi.yaml on :4010
 make types     # regenerate api/app/models.py and web/src/api/schema.ts
