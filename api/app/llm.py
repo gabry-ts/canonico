@@ -227,9 +227,16 @@ def _gateway(model: str, system: str, user: str, schema: dict, name: str, max_to
         response = httpx.post(f"{os.environ.get('AI_GATEWAY_URL') or GATEWAY_URL}/chat/completions", json=body, headers=headers, timeout=timeout)
     except httpx.HTTPError as exc:
         raise LLMError("Model gateway is unreachable.") from exc
+    if response.status_code == 402:
+        raise LLMError("Model gateway credit is used up (status 402).")
+    if response.status_code == 429:
+        raise LLMError("Model gateway rate limit reached.")
     if response.status_code >= 400:
         raise LLMError(f"Model gateway returned status {response.status_code}.")
-    payload = response.json()
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        raise LLMError("Model gateway returned a response that is not JSON.") from exc
     usage = payload.get("usage") or {}
     text = (payload.get("choices") or [{}])[0].get("message", {}).get("content") or ""
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip())

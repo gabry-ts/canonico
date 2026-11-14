@@ -57,6 +57,14 @@ def test_gateway_request_shape(monkeypatch):
     assert json.loads(text) == {"ok": True} and (tokens_in, tokens_out) == (3, 2)
 
 
+@pytest.mark.parametrize("status, message", [(402, "credit is used up"), (429, "rate limit"), (500, "status 500")])
+def test_gateway_errors(monkeypatch, status, message):
+    monkeypatch.setenv("AI_GATEWAY_API_KEY", "secret-g")
+    monkeypatch.setattr(llm.httpx, "post", lambda url, **k: httpx.Response(status, text="no", request=httpx.Request("POST", url)))
+    with pytest.raises(llm.LLMError, match=message):
+        llm._gateway("claude-haiku-5-5", "sys", "usr", {"type": "object"}, "res", 100)
+
+
 def test_complete_json_routes_to_gateway(monkeypatch, tmp_path):
     monkeypatch.delenv("CANONICO_LLM_DISABLED", raising=False)
     monkeypatch.setenv("LLM_PROVIDER", "gateway")
