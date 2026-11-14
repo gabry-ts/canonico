@@ -3084,6 +3084,40 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+  /sources/github/preview:
+    post:
+      tags:
+      - sources
+      operationId: previewGithubSource
+      summary: Preview a public GitHub repository
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GithubPreviewRequest'
+            example:
+              repo_url: https://github.com/gabry-ts/canonico
+      responses:
+        '200':
+          description: Repository preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GithubPreview'
+              example:
+                repo_url: https://github.com/gabry-ts/canonico
+                full_name: gabry-ts/canonico
+                public: true
+                description: Canonical memory for company knowledge.
+                default_branch: main
+                open_issues: 3
+                has_readme: true
+                last_pushed_at: '2026-11-14T09:00:00Z'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
   /sources/{source_id}:
     get:
       tags:
@@ -5722,6 +5756,46 @@ components:
               - string
               - 'null'
               format: date-time
+    GithubPreviewRequest:
+      type: object
+      required:
+      - repo_url
+      properties:
+        repo_url:
+          type: string
+    GithubPreview:
+      type: object
+      required:
+      - repo_url
+      - full_name
+      - public
+      - description
+      - default_branch
+      - open_issues
+      - has_readme
+      - last_pushed_at
+      properties:
+        repo_url:
+          type: string
+        full_name:
+          type: string
+        public:
+          type: boolean
+        description:
+          type:
+          - string
+          - 'null'
+        default_branch:
+          type: string
+        open_issues:
+          type: integer
+        has_readme:
+          type: boolean
+        last_pushed_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
     StatsSource:
       type: object
       properties:
