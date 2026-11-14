@@ -275,6 +275,8 @@ _NOUNS_IT = {
 _ERRORS_IT: tuple[tuple[str, str], ...] = (
     (r"^Role (\S+) lacks permission (\S+)\.$", r"Il ruolo \1 non ha il permesso \2."),
     (r"^Invalid X-Canonico-Token\.$", "X-Canonico-Token non valido."),
+    (r"^Wrong email or password\.$", "Email o password errate."),
+    (r"^Sign in to make changes\.$", "Accedi per apportare modifiche."),
     (r"^No project_id and no tag rule matched the item\.$", "Nessun project_id e nessuna regola di tag corrisponde all'elemento."),
     (r"^Malformed JSON body\.$", "Corpo JSON non valido."),
     (r"^Unexpected server error\.$", "Errore imprevisto del server."),
