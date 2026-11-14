@@ -248,8 +248,13 @@ export default function Ask() {
       setStep(1)
     } else if (step === 3) setForm(null)
     else if (step === 4) {
-      const fact = view.retired.find((f) => f.id === DEMO.oldFact) ?? view.retired[view.retired.length - 1]
-      if (fact) perm.guard('restore_fact', () => void restore(fact, true))()
+      // Undo the demo retirement only. `oldFact` always comes from the demo topic, even when the panel follows another one.
+      const fact = oldFact?.status === 'retired' ? oldFact : undefined
+      if (fact)
+        perm.guard('restore_fact', () => {
+          backToDemoTopic()
+          void restore(fact, true)
+        })()
       else {
         clearChat()
         setStep(2)

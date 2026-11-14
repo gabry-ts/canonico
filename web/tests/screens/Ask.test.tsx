@@ -533,7 +533,7 @@ describe('Ask', () => {
       expect(chat().getAllByText('Three to four weeks.')).toHaveLength(1)
     })
 
-    it('restores the last retired fact when the demo one is not among them', async () => {
+    it('restores no other fact when the demo one is not among the retired ones', async () => {
       api.get(
         '/topics/:topic_id/chain',
         chain({ facts: [{ ...ONBOARDING.brief, status: 'retired' }, { ...ONBOARDING.kickoff, status: 'retired' }, ONBOARDING.report] }),
@@ -544,8 +544,27 @@ describe('Ask', () => {
       await chat().findByText('Three to four weeks.')
       await user.click(bar().getByRole('button', { name: 'Back' }))
 
-      expect(await screen.findByText('Restored 5 weeks.')).toBeInTheDocument()
-      expect(api.callsTo('POST', '/facts/:fact_id/restore').map((c) => c.params.fact_id)).toEqual(['M-103'])
+      onStep(2)
+      expect(chat().queryByText('Three to four weeks.')).not.toBeInTheDocument()
+      expect(api.callsTo('POST', '/facts/:fact_id/restore')).toHaveLength(0)
+    })
+
+    it('restores the demo fact, not one of the topic the panel moved to', async () => {
+      const { user } = await start()
+      await toStep4(user)
+      await user.clear(composer())
+      await user.type(composer(), QUESTION_2 + '{Enter}')
+      // The panel follows the audit topic, which has a retired fact of its own (M-206).
+      await panel().findByText('no binding value')
+      await settled('Next question')
+      await user.click(bar().getByRole('button', { name: 'Back' }))
+
+      expect(await screen.findByText('Restored 4 weeks.')).toBeInTheDocument()
+      expect(api.callsTo('POST', '/facts/:fact_id/restore').map((c) => c.params.fact_id)).toEqual(['M-105'])
+      onStep(2)
+      // The panel is back on the demo topic, ready to retire the figure again.
+      expect(await panel().findByText('still active')).toBeInTheDocument()
+      await settled('Retire “4 weeks”')
     })
 
     it('only clears the chat when the topic has no retired fact', async () => {
