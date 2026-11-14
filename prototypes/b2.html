@@ -78,6 +78,17 @@
   .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 999px; background: white; box-shadow: 0 1px 2px rgb(0 0 0 / .2); transition: transform .15s; }
   .switch.on { background: hsl(var(--secondary)); } .switch.on::after { transform: translateX(12px); }
   .kbd { font-family: 'Geist Mono', monospace; font-size: 11px; padding: 1px 6px; border-radius: 5px; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
+  .nav-item { width: 100%; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; font-size: 14px; text-align: left; color: hsl(var(--muted-foreground)); transition: background .15s; }
+  .nav-item:hover { background: hsl(var(--muted)); color: hsl(var(--foreground)); }
+  .nav-item.on { background: hsl(var(--muted)); color: hsl(var(--foreground)); font-weight: 500; }
+  .dot { width: 6px; height: 6px; border-radius: 999px; background: hsl(152 38% 45%); flex-shrink: 0; }
+  .dot.idle { background: transparent; box-shadow: inset 0 0 0 1.2px hsl(var(--muted-foreground) / .7); }
+  .sheet { position: fixed; z-index: 30; top: 0; bottom: 0; left: 0; width: 400px; max-width: 100vw; background: hsl(var(--card)); box-shadow: 1px 0 0 hsl(var(--border)), 12px 0 40px rgb(0 0 0 / .06); transform: translateX(-100%); transition: transform .2s ease-out; }
+  .sheet.open { transform: none; }
+  @media (min-width: 1024px) { .sheet { left: 200px; transform: translateX(calc(-100% - 200px)); } }
+  @media (min-width: 1280px) { .sheet { left: 224px; transform: translateX(calc(-100% - 224px)); } }
+  .sheet.open { transform: none !important; }
+  .row { display: grid; grid-template-columns: 104px 1fr; gap: 4px 12px; font-size: 14px; }
 </style>
 </head>
 <body class="text-[16px] min-h-screen lg:h-screen lg:overflow-hidden flex flex-col">
@@ -93,7 +104,10 @@
       <a href="c.html" class="px-2 py-0.5 rounded-md hover:bg-muted hover:text-foreground">C</a>
     </nav>
   </div>
-  <span class="text-[12px] text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">Static prototype</span>
+  <div class="flex items-center gap-3">
+    <a href="admin.html" class="text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-4 decoration-[hsl(var(--border))]">Admin</a>
+    <span class="text-[12px] text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">Static prototype</span>
+  </div>
 </div>
 
 <!-- app bar + step indicator -->
@@ -113,11 +127,14 @@
   </div>
 </header>
 
-<main class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(460px,560px)]">
+<main class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[200px_minmax(0,1fr)_minmax(440px,540px)] xl:grid-cols-[224px_minmax(0,1fr)_minmax(460px,560px)]">
+  <!-- organisation → projects → sources -->
+  <nav id="sidebar" class="hidden lg:block min-h-0 overflow-y-auto scroll border-r hair px-3 py-6"></nav>
   <!-- chat -->
   <section class="flex flex-col min-h-[70vh] lg:min-h-0">
     <div id="chat" class="relative flex-1 min-h-0 overflow-y-auto scroll px-8 xl:px-14 py-10"></div>
     <div class="shrink-0 px-8 xl:px-14 pb-6 pt-2">
+      <div id="scope" class="mb-2 px-1 text-[13px] text-muted-foreground flex items-center gap-2"></div>
       <div class="flex items-center gap-3 rounded-2xl bg-muted px-5 h-14">
         <input id="composer" class="flex-1 bg-transparent outline-none text-[15px] placeholder:text-muted-foreground truncate" placeholder="Ask the company brain…" readonly>
         <span class="text-[13px] text-muted-foreground shrink-0">press <span class="kbd">→</span> for next step</span>
@@ -133,10 +150,13 @@
 
 <footer class="h-10 shrink-0 flex items-center justify-between px-6 border-t hair text-[12px] text-muted-foreground">
   <span>Data: OIDA Benchmark Corpora (Bottino, Ferrero, Dosio, Beneventano), CC BY 4.0</span>
-  <span class="hidden md:inline">Quotes are verbatim from the corpus. Fact IDs, classifications, times and user actions are sample UI state.</span>
+  <span class="hidden md:inline truncate ml-6">Quotes are verbatim from the corpus. Fact IDs, classifications, times, user actions, the demo email and the library versions are sample UI state.</span>
 </footer>
 
 <div id="toast" class="fixed bottom-14 right-6 text-[14px] bg-secondary text-secondary-foreground rounded-xl px-4 py-2.5 shadow-lg opacity-0 pointer-events-none transition-opacity"></div>
+<div id="inbox" class="fixed top-[116px] right-6 lg:right-auto lg:left-[236px] z-20 w-[380px] rounded-2xl bg-card shadow-[0_0_0_1px_hsl(var(--border)),0_12px_40px_rgb(0_0_0/.08)] px-5 py-4 opacity-0 pointer-events-none transition-opacity"></div>
+<div id="scrim" class="fixed inset-0 z-20 hidden" data-close-sheet></div>
+<aside id="sheet" class="sheet overflow-y-auto scroll"></aside>
 
 <script>
 const Q1 = 'What onboarding time target did Meridian Labs ultimately recommend, and how did that target shift from the client’s original goal over the engagement?';
@@ -159,31 +179,61 @@ const FACTS = {
   'M-205': { q:'q02', type:'Evidence', date:'2025-10-02', doc:'02-subject/observation-003-audit-workflow', loc:'§ Data Collection Gaps', claim:'Stage times cannot be measured', quote:'it was not possible to measure the actual time spent at each stage of the audit queue' },
   'M-206': { q:'q02', type:'Estimate', date:'2025-11-28', doc:'07-documents/report-final', loc:'§ Executive summary', claim:'“5–8 day average”', quote:'Audit process bottleneck (5–8 day average, 3–5 day variance)', note:'Restates the estimates, no measurement cited.' },
   'M-207': { q:'q02', type:'Estimate', date:'2025-11-21', doc:'05-meetings/meeting-005-final-presentation', loc:'[10:14]', claim:'“Current state is five to eight days”', quote:'Current state is five to eight days.', note:'Restates the estimates, no measurement cited.' },
-  'M-208': { q:'q02', type:'Evidence', date:'2025-08-22', doc:'01-scope/project-brief', loc:'§ Audit', claim:'CEO: queue backs up 5–8 days, never measured', quote:'we’ve never systematically measured it.', note:'Self-reported, before the engagement.' }
+  'M-208': { q:'q02', type:'Evidence', date:'2025-08-22', doc:'01-scope/project-brief', loc:'§ Audit', claim:'CEO: queue backs up 5–8 days, never measured', quote:'we’ve never systematically measured it.', note:'Self-reported, before the engagement.' },
+
+  // Sample content (not from the corpus): the demo email and the document library versions.
+  'L-401': { q:'q01', type:'Evidence', date:'2026-01-12', doc:'library/onboarding-standard v2', loc:'§ Target', claim:'Onboarding standard v2: 3–4 weeks', quote:'Onboarding target: 3–4 weeks to autonomy.', note:'Sample document in the document library.', src:'library' },
+  'E-301': { q:'q01', type:'Decision', date:'2026-11-14', doc:'mail/client@meridianlabs.org', loc:'Onboarding target confirmed', claim:'Onboarding target: 5 weeks', quote:'…we confirm the onboarding target at 5 weeks.', note:'Sample email, routed to ClearPath engagement by the rule @meridianlabs.org.', src:'mail' },
+  'L-402': { q:'q01', type:'Decision', date:'2026-11-14', doc:'library/onboarding-standard v3', loc:'§ Target', claim:'Onboarding standard v3: 5 weeks', quote:'Onboarding target: 5 weeks to autonomy.', note:'Sample version uploaded to the document library.', src:'library' }
 };
 
 const STEPS = [
   { label:'Ask', caption:'Canonico answers with the binding decision and cites the source. One older requirement still disagrees.' },
   { label:'Retire', caption:'A person retires the outdated requirement R1.1. Nothing is deleted: it is marked as replaced.' },
   { label:'Ask again', caption:'Same question again. The answer changed because of that correction, and it says why.' },
-  { label:'Contested', caption:'A question with no single answer. Canonico shows the disagreement instead of picking a number.' }
+  { label:'Contested', caption:'A question with no single answer. Canonico shows the disagreement instead of picking a number.' },
+  { label:'New email', caption:'An email from the client is routed to ClearPath by a mail rule. Its 5 weeks supersedes 3–4 weeks.' },
+  { label:'New version', caption:'Version 3 of the onboarding standard is uploaded. Version 2 is superseded and v3 becomes the source.' }
 ];
+const LAST = STEPS.length;
+const SRC_LABEL = { docs:'Documents', library:'Document library', github:'GitHub', mail:'Mail' };
 const INTRO = 'Pick a question, or press Next step to run the demo.';
 
-const state = { step: 0, open: null, showAll: false, timeline: true, compare: false, reveal: null, user: {}, correcting: null };
+const state = { step: 0, open: null, showAll: false, timeline: true, compare: false, reveal: null, user: {}, correcting: null, scope: 'project', sheet: null, mailOverride: false };
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 const shortDoc = d => d.split('/')[1];
 const fmtDate = d => { const [y,m,dd] = d.split('-'); return `${+dd} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]} ${y}`; };
 const cite = (id, label) => `<button class="cite" data-open="${id}">${label}</button>`;
 const retired103 = () => state.step >= 3;
+const isQ2 = () => state.step === 4;
+const bindingQ1 = () => state.step >= 6 ? 'L-402' : (state.step === 5 ? 'E-301' : 'M-106');
+const visible = id => (id !== 'E-301' || state.step >= 5) && (id !== 'L-402' || state.step >= 6);
+function replacedBy(id){
+  if (id === 'M-103' && retired103()) return 'M-106';
+  if (id === 'M-106' && state.step >= 5) return 'E-301';
+  if (id === 'L-401' && state.step >= 5) return state.step >= 6 ? 'L-402' : 'E-301';
+  return FACTS[id].by;
+}
+function keyFacts(){
+  if (isQ2()) return ['M-203','M-201','M-202'];
+  if (state.step === 5) return ['E-301','M-106','M-103'];
+  if (state.step >= 6) return ['L-402','L-401','E-301'];
+  return ['M-106','M-105','M-103'];
+}
+function restFacts(){
+  if (isQ2()) return ['M-204','M-205','M-206','M-207','M-208'];
+  const all = ['M-106','M-107','L-401','M-103','M-105','M-104','M-102','M-101'];
+  const key = keyFacts();
+  return all.filter(id => !key.includes(id));
+}
 
 /* ---------------- chat ---------------- */
 function userMsg(text){
   return `<div class="fade-in flex justify-end"><div class="max-w-[620px] bg-muted rounded-2xl rounded-br-md px-5 py-3.5 leading-relaxed">${text}</div></div>`;
 }
 function meta(time, badgeHtml){
-  return `<div class="flex items-center gap-3 mb-3"><span class="text-[14px] font-medium">Canonico</span><span class="mono text-[13px] text-muted-foreground">${time}</span>${badgeHtml || ''}</div>`;
+  return `<div class="flex items-center gap-3 mb-3"><span class="text-[14px] font-medium">Canonico</span><span class="mono text-[13px] text-muted-foreground">${time}</span>${badgeHtml || ''}<span class="text-[13px] text-muted-foreground">${state.scope === 'org' ? 'whole organisation' : 'ClearPath engagement'}</span></div>`;
 }
 function compareToggle(){
   return `<button data-compare class="mt-5 flex items-center gap-2.5 text-[14px] text-muted-foreground hover:text-foreground">
@@ -211,10 +261,27 @@ function answerQ1(after){
   return lead + (after ? resolved : conflict);
 }
 
-function changedNote(){
+function answerQ1New(lib){
+  const lead = `<div class="flex items-baseline gap-4 flex-wrap">
+      <span class="mono text-[34px] leading-none font-medium text-primary tracking-tight">5 weeks</span>
+      <span class="text-muted-foreground">onboarding target, confirmed by the client</span></div>`;
+  if (!lib) return lead + `
+    <p class="mt-5 leading-relaxed">The client confirmed the onboarding target at five weeks in an ${cite('E-301','email from client@meridianlabs.org')}, which the mail rule routed to this project.</p>
+    <p class="mt-3 leading-relaxed text-muted-foreground">It supersedes the 3–4 week SLA of the ${cite('M-106','Final Engagement Report')}, which stays in history. Requirement R1.1 remains retired.</p>`;
+  return lead + `
+    <p class="mt-5 leading-relaxed">The binding source is now the ${cite('L-402','Onboarding standard v3')} in the document library. It replaces ${cite('L-401','version 2')}, which still carried 3–4 weeks.</p>
+    <p class="mt-3 leading-relaxed text-muted-foreground">The same target was confirmed earlier by the ${cite('E-301','client email')}, so the two sources agree.</p>`;
+}
+
+function changedNote(kind){
+  const body = kind === 'email'
+    ? `<span class="font-medium">Changed because a new email from client@meridianlabs.org superseded 3–4 weeks.</span> The final report’s SLA is kept as history, not deleted.`
+    : kind === 'library'
+    ? `<span class="font-medium">Changed because Onboarding standard v3 replaced v2</span> in the document library. The value matches the email; the source is now the versioned document.`
+    : `<span class="font-medium">Changed because you retired requirement R1.1</span> (“3 weeks or less”). The value is the same, but the conflict is gone and the answer now explains why three weeks was dropped.`;
   return `<div class="fade-in mb-4 flex gap-3 rounded-xl bg-muted px-5 py-4 leading-relaxed">
     <span aria-hidden="true" class="text-[18px] leading-6">↻</span>
-    <div><span class="font-medium">Changed because you retired requirement R1.1</span> (“3 weeks or less”). The value is the same, but the conflict is gone and the answer now explains why three weeks was dropped.</div></div>`;
+    <div>${body}</div></div>`;
 }
 
 function answerQ2(){
@@ -268,14 +335,35 @@ function renderChat(){
     parts.push(userMsg(Q1));
     parts.push(botBlock(answerQ1(true) + compareToggle() + ghost('Meridian Labs recommended a <strong class="font-medium">four-week</strong> onboarding target.', 'meeting-005', 'Still stale: plain retrieval does not see your correction or the final report’s precedence.'), '14:05', '<span class="badge binding">Binding</span>', changedNote()));
   }
-  if (s >= 4) {
+  if (s === 4) {
     parts.push(earlier('Earlier: onboarding target, answered twice'));
     parts.push(userMsg(Q2));
     parts.push(botBlock(answerQ2() + compareToggle() + ghost('A report spends <strong class="font-medium">5–8 days</strong> in the audit queue on average.', 'report-final', 'Picks one estimate and states it as fact, hiding a factor-of-3 disagreement.'), '14:07', '<span class="badge strong">Contested</span>'));
   }
+  if (s >= 5) {
+    const staleGhost = ghost('Meridian Labs recommended a <strong class="font-medium">four-week</strong> onboarding target.', 'meeting-005', 'Still stale: a long transcript outranks a two-line email by similarity, and versions are not compared.');
+    parts.push(earlier('Earlier: onboarding target (3–4 weeks) and audit queue time'));
+    parts.push(`<div id="eventDivider">${earlier('New email from client@meridianlabs.org · routed to ClearPath · <span class="mono">14:09</span>')}</div>`);
+    if (s === 5) {
+      parts.push(userMsg(Q1));
+      parts.push(botBlock(answerQ1New(false) + compareToggle() + staleGhost, '14:09', '<span class="badge binding">Binding</span>', changedNote('email')));
+    } else {
+      parts.push(`<div class="fade-in max-w-[720px] text-muted-foreground"><div class="text-[14px] mb-1">Earlier answer · <span class="mono">14:09</span></div>
+        <div class="leading-relaxed"><span class="mono text-foreground">5 weeks</span>, source: client email.</div></div>`);
+      parts.push(`<div id="versionDivider">${earlier('Onboarding standard v3 uploaded to the document library · <span class="mono">14:11</span>')}</div>`);
+      parts.push(userMsg(Q1));
+      parts.push(botBlock(answerQ1New(true) + compareToggle() + staleGhost, '14:11', '<span class="badge binding">Binding</span>', changedNote('library')));
+    }
+  }
   const chat = document.getElementById('chat');
   chat.innerHTML = `<div class="${s === 0 ? 'h-full' : 'space-y-10 max-w-[760px]'}">${parts.join('')}</div>`;
-  document.getElementById('composer').value = s === 0 ? '' : (s >= 4 ? Q2 : Q1);
+  document.getElementById('composer').value = s === 0 ? '' : (s === 4 ? Q2 : Q1);
+  renderScope();
+}
+function renderScope(){
+  const org = state.scope === 'org';
+  document.getElementById('scope').innerHTML = `<span>Asking:</span><span class="text-foreground font-medium">${org ? 'whole organisation' : 'ClearPath engagement'}</span>
+    <button data-scope="${org ? 'project' : 'org'}" class="underline underline-offset-4 decoration-[hsl(var(--border))] hover:text-foreground">${org ? 'switch to ClearPath only' : 'switch to whole organisation'}</button>`;
 }
 
 /* ---------------- memory panel ---------------- */
@@ -284,7 +372,9 @@ function factStatus(id){
   if (id === 'M-103' && retired103()) return { badge:'Retired by you', cls:'', dim:true };
   if (u.retired) return { badge:'Retired by you', cls:'', dim:true };
   if (u.pinned) return { badge:'Binding', cls:'binding', binding:true };
-  if (f.type === 'Decision') return { badge:'Binding', cls:'binding', binding:true };
+  if (f.q === 'q01' && id === bindingQ1()) return { badge:'Binding', cls:'binding', binding:true };
+  if (f.q === 'q01' && replacedBy(id) && f.type !== 'Superseded') return { badge:'Superseded', cls:'', dim:true };
+  if (id === 'E-301') return { badge:'Confirms', cls:'' };
   if (id === 'M-103') return { badge:'Conflict', cls:'strong' };
   if (f.type === 'Superseded') return { badge:'Superseded', cls:'', dim:true };
   if (f.type === 'Contested') return { badge:'Contested', cls:'strong' };
@@ -295,11 +385,12 @@ function factView(id){
   const f = FACTS[id]; const u = state.user[id] || {}; const st = factStatus(id);
   const open = state.open === id;
   const claim = u.corrected || f.claim;
-  let by = f.by; if (id === 'M-103' && retired103()) by = 'M-106';
+  const by = replacedBy(id);
   let details = '';
   if (open) {
     const notes = [];
     if (id === 'M-103' && retired103()) notes.push('Retired by you at <span class="mono">14:04</span>: the final report sets 3–4 weeks, and meeting 005 explains why 3 weeks was dropped.');
+    else if (id === 'M-107' && state.step >= 5) notes.push('Corroborated M-106, which is now superseded.');
     else if (f.note) notes.push(f.note);
     if (u.corrected) notes.push(`Corrected by you. Was “${esc(f.claim)}”.`);
     const retireForm = id === 'M-103' && state.step === 2 ? `
@@ -317,7 +408,7 @@ function factView(id){
     details = `<div class="fade-in mt-4" data-stop>
       <blockquote class="border-l-2 ${st.binding ? 'border-[hsl(var(--primary))]' : 'hair'} pl-4 leading-relaxed">“${esc(f.quote)}”${f.quote2 ? ` … “${esc(f.quote2)}”` : ''}</blockquote>
       <dl class="mt-4 grid grid-cols-[84px_1fr] gap-x-3 gap-y-1.5 text-[14px]">
-        <dt class="text-muted-foreground">Source</dt><dd>${shortDoc(f.doc)} <span class="text-muted-foreground">· ${f.loc}</span></dd>
+        <dt class="text-muted-foreground">Source</dt><dd>${f.src ? `<button class="cite !text-[14px] !text-foreground" data-sheet="${f.src}">${SRC_LABEL[f.src]}</button> · ` : ''}${shortDoc(f.doc)} <span class="text-muted-foreground">· ${f.loc}</span></dd>
         <dt class="text-muted-foreground">Date</dt><dd class="mono">${fmtDate(f.date)}</dd>
         ${by ? `<dt class="text-muted-foreground">Replaced by</dt><dd><button class="cite !text-[14px]" data-open="${by}">${FACTS[by].claim}</button></dd>` : ''}
         ${notes.length ? `<dt class="text-muted-foreground">Note</dt><dd class="text-muted-foreground">${notes.join(' ')}</dd>` : ''}
@@ -333,7 +424,7 @@ function factView(id){
     <div class="flex items-start gap-4">
       <div class="min-w-0 flex-1">
         <div class="claim text-[16px] leading-snug ${st.binding ? 'text-primary font-medium' : ''}">${esc(claim)}</div>
-        <div class="mt-1 text-[14px] text-muted-foreground truncate">${shortDoc(f.doc)} · <span class="mono">${fmtDate(f.date)}</span></div>
+        <div class="mt-1 text-[14px] text-muted-foreground truncate">${f.src ? SRC_LABEL[f.src] + ' · ' : ''}${f.src === 'mail' ? 'client@meridianlabs.org' : shortDoc(f.doc)} · <span class="mono">${fmtDate(f.date)}</span></div>
       </div>
       <span class="badge ${st.cls} mt-0.5">${st.badge}</span>
     </div>${details}</div>`;
@@ -345,6 +436,13 @@ function timelineQ1(){
   const arrow = (dashed) => `<div class="shrink-0 flex flex-col items-center px-1 text-muted-foreground" title="${dashed ? 'not linked yet' : 'supersedes'}">
       <svg width="26" height="10" viewBox="0 0 26 10" aria-hidden="true"><line x1="0" y1="5" x2="20" y2="5" stroke="currentColor" stroke-width="1.3" ${dashed ? 'stroke-dasharray="3 3"' : ''}/><path d="M19 1.5 L25 5 L19 8.5Z" fill="currentColor"/></svg>
       ${dashed ? '<span class="text-[11px] leading-none mt-0.5">?</span>' : ''}</div>`;
+  const s = state.step;
+  if (s >= 5) return `<div class="flex items-center">
+      ${node('M-105','4 wk','21 Nov','dim')}${arrow(false)}
+      ${node('M-106','3–4 wk','28 Nov','dim')}${arrow(false)}
+      ${node('E-301','5 wk','email', s >= 6 ? '' : 'binding')}${s >= 6 ? arrow(false) + node('L-402','5 wk','std v3','binding') : ''}
+    </div>
+    <p class="mt-3 text-[13px] text-muted-foreground leading-relaxed">Latest versions, oldest to newest. ${s >= 6 ? 'Version 3 of the onboarding standard is now the source; the email agrees.' : 'The client email of <span class="mono">14 Nov 2026</span> supersedes the final report.'} Earlier versions are under Show all.</p>`;
   return `<div class="flex items-center">
       ${node('M-102','< 3 wk','22 Aug','dim')}${arrow(false)}
       ${node('M-103','≤ 3 wk','29 Sep', r ? 'dim' : 'conflict')}${arrow(!r)}
@@ -367,11 +465,11 @@ function renderPanel(){
       <div class="mt-6 text-muted-foreground leading-relaxed max-w-[400px]">When you ask, the facts behind the answer appear here: the binding version, what it replaced, and any conflict. Click a fact to see its source and correct it.</div>`;
     return;
   }
-  const q2 = s >= 4;
+  const q2 = isQ2();
   const topic = q2 ? 'Audit queue time' : 'Onboarding target';
-  const key = q2 ? ['M-203','M-201','M-202'] : ['M-106','M-105','M-103'];
-  const rest = q2 ? ['M-204','M-205','M-206','M-207','M-208'] : ['M-107','M-104','M-102','M-101'];
-  const labels = q2 ? ['Conflicting sources','',''] : ['Binding now','It replaced', retired103() ? 'Was in conflict' : 'Conflict'];
+  const key = keyFacts();
+  const rest = restFacts();
+  const labels = q2 ? ['Conflicting sources','',''] : ['Binding now','It replaced', s >= 6 ? 'Confirmed by' : (retired103() ? 'Was in conflict' : 'Conflict')];
   const keyHtml = key.map((id, i) => (labels[i] ? `<div class="text-[13px] text-muted-foreground px-5 ${i ? 'mt-5' : ''} mb-1.5">${labels[i]}</div>` : '') + factView(id)).join('');
   panel.innerHTML = `
     <div class="flex items-baseline justify-between">
@@ -397,28 +495,125 @@ function renderStepper(){
   document.getElementById('stepper').innerHTML = STEPS.map((st, i) => {
     const n = i + 1; const cls = s === n ? 'on' : (s > n ? 'done' : '');
     return `<button data-goto="${n}" title="${st.label}" class="flex items-center gap-2 ${s === n ? 'text-foreground' : 'text-muted-foreground'} hover:text-foreground">
-      <span class="step-dot mono ${cls}">${n}</span>${s === n ? `<span class="text-[14px] font-medium pr-1">${st.label}</span>` : ''}</button>${n < 4 ? '<span class="w-3 h-px bg-[hsl(var(--border))]"></span>' : ''}`;
+      <span class="step-dot mono ${cls}">${n}</span>${s === n ? `<span class="text-[14px] font-medium pr-1">${st.label}</span>` : ''}</button>${n < LAST ? '<span class="w-3 h-px bg-[hsl(var(--border))]"></span>' : ''}`;
   }).join('');
   document.getElementById('caption').textContent = s === 0 ? INTRO : STEPS[s-1].caption;
-  document.getElementById('nextLabel').textContent = s >= 4 ? 'Restart' : (s === 2 ? 'Confirm retire' : (s === 0 ? 'Start demo' : 'Next step'));
+  document.getElementById('nextLabel').textContent = s >= LAST ? 'Restart' : ({ 0:'Start demo', 2:'Confirm retire', 4:'Send demo email', 5:'Upload v3' }[s] || 'Next step');
   document.getElementById('backBtn').style.visibility = s === 0 ? 'hidden' : 'visible';
+}
+
+/* ---------------- organisation → projects → sources ---------------- */
+function sources(){
+  const s = state.step;
+  return [
+    { id:'docs', label:'Documents', count:'46', dot:'' },
+    { id:'library', label:'Document library', count: s >= 6 ? 'v3' : 'v2', dot:'' },
+    { id:'github', label:'GitHub', count:'20', dot:'' },
+    { id:'mail', label:'Mail', count: s >= 5 ? '1' : '0', dot:'' }
+  ];
+}
+function renderSidebar(){
+  const org = state.scope === 'org';
+  const src = sources().map(x => `<button data-sheet="${x.id}" class="nav-item !py-1.5 ${state.sheet === x.id ? 'on' : ''}">
+      <span class="dot ${x.dot}"></span><span class="flex-1 truncate">${x.label}</span><span class="mono text-[12px] text-muted-foreground">${x.count}</span></button>`).join('');
+  document.getElementById('sidebar').innerHTML = `
+    <div class="px-2.5 text-[12px] text-muted-foreground">Organisation</div>
+    <button data-scope="org" class="nav-item mt-1 ${org ? 'on' : ''}" title="Global brain: sees all projects">
+      <span class="w-5 h-5 rounded-md bg-muted grid place-items-center text-[11px] font-semibold text-foreground shrink-0">M</span><span class="truncate">Meridian Labs</span></button>
+    <div class="px-2.5 mt-6 text-[12px] text-muted-foreground">Projects</div>
+    <button data-scope="project" class="nav-item mt-1 ${org ? '' : 'on'}"><span class="truncate">ClearPath engagement</span></button>
+    <div class="ml-3 pl-2 mt-1 mb-1 border-l hair space-y-0.5">${src}</div>
+    <button data-internal class="nav-item"><span class="truncate">Internal</span></button>
+    <p class="px-2.5 mt-6 text-[12px] text-muted-foreground leading-relaxed">Projects are isolated. The organisation sees all of them.</p>`;
+}
+
+function sheetHtml(id){
+  const s = state.step;
+  const head = (title, sub) => `<div class="flex items-start justify-between gap-4">
+      <div><div class="text-[13px] text-muted-foreground">ClearPath engagement · source</div><div class="text-[20px] font-semibold tracking-tight mt-0.5">${title}</div>
+      <div class="text-[14px] text-muted-foreground mt-1">${sub}</div></div>
+      <button data-close-sheet class="btn ghost sm" aria-label="Close">✕</button></div>`;
+  const status = (txt) => `<div class="mt-5 flex items-center gap-2 text-[14px]"><span class="dot"></span>${txt}</div>`;
+  if (id === 'docs') return head('Documents', 'Uploaded files, parsed into facts') + status('Synced · <span class="mono">46</span> documents · <span class="mono">214</span> facts') + `
+    <div class="mt-6 row"><span class="text-muted-foreground">Source id</span><span class="mono text-[13px]">src-clearpath-docs</span>
+      <span class="text-muted-foreground">Corpus</span><span>OIDA ClearPath, CC BY 4.0</span>
+      <span class="text-muted-foreground">Folders</span><span>01-scope, 02-subject, 05-meetings, 07-documents, …</span></div>`;
+  if (id === 'github') return head('GitHub', 'Public repository, no keys stored') + status('Synced · <span class="mono">20</span> issues and README') + `
+    <div class="mt-6 row"><span class="text-muted-foreground">Source id</span><span class="mono text-[13px]">src-clearpath-gh</span>
+      <span class="text-muted-foreground">Repository</span><span class="mono text-[13px]">gabry-ts/canonico</span>
+      <span class="text-muted-foreground">Reads</span><span>Issues, comments, README</span></div>`;
+  if (id === 'library') {
+    const v = (n, date, cur, sup) => `<div class="flex items-center gap-3 py-2.5 border-t hair first:border-t-0">
+      <span class="mono text-[13px] w-6 shrink-0">v${n}</span>
+      <div class="flex-1 min-w-0"><div class="text-[14px] truncate">Onboarding standard</div><div class="mono text-[12px] text-muted-foreground">${date} · sample</div></div>
+      ${cur ? '<span class="badge">Current</span>' : (sup ? '<span class="badge">Superseded</span>' : '')}</div>`;
+    return head('Document library', 'Versioned documents. A new version supersedes the facts it restates.') + status(`Synced · 1 document · <span class="mono">${s >= 6 ? 3 : 2}</span> versions`) + `
+    <div class="mt-6 rounded-xl bg-muted/60 px-4 py-1">${s >= 6 ? v(3,'14 Nov 2026',true) : ''}${v(2,'12 Jan 2026', s < 6, s >= 6)}${v(1,'2 Dec 2025',false,true)}</div>
+    ${s >= 6 ? `<p class="mt-4 text-[14px] text-muted-foreground leading-relaxed">v3 uploaded at <span class="mono">14:11</span>. The v2 fact “3–4 weeks” is now superseded.</p>`
+      : `<button data-goto="6" class="btn dark sm mt-5">Upload new version · Onboarding standard v3</button>
+         <p class="mt-2 text-[13px] text-muted-foreground">Sample file. The demo uploads it as <span class="mono">POST /documents/{id}/versions</span>.</p>`}
+    <div class="mt-6 row"><span class="text-muted-foreground">Source id</span><span class="mono text-[13px]">src-clearpath-library</span>
+      <span class="text-muted-foreground">Provider</span><span>Local library <span class="text-muted-foreground">· SharePoint, Google Drive coming soon</span></span></div>`;
+  }
+  // mail
+  const o = state.mailOverride;
+  const seg = (on, label, val) => `<button data-mail-override="${val}" class="flex-1 h-8 rounded-md text-[13px] ${on ? 'bg-card shadow-[0_0_0_1px_hsl(var(--border))] text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'}">${label}</button>`;
+  return head('Mail', 'Mocked inbox and inbound webhook') + status(`Listening · <span class="mono">${s >= 5 ? 1 : 0}</span> emails routed here`) + `
+    <div class="mt-6 text-[13px] text-muted-foreground">Configuration</div>
+    <div class="mt-2 flex gap-1 rounded-lg bg-muted p-1">${seg(!o,'Inherited from organisation','0')}${seg(o,'Overridden on this project','1')}</div>
+    <div class="mt-4 row"><span class="text-muted-foreground">IMAP host</span><span class="mono text-[13px]">mock.meridianlabs.org</span>
+      <span class="text-muted-foreground">Inbound</span><span class="mono text-[13px]">${o ? 'clearpath@inbound.meridianlabs.org' : 'brain@inbound.meridianlabs.org'}</span>
+      <span class="text-muted-foreground">Set on</span><span>${o ? 'This project' : 'Meridian Labs (organisation)'}</span></div>
+    <div class="mt-6 text-[13px] text-muted-foreground">Routing rules</div>
+    <div class="mt-2 rounded-xl bg-muted/60 px-4 py-3 flex items-center gap-3 text-[14px]">
+      <span class="mono text-[13px]">@meridianlabs.org</span><span class="text-muted-foreground">→</span><span class="flex-1">ClearPath engagement</span></div>
+    ${s >= 5 ? `<div class="mt-6 text-[13px] text-muted-foreground">Inbox</div>
+      <div class="mt-2 rounded-xl shadow-[inset_0_0_0_1px_hsl(var(--border))] px-4 py-3 text-[14px]">
+        <div class="flex justify-between gap-3"><span class="font-medium">client@meridianlabs.org</span><span class="mono text-[12px] text-muted-foreground">14:09</span></div>
+        <div class="mt-0.5">Onboarding target confirmed</div><div class="text-muted-foreground mt-0.5">…we confirm the onboarding target at 5 weeks.</div></div>`
+      : `<button data-goto="5" class="btn dark sm mt-6">Send demo email</button>
+         <p class="mt-2 text-[13px] text-muted-foreground">Sends a sample email from client@meridianlabs.org to the inbound webhook.</p>`}
+    <div class="mt-6 row"><span class="text-muted-foreground">Source id</span><span class="mono text-[13px]">src-clearpath-mail</span>
+      <span class="text-muted-foreground">Connectors</span><span class="text-muted-foreground">Gmail, Outlook coming soon</span></div>`;
+}
+function renderSheet(){
+  const el = document.getElementById('sheet');
+  document.getElementById('scrim').classList.toggle('hidden', !state.sheet);
+  el.classList.toggle('open', !!state.sheet);
+  if (state.sheet) el.innerHTML = `<div class="px-7 py-7">${sheetHtml(state.sheet)}</div>`;
+}
+function openSheet(id){ state.sheet = state.sheet === id ? null : id; renderSidebar(); renderSheet(); }
+
+let it;
+function inbox(){
+  const el = document.getElementById('inbox');
+  el.innerHTML = `<div class="flex items-center justify-between text-[13px] text-muted-foreground"><span>New email · routed to ClearPath engagement</span><span class="mono">14:09</span></div>
+    <div class="mt-2 font-medium text-[15px]">client@meridianlabs.org</div>
+    <div class="text-[15px]">Onboarding target confirmed</div>
+    <div class="text-[14px] text-muted-foreground mt-0.5">…we confirm the onboarding target at 5 weeks.</div>
+    <div class="mt-2 text-[12px] text-muted-foreground">Rule <span class="mono">@meridianlabs.org → ClearPath</span></div>`;
+  el.style.opacity = 1; clearTimeout(it); it = setTimeout(() => el.style.opacity = 0, 4200);
 }
 
 function go(n){
   state.step = n; state.showAll = false; state.correcting = null; state.reveal = null;
   state.open = n === 2 ? 'M-103' : null;
+  state.sheet = null;
   render();
   document.getElementById('panel').scrollTop = 0;
   const chat = document.getElementById('chat'); chat.scrollTop = 0;
   if (n === 3) { const d = document.getElementById('retiredDivider'); if (d) chat.scrollTop = d.offsetTop - 24; }
+  if (n >= 5) setTimeout(() => { const d = document.getElementById(n === 6 ? 'versionDivider' : 'eventDivider'); if (d) chat.scrollTop = d.offsetTop - 24; }, 40);
   if (n === 2 || n === 3) setTimeout(() => { const el = document.getElementById('fact-M-103'); if (el) { el.scrollIntoView({ block:'nearest', behavior:'smooth' }); flash('M-103'); } }, 60);
+  if (n === 5 || n === 6) setTimeout(() => flash(n === 5 ? 'E-301' : 'L-402'), 60);
   if (n === 3) toast('Requirement R1.1 retired. Asking again.');
+  if (n === 5) inbox();
+  if (n === 6) toast('Onboarding standard v3 uploaded. Version 2 superseded.');
 }
-function render(){ renderChat(); renderPanel(); renderStepper(); }
+function render(){ renderChat(); renderPanel(); renderStepper(); renderSidebar(); renderSheet(); }
 
 function openFact(id){
-  const q2 = state.step >= 4;
-  const key = q2 ? ['M-203','M-201','M-202'] : ['M-106','M-105','M-103'];
+  const key = keyFacts();
   if (!key.includes(id)) state.showAll = true;
   state.open = id; state.correcting = null; renderPanel();
   const el = document.getElementById('fact-' + id);
@@ -428,7 +623,12 @@ function flash(id){ const el = document.getElementById('fact-' + id); if (!el) r
 let tt; function toast(t){ const el = document.getElementById('toast'); el.textContent = t; el.style.opacity = 1; clearTimeout(tt); tt = setTimeout(() => el.style.opacity = 0, 2200); }
 
 document.addEventListener('click', e => {
+  if (e.target.closest('[data-close-sheet]')) { state.sheet = null; renderSidebar(); renderSheet(); return; }
   const g = e.target.closest('[data-goto]'); if (g) { go(+g.dataset.goto); return; }
+  const sh = e.target.closest('[data-sheet]'); if (sh) { openSheet(sh.dataset.sheet); return; }
+  const sc = e.target.closest('[data-scope]'); if (sc) { state.scope = sc.dataset.scope; renderChat(); renderSidebar(); toast(state.scope === 'org' ? 'Asking the whole organisation: all projects.' : 'Asking ClearPath engagement only.'); return; }
+  if (e.target.closest('[data-internal]')) { toast('Internal is a separate project and cannot see ClearPath facts.'); return; }
+  const mo = e.target.closest('[data-mail-override]'); if (mo) { state.mailOverride = mo.dataset.mailOverride === '1'; renderSheet(); return; }
   const o = e.target.closest('[data-open]'); if (o) { openFact(o.dataset.open); return; }
   if (e.target.closest('[data-compare]')) { state.compare = !state.compare; renderChat(); return; }
   const rv = e.target.closest('[data-reveal]'); if (rv) { const id = rv.dataset.reveal; state.reveal = state.reveal === id ? null : id; renderChat(); if (state.reveal) openFact(id); return; }
@@ -453,11 +653,12 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-stop]')) return;
   const f = e.target.closest('[data-fact]'); if (f) { const id = f.dataset.fact; state.open = state.open === id ? null : id; state.correcting = null; renderPanel(); }
 });
-document.getElementById('nextBtn').addEventListener('click', () => go(state.step >= 4 ? 0 : state.step + 1));
+document.getElementById('nextBtn').addEventListener('click', () => go(state.step >= LAST ? 0 : state.step + 1));
 document.getElementById('backBtn').addEventListener('click', () => go(Math.max(0, state.step - 1)));
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' && !e.target.readOnly) return;
-  if (e.key === 'ArrowRight') go(Math.min(4, state.step + 1));
+  if (e.key === 'Escape' && state.sheet) { state.sheet = null; renderSidebar(); renderSheet(); return; }
+  if (e.key === 'ArrowRight') go(Math.min(LAST, state.step + 1));
   if (e.key === 'ArrowLeft') go(Math.max(0, state.step - 1));
 });
 render();
