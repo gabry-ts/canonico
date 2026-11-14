@@ -21,6 +21,8 @@ export default function Ask() {
 
   const [step, setStep] = useState(1)
   const [revealed, setRevealed] = useState(false)
+  // Below lg the panel is hidden; "Show what the AI believes" opens it as a full-screen sheet.
+  const [sheet, setSheet] = useState(false)
   const [items, setItems] = useState<Item[]>([])
   const [topic, setTopic] = useState(DEMO.topic)
   const [contested, setContested] = useState<AskResponse | null>(null)
@@ -216,6 +218,7 @@ export default function Ask() {
     if (busy) return
     if (step === 1) {
       setRevealed(true)
+      setSheet(true)
       setStep(2)
     } else if (step === 2) {
       if (retireTarget) perm.guard('retire_fact', () => setForm({ id: retireTarget.id, reason: t('ask.panel.reasonDefault'), error: false }))()
@@ -292,7 +295,7 @@ export default function Ask() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="shrink-0 h-11 border-b bg-muted/40 flex items-center gap-4 px-4 lg:px-5">
+      <div className="shrink-0 min-h-11 py-1.5 lg:py-0 lg:h-11 border-b bg-muted/40 flex flex-wrap lg:flex-nowrap items-center gap-x-4 gap-y-1.5 px-4 lg:px-5">
         <span className="text-[12px] font-medium text-muted-foreground shrink-0 hidden md:inline">{t('ask.demo')}</span>
         <div className="flex items-center gap-1 shrink-0">
           {Array.from({ length: LAST }, (_, i) => {
@@ -315,7 +318,7 @@ export default function Ask() {
             )
           })}
         </div>
-        <p className="flex-1 min-w-0 truncate text-[13px] text-muted-foreground">{t(`ask.steps.s${step}.caption`)}</p>
+        <p className="hidden md:block flex-1 min-w-0 truncate text-[13px] text-muted-foreground">{t(`ask.steps.s${step}.caption`)}</p>
         <div className="flex items-center gap-1 shrink-0">
           {step < LAST && (
             <button
@@ -400,7 +403,12 @@ export default function Ask() {
             </div>
           </div>
         </section>
-        <aside className="hidden lg:flex flex-col min-h-0 border-l bg-card" aria-label={t('ask.panel.title')}>
+        <aside className={`${sheet ? 'fixed inset-0 z-40 flex' : 'hidden'} lg:static lg:z-auto lg:flex flex-col min-h-0 border-l bg-card`} aria-label={t('ask.panel.title')}>
+          <div className="lg:hidden shrink-0 flex justify-end px-3 pt-3">
+            <button className="btn btn-ghost btn-icon btn-sm" aria-label={t('common.close')} onClick={() => setSheet(false)}>
+              <Ic n="x" />
+            </button>
+          </div>
           <div className="flex-1 min-h-0 overflow-y-auto scroll px-6 py-6">
             <Panel
               chain={chain}
