@@ -72,6 +72,31 @@ def alias_topic(state: dict, question: str, project_id: str | None = None) -> st
     return None
 
 
+ROUTE_SYSTEM = """You route a question to the topics of a company memory.
+Each topic is one question the memory can answer. Pick the topics whose facts answer the user's question: at most two, the best one first.
+Return an empty list when no topic fits. Use only ids from the list."""
+ROUTE_SCHEMA = {"type": "object", "properties": {"topics": {"type": "array", "items": {"type": "string"}}}, "required": ["topics"], "additionalProperties": False}
+
+
+def topic_lines(state: dict, project_id: str | None = None) -> dict[str, str]:
+    """One line per topic in scope, as shown to the model router."""
+    lines = {}
+    for topic in state["topics"].values():
+        if store.in_scope(topic.get("project_id"), project_id):
+            questions = topic.get("x", {}).get("questions") or [""]
+            lines[topic["id"]] = f"{topic['id']} | {topic['label']} | {questions[0]}"
+    return lines
+
+
+def model_route(question: str, lines: dict[str, str], model: str, meter) -> list[str]:
+    """Topics a small model picks for a question, best first. One cached call, a few seconds at most."""
+    from app import llm
+
+    user = "Topics (id | label | question):\n" + "\n".join(lines.values()) + f"\n\nQuestion: {question}"
+    data = llm.complete_json(model, ROUTE_SYSTEM, user, ROUTE_SCHEMA, meter, name="route", max_tokens=2000, timeout=8.0, retries=0)
+    return [t for t in dict.fromkeys(data.get("topics", [])) if t in lines][:2]
+
+
 def match_topic(state: dict, question: str, min_coverage: float = 0.34, project_id: str | None = None) -> str | None:
     alias = alias_topic(state, question, project_id)
     if alias is not None:
@@ -146,18 +171,23 @@ def fact_roles(state: dict, topic_id: str, focus: set[str] | None) -> dict[str, 
     return weights
 
 
-def canonico_ranking(state: dict, query: str, top_k: int = 10, topics: int = 2, min_coverage: float = 0.3, project_id: str | None = None) -> list[str]:
+def canonico_ranking(state: dict, query: str, top_k: int = 10, topics: int = 2, min_coverage: float = 0.3, project_id: str | None = None, route: list[str] | None = None) -> list[str]:
     """Documents ranked by text match plus the epistemic role of the facts they are the source of.
 
     Start from the normalised BM25 score of each document. For the topics that match the question,
     add to each source document the weight of its best fact: binding first, then facts in an open
     conflict, then the superseded chain, then evidence, open questions and estimates.
+    The topics come from the keyword matcher, or from `route` when a model picked them
+    (first topic at full weight, second at 0.6).
     """
     tokens = tokenize(query)
     plain = docs_index(state, project_id).rank(tokens)
     top_plain = plain[0][1] if plain else 1.0
     scores = {doc_id: score / top_plain for doc_id, score in plain}
-    matched = [t for t in rank_topics(state, query, project_id) if t[2] >= min_coverage][:topics]
+    if route is not None:
+        matched = [(topic_id, 1.0 if n == 0 else 0.6, 1.0) for n, topic_id in enumerate(route[:topics]) if topic_id in state["topics"]]
+    else:
+        matched = [t for t in rank_topics(state, query, project_id) if t[2] >= min_coverage][:topics]
     for topic_id, topic_score, _ in matched:
         share = topic_score / matched[0][1]
         gains: dict[str, float] = {}
@@ -438,12 +468,15 @@ def explain_change(state: dict, since_version: int, topic_id: str | None) -> str
     return _describe(state, _net_events(events)) or "memory changed since the previous answer"
 
 
-def ask(state: dict, question: str, topic_id: str | None = None, include_plain: bool = False, project_id: str | None = None) -> tuple[dict, dict]:
+def ask(state: dict, question: str, topic_id: str | None = None, include_plain: bool = False, project_id: str | None = None, route: list[str] | None = None) -> tuple[dict, dict]:
     """Answer a question, store the answer and return (response, record).
 
     With a project the answer only uses that project's memory. Without one it has organisation scope.
+    The topic is the one given, else a known phrasing of the question, else the first topic of
+    `route` (picked by the model router), else the keyword match.
     """
-    matched = topic_id or match_topic(state, question, project_id=project_id)
+    routed = next((t for t in route or [] if t in state["topics"] and store.in_scope(state["topics"][t].get("project_id"), project_id)), None)
+    matched = topic_id or alias_topic(state, question, project_id) or routed or match_topic(state, question, project_id=project_id)
     focus = None
     if matched is None:
         response = _result("no_answer", NO_ANSWER, None, [], [], [], state)

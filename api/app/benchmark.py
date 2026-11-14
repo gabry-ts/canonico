@@ -60,7 +60,7 @@ def corpus_view(state: dict) -> dict:
     return {**state, "documents": documents, "facts": facts, "topics": topics, "conflicts": conflicts}
 
 
-def answer_document(state: dict, question: str, ranking: list[str]) -> str:
+def answer_document(state: dict, question: str, ranking: list[str], route: list[str] | None = None) -> str:
     """Document the answer engine points to: the source of the binding fact, as POST /ask returns it.
 
     For a contested answer it is the document that holds most of the competing facts. When memory
@@ -70,7 +70,8 @@ def answer_document(state: dict, question: str, ranking: list[str]) -> str:
 
     from app.text import tokenize
 
-    topic_id = engine.match_topic(state, question, project_id=PROJECT)
+    routed = next((t for t in route or [] if t in state["topics"]), None)
+    topic_id = engine.alias_topic(state, question, PROJECT) or routed or engine.match_topic(state, question, project_id=PROJECT)
     if topic_id is not None:
         answer = engine.answer_topic(state, topic_id, engine.focus_facts(state, topic_id, tokenize(question)))
         if answer["binding"] is not None:
@@ -80,7 +81,8 @@ def answer_document(state: dict, question: str, ranking: list[str]) -> str:
     return ranking[0] if ranking else ""
 
 
-def evaluate(state: dict) -> dict:
+def evaluate(state: dict, router=None) -> dict:
+    """Run the benchmark. `router` maps a question to topic ids (the model router), None uses keywords only."""
     state = corpus_view(state)
     queries, qrels = load_queries(), load_qrels()
     dates = {i: d["date"] for i, d in state["documents"].items()}
@@ -90,9 +92,10 @@ def evaluate(state: dict) -> dict:
         if not grades:
             continue
         plain = [r["doc_id"] for r in engine.plain_retrieval(state, query["text"], top_k=10, project_id=PROJECT)]
-        canonico = engine.canonico_ranking(state, query["text"], top_k=10, project_id=PROJECT)
+        route = router(query["text"]) if router else None
+        canonico = engine.canonico_ranking(state, query["text"], top_k=10, project_id=PROJECT, route=route or None)
         gold = gold_document(grades, dates)
-        answered = answer_document(state, query["text"], canonico)
+        answered = answer_document(state, query["text"], canonico, route)
         ndcg_plain.append(ndcg_at_k(plain, grades))
         ndcg_canonico.append(ndcg_at_k(canonico, grades))
         per_query.append(
@@ -131,3 +134,18 @@ def extras(result: dict) -> dict:
         "top1_gold_plain": round(sum(q["pass_plain"] for q in rows) / (len(rows) or 1), 4),
         "top1_gold_canonico": round(sum(q["pass_canonico"] for q in rows) / (len(rows) or 1), 4),
     }
+
+
+def model_router(state: dict, meter):
+    """Router for `evaluate` that asks the model once per question (cached on disk)."""
+    view = corpus_view(state)
+    lines = engine.topic_lines(view, PROJECT)
+    model = state["config"]["models"]["extraction"]
+
+    def route(question: str) -> list[str]:
+        try:
+            return engine.model_route(question, lines, model, meter)
+        except Exception:
+            return []
+
+    return route

@@ -113,7 +113,7 @@ def _cache_key(model: str, system: str, user: str, schema: dict, max_tokens: int
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def complete_json(model: str, system: str, user: str, schema: dict, meter: Meter, name: str = "result", max_tokens: int = 8000, effort: str = "low") -> dict:
+def complete_json(model: str, system: str, user: str, schema: dict, meter: Meter, name: str = "result", max_tokens: int = 8000, effort: str = "low", timeout: float = 240.0, retries: int = 4) -> dict:
     """Return a JSON object that follows the schema. Cached by input hash, capped by the meter."""
     path = cache_dir() / f"{_cache_key(model, system, user, schema, max_tokens, effort)}.json"
     if path.exists():
@@ -132,9 +132,9 @@ def complete_json(model: str, system: str, user: str, schema: dict, meter: Meter
     input_tokens = output_tokens = 0
     try:
         if provider() == "anthropic":
-            text, input_tokens, output_tokens = _anthropic(bare_model(model), system, user, schema, max_tokens, effort)
+            text, input_tokens, output_tokens = _anthropic(bare_model(model), system, user, schema, max_tokens, effort, timeout, retries)
         else:
-            text, input_tokens, output_tokens = _gateway(model, system, user, schema, name, max_tokens)
+            text, input_tokens, output_tokens = _gateway(model, system, user, schema, name, max_tokens, timeout)
     finally:
         meter.settle(estimate, cost_of(model, input_tokens, output_tokens), input_tokens, output_tokens)
     try:
@@ -150,10 +150,10 @@ def complete_json(model: str, system: str, user: str, schema: dict, meter: Meter
     return data
 
 
-def _anthropic(model: str, system: str, user: str, schema: dict, max_tokens: int, effort: str) -> tuple[str, int, int]:
+def _anthropic(model: str, system: str, user: str, schema: dict, max_tokens: int, effort: str, timeout: float = 240.0, retries: int = 4) -> tuple[str, int, int]:
     import anthropic
 
-    client = anthropic.Anthropic(max_retries=4, timeout=240.0)
+    client = anthropic.Anthropic(max_retries=retries, timeout=timeout)
     request = {
         "model": model,
         "max_tokens": max_tokens,
@@ -193,7 +193,7 @@ def gateway_model(model: str) -> str:
     return "anthropic/" + re.sub(r"-(\d+)-(\d+)$", r"-\1.\2", model)
 
 
-def _gateway(model: str, system: str, user: str, schema: dict, name: str, max_tokens: int) -> tuple[str, int, int]:
+def _gateway(model: str, system: str, user: str, schema: dict, name: str, max_tokens: int, timeout: float = 240.0) -> tuple[str, int, int]:
     body = {
         "model": gateway_model(model),
         "max_tokens": max_tokens,
@@ -202,7 +202,7 @@ def _gateway(model: str, system: str, user: str, schema: dict, name: str, max_to
     }
     headers = {"Authorization": f"Bearer {os.environ.get('AI_GATEWAY_API_KEY', '')}"}
     try:
-        response = httpx.post(f"{os.environ.get('AI_GATEWAY_URL') or GATEWAY_URL}/chat/completions", json=body, headers=headers, timeout=240.0)
+        response = httpx.post(f"{os.environ.get('AI_GATEWAY_URL') or GATEWAY_URL}/chat/completions", json=body, headers=headers, timeout=timeout)
     except httpx.HTTPError as exc:
         raise LLMError("Model gateway is unreachable.") from exc
     if response.status_code >= 400:

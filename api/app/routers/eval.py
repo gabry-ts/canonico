@@ -3,9 +3,10 @@ import secrets
 import threading
 
 from fastapi import APIRouter, Query
+from fastapi.responses import JSONResponse
 
 from app import benchmark, store
-from app.http import not_found, out
+from app.http import dump, not_found, out
 from app.models import EvalQuery, EvalResult, EvalRun
 from app.store import STORE
 
@@ -19,15 +20,22 @@ def run_view(run: dict) -> dict:
 def _execute(run_id: str) -> None:
     with STORE.read() as state:
         snapshot = copy.deepcopy(state)
+    from app import llm
+    from app.routers.ask import router_enabled
+
+    meter = llm.Meter(cap_usd=max(0.0, snapshot["config"]["cost_cap_usd"] - snapshot.get("cost_spent", 0.0)))
     try:
-        result, status = benchmark.evaluate(snapshot), "done"
+        router = benchmark.model_router(snapshot, meter) if router_enabled(snapshot) else None
+        result, status = benchmark.evaluate(snapshot, router), "done"
+        result["router"] = "model" if router else "keywords"
     except Exception:
         result, status = None, "error"
     with STORE.write() as state:
         run = next((r for r in state["eval_runs"] if r["id"] == run_id), None)
         if run is None:
             return
-        run.update(status=status, finished_at=store.now(), result=result)
+        run.update(status=status, finished_at=store.now(), result=result, cost_usd=round(meter.spent, 4))
+        state["cost_spent"] = round(state.get("cost_spent", 0.0) + meter.spent, 6)
         if result is not None:
             state["eval_latest"] = result
 
@@ -35,9 +43,10 @@ def _execute(run_id: str) -> None:
 @router.get("/eval/latest", operation_id="getLatestEval", status_code=200, response_model=EvalResult)
 def get_latest_eval():
     with STORE.read() as state:
-        if not state.get("eval_latest"):
+        latest = state.get("eval_latest")
+        if not latest:
             raise not_found("Evaluation result")
-        return out(EvalResult, state["eval_latest"])
+        return JSONResponse({**dump(EvalResult, latest), "router": latest.get("router", "keywords")})
 
 
 @router.post("/eval/run", operation_id="runEval", status_code=202, response_model=EvalRun)
