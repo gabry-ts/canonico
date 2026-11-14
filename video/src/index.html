@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Canonico film v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: hsl(0 0% 99%); --fg: hsl(220 13% 13%); --card: #fff; --muted: hsl(220 14% 96%);
+    --mfg: hsl(220 8% 46%); --border: hsl(220 13% 91%); --primary: hsl(229 72% 46%);
+    --soft: hsl(229 85% 97%); --dark: hsl(220 13% 18%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+  body { font-family: 'Geist', system-ui, sans-serif; color: var(--fg); -webkit-font-smoothing: antialiased; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; background: var(--bg); overflow: hidden; }
+  .abs { position: absolute; }
+  .full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+  .mono { font-family: 'Geist Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .title { left: 0; width: 1920px; text-align: center; font-size: 150px; font-weight: 600; letter-spacing: -0.035em; }
+  .daychip { font-size: 30px; font-weight: 500; padding: 9px 26px; border-radius: 999px; background: var(--muted); color: var(--fg); line-height: 40px; }
+  .logo { display: flex; align-items: center; gap: 14px; font-weight: 600; letter-spacing: -0.02em; }
+  .panel { background: var(--card); border-radius: 24px; box-shadow: inset 0 0 0 2px var(--border), 0 14px 40px rgb(20 25 40 / .07); }
+  .badge { display: inline-block; font-size: 24px; font-weight: 500; padding: 5px 18px; border-radius: 999px; background: var(--muted); color: var(--mfg); white-space: nowrap; line-height: 34px; }
+  .badge.binding { background: var(--primary); color: #fff; }
+  .badge.onblue { background: #fff; color: var(--primary); }
+  .badge.strong { background: var(--card); color: var(--fg); box-shadow: inset 0 0 0 2.5px rgb(30 34 44 / .6); }
+  .badge.dark { background: var(--dark); color: #fff; }
+  .bubble { background: var(--dark); color: #fff; font-size: 36px; font-weight: 500; padding: 20px 32px; border-radius: 26px 26px 6px 26px; white-space: nowrap; }
+  .chip { display: flex; align-items: center; gap: 14px; font-size: 28px; font-weight: 500; white-space: nowrap; }
+  .avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--muted); display: grid; place-items: center; flex-shrink: 0; font-weight: 600; font-size: 26px; }
+  .ailabel { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 500; color: var(--mfg); }
+  .aidot { width: 26px; height: 26px; border-radius: 8px; background: var(--muted); box-shadow: inset 0 0 0 2px var(--border); }
+  .row { position: relative; height: 76px; border-radius: 14px; background: var(--muted); display: flex; align-items: center; padding: 0 26px; margin-top: 10px; }
+  .row .d { width: 196px; font-size: 22px; color: var(--mfg); }
+  .row .n { font-size: 26px; flex: 1; display: flex; align-items: center; gap: 14px; }
+  .row .v { font-size: 30px; font-weight: 600; letter-spacing: -0.01em; }
+  .cell { width: 400px; height: 84px; border-radius: 14px; box-shadow: inset 0 0 0 2px var(--border); padding: 12px 22px; }
+  .cell .v { font-size: 29px; font-weight: 600; color: var(--mfg); text-decoration: line-through; text-decoration-color: hsl(220 8% 46% / .7); }
+  .cell .m { font-size: 19px; color: var(--mfg); margin-top: 2px; }
+  .btn { display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 500; border-radius: 12px; background: var(--dark); color: #fff; }
+  .logline { height: 40px; line-height: 40px; font-size: 22px; white-space: nowrap; color: hsl(220 14% 80%); }
+  .logline.c { color: #fff; } .logline.w { color: hsl(220 10% 58%); }
+  .end { left: 0; width: 1920px; text-align: center; letter-spacing: -0.03em; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- top bar -->
+  <div id="day1" class="abs daychip" style="left:140px;top:64px">Monday</div>
+  <div id="day2" class="abs daychip" style="left:140px;top:64px">Next Monday</div>
+  <div id="brand" class="abs logo" style="right:140px;top:66px;font-size:40px">
+    <svg width="46" height="46" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="13" height="13" rx="3.5" stroke="hsl(229 72% 46%)" stroke-width="1.4"/><path d="M5 8h6M8 5v6" stroke="hsl(229 72% 46%)" stroke-width="1.4"/></svg>
+    <span>Canonico</span>
+  </div>
+
+  <!-- ================= ACT 1: Monday ================= -->
+  <div id="act1" class="full">
+    <div id="p1" class="abs chip" style="left:140px;top:170px">
+      <div class="avatar"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="hsl(220 13% 13%)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20c.9-3.6 3.7-5.4 7.2-5.4s6.3 1.8 7.2 5.4"/></svg></div>
+      <span>New consultant</span>
+    </div>
+    <div id="q1" class="abs" style="right:1120px;top:262px"><div class="bubble"><span id="q1t"></span></div></div>
+    <div id="a1" class="abs panel" style="left:140px;top:392px;width:560px;height:226px;padding:30px 38px">
+      <div class="ailabel"><span class="aidot"></span>Company AI</div>
+      <div id="a1text" style="font-size:68px;font-weight:600;letter-spacing:-0.03em;margin-top:8px;line-height:84px">Four weeks.</div>
+      <div id="a1cite" class="mono" style="font-size:21px;color:var(--mfg);margin-top:8px">from: final presentation · 21 Nov 2025</div>
+    </div>
+    <div id="wrong" class="abs" style="left:556px;top:366px;transform-origin:50% 50%"><span class="badge dark" style="font-size:32px;padding:9px 26px;border-radius:14px;font-weight:600">Wrong</span></div>
+
+    <div id="ticket" class="abs panel" style="left:140px;top:664px;width:660px;height:204px;padding:30px 36px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="hsl(220 8% 46%)" stroke-width="2" stroke-linejoin="round"><path d="M3 8.5V6a1.5 1.5 0 0 1 1.5-1.5h15A1.5 1.5 0 0 1 21 6v2.5a3.5 3.5 0 0 0 0 7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18v-2.5a3.5 3.5 0 0 0 0-7z"/><path d="M14 5v14" stroke-dasharray="2.5 3"/></svg>
+        <span class="mono" style="font-size:24px;color:var(--mfg)">Ticket #1482</span>
+        <span id="waitBadge" class="badge strong" style="margin-left:auto;width:176px;text-align:left">Waiting<span id="waitDots">.</span></span>
+      </div>
+      <div style="font-size:34px;font-weight:600;letter-spacing:-0.02em;margin-top:18px">Wrong answer from the company AI</div>
+      <div style="font-size:24px;color:var(--mfg);margin-top:12px">Assigned to Engineering · opened Monday</div>
+    </div>
+
+    <!-- history of the number -->
+    <div id="hist" class="abs panel" style="left:880px;top:170px;width:900px;height:650px;padding:34px 38px">
+      <div style="display:flex;align-items:center;justify-content:space-between;height:44px;margin-bottom:12px">
+        <span style="font-size:30px;font-weight:600;letter-spacing:-0.02em">Onboarding time, document by document</span>
+        <span id="count" class="badge dark">changed 0 times</span>
+      </div>
+      <div id="histRows"></div>
+    </div>
+
+    <!-- engineer + logs -->
+    <div id="engChip" class="abs chip" style="left:880px;top:170px">
+      <div class="avatar mono" style="font-size:20px">&lt;/&gt;</div><span>Engineer</span>
+    </div>
+    <div id="logs" class="abs" style="left:880px;top:252px;width:900px;height:568px;border-radius:24px;background:var(--dark);overflow:hidden;box-shadow:0 20px 50px rgb(20 25 40 / .22)">
+      <div style="height:58px;display:flex;align-items:center;gap:10px;padding:0 24px;border-bottom:2px solid rgb(255 255 255 / .08)">
+        <span style="width:14px;height:14px;border-radius:50%;background:rgb(255 255 255 / .22)"></span><span style="width:14px;height:14px;border-radius:50%;background:rgb(255 255 255 / .22)"></span><span style="width:14px;height:14px;border-radius:50%;background:rgb(255 255 255 / .22)"></span>
+        <span class="mono" style="font-size:21px;color:rgb(255 255 255 / .6);margin-left:14px">memory-service.log</span>
+      </div>
+      <div style="position:absolute;left:0;right:0;top:58px;bottom:0;overflow:hidden;padding:18px 28px"><div id="logBody" class="mono"></div></div>
+    </div>
+  </div>
+
+  <!-- ================= ACT 2: Next Monday, with Canonico ================= -->
+  <div id="act2" class="full">
+    <!-- chat, left -->
+    <div id="stale" style="opacity:.55">
+      <div class="abs mono" style="left:140px;top:170px;font-size:22px;color:var(--mfg)">Last Monday</div>
+      <div class="abs" style="right:1120px;top:208px"><div class="bubble" style="font-size:28px;padding:14px 24px;border-radius:20px 20px 5px 20px">How long does onboarding take?</div></div>
+      <div class="abs panel" style="left:140px;top:290px;width:420px;height:110px;padding:24px 30px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:44px;font-weight:600;letter-spacing:-0.03em;color:var(--mfg);text-decoration:line-through">Four weeks.</span>
+        <span class="badge dark" style="border-radius:10px;font-size:22px">Wrong</span>
+      </div>
+    </div>
+    <div id="today">
+      <div class="abs" style="left:140px;top:440px;width:660px;height:2px;background:var(--border)"></div>
+      <div class="abs mono" style="left:140px;top:460px;font-size:22px;color:var(--mfg)">Today</div>
+    </div>
+    <div id="q2" class="abs" style="right:1120px;top:506px"><div class="bubble"><span id="q2t"></span></div></div>
+    <div id="a2" class="abs panel" style="left:140px;top:612px;width:660px;height:226px;padding:30px 38px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="ailabel"><span class="aidot"></span>Company AI</div>
+        <span class="badge binding">binding</span>
+      </div>
+      <div style="font-size:54px;font-weight:600;letter-spacing:-0.03em;margin-top:10px;line-height:78px;white-space:nowrap">Three to four weeks.</div>
+      <div id="a2cite" class="mono" style="font-size:21px;color:var(--mfg);margin-top:8px">from: final report · 28 Nov 2025</div>
+    </div>
+    <div class="abs" style="left:140px;top:868px;display:flex;gap:16px">
+      <span id="pill1" class="badge strong" style="font-size:30px;padding:9px 26px;line-height:40px">No ticket</span>
+      <span id="pill2" class="badge strong" style="font-size:30px;padding:9px 26px;line-height:40px">No engineer</span>
+    </div>
+
+    <!-- memory, right -->
+    <div id="mem" class="abs panel" style="left:880px;top:150px;width:900px;height:770px">
+      <div id="memTitle" class="abs logo" style="left:40px;top:38px;font-size:32px;gap:14px">
+        <span>What the AI believes</span>
+      </div>
+      <div id="gChip" class="abs chip" style="right:40px;top:32px;font-size:25px;gap:12px">
+        <div class="avatar" style="width:52px;height:52px;background:var(--primary);color:#fff;font-size:24px">G</div>
+        <span>Giulia <span style="color:var(--mfg);font-weight:400">· Operations lead</span></span>
+      </div>
+
+      <div id="bind" class="abs" style="left:40px;top:116px;width:820px;height:196px;border-radius:20px;background:var(--primary);color:#fff;transform-origin:50% 50%">
+        <div class="abs" style="left:36px;top:28px;display:flex;align-items:center;gap:14px">
+          <span class="badge onblue">binding</span><span style="font-size:24px;color:rgb(255 255 255 / .85)">from the final report</span>
+        </div>
+        <div class="abs" style="left:36px;top:80px;font-size:76px;font-weight:600;letter-spacing:-0.03em;line-height:92px;white-space:nowrap">3–4 weeks</div>
+        <div id="srcChip" class="abs" style="right:32px;top:30px;text-align:right">
+          <div style="font-size:19px;color:rgb(255 255 255 / .7)">Source</div>
+          <div class="mono" style="font-size:22px;margin-top:4px;padding:5px 14px;border-radius:10px;background:rgb(255 255 255 / .16);display:inline-block">07-documents/report-final</div>
+        </div>
+        <div id="dateChip" class="abs" style="right:32px;top:112px;text-align:right">
+          <div style="font-size:19px;color:rgb(255 255 255 / .7)">Date</div>
+          <div class="mono" style="font-size:22px;margin-top:4px;padding:5px 14px;border-radius:10px;background:rgb(255 255 255 / .16);display:inline-block">28 Nov 2025</div>
+        </div>
+      </div>
+
+      <div id="repH" class="abs" style="left:40px;top:338px;font-size:24px;font-weight:500;color:var(--mfg)">The 4 versions it replaced</div>
+      <div id="cells" class="abs" style="left:40px;top:382px;width:820px;display:flex;flex-wrap:wrap;gap:20px"></div>
+
+      <div id="old" class="abs" style="left:40px;top:596px;width:820px;height:134px;border-radius:20px;background:var(--card)">
+        <div class="abs" style="left:32px;top:20px">
+          <div id="oldVal" style="font-size:50px;font-weight:600;letter-spacing:-0.03em;line-height:60px">4 weeks</div>
+          <div class="mono" style="font-size:20px;color:var(--mfg);margin-top:4px;position:relative;height:28px;width:440px">
+            <span id="oldMeta" class="abs" style="left:0;top:0;white-space:nowrap">21 Nov 2025 · final presentation</span>
+            <span id="oldMeta2" class="abs" style="left:0;top:0;white-space:nowrap">retired by Giulia · today</span>
+          </div>
+        </div>
+        <div class="abs" style="right:196px;top:44px;width:170px;height:46px">
+          <span id="activeBadge" class="badge strong abs" style="right:0;top:0;transform-origin:50% 50%">still active</span>
+          <span id="retBadge" class="badge abs" style="right:0;top:0">retired</span>
+        </div>
+        <div id="retBtn" class="abs btn" style="right:30px;top:40px;width:140px;height:54px">Retire</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- cursor -->
+  <div id="ripple" class="abs" style="width:96px;height:96px;border-radius:50%;background:hsl(229 72% 46% / .28);left:0;top:0"></div>
+  <div id="cursor" class="abs" style="left:0;top:0">
+    <svg width="40" height="46" viewBox="0 0 20 23"><path d="M2 1.5v17l4.6-4.3 3 7 2.9-1.3-3-6.8H16z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    <span class="abs" style="left:30px;top:38px;font-size:20px;font-weight:500;color:#fff;background:var(--primary);padding:3px 12px;border-radius:999px">Giulia</span>
+  </div>
+
+  <!-- titles -->
+  <div id="t1" class="abs title" style="top:420px">Monday</div>
+  <div id="t2" class="abs title" style="top:340px">Next Monday</div>
+  <div id="t2b" class="abs logo" style="left:0;width:1920px;top:560px;justify-content:center;font-size:68px;gap:22px">
+    <span style="color:var(--mfg);font-weight:400">with</span>
+    <svg width="72" height="72" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="13" height="13" rx="3.5" stroke="hsl(229 72% 46%)" stroke-width="1.4"/><path d="M5 8h6M8 5v6" stroke="hsl(229 72% 46%)" stroke-width="1.4"/></svg>
+    <span>Canonico</span>
+  </div>
+
+  <!-- ================= ACT 3: closing ================= -->
+  <div id="act3" class="full" style="background:var(--bg)">
+    <div id="l1" class="abs end" style="top:270px;font-size:60px;font-weight:500;color:var(--mfg)">Memory tools are built for developers.</div>
+    <div id="l2" class="abs end" style="top:400px;font-size:100px;font-weight:600;line-height:120px">Canonico is built for</div>
+    <div id="l3" class="abs end" style="top:524px;font-size:100px;font-weight:600;line-height:120px;color:var(--primary)">the people who know the facts.</div>
+    <div id="logoEnd" class="abs logo" style="left:0;width:1920px;top:760px;justify-content:center;font-size:58px;gap:18px">
+      <svg width="62" height="62" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="13" height="13" rx="3.5" stroke="hsl(229 72% 46%)" stroke-width="1.4"/><path d="M5 8h6M8 5v6" stroke="hsl(229 72% 46%)" stroke-width="1.4"/></svg>
+      <span>Canonico</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // each voice take has its own timings: index.html?take=alice loads cues_alice.js
+  const TAKE = new URLSearchParams(location.search).get('take') || 'alice';
+  document.write('<script src="cues_' + TAKE + '.js"><\/script>');
+</script>
+<script>
+const C = window.CUES;
+const $ = id => document.getElementById(id);
+const clamp = x => Math.max(0, Math.min(1, x));
+const ease = x => 1 - Math.pow(1 - clamp(x), 3);
+const io = x => { x = clamp(x); return x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2; };
+const p = (t, start, dur = .45) => clamp((t - start) / dur);
+const lerp = (a, b, k) => a + (b - a) * k;
+const show = (el, o, dy = 0) => { el.style.opacity = o; el.style.transform = dy ? `translateY(${dy}px)` : ''; };
+const inn = (el, t, start, dur = .45, rise = 18) => { const k = ease(p(t, start, dur)); show(el, k, (1 - k) * rise); return k; };
+
+const Q = 'How long does onboarding take?';
+// the six statements about onboarding time in the ClearPath corpus, oldest first
+const HIST = [
+  ['22 Aug 2025', 'Project brief', '≈ 6 weeks'],
+  ['22 Aug 2025', 'Project brief', 'below 3 weeks'],
+  ['29 Sep 2025', 'Requirements', '3 weeks or less'],
+  ['15 Oct 2025', 'Interim review', '≈ 6.5–7 weeks'],
+  ['21 Nov 2025', 'Final presentation', '4 weeks'],
+  ['28 Nov 2025', 'Final report', '3–4 weeks'],
+];
+const LOGS = [
+  ['$ grep -i "onboarding" memory-service.log', 'c'],
+  ['09:14:07 INFO  search q="how long does onboarding take" k=5', ''],
+  ['09:14:07 DEBUG embed dim=1536 took=41ms', 'w'],
+  ['09:14:08 DEBUG hit chunk=5f2a doc=meeting-005-final-presentation', ''],
+  ['09:14:08 DEBUG hit chunk=1c9e doc=requirements', ''],
+  ['09:14:08 DEBUG hit chunk=a07b doc=report-final', ''],
+  ['09:14:08 DEBUG hit chunk=77d1 doc=project-brief', ''],
+  ['09:14:08 INFO  rerank kept=1 dropped=4', 'w'],
+  ['09:14:09 INFO  answer "Four weeks."', 'c'],
+  ['$ grep -i "replaced" memory-service.log', 'c'],
+  ['(no matches)', 'w'],
+];
+const LH = 40, MAXL = 11;
+
+const rows = HIST.map(([d, n, v], i) => {
+  const el = document.createElement('div'); el.className = 'row';
+  el.innerHTML = `<span class="d mono">${d}</span><span class="n"><span>${n}</span>${i === 4 ? '<span id="aiBadge" class="badge strong" style="font-size:20px;line-height:28px;padding:3px 14px">the AI’s answer</span>' : ''}</span><span class="v">${v}</span>`;
+  $('histRows').appendChild(el); return el;
+});
+const cells = HIST.slice(0, 4).map(([d, n, v]) => {
+  const el = document.createElement('div'); el.className = 'cell';
+  el.innerHTML = `<div class="v">${v}</div><div class="m mono">${d} · ${n.toLowerCase()}</div>`;
+  $('cells').appendChild(el); return el;
+});
+const lines = LOGS.map(([s, c]) => {
+  const el = document.createElement('div'); el.className = 'logline ' + c; el.textContent = s;
+  $('logBody').appendChild(el); return el;
+});
+
+function fit() { $('stage').style.transform = `scale(${window.innerWidth / 1920})`; }
+window.addEventListener('resize', fit); fit();
+
+window.DURATION = C.end;
+window.renderAt = function (t) {
+  // ---------- titles
+  show($('t1'), ease(p(t, .03, .3)) * (1 - ease(p(t, C.ask - .42, .3))), (1 - ease(p(t, .03, .45))) * 24);
+  const t2out = 1 - ease(p(t, C.giulia - .5, .3));
+  show($('t2'), ease(p(t, C.s2 - .05, .35)) * t2out, (1 - ease(p(t, C.s2 - .05, .45))) * 24);
+  show($('t2b'), ease(p(t, C.withc - .05, .35)) * t2out, (1 - ease(p(t, C.withc - .05, .45))) * 18);
+
+  // ---------- act 1: Monday
+  const a1 = ease(p(t, C.ask - .1, .45)) * (1 - ease(p(t, C.s2 - .38, .3)));
+  $('act1').style.opacity = a1; $('day1').style.opacity = a1;
+  inn($('p1'), t, C.ask, .4, 12);
+  inn($('q1'), t, C.asks - .15, .35);
+  $('q1t').textContent = Q.slice(0, Math.round(Q.length * p(t, C.asks + .1, Math.max(.8, C.ans1 - C.asks - 1.0)))) || '​';
+  inn($('a1'), t, C.ans1 - .12, .38, 22);
+  $('a1cite').style.opacity = ease(p(t, C.ans1 + .55, .4));
+  const w = p(t, C.wrong - .02, .26);
+  $('wrong').style.opacity = clamp(w * 3);
+  $('wrong').style.transform = `rotate(-6deg) scale(${lerp(1.7, 1, ease(w))})`;
+  const struck = t > C.wrong + .14;
+  $('a1text').style.color = struck ? 'hsl(220 8% 46%)' : '';
+  $('a1text').style.textDecoration = struck ? 'line-through' : 'none';
+
+  const histIn = ease(p(t, C.changed - .12, .45)), toLogs = ease(p(t, C.waits - .05, .4));
+  show($('hist'), histIn * (1 - toLogs), (1 - histIn) * 30);
+  const r0 = C.changed + .12, stepR = Math.max(.12, Math.min(.3, (C.five + .5 - r0 - .2) / 5));
+  rows.forEach((el, i) => { const k = ease(p(t, r0 + i * stepR, .32)); show(el, k, (1 - k) * 16); });
+  const n = Math.max(0, Math.min(5, Math.floor((t - r0 - .2) / stepR)));
+  $('count').textContent = `changed ${n} time${n === 1 ? '' : 's'}`;
+  $('count').style.opacity = n >= 1 ? 1 : 0;
+  $('aiBadge').style.opacity = ease(p(t, r0 + 4 * stepR + .25, .3));
+  const fin = ease(p(t, C.final + .3, .4));
+  rows[5].style.boxShadow = `inset 0 0 0 ${lerp(0, 4, fin)}px hsl(220 13% 18%)`;
+  rows[5].style.background = fin > .5 ? '#fff' : '';
+
+  inn($('ticket'), t, C.ticket, .45, 30);
+  $('waitBadge').style.opacity = ease(p(t, C.waits, .3));
+  $('waitDots').textContent = '.'.repeat(1 + (Math.max(0, Math.floor((t - C.waits) / .4)) % 3));
+  const lg = ease(p(t, C.waits + .05, .45));
+  show($('logs'), lg, (1 - lg) * 30);
+  inn($('engChip'), t, C.eng - .05, .35, 12);
+  const l0 = C.eng + .3, lineStep = Math.max(.1, Math.min(.3, (C.s2 - .45 - l0) / LOGS.length));
+  const cf = (t - l0) / lineStep;
+  lines.forEach((el, i) => { el.style.opacity = cf >= i ? 1 : 0; });
+  $('logBody').style.transform = `translateY(${-Math.max(0, Math.min(LOGS.length, cf + 1) - MAXL) * LH}px)`;
+
+  // ---------- act 2: Next Monday, with Canonico
+  const a2 = ease(p(t, C.giulia - .15, .5)) * (1 - ease(p(t, C.s3 - .38, .3)));
+  $('act2').style.opacity = a2; $('day2').style.opacity = a2; $('brand').style.opacity = a2;
+  inn($('gChip'), t, C.giulia + .05, .4, 12);
+  inn($('memTitle'), t, C.sees - .2, .4, 12);
+  const b = ease(p(t, C.binding - .05, .45));
+  $('bind').style.opacity = b; $('bind').style.transform = `translateY(${(1 - b) * 20}px) scale(${lerp(.97, 1, b)})`;
+  inn($('srcChip'), t, C.source + .1, .35, 10);
+  inn($('dateChip'), t, C.date, .35, 10);
+  inn($('repH'), t, C.four - .05, .35, 10);
+  cells.forEach((el, i) => inn(el, t, C.four + .12 + i * .15, .35, 14));
+  inn($('old'), t, C.old - .05, .45, 24);
+  const act = p(t, C.active - .05, .3);
+  const clickT = C.retire + .3, done = ease(p(t, clickT + .12, .4));
+  $('activeBadge').style.transform = `scale(${lerp(1.35, 1, ease(act))})`;
+  $('activeBadge').style.opacity = clamp(act * 3) * (1 - done);
+  $('retBadge').style.opacity = done;
+  $('retBtn').style.opacity = ease(p(t, C.old + .3, .35)) * (1 - done);
+  $('retBtn').style.transform = `scale(${t > clickT && t < clickT + .15 ? .93 : 1})`;
+  const hot = clamp(act * 3) * (1 - done);
+  $('old').style.boxShadow = `inset 0 0 0 ${lerp(2, 4.5, hot)}px ${hot > .5 ? 'rgb(30 34 44 / .7)' : 'hsl(220 13% 91%)'}`;
+  $('oldVal').style.color = done > .5 ? 'hsl(220 8% 46%)' : '';
+  $('oldVal').style.textDecoration = done > .5 ? 'line-through' : 'none';
+  $('oldMeta').style.opacity = 1 - done; $('oldMeta2').style.opacity = done;
+
+  const cm = io(p(t, C.retire - .8, 1.0));
+  $('cursor').style.opacity = ease(p(t, C.retire - .85, .25)) * (1 - ease(p(t, clickT + .9, .4))) * a2;
+  $('cursor').style.transform = `translate(${lerp(1470, 1634, cm)}px, ${lerp(1000, 806, cm)}px)`;
+  const rp = p(t, clickT, .45);
+  $('ripple').style.opacity = rp > 0 && rp < 1 ? 1 - rp : 0;
+  $('ripple').style.transform = `translate(${1640 - 48}px, ${811 - 48}px) scale(${.3 + rp})`;
+
+  show($('today'), ease(p(t, C.again - .15, .35)));
+  inn($('q2'), t, C.again + .05, .35);
+  $('q2t').textContent = Q.slice(0, Math.round(Q.length * p(t, C.again + .2, Math.max(.6, C.ans2 - C.again - .75)))) || '​';
+  inn($('a2'), t, C.ans2 - .1, .4, 22);
+  $('a2cite').style.opacity = ease(p(t, C.ans2 + .5, .4));
+  inn($('pill1'), t, C.noticket, .3, 10);
+  inn($('pill2'), t, C.noeng, .3, 10);
+
+  // ---------- act 3: closing
+  $('act3').style.opacity = ease(p(t, C.s3 - .1, .4));
+  const l1 = ease(p(t, C.s3 + .05, .45));
+  show($('l1'), l1, (1 - l1) * 18);
+  inn($('l2'), t, C.can - .05, .45, 18);
+  inn($('l3'), t, C.people - .05, .45, 18);
+  inn($('logoEnd'), t, C.know + .45, .5, 14);
+};
+window.renderAt(0);
+</script>
+</body>
+</html>

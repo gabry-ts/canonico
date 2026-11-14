@@ -1,0 +1,11 @@
+{
+  "name": "canonico-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs \"$CHROME\" alice ../canonico_v2_alice_1080p.mp4"
+  },
+  "dependencies": {
+    "puppeteer-core": "^25.17.0"
+  }
+}

@@ -1,0 +1,5 @@
+[calm, matter-of-fact] Monday. A new consultant asks the company AI how long onboarding takes. "Four weeks." [short pause] [firm] WRONG: the target changed FIVE times, and the final report says three to four. [weary] She opens a ticket... and waits for an engineer to dig through the logs.
+
+[bright, energetic] Next Monday, with Canonico. Giulia, the operations lead, SEES what the AI believes: the binding answer from the final report, with its source and date, the four versions it replaced, and the old "four weeks" -- STILL active. [short pause] She retires it. The consultant asks again: [warm, confident] "Three to four weeks." No ticket, no engineer.
+
+[slower, measured] Memory tools are built for developers. [emphatic] Canonico is built for the people who KNOW the facts.
