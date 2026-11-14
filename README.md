@@ -20,6 +20,29 @@ Before the event a team member built an exploratory prototype in a different dom
 
 Copy `.env.example` to `.env` and fill in the values. Keys stay server-side.
 
+## Repository layout
+
+```
+openapi.yaml   shared API contract
+api/           backend, Python FastAPI (models generated from openapi.yaml)
+web/           frontend, Vite + React + TypeScript + Tailwind
+eval/          benchmark notes, plain retrieval vs Canonico
+data/          evaluation corpora
+prototypes/    static UI prototypes
+```
+
+## Run locally
+
+```
+make install   # python venv + npm install
+make api       # backend on :8000
+make web       # frontend on :5173
+make mock      # Prism mock of openapi.yaml on :4010
+make types     # regenerate api/app/models.py and web/src/api/schema.ts
+```
+
+The frontend talks to `VITE_API_URL` (see `web/.env.example`), by default the mock on `:4010`.
+
 ## License
 
 MIT
