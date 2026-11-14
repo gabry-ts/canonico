@@ -7,12 +7,14 @@ from pydantic import BaseModel
 import logging
 import os
 
+from app import auth as session_auth
 from app import http, i18n, llm, settings
 from app.routers import (
     admin,
     answers,
     ask,
     audit,
+    auth,
     conflicts,
     documents,
     eval,
@@ -41,6 +43,7 @@ class Health(BaseModel):
 
 app = FastAPI(title="Canonico API", version=VERSION)
 
+app.add_middleware(session_auth.AuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins(),
@@ -75,5 +78,6 @@ for module in (
     mail,
     members,
     hooks,
+    auth,
 ):
     app.include_router(module.router)

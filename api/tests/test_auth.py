@@ -1,0 +1,130 @@
+"""Email and password sessions, the demo sign-in and enforcement of sessions on writes."""
+
+import pytest
+
+from app import auth
+from tests.conftest import assert_contract
+
+GIULIA = {"email": "giulia.ferri@meridianlabs.org", "password": "canonico-demo"}
+RETIRE = {"reason": "The final report replaced the verbal preview.", "actor": "Someone else"}
+Q = "How long does onboarding take?"
+
+
+@pytest.fixture()
+def required(monkeypatch):
+    monkeypatch.setenv("CANONICO_AUTH_REQUIRED", "true")
+
+
+def bearer(token: str) -> dict:
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_login_sets_a_session_cookie_and_returns_the_member(client):
+    response = client.post("/auth/login", json=GIULIA)
+    body = assert_contract(response, "POST", "/auth/login")
+    assert body["member"]["id"] == "mem-giulia-ferri" and body["token"]
+    cookie = response.headers["set-cookie"]
+    assert cookie.startswith(f"{auth.COOKIE}=") and "HttpOnly" in cookie and "samesite=lax" in cookie.lower() and "Path=/" in cookie
+    assert "Secure" not in cookie
+    assert client.get("/me", headers={"X-Demo-Actor": "Luca"}).json()["member"]["id"] == "mem-giulia-ferri"
+
+
+def test_login_is_case_insensitive_on_email_and_secure_behind_https(client):
+    response = client.post("/auth/login", json={**GIULIA, "email": "Giulia.Ferri@MeridianLabs.org"}, headers={"X-Forwarded-Proto": "https"})
+    assert response.status_code == 200 and "Secure" in response.headers["set-cookie"]
+
+
+def test_wrong_password_and_unknown_email_give_the_same_401(client):
+    wrong = client.post("/auth/login", json={**GIULIA, "password": "nope"})
+    unknown = client.post("/auth/login", json={"email": "nobody@meridianlabs.org", "password": "canonico-demo"})
+    assert_contract(wrong, "POST", "/auth/login", 401)
+    assert wrong.json() == unknown.json() and unknown.status_code == 401
+    assert "set-cookie" not in wrong.headers
+
+
+def test_passwords_are_stored_hashed():
+    hashes = auth.password_hashes()
+    assert set(hashes) == {"mem-giulia-ferri", "mem-sara-conti", "mem-luca-bassi"}
+    assert all(h.startswith("pbkdf2_sha256$") and "canonico-demo" not in h for h in hashes.values())
+    assert len({h.split("$")[2] for h in hashes.values()}) == 3
+
+
+def test_demo_login_defaults_to_giulia_and_accepts_a_member(client):
+    body = assert_contract(client.post("/auth/demo-login"), "POST", "/auth/demo-login")
+    assert body["member"]["id"] == "mem-giulia-ferri"
+    body = client.post("/auth/demo-login", json={"member_id": "mem-luca-bassi"}).json()
+    assert body["member"]["org_role"] == "viewer"
+    assert_contract(client.post("/auth/demo-login", json={"member_id": "mem-nobody"}), "POST", "/auth/demo-login", 404)
+
+
+def test_demo_login_off_is_404(client, monkeypatch):
+    monkeypatch.setenv("CANONICO_DEMO_LOGIN", "false")
+    assert_contract(client.post("/auth/demo-login"), "POST", "/auth/demo-login", 404)
+
+
+def test_logout_revokes_the_token_and_clears_the_cookie(client, required):
+    token = client.post("/auth/login", json=GIULIA).json()["token"]
+    assert client.post("/facts/M-105/retire", json=RETIRE).status_code == 200
+    response = client.post("/auth/logout")
+    assert response.status_code == 204 and f'{auth.COOKIE}=""' in response.headers["set-cookie"]
+    assert client.post("/facts/M-105/restore", json={"actor": "x"}).status_code == 401
+    assert client.post("/facts/M-105/restore", headers=bearer(token)).status_code == 401
+
+
+def test_bearer_token_works_without_the_cookie(client, required):
+    token = client.post("/auth/login", json=GIULIA).json()["token"]
+    client.cookies.clear()
+    assert client.post("/facts/M-105/retire", json=RETIRE).status_code == 401
+    assert client.post("/facts/M-105/retire", json=RETIRE, headers=bearer(token)).status_code == 200
+    assert client.get("/me", headers=bearer(token)).json()["member"]["id"] == "mem-giulia-ferri"
+    assert client.post("/facts/M-105/restore", headers=bearer("not-a-token")).status_code == 401
+
+
+def test_writes_need_a_session_when_required_and_reads_stay_public(client, required):
+    response = client.post("/facts/M-105/retire", json=RETIRE, headers={"X-Demo-Actor": "Giulia"})
+    body = assert_contract(response, "POST", "/facts/{fact_id}/retire", 401)
+    assert body["code"] == "unauthorized"
+    assert client.post("/demo/reset").status_code == 401
+    assert client.patch("/facts/M-105", json={"reason": "x", "actor": "x"}).status_code == 401
+    assert client.get("/me").status_code == 401
+    assert client.get("/facts/M-105").status_code == 200
+    assert client.get("/topics").status_code == 200
+    assert client.get("/audit").status_code == 200
+    assert client.get("/health").status_code == 200
+    hook = client.post("/hooks/org", json={})
+    assert hook.status_code != 401 or "X-Canonico-Token" in hook.text
+
+
+def test_session_member_is_the_actor_in_the_audit(client, required):
+    client.post("/auth/login", json=GIULIA)
+    retired = client.post("/facts/M-105/retire", json=RETIRE, headers={"X-Demo-Actor": "Luca"}).json()
+    assert retired["retired_by"] == "Giulia"
+    events = client.get("/audit", params={"fact_id": "M-105"}).json()
+    assert events[0]["actor"] == "Giulia" and events[0]["actor_role"] == "owner"
+
+
+def test_viewer_session_gets_403_on_retire(client, required):
+    client.post("/auth/login", json={"email": "luca.bassi@meridianlabs.org", "password": "canonico-demo"})
+    response = client.post("/facts/M-105/retire", json=RETIRE, headers={"X-Demo-Actor": "Giulia"})
+    assert_contract(response, "POST", "/facts/{fact_id}/retire", 403)
+    assert client.post("/demo/reset").status_code == 403
+
+
+def test_without_the_flag_nothing_changes_for_anonymous_callers(client):
+    assert client.get("/me").json()["member"]["id"] == "mem-giulia-ferri"
+    assert client.get("/me", headers={"X-Demo-Actor": "Luca"}).json()["role"] == "viewer"
+    assert client.post("/facts/M-105/retire", json=RETIRE, headers={"X-Demo-Actor": "Luca"}).status_code == 403
+    assert client.post("/facts/M-105/retire", json=RETIRE).json()["retired_by"] == "Someone else"
+
+
+def test_video_flow_signed_in_as_giulia_with_auth_required(client, required):
+    assert client.post("/auth/demo-login").status_code == 200
+    assert client.post("/demo/reset").status_code == 200
+    before = client.post("/ask", json={"question": Q}).json()
+    assert before["binding"]["id"] == "M-106" and [f["id"] for f in before["conflicts"]] == ["M-105"]
+    retired = client.post("/facts/M-105/retire", json={"reason": "The final report replaced the verbal preview.", "actor": "Giulia"})
+    assert retired.status_code == 200 and retired.json()["retired_by"] == "Giulia"
+    after = client.post("/ask", json={"question": Q}).json()
+    assert after["conflicts"] == [] and after["changed_because"] == "Giulia retired 4 weeks (final presentation)"
+    assert after["answer"] != before["answer"]
+    assert client.post("/demo/reset").status_code == 200
