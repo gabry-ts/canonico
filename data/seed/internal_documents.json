@@ -1,0 +1,11 @@
+[
+  {
+    "id": "internal/analyst-handbook",
+    "title": "Analyst handbook",
+    "date": "2026-03-02",
+    "path": "internal/analyst-handbook.txt",
+    "project_id": "proj-internal",
+    "source_id": "src-internal-docs",
+    "text": "Analyst handbook\nMeridian Labs, internal\n\nWorking hours are flexible between 8:00 and 19:00.\nTravel is booked through the operations desk at least 5 working days before departure.\nExpenses above 500 euro need approval from the engagement lead.\nNew analysts are expected to work independently after 2 weeks of shadowing.\n"
+  }
+]

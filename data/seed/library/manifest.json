@@ -1,0 +1,44 @@
+{
+  "documents": [
+    {
+      "doc_id": "library/onboarding-standard",
+      "title": "Onboarding standard",
+      "project_id": "proj-clearpath",
+      "source_id": "src-clearpath-library",
+      "versions": [
+        {
+          "version": 1,
+          "version_label": "v1",
+          "version_of": null,
+          "uploaded_at": "2025-12-04T09:00:00Z",
+          "date": "2025-12-04",
+          "file": "onboarding-standard-v1.txt"
+        },
+        {
+          "version": 2,
+          "version_label": "v2",
+          "version_of": "library/onboarding-standard",
+          "uploaded_at": "2026-01-12T09:00:00Z",
+          "date": "2026-01-12",
+          "file": "onboarding-standard-v2.txt"
+        }
+      ]
+    },
+    {
+      "doc_id": "library/audit-handbook",
+      "title": "Audit handbook",
+      "project_id": "proj-clearpath",
+      "source_id": "src-clearpath-library",
+      "versions": [
+        {
+          "version": 1,
+          "version_label": "v1",
+          "version_of": null,
+          "uploaded_at": "2025-10-20T09:00:00Z",
+          "date": "2025-10-20",
+          "file": "audit-handbook-v1.txt"
+        }
+      ]
+    }
+  ]
+}

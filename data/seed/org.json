@@ -1,0 +1,146 @@
+{
+  "organisation": {
+    "id": "org-meridian",
+    "name": "Meridian Labs",
+    "mail_config": {
+      "mode": "imap_mock",
+      "imap_host": "mock.meridianlabs.org",
+      "imap_user": "brain@meridianlabs.org",
+      "inbound_address": "brain@inbound.meridianlabs.org",
+      "poll_interval_s": 60
+    }
+  },
+  "projects": [
+    {
+      "id": "proj-clearpath",
+      "name": "ClearPath engagement",
+      "description": "Consulting engagement for ClearPath, 46 documents.",
+      "created_at": "2026-11-14T09:00:00Z",
+      "mail_config_override": null
+    },
+    {
+      "id": "proj-internal",
+      "name": "Internal",
+      "description": "Internal documents and tooling repository.",
+      "created_at": "2026-11-14T09:05:00Z",
+      "mail_config_override": {
+        "mode": "webhook",
+        "imap_host": null,
+        "imap_user": null,
+        "inbound_address": "internal@inbound.meridianlabs.org",
+        "poll_interval_s": 60
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-clearpath-docs",
+      "project_id": "proj-clearpath",
+      "type": "documents",
+      "label": "ClearPath documents",
+      "status": "ok",
+      "last_synced_at": "2026-11-14T09:12:00Z",
+      "config": {}
+    },
+    {
+      "id": "src-clearpath-library",
+      "project_id": "proj-clearpath",
+      "type": "document_library",
+      "label": "ClearPath library",
+      "status": "ok",
+      "last_synced_at": "2026-11-14T09:12:00Z",
+      "config": {
+        "provider": "local_mock",
+        "root_path": "/seed/library"
+      }
+    },
+    {
+      "id": "src-clearpath-mail",
+      "project_id": "proj-clearpath",
+      "type": "mail",
+      "label": "ClearPath mailbox",
+      "status": "ok",
+      "last_synced_at": "2026-11-14T09:12:00Z",
+      "config": {
+        "mode": "imap_mock",
+        "mailbox": "brain@meridianlabs.org",
+        "match_rules": [
+          "rule-001"
+        ]
+      }
+    },
+    {
+      "id": "src-internal-docs",
+      "project_id": "proj-internal",
+      "type": "documents",
+      "label": "Internal documents",
+      "status": "ok",
+      "last_synced_at": "2026-11-14T09:12:00Z",
+      "config": {}
+    },
+    {
+      "id": "src-internal-gh",
+      "project_id": "proj-internal",
+      "type": "github",
+      "label": "gabry-ts/canonico",
+      "status": "idle",
+      "last_synced_at": null,
+      "config": {
+        "repo_url": "https://github.com/gabry-ts/canonico",
+        "include": [
+          "issues",
+          "readme"
+        ]
+      }
+    }
+  ],
+  "mail_rules": [
+    {
+      "id": "rule-001",
+      "match_type": "sender_domain",
+      "value": "@meridianlabs.org",
+      "project_id": "proj-clearpath",
+      "priority": 10
+    },
+    {
+      "id": "rule-002",
+      "match_type": "sender_domain",
+      "value": "@team.meridianlabs.org",
+      "project_id": "proj-internal",
+      "priority": 20
+    }
+  ],
+  "members": [
+    {
+      "id": "mem-giulia-ferri",
+      "name": "Giulia Ferri",
+      "display_name": "Giulia",
+      "title": "Operations lead",
+      "email": "giulia.ferri@meridianlabs.example",
+      "org_role": "owner",
+      "created_at": "2026-11-14T09:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "mem-sara-conti",
+      "name": "Sara Conti",
+      "display_name": "Sara",
+      "title": "Senior consultant",
+      "email": "sara.conti@meridianlabs.example",
+      "org_role": "editor",
+      "created_at": "2026-11-14T09:10:00Z",
+      "status": "active"
+    },
+    {
+      "id": "mem-luca-bassi",
+      "name": "Luca Bassi",
+      "display_name": "Luca",
+      "title": "Analyst",
+      "email": "luca.bassi@meridianlabs.example",
+      "org_role": "viewer",
+      "created_at": "2026-11-14T09:20:00Z",
+      "status": "invited"
+    }
+  ],
+  "project_members": []
+}

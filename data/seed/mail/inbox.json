@@ -1,0 +1,17 @@
+[
+  {
+    "mailbox": "brain@meridianlabs.org",
+    "email": {
+      "message_id": "<status-0046@meridianlabs.org>",
+      "from": "pm@meridianlabs.org",
+      "to": [
+        "brain@inbound.meridianlabs.org"
+      ],
+      "cc": [],
+      "subject": "Weekly status, week 46",
+      "date": "2026-11-13T17:05:00Z",
+      "text": "Rollout of the new onboarding checklist starts Monday.",
+      "attachments": []
+    }
+  }
+]

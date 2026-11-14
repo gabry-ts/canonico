@@ -3,10 +3,10 @@
     "id": "C-001",
     "topic": "onboarding-target",
     "fact_ids": [
-      "M-103",
+      "M-105",
       "M-106"
     ],
-    "summary": "Requirement R1.1 says 3 weeks or less, the final report sets 3–4 weeks, and nothing links them.",
+    "summary": "The final presentation still says 4 weeks, the final report sets 3–4 weeks. The presentation was superseded but is still active.",
     "detected_at": "2026-11-14T09:15:00Z",
     "resolution": null,
     "x": {
@@ -37,9 +37,9 @@
     "id": "C-003",
     "topic": "onboarding-current-duration",
     "fact_ids": [
-      "M-310",
-      "M-303",
-      "M-302"
+      "M-1010",
+      "M-1003",
+      "M-1002"
     ],
     "summary": "Earlier sources give about six weeks while the interim estimate gave 6.5-7 weeks; the final 6-6.5 weeks sits alongside the exact-six-week statements without resolving them.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -50,8 +50,8 @@
     "id": "C-004",
     "topic": "company-headcount",
     "fact_ids": [
-      "M-377",
-      "M-378"
+      "M-1077",
+      "M-1078"
     ],
     "summary": "The project brief says ClearPath has 78 employees, while the kickoff meeting says about 120 people, and nothing indicates which figure prevails.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -62,10 +62,10 @@
     "id": "C-005",
     "topic": "board-presentation-date",
     "fact_ids": [
-      "M-387",
-      "M-398",
-      "M-393",
-      "M-396"
+      "M-1087",
+      "M-1098",
+      "M-1093",
+      "M-1096"
     ],
     "summary": "The board presentation is given as November 20 (meetings), December 10 (client emails), and November 28 (internal email), with nothing resolving which one prevails.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -76,10 +76,10 @@
     "id": "C-006",
     "topic": "team-leader-count",
     "fact_ids": [
-      "M-533",
-      "M-534",
-      "M-535",
-      "M-538"
+      "M-1233",
+      "M-1234",
+      "M-1235",
+      "M-1238"
     ],
     "summary": "Sources disagree on the number of team leaders: four (Priya's interview, meeting-002, Marcus in meeting-003) versus six (Thomas's brief, observation-005), with no document settling which prevails.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -90,9 +90,9 @@
     "id": "C-007",
     "topic": "it-provisioning-time",
     "fact_ids": [
-      "M-514",
-      "M-519",
-      "M-520"
+      "M-1214",
+      "M-1219",
+      "M-1220"
     ],
     "summary": "Reported IT provisioning time varies: 2-3 business days (Michele), 3-5 days (Priya, David), a week or more (Priya), and 3-7 days (final presentation), with nothing establishing which is authoritative.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -103,9 +103,9 @@
     "id": "C-008",
     "topic": "research-methods-counts",
     "fact_ids": [
-      "M-428",
-      "M-436",
-      "M-437"
+      "M-1128",
+      "M-1136",
+      "M-1137"
     ],
     "summary": "The SOW commits to 15-20 interviews, but the interviews proposed, scheduled and conducted number only six.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -116,8 +116,8 @@
     "id": "C-009",
     "topic": "research-methods-counts",
     "fact_ids": [
-      "M-429",
-      "M-438"
+      "M-1129",
+      "M-1138"
     ],
     "summary": "The SOW plans 8-12 observation sessions, but completion is reported only as a three-week observation period with no session count.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -128,9 +128,9 @@
     "id": "C-010",
     "topic": "roadmap-and-implementation",
     "fact_ids": [
-      "M-333",
-      "M-334",
-      "M-335"
+      "M-1033",
+      "M-1034",
+      "M-1035"
     ],
     "summary": "The SOW excludes implementation as a separate engagement, while later communications plan an intake automation start and an implementation kickoff in January without saying whether scope changed.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -141,8 +141,8 @@
     "id": "C-011",
     "topic": "audit-cycle-time-current",
     "fact_ids": [
-      "M-551",
-      "M-553"
+      "M-1251",
+      "M-1253"
     ],
     "summary": "The process map estimates total cycle time of 8-15 weeks, while the final report gives an average of 5-8 days.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -153,9 +153,9 @@
     "id": "C-012",
     "topic": "marco-client-load",
     "fact_ids": [
-      "M-572",
-      "M-573",
-      "M-571"
+      "M-1272",
+      "M-1273",
+      "M-1271"
     ],
     "summary": "Marco's self-report says 5 active clients while Priya's ops records and the observation show 3, and nothing says which prevails.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -166,9 +166,9 @@
     "id": "C-013",
     "topic": "engagement-schedule-plan",
     "fact_ids": [
-      "M-349",
-      "M-351",
-      "M-363"
+      "M-1049",
+      "M-1051",
+      "M-1063"
     ],
     "summary": "Phase One discovery was planned as 2-3 weeks from September 15, but the observations phase only closes on October 31, about 6.5 weeks later.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -179,8 +179,8 @@
     "id": "C-014",
     "topic": "resequencing",
     "fact_ids": [
-      "M-669",
-      "M-675"
+      "M-1369",
+      "M-1375"
     ],
     "summary": "Internal notes attribute the audit delay to data availability from ClearPath, while the external email attributes it to data compilation taking longer than anticipated.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -191,8 +191,8 @@
     "id": "C-015",
     "topic": "resequencing",
     "fact_ids": [
-      "M-674",
-      "M-677"
+      "M-1374",
+      "M-1377"
     ],
     "summary": "Marcus describes the project as tighter than ideal at week 6, while the later external message claims it is on track for all December 1 commitments.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -203,10 +203,10 @@
     "id": "C-016",
     "topic": "report-deliverable-dates",
     "fact_ids": [
-      "M-656",
-      "M-657",
-      "M-660",
-      "M-658"
+      "M-1356",
+      "M-1357",
+      "M-1360",
+      "M-1358"
     ],
     "summary": "Final delivery is given as Nov 28, December 1, and December 2 (Friday) with nothing saying which prevails.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -217,8 +217,8 @@
     "id": "C-017",
     "topic": "report-deliverable-dates",
     "fact_ids": [
-      "M-648",
-      "M-659"
+      "M-1348",
+      "M-1359"
     ],
     "summary": "Written report due Nov 10 conflicts with interim reports due Nov 15 or Nov 25, and nothing resolves which applies.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -229,8 +229,8 @@
     "id": "C-018",
     "topic": "milan-office-profile",
     "fact_ids": [
-      "M-480",
-      "M-482"
+      "M-1180",
+      "M-1182"
     ],
     "summary": "The kickoff meeting says the Milan team is mostly client-facing, while the emails say its 8 people are mostly administrative with light compliance work.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -241,8 +241,8 @@
     "id": "C-019",
     "topic": "competitor-landscape",
     "fact_ids": [
-      "M-593",
-      "M-594"
+      "M-1293",
+      "M-1294"
     ],
     "summary": "Docure Consulting is described as recently acquired by ComplianceCare BV and also as an acquisition target in the same document.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -253,8 +253,8 @@
     "id": "C-020",
     "topic": "review-capacity",
     "fact_ids": [
-      "M-575",
-      "M-576"
+      "M-1275",
+      "M-1276"
     ],
     "summary": "Marco reports usually 4 or 5 audits waiting for review, while a later meeting reports average queues of fifteen to twenty items before senior review, and nothing says which prevails.",
     "detected_at": "2026-11-14T09:15:00Z",
@@ -265,8 +265,8 @@
     "id": "C-021",
     "topic": "audit-review-design",
     "fact_ids": [
-      "M-697",
-      "M-699"
+      "M-1397",
+      "M-1399"
     ],
     "summary": "An earlier peer-review pilot was abandoned for lack of trust in peer review, yet the roadmap later requires peer review before client delivery.",
     "detected_at": "2026-11-14T09:15:00Z",

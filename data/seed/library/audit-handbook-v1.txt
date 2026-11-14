@@ -1,0 +1,10 @@
+Audit handbook
+Version 1, ClearPath Solutions
+Owner: Audit team leads
+
+Release
+Every audit report goes through a two-step review before release.
+The first review is done by a team lead, the second by the sign-off owner.
+
+Records
+Each review step is recorded with reviewer and date.
