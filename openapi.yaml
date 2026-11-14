@@ -70,6 +70,12 @@ tags:
   description: Mail configuration, routing rules, inbound webhook and mocked IMAP polling
 - name: members
   description: Organisation and project members, roles and the demo actor
+- name: hooks
+  description: Inbound webhooks, webhook secrets and tag routing rules
+- name: items
+  description: Items (meetings, documents, notes, tickets) sent into a project by webhook or manual upload
+- name: tags
+  description: Tags on facts and documents
 paths:
   /health:
     get:
@@ -422,6 +428,7 @@ paths:
       summary: List facts
       parameters:
       - $ref: '#/components/parameters/ProjectIdQuery'
+      - $ref: '#/components/parameters/TagQuery'
       - name: topic
         in: query
         description: Topic id.
@@ -873,6 +880,7 @@ paths:
       summary: List documents (without text)
       parameters:
       - $ref: '#/components/parameters/ProjectIdQuery'
+      - $ref: '#/components/parameters/TagQuery'
       - name: source_id
         in: query
         description: Only documents from this source.
@@ -888,6 +896,7 @@ paths:
           - document_library
           - github
           - mail
+          - webhook
       responses:
         '200':
           description: All ingested documents.
@@ -2230,6 +2239,7 @@ paths:
       description: Combines keyword and embedding scores. Filter by epistemic type, status and kind of result.
       parameters:
       - $ref: '#/components/parameters/ProjectIdQuery'
+      - $ref: '#/components/parameters/TagQuery'
       - name: q
         in: query
         required: true
@@ -4692,6 +4702,511 @@ paths:
                   mail: done
                   first_project: pending
                   first_source: pending
+  /hooks/projects/{project_id}:
+    post:
+      tags:
+      - hooks
+      operationId: receiveProjectHook
+      summary: Receive an inbound item for one project
+      description: Inbound webhook. Authenticated with the project webhook secret in `X-Canonico-Token`, not with the demo actor. The item is stored as a document, facts are extracted, and the call is audited. Re-sending the same `external_id` returns the first result with `duplicate` true.
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/CanonicoToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InboundItem'
+            example:
+              type: meeting
+              title: Steering committee 12 Nov
+              date: '2026-11-12T10:00:00Z'
+              text: We agreed the onboarding target stays at 3–4 weeks.
+              tags:
+              - clearpath
+              - topic:onboarding-target
+              participants:
+              - Sara Conti
+              - Marco Bianchi
+              external_id: meet-2026-11-12-steerco
+      responses:
+        '202':
+          description: Item accepted and processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboundItemResult'
+              example:
+                item_id: itm-0001
+                project_id: proj-clearpath
+                routed_by: url
+                rule_id: null
+                document_id: hooks/meeting-2026-11-12-steering-committee
+                facts_created:
+                - M-201
+                supersedes_created:
+                - fact_id: M-201
+                  supersedes: M-103
+                audit_event_id: A-0301
+                duplicate: false
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /hooks/org:
+    post:
+      tags:
+      - hooks
+      operationId: receiveOrgHook
+      summary: Receive an inbound item for the organisation
+      description: Inbound webhook authenticated with the organisation secret in `X-Canonico-Token`. Routing uses `project_id` when given, otherwise the tag rules by ascending priority. When nothing matches the response is 422 with Error code `unroutable`.
+      parameters:
+      - $ref: '#/components/parameters/CanonicoToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InboundItem'
+            example:
+              type: meeting
+              title: Steering committee 12 Nov
+              date: '2026-11-12T10:00:00Z'
+              text: We agreed the onboarding target stays at 3–4 weeks.
+              tags:
+              - clearpath
+              - topic:onboarding-target
+              participants:
+              - Sara Conti
+              - Marco Bianchi
+      responses:
+        '202':
+          description: Item accepted and processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboundItemResult'
+              example:
+                item_id: itm-0001
+                project_id: proj-clearpath
+                routed_by: tag_rule
+                rule_id: tr-001
+                document_id: hooks/meeting-2026-11-12-steering-committee
+                facts_created:
+                - M-201
+                supersedes_created: []
+                audit_event_id: A-0301
+                duplicate: false
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Validation failed, or no project could be resolved (`unroutable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: unroutable
+                message: No project_id and no tag rule matched the item.
+  /org/hooks:
+    get:
+      tags:
+      - hooks
+      operationId: getOrgHooks
+      summary: Get the organisation webhook config
+      description: The secret is never returned here, only its last four characters.
+      responses:
+        '200':
+          description: Organisation webhook config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgHookConfig'
+              example:
+                url: https://api.canonico.app/hooks/org
+                secret_last4: 9f2a
+                created_at: '2026-11-01T09:00:00Z'
+  /org/hooks/rotate-secret:
+    post:
+      tags:
+      - hooks
+      operationId: rotateOrgHookSecret
+      summary: Rotate the organisation webhook secret
+      description: The new secret is returned once, here only. Requires manage_sources.
+      responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '200':
+          description: New secret.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotateSecretResult'
+              example:
+                secret: whsec_x7Kq2demo9f2a
+                secret_last4: 9f2a
+                rotated_at: '2026-11-14T15:00:00Z'
+  /sources/{source_id}/rotate-secret:
+    post:
+      tags:
+      - hooks
+      operationId: rotateSourceSecret
+      summary: Rotate the secret of a webhook source
+      description: Only for sources of type `webhook`. The new secret is returned once, here only. Requires manage_sources.
+      parameters:
+      - $ref: '#/components/parameters/SourceId'
+      responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '200':
+          description: New secret.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotateSecretResult'
+              example:
+                secret: whsec_x7Kq2demo9f2a
+                secret_last4: 9f2a
+                rotated_at: '2026-11-14T15:00:00Z'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /org/tag-rules:
+    get:
+      tags:
+      - hooks
+      operationId: listTagRules
+      summary: List tag routing rules
+      description: Rules are evaluated by ascending `priority`, first match wins.
+      responses:
+        '200':
+          description: Rules.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TagRule'
+              example:
+                items:
+                - id: tr-001
+                  tag: clearpath
+                  project_id: proj-clearpath
+                  priority: 10
+    post:
+      tags:
+      - hooks
+      operationId: createTagRule
+      summary: Create a tag routing rule
+      description: Requires manage_sources.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagRuleCreate'
+            example:
+              tag: clearpath
+              project_id: proj-clearpath
+              priority: 10
+      responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '201':
+          description: Created rule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagRule'
+              example:
+                id: tr-001
+                tag: clearpath
+                project_id: proj-clearpath
+                priority: 10
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /org/tag-rules/test:
+    post:
+      tags:
+      - hooks
+      operationId: testTagRules
+      summary: Test which project and rule would match a set of tags
+      description: Dry run, nothing is stored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - tags
+              properties:
+                tags:
+                  type: array
+                  items:
+                    type: string
+            example:
+              tags:
+              - clearpath
+              - topic:onboarding-target
+      responses:
+        '200':
+          description: Match result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagRuleTestResult'
+              example:
+                project_id: proj-clearpath
+                rule_id: tr-001
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /org/tag-rules/{rule_id}:
+    patch:
+      tags:
+      - hooks
+      operationId: patchTagRule
+      summary: Update a tag routing rule
+      description: Requires manage_sources.
+      parameters:
+      - $ref: '#/components/parameters/RuleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagRulePatch'
+            example:
+              priority: 5
+      responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '200':
+          description: Updated rule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagRule'
+              example:
+                id: tr-001
+                tag: clearpath
+                project_id: proj-clearpath
+                priority: 5
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      tags:
+      - hooks
+      operationId: deleteTagRule
+      summary: Delete a tag routing rule
+      description: Requires manage_sources.
+      parameters:
+      - $ref: '#/components/parameters/RuleId'
+      responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - deleted
+                properties:
+                  id:
+                    type: string
+                  deleted:
+                    type: boolean
+              example:
+                id: tr-001
+                deleted: true
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /projects/{project_id}/items:
+    get:
+      tags:
+      - items
+      operationId: listProjectItems
+      summary: List items received by a project
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - name: type
+        in: query
+        schema:
+          $ref: '#/components/schemas/InboundItemType'
+      - name: tag
+        in: query
+        description: Only items carrying this tag.
+        schema:
+          type: string
+        example: clearpath
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Page of items, newest first.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemPage'
+              example:
+                items:
+                - id: itm-0001
+                  project_id: proj-clearpath
+                  type: meeting
+                  title: Steering committee 12 Nov
+                  date: '2026-11-12T10:00:00Z'
+                  tags:
+                  - clearpath
+                  - topic:onboarding-target
+                  participants:
+                  - Sara Conti
+                  - Marco Bianchi
+                  source_id: src-clearpath-hook
+                  document_id: hooks/meeting-2026-11-12-steering-committee
+                  facts_count: 1
+                  received_at: '2026-11-12T10:05:00Z'
+                  routed_by: tag_rule
+                total: 1
+                limit: 50
+                offset: 0
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+      - items
+      operationId: uploadProjectItem
+      summary: Upload an item from the UI
+      description: Manual upload. Send JSON, or multipart with a `file` and a `metadata` JSON part. Allowed for actors with the ask permission or above. The item is attributed to the actor.
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InboundItem'
+            example:
+              type: note
+              title: Call with ClearPath ops
+              date: '2026-11-13T16:00:00Z'
+              text: ClearPath ops confirmed the onboarding target is 3–4 weeks.
+              tags:
+              - clearpath
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InboundItemUpload'
+      responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '202':
+          description: Item accepted and processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboundItemResult'
+              example:
+                item_id: itm-0002
+                project_id: proj-clearpath
+                routed_by: project_id
+                rule_id: null
+                document_id: hooks/note-2026-11-13-call-with-clearpath-ops
+                facts_created:
+                - M-202
+                supersedes_created: []
+                audit_event_id: A-0302
+                duplicate: false
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /items/{item_id}:
+    get:
+      tags:
+      - items
+      operationId: getItem
+      summary: Get one item with a text excerpt
+      parameters:
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: itm-0001
+      responses:
+        '200':
+          description: The item.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemDetail'
+              example:
+                id: itm-0001
+                project_id: proj-clearpath
+                type: meeting
+                title: Steering committee 12 Nov
+                date: '2026-11-12T10:00:00Z'
+                tags:
+                - clearpath
+                - topic:onboarding-target
+                participants:
+                - Sara Conti
+                - Marco Bianchi
+                source_id: src-clearpath-hook
+                document_id: hooks/meeting-2026-11-12-steering-committee
+                facts_count: 1
+                received_at: '2026-11-12T10:05:00Z'
+                routed_by: tag_rule
+                text_excerpt: We agreed the onboarding target stays at 3–4 weeks.
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tags:
+    get:
+      tags:
+      - tags
+      operationId: listTags
+      summary: List tags with usage counts
+      parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
+      responses:
+        '200':
+          description: Tags in use.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagCount'
+              example:
+              - tag: clearpath
+                count: 12
+              - tag: topic:onboarding-target
+                count: 4
 components:
   parameters:
     FactId:
@@ -4780,6 +5295,22 @@ components:
       schema:
         type: string
       example: mem-sara-conti
+    CanonicoToken:
+      name: X-Canonico-Token
+      in: header
+      required: true
+      description: Webhook secret of the project or of the organisation.
+      schema:
+        type: string
+      example: whsec_x7Kq2demo9f2a
+    TagQuery:
+      name: tag
+      in: query
+      required: false
+      description: Only rows carrying this tag.
+      schema:
+        type: string
+      example: clearpath
     DemoActorHeader:
       name: X-Demo-Actor
       in: header
@@ -4789,6 +5320,15 @@ components:
         type: string
       example: mem-sara-conti
   responses:
+    Unauthorized:
+      description: Missing or invalid webhook token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: unauthorized
+            message: Invalid X-Canonico-Token.
     BadRequest:
       description: Malformed request.
       content:
@@ -4931,6 +5471,11 @@ components:
           type: boolean
           default: false
           description: True when a person marked this fact as binding.
+        tags:
+          type: array
+          items:
+            type: string
+          description: Free tags. `topic:<topic-id>` forces the topic.
     FactPage:
       type: object
       required:
@@ -5002,7 +5547,13 @@ components:
           - document_library
           - github
           - mail
+          - webhook
           - null
+        tags:
+          type: array
+          items:
+            type: string
+          description: Free tags. `topic:<topic-id>` forces the topic.
     Citation:
       type: object
       required:
@@ -6552,6 +7103,7 @@ components:
       - document_library
       - github
       - mail
+      - webhook
     SourceStatus:
       type: string
       enum:
@@ -6622,6 +7174,7 @@ components:
       - $ref: '#/components/schemas/MailSourceConfig'
       - $ref: '#/components/schemas/DocumentLibraryConfig'
       - $ref: '#/components/schemas/DocumentsSourceConfig'
+      - $ref: '#/components/schemas/WebhookSourceConfig'
     Source:
       type: object
       required:
@@ -7243,6 +7796,315 @@ components:
               $ref: '#/components/schemas/SetupStepState'
             first_source:
               $ref: '#/components/schemas/SetupStepState'
+    InboundItemType:
+      type: string
+      enum:
+      - meeting
+      - document
+      - note
+      - ticket
+    RoutedBy:
+      type: string
+      enum:
+      - url
+      - project_id
+      - tag_rule
+    WebhookSourceConfig:
+      type: object
+      required:
+      - default_tags
+      properties:
+        url:
+          type: string
+          format: uri
+          readOnly: true
+          description: Inbound URL for this source.
+          example: https://api.canonico.app/hooks/projects/proj-clearpath
+        secret_last4:
+          type: string
+          readOnly: true
+          description: Last four characters of the secret. The full secret is only returned by the rotate-secret operations.
+          example: 9f2a
+        default_tags:
+          type: array
+          items:
+            type: string
+          description: Tags added to every item received by this source.
+    OrgHookConfig:
+      type: object
+      required:
+      - url
+      - secret_last4
+      - created_at
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://api.canonico.app/hooks/org
+        secret_last4:
+          type: string
+          example: 9f2a
+        created_at:
+          type: string
+          format: date-time
+    RotateSecretResult:
+      type: object
+      required:
+      - secret
+      - secret_last4
+      - rotated_at
+      properties:
+        secret:
+          type: string
+          description: The new secret. Shown once, store it now.
+          example: whsec_x7Kq2demo9f2a
+        secret_last4:
+          type: string
+          example: 9f2a
+        rotated_at:
+          type: string
+          format: date-time
+    InboundItem:
+      type: object
+      required:
+      - type
+      - title
+      - date
+      properties:
+        type:
+          $ref: '#/components/schemas/InboundItemType'
+        title:
+          type: string
+        date:
+          type: string
+          format: date-time
+        text:
+          type: string
+          description: Item body. Optional when `file_url` is given.
+        file_url:
+          type: string
+          format: uri
+          description: Location of the file to fetch when there is no `text`.
+        tags:
+          type: array
+          items:
+            type: string
+          description: Free tags. A tag `topic:<topic-id>` forces the topic, for example `topic:onboarding-target`.
+        participants:
+          type: array
+          items:
+            type: string
+          description: People present, for meetings.
+        external_id:
+          type: string
+          description: Idempotency key. The same value is processed once.
+        version_of:
+          type: string
+          description: Id of a document in the library. The item becomes a new version of it.
+        project_id:
+          type: string
+          description: Target project. Only used by the organisation endpoint.
+      example:
+        type: meeting
+        title: Steering committee 12 Nov
+        date: '2026-11-12T10:00:00Z'
+        text: We agreed the onboarding target stays at 3–4 weeks.
+        tags:
+        - clearpath
+        - topic:onboarding-target
+        participants:
+        - Sara Conti
+        - Marco Bianchi
+    InboundItemUpload:
+      type: object
+      required:
+      - file
+      - metadata
+      properties:
+        file:
+          type: string
+          format: binary
+        metadata:
+          type: string
+          description: JSON of an InboundItem. `text` and `file_url` may be omitted, the file is the body.
+          example: '{"type":"document","title":"Onboarding plan v2","date":"2026-11-13T09:00:00Z","tags":["clearpath"]}'
+    InboundItemResult:
+      type: object
+      required:
+      - item_id
+      - project_id
+      - routed_by
+      - rule_id
+      - document_id
+      - facts_created
+      - supersedes_created
+      - audit_event_id
+      - duplicate
+      properties:
+        item_id:
+          type: string
+        project_id:
+          type: string
+        routed_by:
+          $ref: '#/components/schemas/RoutedBy'
+        rule_id:
+          type:
+          - string
+          - 'null'
+          description: Tag rule that routed the item, null otherwise.
+        document_id:
+          type: string
+        facts_created:
+          type: array
+          items:
+            type: string
+        supersedes_created:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupersedeLink'
+        audit_event_id:
+          type:
+          - string
+          - 'null'
+        duplicate:
+          type: boolean
+          description: True when `external_id` was already processed and nothing new was created.
+    Item:
+      type: object
+      required:
+      - id
+      - project_id
+      - type
+      - title
+      - date
+      - source_id
+      - document_id
+      - facts_count
+      - received_at
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        type:
+          $ref: '#/components/schemas/InboundItemType'
+        title:
+          type: string
+        date:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        participants:
+          type: array
+          items:
+            type: string
+        source_id:
+          type:
+          - string
+          - 'null'
+        document_id:
+          type: string
+        facts_count:
+          type: integer
+          minimum: 0
+        received_at:
+          type: string
+          format: date-time
+        routed_by:
+          $ref: '#/components/schemas/RoutedBy'
+    ItemDetail:
+      allOf:
+      - $ref: '#/components/schemas/Item'
+      - type: object
+        properties:
+          text_excerpt:
+            type: string
+            description: First part of the item text.
+    ItemPage:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    TagRule:
+      type: object
+      required:
+      - id
+      - tag
+      - project_id
+      - priority
+      properties:
+        id:
+          type: string
+        tag:
+          type: string
+        project_id:
+          type: string
+        priority:
+          type: integer
+          description: Lower runs first.
+    TagRuleCreate:
+      type: object
+      required:
+      - tag
+      - project_id
+      properties:
+        tag:
+          type: string
+        project_id:
+          type: string
+        priority:
+          type: integer
+          default: 100
+    TagRulePatch:
+      type: object
+      properties:
+        tag:
+          type: string
+        project_id:
+          type: string
+        priority:
+          type: integer
+    TagRuleTestResult:
+      type: object
+      required:
+      - project_id
+      - rule_id
+      properties:
+        project_id:
+          type:
+          - string
+          - 'null'
+        rule_id:
+          type:
+          - string
+          - 'null'
+    TagCount:
+      type: object
+      required:
+      - tag
+      - count
+      properties:
+        tag:
+          type: string
+        count:
+          type: integer
+          minimum: 0
   examples:
     FactM103:
       value:
