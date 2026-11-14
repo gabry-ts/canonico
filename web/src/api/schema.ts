@@ -1295,7 +1295,7 @@ export interface paths {
         put?: never;
         /**
          * Send the canned demo email (demo only)
-         * @description Demo-only convenience for the live demo. Sends a canned InboundEmail from client@meridianlabs.org, subject "Onboarding target confirmed", text "Following our call, we confirm the onboarding target at 5 weeks." It is routed to proj-clearpath and supersedes M-106 (3–4 weeks) with a new fact E-301 (5 weeks). Not for production use.
+         * @description Demo-only convenience for the live demo. Sends a canned InboundEmail from client@meridianlabs.org, subject "Onboarding target confirmed", text "Following our call, we confirm the onboarding target at 5 weeks." It is routed to proj-clearpath and supersedes M-106 (3–4 weeks) with a new fact E-301 (5 weeks). In `imap` mail mode the email is sent over SMTP to the real mailbox and then polled over IMAP, with the same outcome. Not for production use.
          */
         post: operations["demoSendEmail"];
         delete?: never;
@@ -2451,10 +2451,10 @@ export interface components {
         /** @enum {string} */
         AuditAction: "retire" | "restore" | "ingest" | "classify" | "create" | "patch" | "pin" | "unpin" | "supersede" | "unlink" | "resolve" | "close" | "approve" | "dismiss" | "merge" | "delete_document" | "undo" | "import" | "reset";
         /**
-         * @description `imap_mock` polls a mocked inbox, `webhook` receives `POST /mail/inbound`. Real IMAP/SMTP and Gmail/Outlook OAuth are out of scope for the MVP.
+         * @description `imap_mock` polls a mocked inbox, `webhook` receives `POST /mail/inbound`, `imap` polls a real IMAP mailbox configured by the `CANONICO_IMAP_*` environment variables. Gmail/Outlook OAuth is out of scope for the MVP.
          * @enum {string}
          */
-        MailMode: "imap_mock" | "webhook";
+        MailMode: "imap_mock" | "webhook" | "imap";
         /**
          * @description Mail settings. Never contains secrets.
          * @example {

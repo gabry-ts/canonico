@@ -738,6 +738,7 @@ class AuditAction(StrEnum):
 class MailMode(StrEnum):
     imap_mock = 'imap_mock'
     webhook = 'webhook'
+    imap = 'imap'
 
 
 class MailConfig(BaseModel):
