@@ -214,10 +214,94 @@ def test_manual_upload_accepts_a_file_with_metadata(client):
     assert result["routed_by"] == "project_id" and len(result["facts_created"]) == 1
     assert client.get(f"/facts/{result['facts_created'][0]}").json()["quote"] == "We confirm the onboarding target at 3–4 weeks."
     assert ask(client, Q)["binding"]["id"] == "M-106"
-    refused = client.post(url, data={"metadata": metadata}, files={"file": ("plan.docx", b"PK\x03\x04binary", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")})
-    assert refused.status_code == 415 and refused.json()["code"] == "unsupported_media_type" and "DOCX" in refused.json()["message"]
-    assert client.post(url, data={"metadata": metadata}, files={"file": ("clip.mp4", b"\x00\x01", "video/mp4")}).status_code == 415
+    broken = client.post(url, data={"metadata": metadata}, files={"file": ("plan.docx", b"PK\x03\x04binary", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")})
+    assert broken.status_code == 422 and "DOCX" in broken.json()["message"]
+    refused = client.post(url, data={"metadata": metadata}, files={"file": ("clip.mp4", b"\x00\x01", "video/mp4")})
+    assert refused.status_code == 415 and refused.json()["code"] == "unsupported_media_type"
     assert client.post(url, data={"metadata": "{not json"}, files={"file": ("a.txt", b"x", "text/plain")}).status_code == 422
     assert_contract(client.post(url, json={"type": "note", "title": "Empty", "date": "2026-11-13T09:00:00Z"}), "POST", "/projects/{project_id}/items", 422)
-    assert_contract(client.post(url, json={"type": "note", "title": "Link", "date": "2026-11-13T09:00:00Z", "file_url": "https://example.com/a.txt"}), "POST", "/projects/{project_id}/items", 422)
+    assert_contract(client.post(url, json={"type": "note", "title": "Link", "date": "2026-11-13T09:00:00Z", "file_url": "ftp://files.example.org/a.txt"}), "POST", "/projects/{project_id}/items", 422)
     assert_contract(client.post("/projects/nope/items", json=MEETING), "POST", "/projects/{project_id}/items", 404)
+
+
+def docx_bytes(*paragraphs: str) -> bytes:
+    import io
+
+    import docx
+
+    document = docx.Document()
+    for paragraph in paragraphs:
+        document.add_paragraph(paragraph)
+    buffer = io.BytesIO()
+    document.save(buffer)
+    return buffer.getvalue()
+
+
+def test_docx_uploads_are_read(client):
+    metadata = '{"type":"document","title":"Onboarding plan v3","date":"2026-11-13T09:00:00Z","tags":["topic:onboarding-target"]}'
+    data = docx_bytes("Onboarding plan", "Approved: the onboarding target is 6 weeks.")
+    upload = client.post(f"/projects/{CLEARPATH}/items", data={"metadata": metadata}, files={"file": ("plan.docx", data, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")})
+    result = assert_contract(upload, "POST", "/projects/{project_id}/items", 202)
+    fact = client.get(f"/facts/{result['facts_created'][0]}").json()
+    assert fact["quote"] == "Approved: the onboarding target is 6 weeks." and fact["supersedes"] == "M-106"
+    document = client.post("/documents", data={"title": "Word note", "date": "2026-11-13", "ingest": "false"}, files={"file": ("note.docx", docx_bytes("First line", "Second line"), "application/octet-stream")})
+    assert document.status_code == 201
+    assert client.get("/documents/word-note").json()["text"] == "First line\nSecond line"
+
+
+def test_file_url_is_fetched_with_limits(client, monkeypatch):
+    import httpx
+
+    from app import files
+
+    served = {
+        "/plan.md": (200, {"content-type": "text/markdown; charset=utf-8"}, "We confirm the onboarding target at 3–4 weeks.".encode()),
+        "/plan.docx": (200, {"content-type": files.DOCX}, docx_bytes("Approved: the onboarding target is 7 weeks.")),
+        "/raw.txt": (200, {"content-type": "application/octet-stream"}, b"Nothing to decide."),
+        "/page.html": (200, {"content-type": "text/html"}, b"<html></html>"),
+        "/clip": (200, {"content-type": "video/mp4"}, b"\x00"),
+        "/huge.txt": (200, {"content-type": "text/plain"}, b"x" * (files.MAX_BYTES + 1)),
+        "/moved": (302, {"location": "/plan.md"}, b""),
+        "/inside": (302, {"location": "http://internal.test/secret.txt"}, b""),
+        "/gone.txt": (404, {"content-type": "text/plain"}, b"no"),
+    }
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url))
+        if request.url.path == "/slow.txt":
+            raise httpx.ReadTimeout("slow", request=request)
+        status, headers, body = served[request.url.path]
+        return httpx.Response(status, headers=headers, content=body)
+
+    monkeypatch.setattr(files, "_client", lambda: httpx.Client(transport=httpx.MockTransport(handler), follow_redirects=False))
+    monkeypatch.setattr(files, "_public_host", lambda host: host == "files.example.org")
+    url = f"/projects/{CLEARPATH}/items"
+    item = {"type": "document", "title": "Linked plan", "date": "2026-11-13T09:00:00Z", "tags": ["topic:onboarding-target"]}
+
+    linked = assert_contract(client.post(url, json={**item, "file_url": "https://files.example.org/plan.md"}), "POST", "/projects/{project_id}/items", 202)
+    assert client.get(f"/facts/{linked['facts_created'][0]}").json()["quote"] == "We confirm the onboarding target at 3–4 weeks."
+    assert client.post(url, json={**item, "title": "Moved plan", "file_url": "https://files.example.org/moved"}).status_code == 202
+    word = client.post(url, json={**item, "title": "Word plan", "file_url": "https://files.example.org/plan.docx"}).json()
+    assert client.get(f"/facts/{word['facts_created'][0]}").json()["value"] == "7 weeks"
+    assert client.post(url, json={**item, "title": "Raw", "file_url": "https://files.example.org/raw.txt"}).status_code == 202
+    hooked = client.post(f"/hooks/projects/{CLEARPATH}", json={**item, "title": "Hooked", "file_url": "https://files.example.org/raw.txt"}, headers=PROJECT_TOKEN)
+    assert hooked.status_code == 202
+
+    for path, words in (("/page.html", "content type text/html"), ("/clip", "content type video/mp4"), ("/huge.txt", "larger than 10 MB"), ("/slow.txt", "longer than 15 seconds"), ("/gone.txt", "answered 404"), ("/inside", "not a public address")):
+        refused = assert_contract(client.post(url, json={**item, "file_url": "https://files.example.org" + path}), "POST", "/projects/{project_id}/items", 422)
+        assert words in refused["message"], refused
+    assert "http and https" in client.post(url, json={**item, "file_url": "file:///etc/passwd"}).json()["message"]
+    assert "not a public address" in client.post(url, json={**item, "file_url": "http://localhost:8000/health"}).json()["message"]
+    assert not any("internal.test" in call or "localhost" in call for call in seen)
+
+    before = len(seen)
+    assert client.post(f"/hooks/projects/{CLEARPATH}", json={**item, "file_url": "https://files.example.org/plan.md"}, headers={"X-Canonico-Token": "wrong"}).status_code == 401
+    assert len(seen) == before
+
+
+def test_internal_addresses_are_not_public():
+    from app import files
+
+    for host in ("127.0.0.1", "localhost", "10.0.0.5", "192.168.1.10", "169.254.169.254", "::1"):
+        assert files._public_host(host) is False, host
