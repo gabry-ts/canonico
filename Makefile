@@ -1,4 +1,4 @@
-.PHONY: install api web mock types test docker-up docker-down docker-logs
+.PHONY: install api web mock types test test-docker docker-up docker-down docker-logs
 
 install:
 	uv venv api/.venv 2>/dev/null || python3 -m venv api/.venv
@@ -10,6 +10,12 @@ api:
 
 test:
 	cd api && .venv/bin/python -m pytest -q
+
+# real SMTP and IMAP round trip against a throwaway GreenMail container (needs docker)
+test-docker:
+	docker run -d --rm --name canonico-greenmail -e GREENMAIL_OPTS='-Dgreenmail.setup.test.smtp -Dgreenmail.setup.test.imap -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=brain:canonico-demo@inbound.meridianlabs.org -Dgreenmail.auth.disabled=false' -p 3025:3025 -p 3143:3143 greenmail/standalone:2.1.15
+	@until docker logs canonico-greenmail 2>&1 | grep -q "Starting GreenMail API"; do sleep 1; done
+	cd api && .venv/bin/python -m pytest tests/test_imap_real.py -m docker -q; status=$$?; docker stop canonico-greenmail >/dev/null; exit $$status
 
 web:
 	cd web && npm run dev
