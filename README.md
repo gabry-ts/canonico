@@ -55,6 +55,16 @@ Backend notes:
 - State survives a restart. Call `POST /demo/reset` before a demo to start from the seed.
 - `render.yaml` describes a single-instance web service for Render (build `pip install ./api`, start `uvicorn` from `api/`). It has not been deployed from this repository yet. The supported deployment is Docker on your own server, see below.
 
+## Deploy
+
+Images are built only by GitHub Actions (`.github/workflows/docker.yml`), never on the server. Every push to `main` that touches `api/`, `web/`, `data/`, `docker-compose.yml` or the workflow builds `linux/amd64` images and pushes them to `ghcr.io/gabry-ts/canonico-api` and `ghcr.io/gabry-ts/canonico-web`, tagged `latest` and `sha-<short>`. The packages are public.
+
+The live copy runs as the Portainer stack `canonico` (image-only compose, no `build:`) behind Traefik at https://canonico.magikarp.uk. The `web` container joins the external `proxy` network and carries the Traefik labels; `api` stays on the stack network and keeps its state in the `canonico-runtime` volume.
+
+- Update: wait for the workflow to go green, then in Portainer open the stack `canonico` and use Update the stack with "Re-pull image" on, or call `PUT /api/stacks/<id>?endpointId=2` with `pullImage: true` and the current compose content.
+- Switch the LLM provider: edit the stack environment variables (`LLM_PROVIDER=gateway` plus `AI_GATEWAY_API_KEY`, or `anthropic` plus `ANTHROPIC_API_KEY`; add the variable to the `api` service `environment` if it is not listed) and redeploy. See "Switching the LLM provider".
+- Reset the demo after a deploy: `curl -X POST https://canonico.magikarp.uk/api/demo/reset`.
+
 ## Deploy with Docker
 
 Two containers on one server. `web` is a Caddy server with the built site; it forwards everything under `/api/` to `api`, so site and API share one origin and the browser needs no CORS. `api` is the FastAPI process, not published to the host.
