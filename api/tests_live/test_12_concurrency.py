@@ -27,11 +27,11 @@ def test_parallel_asks_and_edits(api, request):
     base = api.base
 
     def ask(question):
-        with httpx.Client(base_url=base, timeout=120) as client:
+        with httpx.Client(base_url=base, timeout=120, headers=dict(api.http.headers)) as client:
             return client.post("/ask", json={"question": question}).status_code
 
     def flip(fact_id):
-        with httpx.Client(base_url=base, timeout=120) as client:
+        with httpx.Client(base_url=base, timeout=120, headers=dict(api.http.headers)) as client:
             codes = [client.post(f"/facts/{fact_id}/retire", json={"reason": "load test", "actor": "Giulia"}).status_code]
             codes.append(client.post(f"/facts/{fact_id}/restore", json={"reason": "load test", "actor": "Giulia"}).status_code)
             return codes
