@@ -83,7 +83,22 @@ Sources of a project:
 - `github`: a public repository, read with the unauthenticated GitHub REST API (README and issues become documents). Responses are cached in `api/.cache/github/` and reused when the rate limit is hit, when GitHub is unreachable and in offline mode.
 - `mail`: `imap_mock` polls the seeded inbox in `data/seed/mail/` (`POST /mail/poll`), `webhook` receives `POST /mail/inbound`. Mail settings live on the organisation and are inherited by projects, a project can override them. Routing rules (`sender_domain`, `sender_address`, `recipient`, `subject_contains`) are evaluated by ascending priority, the first match decides the project; `sender_domain` compares the exact domain. An email that no rule matches is stored at organisation scope.
 
-Fact ids tell where a fact came from: `M-1xx` and `M-2xx` curated demo facts, `M-1001` and above extracted from the corpus, `M-301` and above typed in by a person or taken from an uploaded version of a plain document, `E-301` and above from email, `L-4xx` from the document library.
+- `webhook`: a per-project inbound URL, `POST /hooks/projects/{project_id}`, authenticated with the secret of the source in `X-Canonico-Token`. The organisation has its own hook, `POST /hooks/org`, which routes an item by its `project_id`, else by the tag rules in ascending priority, else answers 422 with code `unroutable`. A secret is shown once, when the source is created or the secret is rotated; only its hash and its last four characters are stored.
+
+Items (`meeting`, `document`, `note`, `ticket`) arrive through a hook or through `POST /projects/{project_id}/items` (JSON, or multipart with a `file` and a `metadata` JSON part; `.txt`, `.md` and `.pdf` are read, other formats get 415). An item is stored as a document and read like an email: the deterministic rule first, the model only when the rule finds nothing and offline mode is off. A tag `topic:<topic-id>` files the item under that topic. `version_of` turns it into a new version of a library document. `external_id` makes a delivery idempotent: the second one returns the first result with `duplicate: true`. A decision with a new value replaces the binding fact; a statement with the same value is stored as a confirmation, the binding fact stays and the answer names what confirms it. `file_url` is not fetched by the server, send the text or upload the file.
+
+Tags of an item are copied to its document and its facts; `GET /facts`, `GET /documents` and `GET /search` accept `tag`, `GET /tags` counts them.
+
+Demo-only secrets, fixed in `data/seed/org.json` so the demo can be scripted (never use them outside the demo, rotate to get random ones):
+
+| hook | `X-Canonico-Token` |
+| --- | --- |
+| `POST /hooks/org` | `whsec_x7Kq2demo9f2a` |
+| `POST /hooks/projects/proj-clearpath` | `whsec_clearpathdemo51c7` |
+
+Demo item: a meeting "Steering committee 12 Nov" with text "We agreed the onboarding target stays at 3–4 weeks." and tags `clearpath`, `topic:onboarding-target`, sent to `/hooks/org`, is routed to `proj-clearpath` by the seeded tag rule `tr-001` and confirms M-106 without replacing it.
+
+Fact ids tell where a fact came from: `M-1xx` and `M-2xx` curated demo facts, `M-1001` and above extracted from the corpus, `M-301` and above typed in by a person, taken from an item (hook or upload) or from an uploaded version of a plain document, `E-301` and above from email, `L-4xx` from the document library.
 
 Members and roles are a demo layer without real authentication. `GET /roles` lists what each role may do. Writes check the role of the member named in the `X-Demo-Actor` header and return 403 when the permission is missing; a project role overrides the organisation role inside that project. Without the header the owner acts.
 
