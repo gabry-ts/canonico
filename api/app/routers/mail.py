@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app import access, inbox, ops, store
+from app import access, inbox, ops, sources, store
 from app.http import ApiError, dump, not_found, out
 from app.models import (
     InboundEmail,
@@ -131,10 +131,18 @@ def delete_mail_rule(rule_id: str, demo_actor: str | None = access.Actor):
     return JSONResponse({"id": rule_id, "deleted": True})
 
 
+def with_model_facts(result: dict) -> dict:
+    """When the deterministic rule found nothing in an email, let the model read it (never in offline mode)."""
+    if not result["facts_created"] and result["routed_project_id"]:
+        result["facts_created"] = sources.enrich_document(result["document_id"], prefix="E")
+    return result
+
+
 @router.post("/mail/inbound", operation_id="receiveInboundEmail", status_code=200, response_model=InboundEmailResult)
 def receive_inbound_email(body: InboundEmail):
     with STORE.write() as state:
-        return out(InboundEmailResult, inbox.receive(state, email_dict(body)))
+        result = inbox.receive(state, email_dict(body))
+    return out(InboundEmailResult, with_model_facts(result))
 
 
 @router.post("/mail/poll", operation_id="pollMail", status_code=200, response_model=MailPollResult)
@@ -143,7 +151,9 @@ def poll_mail(body: MailPollRequest | None = None):
     with STORE.write() as state:
         if project_id is not None:
             ops.require_project(state, project_id)
-        return out(MailPollResult, inbox.poll(state, project_id))
+        result = inbox.poll(state, project_id)
+    result["results"] = [with_model_facts(item) for item in result["results"]]
+    return out(MailPollResult, result)
 
 
 @router.get("/projects/{project_id}/messages", operation_id="listProjectMessages", status_code=200, response_model=MessagePage)

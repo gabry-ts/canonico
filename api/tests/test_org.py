@@ -325,3 +325,32 @@ def test_deleting_a_project_removes_its_memory_and_rules(client):
     assert ask(client, Q)["binding"]["id"] == "M-106"
     client.post("/demo/reset")
     assert client.get("/facts/M-905").status_code == 200
+
+
+def test_model_reads_an_email_only_when_the_rule_finds_nothing(client, monkeypatch):
+    from app import llm
+
+    calls = []
+
+    def fake(model, system, user, schema, meter, name="result", max_tokens=8000, effort="low"):
+        calls.append(name)
+        meter.settle(0.0, 0.002, 100, 50)
+        return {"facts": [{"topic": "onboarding target", "value": "The onboarding checklist rollout starts Monday", "short": "Monday", "type": "DECISION",
+                           "quote": "Rollout of the new onboarding checklist starts Monday.", "date": "2026-11-13", "confidence": 0.8}]}
+
+    monkeypatch.setattr(llm, "available", lambda: True)
+    monkeypatch.setattr(llm, "complete_json", fake)
+    assert client.post("/demo/send-email").json()["facts_created"] == ["E-301"]
+    assert calls == []
+    polled = client.post("/mail/poll", json={"project_id": CLEARPATH}).json()
+    assert calls == ["facts"] and polled["results"][0]["facts_created"] == ["E-302"]
+    extracted = client.get("/facts/E-302").json()
+    assert extracted["project_id"] == CLEARPATH and extracted["topic"] != "onboarding-target"
+    assert client.get("/stats").json()["cost"]["spent_usd"] > 0
+    assert ask(client, Q)["binding"]["id"] == "E-301"
+
+    client.post("/demo/reset")
+    client.patch("/config", json={"offline_mode": True})
+    calls.clear()
+    assert client.post("/mail/poll", json={"project_id": CLEARPATH}).json()["results"][0]["facts_created"] == []
+    assert calls == []

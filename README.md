@@ -49,7 +49,7 @@ Backend notes:
 - Memory lives in process and is persisted to `api/.runtime/state.json` (gitignored). It is seeded from `data/seed/*.json` and `data/clearpath/corpus.jsonl`; `POST /demo/reset` restores the seed.
 - Run it as a single process: state is not shared between workers or serverless instances.
 - Model calls go through `api/app/llm.py`: `LLM_PROVIDER=anthropic` (Messages API, `ANTHROPIC_API_KEY`) or `LLM_PROVIDER=gateway` (Vercel AI Gateway, `AI_GATEWAY_API_KEY`). Output is schema-constrained JSON, responses are cached on disk in `api/.cache/` and every run is capped by `CANONICO_COST_CAP_USD` (default 2.00).
-- `cd api && .venv/bin/python -m app.ingest` re-extracts the 46 documents and rewrites `data/seed/` (facts, topics, conflicts, `meta.json` with tokens and cost). A fact is kept only if its quote is a verbatim span of its document. The two demo topics stay hand-curated.
+- `cd api && .venv/bin/python -m app.ingest` re-extracts the 46 documents and rewrites `data/seed/` (facts, topics, conflicts, `meta.json` with tokens and cost). A fact is kept only if its quote is a verbatim span of its document. Hand-curated facts and topics are kept as they are.
 - CORS origins come from `CORS_ORIGINS` (comma-separated) and `CORS_ORIGIN_REGEX` (default allows `*.vercel.app` previews).
 - State survives a restart. Call `POST /demo/reset` before a demo to start from the seed.
 - `render.yaml` describes a single-instance web service for Render (build `pip install ./api`, start `uvicorn` from `api/`). It has not been deployed from this repository yet.
@@ -68,7 +68,7 @@ The seeded memory answers `POST /ask {"question": "How long does onboarding take
 
 `GET /me` returns the demo identity (Giulia, owner). The `X-Demo-Actor` header or the `actor` query parameter switch to another member. There is no real authentication.
 
-Other flows that work offline: `POST /demo/send-email` (a client email confirms 5 weeks and supersedes the final report figure), `POST /documents/{doc_id}/versions` (a new version of a library document supersedes what the previous version said on the same topic), `POST /mail/poll` on the mocked inbox in `data/seed/mail/`. Values are found by a deterministic rule (a sentence that states a quantity on a known topic), so these flows need no model. `PATCH /config {"offline_mode": true}` blocks every live model call.
+Other flows that work offline: `POST /demo/send-email` (a client email confirms 5 weeks and supersedes the final report figure), `POST /documents/{doc_id}/versions` (a new version of a library document supersedes what the previous version said on the same topic), `POST /mail/poll` on the mocked inbox in `data/seed/mail/`. Values are found by a deterministic rule first (a sentence that states a quantity on a known topic), so these flows need no model. Only when the rule finds nothing, a provider is configured and offline mode is off, the model reads the email or the new version; facts it extracts are filed outside the hand-curated topics. `PATCH /config {"offline_mode": true}` blocks every live model call.
 
 ## Organisation, projects and sources
 

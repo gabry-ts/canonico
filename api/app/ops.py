@@ -98,8 +98,8 @@ def restore(state: dict, fact: dict, reason: str | None, actor: str) -> dict | N
     return event
 
 
-def create_fact(state: dict, *, topic: str, value: str, type: str, doc_id: str | None, quote: str, date: str, confidence: float, actor: str, action: str = "create", x: dict | None = None) -> dict:
-    fact_id = store.next_fact_id(state)
+def create_fact(state: dict, *, topic: str, value: str, type: str, doc_id: str | None, quote: str, date: str, confidence: float, actor: str, action: str = "create", x: dict | None = None, prefix: str = "M") -> dict:
+    fact_id = store.next_fact_id(state, prefix)
     fact = {
         "id": fact_id,
         "topic": topic,

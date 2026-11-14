@@ -129,7 +129,11 @@ def upload_document_version(doc_id: str, body: DocumentVersionCreate):
             raise ApiError(409, f"Version {body.version_label} already exists.")
         date = body.date.isoformat() if body.date else store.now()[:10]
         result = inbox.new_version(state, document, text=body.text, label=body.version_label, title=body.title, date=date)
-        return out(DocumentVersionResult, result, 201)
+    if not result["facts_created"]:
+        from app import sources
+
+        result["facts_created"] = sources.enrich_document(doc_id)
+    return out(DocumentVersionResult, result, 201)
 
 
 @router.get("/documents/{doc_id:path}/facts", operation_id="listDocumentFacts", status_code=200, response_model=list[Fact])

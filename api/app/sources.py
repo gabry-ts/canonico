@@ -144,7 +144,31 @@ def _add_github_documents(job_id: str, source: dict, documents: list[dict]) -> N
         state["cost_spent"] = round(state.get("cost_spent", 0.0) + meter.spent, 6)
 
 
-def file_extracted_facts(state: dict, document: dict, found: list[dict]) -> list[str]:
+def enrich_document(doc_id: str, prefix: str = "M") -> list[str]:
+    """Ask the model for the facts of a stored document that the deterministic rule did not find.
+
+    Does nothing in offline mode, without a provider or without budget. Model failures are swallowed:
+    the document stays stored and the caller's result is unchanged.
+    """
+    with STORE.read() as state:
+        document = copy.deepcopy(state["documents"].get(doc_id))
+        if document is None or document.get("project_id") is None or not inbox.can_use_model(state):
+            return []
+        model = state["config"]["models"]["extraction"]
+        budget = max(0.0, state["config"]["cost_cap_usd"] - state.get("cost_spent", 0.0))
+    meter = llm.Meter(cap_usd=budget)
+    try:
+        found = extract.extract_document(document, model, meter)
+    except Exception:
+        found = []
+    with STORE.write() as state:
+        state["cost_spent"] = round(state.get("cost_spent", 0.0) + meter.spent, 6)
+        if doc_id not in state["documents"]:
+            return []
+        return file_extracted_facts(state, state["documents"][doc_id], found, prefix)
+
+
+def file_extracted_facts(state: dict, document: dict, found: list[dict], prefix: str = "M") -> list[str]:
     """File model-extracted facts under topics of the document's project. Curated topics are never touched."""
     from app import engine
 
@@ -172,6 +196,7 @@ def file_extracted_facts(state: dict, document: dict, found: list[dict]) -> list
             actor="system",
             action="ingest",
             x={"manual": False, "short": raw.get("short") or "", "label": f"the fact “{raw.get('short') or raw['value'][:60]}” from “{document['title']}”"},
+            prefix=prefix,
         )
         created.append(fact["id"])
     return created
