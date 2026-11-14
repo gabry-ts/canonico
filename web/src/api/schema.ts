@@ -1026,6 +1026,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sources/github/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview a public GitHub repository */
+        post: operations["previewGithubSource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sources/{source_id}": {
         parameters: {
             query?: never;
@@ -1999,6 +2016,20 @@ export interface components {
                 /** Format: date-time */
                 measured_at?: string | null;
             };
+        };
+        GithubPreviewRequest: {
+            repo_url: string;
+        };
+        GithubPreview: {
+            repo_url: string;
+            full_name: string;
+            public: boolean;
+            description: string | null;
+            default_branch: string;
+            open_issues: number;
+            has_readme: boolean;
+            /** Format: date-time */
+            last_pushed_at: string | null;
         };
         StatsSource: {
             source_id?: string;
@@ -5919,6 +5950,49 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    previewGithubSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "repo_url": "https://github.com/gabry-ts/canonico"
+                 *     }
+                 */
+                "application/json": components["schemas"]["GithubPreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Repository preview. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "repo_url": "https://github.com/gabry-ts/canonico",
+                     *       "full_name": "gabry-ts/canonico",
+                     *       "public": true,
+                     *       "description": "Canonical memory for company knowledge.",
+                     *       "default_branch": "main",
+                     *       "open_issues": 3,
+                     *       "has_readme": true,
+                     *       "last_pushed_at": "2026-11-14T09:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["GithubPreview"];
+                };
+            };
+            404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
         };
     };

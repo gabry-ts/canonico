@@ -577,6 +577,21 @@ class TimeToFixSeconds(BaseModel):
     measured_at: AwareDatetime | None = None
 
 
+class GithubPreviewRequest(BaseModel):
+    repo_url: str
+
+
+class GithubPreview(BaseModel):
+    repo_url: str
+    full_name: str
+    public: bool
+    description: str | None
+    default_branch: str
+    open_issues: int
+    has_readme: bool
+    last_pushed_at: AwareDatetime | None
+
+
 class StatsSource(BaseModel):
     source_id: str | None = None
     type: str | None = None
