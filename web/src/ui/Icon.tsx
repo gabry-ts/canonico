@@ -68,7 +68,12 @@ export function Logo({ size = 22 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0">
       <rect x="2" y="2" width="20" height="20" rx="6" fill="hsl(var(--primary))" />
-      <path d="M8.5 9.25h7M8.5 12h7M8.5 14.75h4" stroke="white" strokeWidth="1.7" strokeLinecap="round" />
+      {/* Small-size cut of the app icon (brand/icon/icon-small.svg): a C whose opening holds one fixed point. */}
+      <path
+        d="M17.176 7.782A6.953 6.953 0 1 0 17.176 16.218A4.219 4.219 0 0 1 14.207 15.054A3.984 3.984 0 1 1 14.207 8.946A4.219 4.219 0 0 1 17.176 7.782Z"
+        fill="white"
+      />
+      <circle cx="17.117" cy="12" r="2.188" fill="white" />
     </svg>
   )
 }
