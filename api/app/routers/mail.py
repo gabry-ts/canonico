@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app import access, imap_client, inbox, ops, sources, store
+from app import access, imap_client, inbox, ops, settings, sources, store, validate
 from app.http import ApiError, dump, not_found, out
 from app.models import (
     InboundEmail,
@@ -37,19 +37,35 @@ def email_dict(body: InboundEmail) -> dict:
     return body.model_dump(mode="json", by_alias=True, exclude_none=True)
 
 
+def real_mailbox() -> dict | None:
+    """The real mailbox the server is configured for (CANONICO_IMAP_HOST), offered as mode `imap`. Never a secret."""
+    host = settings.env("CANONICO_IMAP_HOST").strip()
+    return {"host": host, "user": settings.env("CANONICO_IMAP_USER").strip() or None} if host else None
+
+
+def org_mail_view(config: dict | None) -> dict:
+    view = mail_view(config) or {"mode": "webhook", "imap_host": None, "imap_user": None, "inbound_address": None, "poll_interval_s": 60}
+    return {**view, "real_mailbox": real_mailbox()}
+
+
+def check_mode(body: MailConfigWrite) -> None:
+    if body.mode.value == "imap" and real_mailbox() is None:
+        raise ApiError(422, "mode: this server has no real mailbox (CANONICO_IMAP_HOST is not set). Use imap_mock or webhook.")
+
+
 @router.get("/org/mail", operation_id="getOrgMail", status_code=200, response_model=MailConfig)
 def get_org_mail():
     with STORE.read() as state:
-        config = mail_view(state["org"].get("mail_config")) or {"mode": "webhook", "imap_host": None, "imap_user": None, "inbound_address": None, "poll_interval_s": 60}
-        return out(MailConfig, config)
+        return out(MailConfig, org_mail_view(state["org"].get("mail_config")))
 
 
 @router.put("/org/mail", operation_id="putOrgMail", status_code=200, response_model=MailConfig)
 def put_org_mail(body: MailConfigWrite, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         access.allow(state, demo_actor, "manage_mail", None)
+        check_mode(body)
         state["org"]["mail_config"] = clean_mail(body)
-        return out(MailConfig, mail_view(state["org"]["mail_config"]))
+        return out(MailConfig, org_mail_view(state["org"]["mail_config"]))
 
 
 @router.get("/projects/{project_id}/mail", operation_id="getProjectMail", status_code=200, response_model=ProjectMail)
@@ -63,6 +79,7 @@ def put_project_mail(project_id: str, body: MailConfigWrite, demo_actor: str | N
     with STORE.write() as state:
         access.allow(state, demo_actor, "manage_mail", project_id)
         project = ops.require_project(state, project_id)
+        check_mode(body)
         project["mail_config_override"] = clean_mail(body)
         return out(ProjectMail, project_mail(state, project))
 
@@ -88,9 +105,7 @@ def create_mail_rule(body: MailRuleCreate, demo_actor: str | None = access.Actor
     with STORE.write() as state:
         access.allow(state, demo_actor, "manage_mail", None)
         ops.require_project(state, body.project_id)
-        value = body.value.strip()
-        if not value:
-            raise ApiError(422, "value: must not be empty")
+        value = validate.rule_value(body.match_type.value, body.value)
         for rule in state["mail_rules"].values():
             if rule["match_type"] == body.match_type.value and rule["value"].lower() == value.lower():
                 raise ApiError(409, f"Rule {rule['id']} already matches {body.match_type.value} {value}.")
@@ -117,6 +132,11 @@ def patch_mail_rule(rule_id: str, body: MailRulePatch, demo_actor: str | None = 
         changes = body.model_dump(mode="json", exclude_unset=True, exclude_none=True)
         if "project_id" in changes:
             ops.require_project(state, changes["project_id"])
+        if "value" in changes or "match_type" in changes:
+            changes["value"] = validate.rule_value(changes.get("match_type", rule["match_type"]), changes.get("value", rule["value"]))
+            for other in state["mail_rules"].values():
+                if other is not rule and other["match_type"] == changes.get("match_type", rule["match_type"]) and other["value"].lower() == changes["value"].lower():
+                    raise ApiError(409, f"Rule {other['id']} already matches {other['match_type']} {other['value']}.")
         rule.update(changes)
         return out(MailRule, rule_view(rule))
 

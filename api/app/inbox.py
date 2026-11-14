@@ -160,10 +160,16 @@ def add_fact(state: dict, *, fact_id: str, topic_id: str, value: str, kind: str,
     return event
 
 
-def replaced_by_decision(state: dict, topic_id: str, short: str, date: str) -> list[dict]:
-    """What a new decision on a topic replaces: the binding fact, and the library versions that still carry its value."""
+def replaced_by_decision(state: dict, topic_id: str, short: str, date: str, restated: bool = False) -> list[dict]:
+    """What a new decision on a topic replaces: the binding fact, and the library versions that still carry its value.
+
+    A decision with the same value only confirms the binding fact, unless `restated`: a new version of a standard
+    that states the binding value again becomes the source of it, so the fact it restates is superseded too.
+    """
     binding = store.binding_of(state, topic_id)
-    if binding is None or not statements.restates(binding, short) or statements.same_value(binding, short) or binding["date"] > date:
+    if binding is None or not statements.restates(binding, short) or binding["date"] > date:
+        return []
+    if statements.same_value(binding, short) and not restated:
         return []
     olds = [binding]
     library = {s["id"] for s in state["sources"].values() if s["type"] == "document_library"}
@@ -291,7 +297,7 @@ def new_version(state: dict, document: dict, *, text: str, label: str | None, ti
         # A standard feeds the topic it governs: the new value is filed there and replaces its binding fact.
         feeds = state["topics"][item["topic"]].get("x", {}).get("feeds")
         target = feeds if feeds in state["topics"] else item["topic"]
-        governed = replaced_by_decision(state, target, item["short"], date) if target != item["topic"] and item["type"] == "DECISION" else []
+        governed = replaced_by_decision(state, target, item["short"], date, restated=library) if target != item["topic"] and item["type"] == "DECISION" else []
         olds = governed + [f for f in previous if f not in governed]
         fact_id = store.next_library_fact_id(state, document["id"]) if library else store.next_fact_id(state)
         names = ", ".join(f"{o['id']} ({o['x'].get('short') or o['value']})" for o in olds)

@@ -1,14 +1,18 @@
 """Username and password sessions.
 
-Sessions live in memory: a random token is handed to the client (cookie or bearer) and only its
-SHA-256 is kept. With CANONICO_AUTH_REQUIRED=true every write needs a session; reads stay public.
-When a session is present its member is the actor of the request, whatever the demo header or the
-`actor` field of the body say.
+A random token is handed to the client (HttpOnly cookie, or bearer for API clients) and only its
+SHA-256 is kept, in memory and in `sessions.json` next to the runtime state, so a restart or a
+redeploy keeps the sessions that have not expired. With CANONICO_AUTH_REQUIRED=true every request
+needs a session, except the health check, the sign-in endpoints, first-run setup and the webhooks
+(which check their own X-Canonico-Token). When a session is present its member is the actor of the
+request, whatever the demo header or the `actor` field of the body say.
 """
 
 import hashlib
 import hmac
 import json
+import logging
+import os
 import secrets
 import threading
 import time
@@ -23,11 +27,16 @@ from app.store import STORE
 COOKIE = "canonico_session"
 TTL_S = 12 * 3600
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
-PUBLIC_WRITE_PREFIXES = ("/auth/", "/hooks/")
-PUBLIC_WRITE_PATHS = {"/health"}
+# Reachable without a session even when sessions are required. The webhooks authenticate with their own token,
+# first-run setup refuses once the organisation has an owner, and the API description is the public contract.
+PUBLIC_PREFIXES = ("/auth/", "/hooks/")
+PUBLIC_PATHS = {"/health", "/org/setup", "/org/setup/status", "/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"}
 DEFAULT_DEMO_MEMBER = "mem-giulia-ferri"
+SESSION_REQUIRED = "Sign in to continue."
+LOG = logging.getLogger("uvicorn.error")
 
 _sessions: dict[str, tuple[str, float]] = {}
+_loaded_from: str | None = None
 _lock = threading.Lock()
 
 
@@ -87,31 +96,107 @@ def _digest(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def sessions_file():
+    """Where sessions are kept between restarts: next to the runtime state (the canonico-runtime volume)."""
+    state = settings.state_file()
+    return state.parent / "sessions.json" if state else None
+
+
+def _ensure_loaded() -> None:
+    """Read the saved sessions once per sessions file. Call with the lock held."""
+    global _loaded_from
+    path = sessions_file()
+    key = str(path) if path else ""
+    if _loaded_from == key:
+        return
+    _loaded_from = key
+    _sessions.clear()
+    if not path or not path.exists():
+        return
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        LOG.warning("sessions: %s could not be read, everyone signs in again", path)
+        return
+    now = time.time()
+    for digest, entry in (raw.get("sessions") or {}).items():
+        try:
+            member_id, expires = str(entry[0]), float(entry[1])
+        except (TypeError, ValueError, IndexError):
+            continue
+        if expires > now:
+            _sessions[digest] = (member_id, expires)
+
+
+def _save() -> None:
+    """Persist the live sessions (token digests only). Call with the lock held."""
+    path = sessions_file()
+    if not path:
+        return
+    now = time.time()
+    live = {d: [m, e] for d, (m, e) in _sessions.items() if e > now}
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"sessions": live}), encoding="utf-8")
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, path)
+    except OSError:
+        LOG.warning("sessions: %s could not be written", path)
+
+
 def issue(member_id: str) -> tuple[str, str]:
     token = secrets.token_urlsafe(32)
     expires = time.time() + TTL_S
     with _lock:
+        _ensure_loaded()
         _sessions[_digest(token)] = (member_id, expires)
-    return token, datetime.fromtimestamp(expires, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        _save()
+    return token, expires_text(expires)
+
+
+def expires_text(expires: float) -> str:
+    return datetime.fromtimestamp(expires, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def revoke(token: str | None) -> None:
     if token:
         with _lock:
-            _sessions.pop(_digest(token), None)
+            _ensure_loaded()
+            if _sessions.pop(_digest(token), None) is not None:
+                _save()
 
 
-def session_member_id(token: str | None) -> str | None:
+def revoke_member(member_id: str) -> None:
+    """End every session of a member, for example when the member is removed."""
+    with _lock:
+        _ensure_loaded()
+        doomed = [d for d, (m, _) in _sessions.items() if m == member_id]
+        for digest in doomed:
+            del _sessions[digest]
+        if doomed:
+            _save()
+
+
+def session_entry(token: str | None) -> tuple[str, float] | None:
+    """(member id, expiry) of a live session, or None."""
     if not token:
         return None
     with _lock:
+        _ensure_loaded()
         entry = _sessions.get(_digest(token))
         if entry is None:
             return None
         if entry[1] < time.time():
             _sessions.pop(_digest(token), None)
+            _save()
             return None
-        return entry[0]
+        return entry
+
+
+def session_member_id(token: str | None) -> str | None:
+    entry = session_entry(token)
+    return entry[0] if entry else None
 
 
 def token_of(request: Request) -> str | None:
@@ -134,12 +219,17 @@ def session_member(request: Request) -> dict | None:
         return state["members"].get(member_id)
 
 
+def session_expiry(request: Request) -> str | None:
+    """Expiry of the session the request carries, None without one."""
+    entry = session_entry(token_of(request))
+    return expires_text(entry[1]) if entry else None
+
+
 def _needs_session(method: str, path: str) -> bool:
-    if path == "/me":
-        return True
-    if method not in WRITE_METHODS:
+    """With sessions required, everything but the public endpoints needs one. CORS preflights never do."""
+    if method == "OPTIONS":
         return False
-    return path not in PUBLIC_WRITE_PATHS and not path.startswith(PUBLIC_WRITE_PREFIXES)
+    return path not in PUBLIC_PATHS and not path.startswith(PUBLIC_PREFIXES)
 
 
 def actor_name(member: dict) -> str:
@@ -147,7 +237,7 @@ def actor_name(member: dict) -> str:
 
 
 class AuthMiddleware:
-    """Enforces sessions on writes when required and makes the session member the actor."""
+    """Enforces sessions when required and makes the session member the actor."""
 
     def __init__(self, app) -> None:
         self.app = app
@@ -160,7 +250,7 @@ class AuthMiddleware:
         member = session_member(request)
         if member is None:
             if required() and _needs_session(scope["method"], scope["path"]):
-                response = JSONResponse({"code": "unauthorized", "message": i18n.error_message("Sign in to make changes.")}, status_code=401)
+                response = JSONResponse({"code": "unauthorized", "message": i18n.error_message(SESSION_REQUIRED)}, status_code=401)
                 await response(scope, receive, send)
                 return
             await self.app(scope, receive, send)

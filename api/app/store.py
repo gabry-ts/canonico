@@ -3,6 +3,7 @@
 import copy
 import hashlib
 import json
+import logging
 import os
 import re
 import threading
@@ -11,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from app import i18n, llm, settings, wording
+
+LOG = logging.getLogger("uvicorn.error")
 
 PUBLIC_FACT_FIELDS = (
     "id",
@@ -362,12 +365,34 @@ def binding_of(state: dict, topic_id: str, focus: set[str] | None = None) -> dic
     pinned = [f for f in active if f.get("pinned")]
     if pinned:
         return pinned[0]
+    answered = closed_answer(state, topic_id)
+    if answered is not None and (focus is None or answered[0]["id"] in focus):
+        return answered[0]
     if focus is not None:
         active = [f for f in active if f["id"] in focus]
     live = [f for f in active if not is_superseded(state, f) and effective_type(state, f) in BINDING_TYPES and confirmed_by(state, f) is None]
     if not live:
         return None
     return max(live, key=lambda f: (f["date"], f.get("x", {}).get("seq", 0), effective_type(state, f) == "DECISION", f["confidence"], f["id"]))
+
+
+def closed_answer(state: dict, topic_id: str) -> tuple[dict, dict] | None:
+    """(fact, question) when a person closed an open question of the topic with an answer fact that still stands.
+
+    That answer is what the topic says from then on: it is binding, whatever its type, and it settles the open
+    conflicts of the topic. Reopening the question (undoing the close) takes this back.
+    """
+    best = None
+    for question in state["open_questions"].values():
+        if question["topic"] != topic_id or question["status"] != "closed" or not question.get("answer_fact_id"):
+            continue
+        fact = state["facts"].get(question["answer_fact_id"])
+        if fact is None or fact["status"] != "active" or fact["topic"] != topic_id:
+            continue
+        key = (question.get("closed_at") or "", question["id"])
+        if best is None or key > best[0]:
+            best = (key, fact, question)
+    return (best[1], best[2]) if best else None
 
 
 def confirmed_by(state: dict, fact: dict) -> dict | None:
@@ -384,16 +409,27 @@ def conflict_live(state: dict, conflict: dict) -> list[dict]:
 
 
 def conflict_status(state: dict, conflict: dict) -> str:
-    if conflict.get("resolution"):
+    if conflict.get("resolution") or closed_answer(state, conflict["topic"]) is not None:
         return "resolved"
     return "open" if len({value_key(f) for f in conflict_live(state, conflict)}) >= 2 else "resolved"
+
+
+def question_resolution(state: dict, conflict: dict) -> dict | None:
+    """Resolution of a conflict settled by closing an open question of its topic."""
+    answered = closed_answer(state, conflict["topic"])
+    if answered is None:
+        return None
+    fact, question = answered
+    reason = question.get("note") or i18n.t("conflict.answered", question=question.get("question_it") if i18n.current() == "it" and question.get("question_it") else question["question"])
+    resolved_at = question.get("closed_ts") or f"{question.get('closed_at') or now()[:10]}T00:00:00Z"
+    return {"winning_fact_id": fact["id"], "reason": reason, "actor": question.get("closed_by") or "system", "resolved_at": resolved_at}
 
 
 def conflict_view(state: dict, conflict: dict) -> dict:
     status = conflict_status(state, conflict)
     resolution = conflict.get("resolution")
     if status == "resolved" and not resolution:
-        resolution = conflict.get("x", {}).get("auto_resolution")
+        resolution = question_resolution(state, conflict) or conflict.get("x", {}).get("auto_resolution")
     summary = conflict["summary"]
     if i18n.current() == "it":
         extra = conflict.get("x", {})
@@ -555,11 +591,19 @@ class Store:
         if path and path.exists():
             try:
                 state = json.loads(path.read_text(encoding="utf-8"))
-                if state.get("seed_hash") == seed_hash():
-                    self.state = state
-                    return
             except (OSError, ValueError):
-                pass
+                state = None
+                LOG.warning("state: %s could not be read, starting from the seed", path)
+            if isinstance(state, dict) and state.get("facts") is not None:
+                # The saved state wins over a newer seed: a restart or a redeploy never wipes the memory,
+                # the audit log or the answers. `POST /demo/reset` is the only way back to the seed.
+                current = seed_hash()
+                if state.get("seed_hash") != current:
+                    LOG.warning("state: kept %s although the seed changed since it was written; POST /demo/reset loads the new seed", path)
+                    _complete(state)
+                    state["seed_hash"] = current
+                self.state = state
+                return
         self.state = build_seed()
         audit(self.state, "ingest", "system", None, "Seeded demo memory from the ClearPath corpus.", bump=False)
         self.state["audit"][-1]["at"] = settings.SEED_AT
@@ -604,6 +648,17 @@ class Store:
             self._derive()
             self._save()
             return self.state
+
+
+def _complete(state: dict) -> None:
+    """Add the top-level records a state written by an older version lacks, taken from a fresh seed."""
+    fresh = build_seed()
+    for key, value in fresh.items():
+        state.setdefault(key, value)
+    for key, value in fresh["seq"].items():
+        state["seq"].setdefault(key, value)
+    for key, value in fresh["config"].items():
+        state["config"].setdefault(key, value)
 
 
 STORE = Store()

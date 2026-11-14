@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Header, Query, Response
+from fastapi import APIRouter, Header, Query, Request, Response
 from fastapi.responses import JSONResponse
 
-from app import access, ops, store
+from app import access, auth, ops, store
 from app.http import ApiError, dump, not_found, out
 from app.models import Me, Member, MemberCreate, MemberPage, MemberPatch, Organisation, OrgSetupRequest, ProjectMember, ProjectMemberSet, RolePermissions, SetupStatus
 from app.routers.org import clean_mail, org_view
@@ -27,8 +27,9 @@ def owners(state: dict) -> list[dict]:
 
 
 @router.get("/me", operation_id="getMe", status_code=200, response_model=Me)
-def get_me(x_demo_actor: str | None = Header(None), actor: str | None = None, project_id: str | None = None):
-    """Demo identity. `name` and `title` are added for the page header."""
+def get_me(request: Request, x_demo_actor: str | None = Header(None), actor: str | None = None, project_id: str | None = None):
+    """Who is acting. `name` and `title` are added for the page header, `session_expires_at` says whether a
+    sign-in session (cookie or bearer) is behind it."""
     with STORE.read() as state:
         if project_id is not None:
             ops.require_project(state, project_id)
@@ -36,7 +37,8 @@ def get_me(x_demo_actor: str | None = Header(None), actor: str | None = None, pr
         if member is None:
             raise not_found("Member")
         view = access.me_view(state, member, project_id)
-        return JSONResponse({**dump(Me, view), "name": view["name"], "title": view["title"]})
+    view["session_expires_at"] = auth.session_expiry(request)
+    return JSONResponse({**dump(Me, view), "name": view["name"], "title": view["title"]})
 
 
 @router.get("/roles", operation_id="listRoles", status_code=200, response_model=list[RolePermissions])
@@ -108,6 +110,8 @@ def delete_org_member(member_id: str, demo_actor: str | None = access.Actor):
             raise ApiError(409, "The last owner cannot be removed.")
         del state["members"][member_id]
         state["project_members"] = [e for e in state["project_members"] if e["member_id"] != member_id]
+    # A removed member is signed out everywhere at once.
+    auth.revoke_member(member_id)
     return Response(status_code=204)
 
 

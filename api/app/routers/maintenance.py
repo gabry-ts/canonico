@@ -11,17 +11,25 @@ from app.store import STORE
 router = APIRouter()
 
 
+def detail(item: dict) -> str:
+    params = dict(item.get("params", {}))
+    if params.get("date"):
+        params["date"] = i18n.short_date(params["date"])
+    return i18n.t(f"maintenance.{item['reason']}", **params)
+
+
 def item_view(state: dict, item: dict) -> dict:
     return {
         "id": item["id"],
         "fact": store.view(state, state["facts"][item["fact_id"]]),
         "reason": item["reason"],
-        "detail": i18n.t(f"maintenance.{item['reason']}", **item.get("params", {})),
+        "detail": detail(item),
         "detail_code": item["reason"],
         "detail_params": item.get("params", {}),
         "proposed_action": item["proposed_action"],
         "status": item["status"],
         "proposed_at": item["proposed_at"],
+        "audit_event_id": item.get("event") if item["status"] != "pending" else None,
     }
 
 
@@ -66,10 +74,14 @@ def approve_maintenance_item(item_id: str, body: MaintenanceDecision):
     with STORE.write() as state:
         item = pending_item(state, item_id)
         fact = state["facts"][item["fact_id"]]
-        note = body.note or i18n.t(f"maintenance.{item['reason']}", **item.get("params", {}))
-        store.audit(state, "approve", body.actor, fact["id"], note, x={"item": item_id, "undo": {"maintenance": item_id}}, bump=False)
-        ops.retire(state, fact, note, body.actor)
+        note = body.note or detail(item)
+        # One audit event for the decision and the retirement it causes, so one undo reverts both.
+        event = ops.retire(state, fact, note, body.actor, action="approve", extra={"item": item_id})
+        if event is None:
+            event = store.audit(state, "approve", body.actor, fact["id"], note, x={"item": item_id, "undo": {}}, bump=False)
+        event["x"]["undo"]["maintenance"] = item_id
         item["status"] = "approved"
+        item["event"] = event["id"]
         return respond(item_view(state, item))
 
 
@@ -78,5 +90,6 @@ def dismiss_maintenance_item(item_id: str, body: MaintenanceDecision):
     with STORE.write() as state:
         item = pending_item(state, item_id)
         item["status"] = "dismissed"
-        store.audit(state, "dismiss", body.actor, item["fact_id"], body.note, x={"item": item_id, "undo": {"maintenance": item_id}}, bump=False)
+        event = store.audit(state, "dismiss", body.actor, item["fact_id"], body.note, x={"item": item_id, "undo": {"maintenance": item_id}}, bump=False)
+        item["event"] = event["id"]
         return respond(item_view(state, item))

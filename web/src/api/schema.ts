@@ -911,7 +911,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Export memory and audit log */
+        /**
+         * Export memory and audit log
+         * @description Organisation scope exports everything. With `project_id` only that project's documents, topics, facts, audit events and answers.
+         */
         get: operations["exportMemory"];
         put?: never;
         post?: never;
@@ -1466,7 +1469,7 @@ export interface paths {
         put?: never;
         /**
          * First-run organisation setup
-         * @description Creates the organisation, its default mail config and the first admin member (role owner). Returns 409 if the organisation is already set up.
+         * @description Creates the organisation, its default mail config and the first admin member (role owner). Returns 409 if the organisation is already set up. Needs no session, also when sessions are required, since it only works before anyone can sign in.
          */
         post: operations["setupOrg"];
         delete?: never;
@@ -1901,6 +1904,11 @@ export interface components {
             /** @example Onboarding target */
             label: string;
             fact_ids: string[];
+            /**
+             * @description The fact that is binding on this topic now, as answers use it (the pinned fact, else the answer of a closed open question, else the latest live decision or constraint). Null when nothing is binding.
+             * @example M-106
+             */
+            binding_fact_id?: string | null;
         };
         TopicChain: {
             topic: components["schemas"]["Topic"];
@@ -1952,6 +1960,11 @@ export interface components {
             plain_retrieval?: components["schemas"]["PlainRetrieval"];
             /** @example you retired requirement R1.1 */
             changed_because: string | null;
+            /**
+             * @description Topic the answer is about. Null when no topic matched the question. A `no_answer` can still name a topic, for example when only an estimate is recorded (the estimate is cited, `binding` stays null).
+             * @example onboarding-target
+             */
+            topic?: string | null;
             /**
              * @description Id of the stored answer record, readable with GET /answers/{answer_id}.
              * @example ans-0001
@@ -2156,6 +2169,11 @@ export interface components {
             status: "pending" | "approved" | "dismissed";
             /** Format: date-time */
             proposed_at: string;
+            /**
+             * @description The audit event that approved or dismissed the item. Undoing it (`POST /audit/{event_id}/undo`) puts the item back to pending and, for an approval, restores the fact in the same step. Null while pending.
+             * @example a-0003
+             */
+            audit_event_id?: string | null;
         };
         MaintenanceDecision: {
             actor: string;
@@ -2184,9 +2202,14 @@ export interface components {
              * @enum {string}
              */
             format: "text" | "markdown";
+            /** @description Plain text. Text that is really the bytes of a binary file (an image read as text) is refused with 422. */
             text: string;
             /** @default true */
             ingest: boolean;
+            /** @description Project of the document. Defaults to the project of `source_id`, else the default project. */
+            project_id?: string;
+            /** @description Source the document belongs to, a `documents` or a `document_library` source. In a document library the id gets the `library/` prefix and the document keeps versions (`POST /documents/{doc_id}/versions`). */
+            source_id?: string;
         };
         DocumentUpload: {
             /** @description Text, markdown or PDF file. */
@@ -2473,6 +2496,11 @@ export interface components {
             inbound_address?: string | null;
             /** @default 60 */
             poll_interval_s: number;
+            /** @description Returned by `GET` and `PUT /org/mail`. The real mailbox this server is configured for (`CANONICO_IMAP_*`), which mode `imap` reads. Null when the server has none, and then mode `imap` is refused with 422. */
+            real_mailbox?: {
+                host: string;
+                user?: string | null;
+            } | null;
         };
         /**
          * @description Write schema for mail settings. `password` is accepted on write only and never returned.
@@ -2490,6 +2518,7 @@ export interface components {
             imap_host?: string | null;
             imap_user?: string | null;
             password?: string | null;
+            /** @description Must be an email address (422 otherwise). Blank is stored as null. */
             inbound_address?: string | null;
             /** @default 60 */
             poll_interval_s: number;
@@ -2849,6 +2878,12 @@ export interface components {
              * @example Operations lead
              */
             title?: string | null;
+            /**
+             * Format: date-time
+             * @description Expiry of the sign-in session (cookie or bearer) behind this request. Null when the request carries no session and the demo identity applies.
+             * @example 2026-11-15T03:12:00Z
+             */
+            session_expires_at?: string | null;
         };
         OrgSetupRequest: {
             organisation_name: string;
@@ -3035,7 +3070,7 @@ export interface components {
                 /**
                  * @example {
                  *       "code": "unauthorized",
-                 *       "message": "Sign in to make changes."
+                 *       "message": "Sign in to continue."
                  *     }
                  */
                 "application/json": components["schemas"]["Error"];
@@ -3317,6 +3352,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["SessionRequired"];
             422: components["responses"]["Unprocessable"];
         };
     };
@@ -3418,6 +3454,7 @@ export interface operations {
                     "application/json": components["schemas"]["Fact"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -3629,6 +3666,7 @@ export interface operations {
                     "application/json": components["schemas"]["Topic"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     createTopic: {
@@ -3788,6 +3826,7 @@ export interface operations {
                     "application/json": components["schemas"]["TopicChain"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -3840,6 +3879,7 @@ export interface operations {
                     "application/json": components["schemas"]["Document"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     createDocument: {
@@ -3932,6 +3972,7 @@ export interface operations {
                     "application/json": components["schemas"]["Document"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -4063,6 +4104,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["SessionRequired"];
             422: components["responses"]["Unprocessable"];
         };
     };
@@ -4138,6 +4180,7 @@ export interface operations {
                     "application/json": components["schemas"]["IngestJob"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -4214,6 +4257,7 @@ export interface operations {
                     "application/json": components["schemas"]["EvalResult"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -4422,6 +4466,7 @@ export interface operations {
                     "application/json": components["schemas"]["FactVersion"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -4548,6 +4593,7 @@ export interface operations {
                     "application/json": components["schemas"]["Dependents"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -4817,6 +4863,7 @@ export interface operations {
                     "application/json": components["schemas"]["Conflict"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     resolveConflict: {
@@ -4958,6 +5005,7 @@ export interface operations {
                     "application/json": components["schemas"]["OpenQuestion"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     closeOpenQuestion: {
@@ -5076,7 +5124,7 @@ export interface operations {
                      *           "tags": []
                      *         },
                      *         "reason": "superseded_still_retrievable",
-                     *         "detail": "Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval.",
+                     *         "detail": "Superseded by M-106 (28 Nov 2025), but still active: plain retrieval returns it until someone retires it.",
                      *         "proposed_action": "retire",
                      *         "status": "pending",
                      *         "proposed_at": "2026-11-14T14:30:00Z"
@@ -5118,6 +5166,7 @@ export interface operations {
                     "application/json": components["schemas"]["MaintenanceItem"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             422: components["responses"]["Unprocessable"];
         };
     };
@@ -5177,7 +5226,7 @@ export interface operations {
                      *         "tags": []
                      *       },
                      *       "reason": "superseded_still_retrievable",
-                     *       "detail": "Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval.",
+                     *       "detail": "Superseded by M-106 (28 Nov 2025), but still active: plain retrieval returns it until someone retires it.",
                      *       "proposed_action": "retire",
                      *       "status": "approved",
                      *       "proposed_at": "2026-11-14T14:30:00Z"
@@ -5409,6 +5458,7 @@ export interface operations {
                     "application/json": components["schemas"]["Fact"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -5476,6 +5526,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["SessionRequired"];
             422: components["responses"]["Unprocessable"];
         };
     };
@@ -5626,6 +5677,7 @@ export interface operations {
                     "application/json": components["schemas"]["AnswerSummary"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     getAnswer: {
@@ -5768,6 +5820,7 @@ export interface operations {
                     "application/json": components["schemas"]["AnswerRecord"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -5974,6 +6027,7 @@ export interface operations {
                     "application/json": components["schemas"]["IngestJob"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             422: components["responses"]["Unprocessable"];
         };
     };
@@ -6009,6 +6063,7 @@ export interface operations {
                     "application/json": components["schemas"]["EvalRun"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     getEvalRun: {
@@ -6052,6 +6107,7 @@ export interface operations {
                     "application/json": components["schemas"]["EvalRun"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -6111,6 +6167,7 @@ export interface operations {
                     "application/json": components["schemas"]["EvalQuery"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     getStats: {
@@ -6258,6 +6315,7 @@ export interface operations {
                     "application/json": components["schemas"]["Stats"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     getConfig: {
@@ -6293,6 +6351,7 @@ export interface operations {
                     "application/json": components["schemas"]["Config"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     patchConfig: {
@@ -6478,7 +6537,13 @@ export interface operations {
     };
     exportMemory: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6541,6 +6606,7 @@ export interface operations {
                     "application/json": components["schemas"]["ExportBundle"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     importMemory: {
@@ -6616,6 +6682,7 @@ export interface operations {
                     "application/json": components["schemas"]["Organisation"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     patchOrg: {
@@ -6738,6 +6805,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["SessionRequired"];
         };
     };
     createProject: {
@@ -6840,6 +6908,7 @@ export interface operations {
                     "application/json": components["schemas"]["Project"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -7020,6 +7089,7 @@ export interface operations {
                     };
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -7170,6 +7240,7 @@ export interface operations {
                     "application/json": components["schemas"]["Source"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -7318,6 +7389,7 @@ export interface operations {
                     "application/json": components["schemas"]["Document"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -7393,6 +7465,7 @@ export interface operations {
                     "application/json": components["schemas"]["SyncJob"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -7423,6 +7496,7 @@ export interface operations {
                     "application/json": components["schemas"]["MailConfig"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     putOrgMail: {
@@ -7507,6 +7581,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProjectMail"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -7649,6 +7724,7 @@ export interface operations {
                     };
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     createMailRule: {
@@ -7980,6 +8056,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -8069,6 +8146,7 @@ export interface operations {
                     "application/json": components["schemas"]["DocumentVersion"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -8188,6 +8266,7 @@ export interface operations {
                     "application/json": components["schemas"]["MemberPage"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     inviteOrgMember: {
@@ -8267,6 +8346,7 @@ export interface operations {
                     "application/json": components["schemas"]["Member"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -8380,6 +8460,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProjectMember"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -8536,6 +8617,7 @@ export interface operations {
                     "application/json": components["schemas"]["RolePermissions"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     getMe: {
@@ -8657,7 +8739,6 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
-            401: components["responses"]["SessionRequired"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["Unprocessable"];
         };
@@ -8864,6 +8945,7 @@ export interface operations {
                     "application/json": components["schemas"]["OrgHookConfig"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     rotateOrgHookSecret: {
@@ -8961,6 +9043,7 @@ export interface operations {
                     };
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     createTagRule: {
@@ -9190,6 +9273,7 @@ export interface operations {
                     "application/json": components["schemas"]["ItemPage"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -9295,6 +9379,7 @@ export interface operations {
                     "application/json": components["schemas"]["ItemDetail"];
                 };
             };
+            401: components["responses"]["SessionRequired"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -9334,6 +9419,7 @@ export interface operations {
                     "application/json": components["schemas"]["TagCount"][];
                 };
             };
+            401: components["responses"]["SessionRequired"];
         };
     };
     login: {

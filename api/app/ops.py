@@ -198,8 +198,13 @@ def require_topic(state: dict, topic_id: str) -> dict:
     return topic
 
 
-def topic_view(topic: dict) -> dict:
-    return {"id": topic["id"], "label": topic["label"], "fact_ids": list(topic["fact_ids"]), "project_id": topic.get("project_id")}
+def topic_view(topic: dict, state: dict | None = None) -> dict:
+    """Public topic. With the state it also names the fact that is binding now, the one answers use."""
+    view = {"id": topic["id"], "label": topic["label"], "fact_ids": list(topic["fact_ids"]), "project_id": topic.get("project_id")}
+    if state is not None:
+        binding = store.binding_of(state, topic["id"])
+        view["binding_fact_id"] = binding["id"] if binding else None
+    return view
 
 
 def require_project(state: dict, project_id: str) -> dict:
@@ -289,6 +294,8 @@ def _recent_changes(state: dict, project_id: str | None, limit: int = 10) -> lis
             action = "new_version"
         elif event["action"] in ("retire", "restore", "resolve", "ingest"):
             action = event["action"]
+        elif event["action"] == "approve" and event["x"].get("undo", {}).get("fact"):
+            action = "retire"
         else:
             continue
         rows.append({"at": event["at"], "actor": event["actor"], "action": action, "fact_id": event.get("fact_id"), "summary": engine.event_summary(state, event)["summary"]})
@@ -305,7 +312,7 @@ def _time_to_fix(state: dict, fact_ids: set[str]) -> dict:
 
     samples, last = [], None
     for event in state["audit"]:
-        if event["action"] not in ("retire", "resolve") or event["x"].get("undone") or event.get("fact_id") not in fact_ids:
+        if event["action"] not in ("retire", "approve", "resolve") or event["x"].get("undone") or event.get("fact_id") not in fact_ids:
             continue
         seen = [a["asked_at"] for a in state["answers"] if a["asked_at"] <= event["at"] and any(f["id"] == event["fact_id"] for f in a["response"]["conflicts"])]
         if seen:
@@ -374,6 +381,7 @@ def apply_undo(state: dict, event: dict) -> None:
         state["open_questions"][undo["question"]["id"]] = undo["question"]
     if "maintenance" in undo and undo["maintenance"] in state["maintenance"]:
         state["maintenance"][undo["maintenance"]]["status"] = "pending"
+        state["maintenance"][undo["maintenance"]].pop("event", None)
     conflict = state["conflicts"].get(event["x"].get("conflict") or "")
     if conflict is not None:
         conflict["resolution"] = None

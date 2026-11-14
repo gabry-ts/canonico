@@ -107,7 +107,8 @@ def test_github_preview(client, monkeypatch):
         raise github.GithubError("repository not found or not public")
 
     monkeypatch.setattr(github, "preview", missing)
-    assert_contract(client.post("/sources/github/preview", json={"repo_url": "https://github.com/a/b"}), "POST", "/sources/github/preview", 404)
+    missed = assert_contract(client.post("/sources/github/preview", json={"repo_url": "https://github.com/a/b"}), "POST", "/sources/github/preview", 404)
+    assert missed["message"] == "Repository a/b was not found or is not public."
 
 
 def test_dashboard_statistics_follow_the_memory(client):

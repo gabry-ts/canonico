@@ -13,7 +13,7 @@ router = APIRouter()
 def list_topics(project_id: str | None = None):
     with STORE.read() as state:
         ops.scope(state, project_id)
-        return out(list[Topic], [ops.topic_view(t) for t in state["topics"].values() if store.in_scope(t.get("project_id"), project_id)])
+        return out(list[Topic], [ops.topic_view(t, state) for t in state["topics"].values() if store.in_scope(t.get("project_id"), project_id)])
 
 
 @router.post("/topics", operation_id="createTopic", status_code=201, response_model=Topic)
@@ -26,7 +26,7 @@ def create_topic(body: TopicCreate):
         if project_id is not None:
             ops.require_project(state, project_id)
         state["topics"][topic_id] = {"id": topic_id, "label": body.label, "fact_ids": [], "project_id": project_id or store.DEFAULT_PROJECT, "x": {}}
-        return out(Topic, ops.topic_view(state["topics"][topic_id]), 201)
+        return out(Topic, ops.topic_view(state["topics"][topic_id], state), 201)
 
 
 @router.get("/topics/{topic_id}/chain", operation_id="getTopicChain", status_code=200, response_model=TopicChain)
@@ -34,7 +34,7 @@ def get_topic_chain(topic_id: str):
     with STORE.read() as state:
         topic = ops.require_topic(state, topic_id)
         facts = sorted(store.topic_facts(state, topic_id), key=lambda f: (f["date"], f["id"]))
-        body = dump(TopicChain, {"topic": ops.topic_view(topic), "facts": [store.view(state, f) for f in facts]})
+        body = dump(TopicChain, {"topic": ops.topic_view(topic, state), "facts": [store.view(state, f) for f in facts]})
         for row, fact in zip(body["facts"], facts):
             document = state["documents"].get(fact.get("doc_id") or "")
             row["doc_title"] = document["title"] if document else None
@@ -48,7 +48,7 @@ def patch_topic(topic_id: str, body: TopicPatch):
     with STORE.write() as state:
         topic = ops.require_topic(state, topic_id)
         topic["label"] = body.label
-        return out(Topic, ops.topic_view(topic))
+        return out(Topic, ops.topic_view(topic, state))
 
 
 @router.post("/topics/{topic_id}/merge", operation_id="mergeTopic", status_code=200, response_model=Topic)
@@ -75,4 +75,4 @@ def merge_topic(topic_id: str, body: TopicMergeRequest):
                 record["topic"] = target["id"]
         del state["topics"][source["id"]]
         store.audit(state, "merge", body.actor, None, f"Merged topic {source['id']} into {target['id']} ({len(moved)} facts).", x={"topic": target["id"]})
-        return out(Topic, ops.topic_view(target))
+        return out(Topic, ops.topic_view(target, state))

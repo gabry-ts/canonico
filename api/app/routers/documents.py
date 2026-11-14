@@ -81,17 +81,36 @@ async def create_document(request: Request):
     body = await _parse(request)
     if not body.text.strip():
         raise ApiError(422, "text: the document is empty.")
+    files.require_text(body.text)
     with STORE.write() as state:
+        source = None
+        if body.source_id:
+            source = state["sources"].get(body.source_id)
+            if source is None:
+                raise not_found(f"Source {body.source_id}")
+            if source["type"] not in ("documents", "document_library"):
+                raise ApiError(422, f"source_id: source {body.source_id} does not hold uploaded documents.")
+            if body.project_id and body.project_id != source["project_id"]:
+                raise ApiError(422, f"source_id: source {body.source_id} belongs to another project.")
+        project_id = body.project_id or (source["project_id"] if source else store.DEFAULT_PROJECT)
+        ops.require_project(state, project_id)
+        if source is None:
+            source = next((x for x in state["sources"].values() if x["project_id"] == project_id and x["type"] == "documents"), None)
+        library = source is not None and source["type"] == "document_library"
         doc_id = (body.id or store.slugify(body.title)).strip("/")
+        if library and not doc_id.startswith("library/"):
+            # Library documents live under library/ and keep their versions, like the seeded ones.
+            doc_id = "library/" + doc_id
         if doc_id in state["documents"]:
             raise ApiError(409, f"Document {doc_id} already exists.")
-        extension = "txt" if body.format and body.format.value == "text" else "md"
-        project_id = getattr(body, "project_id", None) or store.DEFAULT_PROJECT
-        ops.require_project(state, project_id)
-        source = next((x["id"] for x in state["sources"].values() if x["project_id"] == project_id and x["type"] == "documents"), None)
+        extension = "txt" if getattr(body.format, "value", body.format) == "text" else "md"
         document = {"id": doc_id, "title": body.title, "date": body.date.isoformat(), "path": f"{doc_id}.{extension}", "text": body.text,
-                    "project_id": project_id, "source_id": source, "version": 1, "version_of": None}
+                    "project_id": project_id, "source_id": source["id"] if source else None, "version": 1, "version_of": None}
         state["documents"][doc_id] = document
+        if library:
+            entry = inbox.ensure_versions(document)[0]
+            entry["uploaded_at"] = store.now()
+            library_s3.store_version(state, document, entry)
         job = None
         if body.ingest is not False:
             job = ingest.new_job(state, "ingest")
@@ -114,6 +133,7 @@ def list_document_versions(doc_id: str):
 def upload_document_version(doc_id: str, body: DocumentVersionCreate):
     if not body.text.strip():
         raise ApiError(422, "text: the new version is empty.")
+    files.require_text(body.text)
     with STORE.write() as state:
         document = require_doc(state, doc_id)
         if body.text.strip() == document["text"].strip():

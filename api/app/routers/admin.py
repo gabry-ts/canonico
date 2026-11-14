@@ -47,17 +47,22 @@ def reset_demo(demo_actor: str | None = access.Actor):
 
 
 @router.get("/export", operation_id="exportMemory", status_code=200, response_model=ExportBundle)
-def export_memory():
+def export_memory(project_id: str | None = None):
+    """The memory as a bundle. With `project_id` only that project: its documents, topics, facts, audit events and answers."""
     with STORE.read() as state:
+        ops.scope(state, project_id)
+        topics = [t for t in state["topics"].values() if store.in_scope(t.get("project_id"), project_id)]
+        topic_ids = {t["id"] for t in topics}
+        answers = [a for a in state["answers"] if project_id is None or a.get("x", {}).get("project") == project_id or a.get("x", {}).get("topic") in topic_ids]
         bundle = {
             "version": settings.VERSION,
             "exported_at": store.now(),
             "corpus": state["config"]["active_corpus"],
-            "documents": [{k: d[k] for k in ("id", "title", "date", "path", "text")} for d in state["documents"].values()],
-            "topics": [ops.topic_view(t) for t in state["topics"].values()],
-            "facts": [store.view(state, f) for f in state["facts"].values()],
-            "audit": [store.public_event(e) for e in state["audit"]],
-            "answers": [record_view(a) for a in state["answers"]],
+            "documents": [{k: d[k] for k in ("id", "title", "date", "path", "text")} for d in state["documents"].values() if store.in_scope(d.get("project_id"), project_id)],
+            "topics": [ops.topic_view(t, state) for t in topics],
+            "facts": [store.view(state, f) for f in state["facts"].values() if store.in_scope(f.get("project_id"), project_id)],
+            "audit": [store.public_event(e) for e in state["audit"] if store.in_scope(e.get("project_id"), project_id)],
+            "answers": [record_view(a) for a in answers],
         }
         return out(ExportBundle, bundle)
 
@@ -87,7 +92,8 @@ def import_memory(body: ExportBundle, mode: Literal["replace", "merge"] = "repla
             state["facts"][fact["id"]] = record
         for topic in bundle["topics"]:
             previous = old_topics.get(topic["id"], {})
-            state["topics"][topic["id"]] = {**topic, "fact_ids": [i for i in topic["fact_ids"] if i in state["facts"]], "x": copy.deepcopy(previous.get("x", {}))}
+            record = {k: v for k, v in topic.items() if k != "binding_fact_id"}
+            state["topics"][topic["id"]] = {**record, "fact_ids": [i for i in topic["fact_ids"] if i in state["facts"]], "x": copy.deepcopy(previous.get("x", {}))}
         for fact in state["facts"].values():
             store.move_fact(state, fact, fact["topic"])
         known = {e["id"] for e in state["audit"]}

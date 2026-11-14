@@ -150,7 +150,7 @@ def test_maintenance_queue_approve_and_dismiss(client):
     queue = assert_contract(client.get("/maintenance/queue", params={"limit": 500}), "GET", "/maintenance/queue")
     by_fact = {m["fact"]["id"]: m for m in queue}
     assert by_fact["M-105"]["reason"] == "superseded_still_retrievable"
-    assert by_fact["M-105"]["detail"] == "Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval."
+    assert by_fact["M-105"]["detail"] == "Superseded by M-106 (28 Nov 2025), but still active: plain retrieval returns it until someone retires it."
     assert "M-101" not in by_fact and "M-103" not in by_fact
     reasons = {m["reason"] for m in queue}
     for reason in reasons:
@@ -159,7 +159,8 @@ def test_maintenance_queue_approve_and_dismiss(client):
     item = by_fact["M-105"]["id"]
     approved = assert_contract(client.post(f"/maintenance/{item}/approve", json={**WHO, "note": "Replaced by the final report."}), "POST", "/maintenance/{item_id}/approve")
     assert approved["status"] == "approved" and approved["fact"]["status"] == "retired" and approved["fact"]["superseded_by"] == "M-106"
-    assert [e["action"] for e in client.get("/audit", params={"fact_id": "M-105"}).json()] == ["retire", "approve"]
+    events = client.get("/audit", params={"fact_id": "M-105"}).json()
+    assert [e["action"] for e in events] == ["approve"] and approved["audit_event_id"] == events[0]["id"]
     assert ask(client, Q1)["conflicts"] == []
     assert_contract(client.post(f"/maintenance/{item}/approve", json=WHO), "POST", "/maintenance/{item_id}/approve", 409)
     other = next(m for m in queue if m["id"] != item)
@@ -173,14 +174,27 @@ def test_maintenance_queue_approve_and_dismiss(client):
 def test_undo_of_an_approved_maintenance_item_restores_fact_and_queue(client):
     queue = client.get("/maintenance/queue", params={"limit": 500}).json()
     item = next(m["id"] for m in queue if m["fact"]["id"] == "M-105")
-    client.post(f"/maintenance/{item}/approve", json=WHO)
+    pending_before = len(client.get("/maintenance/queue", params={"limit": 500}).json())
+    approved = client.post(f"/maintenance/{item}/approve", json=WHO).json()
     events = client.get("/audit", params={"fact_id": "M-105"}).json()
-    assert [e["action"] for e in events] == ["retire", "approve"]
-    for event in events:
-        assert_contract(client.post(f"/audit/{event['id']}/undo", json={**WHO, "reason": "Approved by mistake."}), "POST", "/audit/{event_id}/undo")
+    assert [e["action"] for e in events] == ["approve"] and approved["audit_event_id"] == events[0]["id"]
+    # One undo puts back both the fact and the queue item, atomically.
+    assert_contract(client.post(f"/audit/{approved['audit_event_id']}/undo", json={**WHO, "reason": "Approved by mistake."}), "POST", "/audit/{event_id}/undo")
     assert client.get("/facts/M-105").json()["status"] == "active"
     pending = {m["fact"]["id"]: m for m in client.get("/maintenance/queue", params={"limit": 500}).json()}
-    assert pending["M-105"]["status"] == "pending"
+    assert pending["M-105"]["status"] == "pending" and pending["M-105"]["id"] == item and pending["M-105"].get("audit_event_id") is None
+    assert len(pending) == pending_before
+    assert client.get("/maintenance/queue", params={"status": "approved"}).json() == []
+    again = client.post(f"/audit/{approved['audit_event_id']}/undo", json={**WHO, "reason": "Twice."})
+    assert again.status_code == 409
+
+
+def test_undo_of_a_dismissal_puts_the_item_back(client):
+    queue = client.get("/maintenance/queue", params={"limit": 500}).json()
+    dismissed = client.post(f"/maintenance/{queue[0]['id']}/dismiss", json={**WHO, "note": "Still valid."}).json()
+    assert dismissed["status"] == "dismissed" and dismissed["audit_event_id"]
+    client.post(f"/audit/{dismissed['audit_event_id']}/undo", json={**WHO, "reason": "Dismissed by mistake."})
+    assert queue[0]["id"] in [m["id"] for m in client.get("/maintenance/queue", params={"limit": 500}).json()]
 
 
 def test_undo_reverts_a_retire_and_refuses_what_cannot_be_undone(client):

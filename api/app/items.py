@@ -4,10 +4,12 @@ An item is stored as a document, read by the same deterministic rule as email (t
 only when the rule finds nothing, never offline) and goes through the same supersession logic.
 """
 
+import hashlib
 import hmac
+import json
 import re
 
-from app import inbox, statements, store
+from app import files, inbox, statements, store
 from app.http import ApiError, not_found
 
 _DATE_WORDS = re.compile(r"\b\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\b|\b(19|20)\d{2}\b", re.IGNORECASE)
@@ -76,16 +78,49 @@ def item_view(state: dict, item: dict) -> dict:
     }
 
 
-def receive(state: dict, project_id: str, item: dict, *, routed_by: str, rule_id: str | None, source: dict | None, actor: str) -> dict:
-    """Store one item in a project and update the memory from it. Returns an InboundItemResult."""
+def fingerprint(item: dict) -> str:
+    """What an item says, independent of how it was sent: two identical payloads have the same fingerprint."""
+    content = {
+        "type": item.get("type"),
+        "title": (item.get("title") or "").strip(),
+        "date": str(item.get("date") or ""),
+        "text": re.sub(r"\s+", " ", (item.get("text") or "")).strip(),
+        "participants": sorted(item.get("participants") or []),
+        "tags": sorted(item.get("tags") or []),
+        "version_of": item.get("version_of"),
+    }
+    return hashlib.sha256(json.dumps(content, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def _already_received(state: dict, project_id: str, item: dict, digest: str) -> dict | None:
+    """The earlier item this one repeats: same `external_id`, or, without one, the very same content still on file."""
     external_id = item.get("external_id")
-    if external_id:
-        seen = next((i for i in state["items"] if i["project_id"] == project_id and i.get("external_id") == external_id), None)
-        if seen is not None:
-            return {**seen["result"], "duplicate": True}
+    for seen in reversed(state["items"]):
+        if seen["project_id"] != project_id:
+            continue
+        if external_id:
+            if seen.get("external_id") == external_id:
+                return seen
+        elif not seen.get("external_id") and seen.get("fingerprint") == digest and seen.get("document_id") in state["documents"]:
+            return seen
+    return None
+
+
+def receive(state: dict, project_id: str, item: dict, *, routed_by: str, rule_id: str | None, source: dict | None, actor: str) -> dict:
+    """Store one item in a project and update the memory from it. Returns an InboundItemResult.
+
+    A repeated delivery (same `external_id`, or an identical payload without one) changes nothing and
+    returns the first result with `duplicate: true`.
+    """
+    external_id = item.get("external_id")
+    digest = fingerprint(item)
+    seen = _already_received(state, project_id, item, digest)
+    if seen is not None:
+        return {**seen["result"], "duplicate": True}
     text = (item.get("text") or "").strip()
     if not text:
         raise ApiError(422, "text: the item has no text. Send `text`, a `file_url` or upload the file.")
+    files.require_text(text)
     tags = list(dict.fromkeys([*(item.get("tags") or []), *((source or {}).get("config", {}).get("default_tags") or [])]))
     date = str(item["date"])[:10]
     name = f"the {item['type']} “{item['title']}”"
@@ -153,6 +188,7 @@ def receive(state: dict, project_id: str, item: dict, *, routed_by: str, rule_id
             "received_at": store.now(),
             "routed_by": routed_by,
             "external_id": external_id,
+            "fingerprint": digest,
             "excerpt": text[:400],
             "result": result,
         }

@@ -80,19 +80,84 @@ def test_bearer_token_works_without_the_cookie(client, required):
     assert client.post("/facts/M-105/restore", headers=bearer("not-a-token")).status_code == 401
 
 
-def test_writes_need_a_session_when_required_and_reads_stay_public(client, required):
+READS = [
+    "/export", "/facts", "/facts/M-105", "/audit", "/topics", "/conflicts", "/stats", "/org", "/projects",
+    "/projects/proj-clearpath/sources", "/sources/src-clearpath-docs", "/org/members", "/org/mail", "/config",
+    "/org/hooks", "/me", "/search?q=M-105", "/documents", "/maintenance/queue", "/open-questions", "/roles",
+]
+
+
+def test_everything_needs_a_session_when_required(client, required):
     response = client.post("/facts/M-105/retire", json=RETIRE, headers={"X-Demo-Actor": "Giulia"})
     body = assert_contract(response, "POST", "/facts/{fact_id}/retire", 401)
-    assert body["code"] == "unauthorized"
+    assert body == {"code": "unauthorized", "message": "Sign in to continue."}
     assert client.post("/demo/reset").status_code == 401
     assert client.patch("/facts/M-105", json={"reason": "x", "actor": "x"}).status_code == 401
-    assert client.get("/me").status_code == 401
-    assert client.get("/facts/M-105").status_code == 200
-    assert client.get("/topics").status_code == 200
-    assert client.get("/audit").status_code == 200
+    for path in READS:
+        got = client.get(path, headers={"X-Demo-Actor": "Giulia"})
+        assert got.status_code == 401, path
+        assert got.json()["code"] == "unauthorized", path
+    members = client.get("/org/members")
+    assert "@" not in members.text
+    assert client.get("/facts", headers={"Accept-Language": "it"}).json()["message"] == "Accedi per continuare."
     assert client.get("/health").status_code == 200
+    assert client.get("/org/setup/status").status_code == 200
+    # The webhooks check their own token, not a session.
     hook = client.post("/hooks/org", json={})
-    assert hook.status_code != 401 or "X-Canonico-Token" in hook.text
+    assert hook.status_code == 401 and "X-Canonico-Token" in hook.text
+    assert client.post("/hooks/org", json={}, headers={"X-Canonico-Token": "whsec_x7Kq2demo9f2a"}).status_code in (400, 422)
+    # CORS preflights never need a session.
+    preflight = client.options("/facts", headers={"Origin": "http://localhost:5173", "Access-Control-Request-Method": "GET"})
+    assert preflight.status_code == 200 and preflight.headers["access-control-allow-credentials"] == "true"
+
+
+def test_reads_work_with_a_session_cookie_only(client, required):
+    client.post("/auth/login", json=GIULIA)
+    for path in READS:
+        assert client.get(path).status_code == 200, path
+    me = assert_contract(client.get("/me"), "GET", "/me")
+    assert me["member"]["id"] == "mem-giulia-ferri" and me["session_expires_at"].endswith("Z")
+
+
+def test_me_says_whether_a_session_is_behind_it(client):
+    assert client.get("/me").json()["session_expires_at"] is None
+    login = client.post("/auth/login", json=GIULIA).json()
+    assert client.get("/me").json()["session_expires_at"] == login["expires_at"]
+
+
+def test_sessions_survive_a_restart(client, required):
+    token = client.post("/auth/login", json=GIULIA).json()["token"]
+    path = auth.sessions_file()
+    assert path.exists() and token not in path.read_text()
+    # A new process: the sessions are read back from disk.
+    with auth._lock:
+        auth._sessions.clear()
+        auth._loaded_from = None
+    assert client.get("/me", headers=bearer(token)).status_code == 200
+    client.post("/auth/logout", headers=bearer(token))
+    with auth._lock:
+        auth._sessions.clear()
+        auth._loaded_from = None
+    assert client.get("/me", headers=bearer(token)).status_code == 401
+
+
+def test_expired_sessions_are_not_restored(client, required, monkeypatch):
+    token = client.post("/auth/login", json=GIULIA).json()["token"]
+    with auth._lock:
+        auth._sessions.clear()
+        auth._loaded_from = None
+    import time
+
+    later = time.time() + auth.TTL_S + 60
+    monkeypatch.setattr(auth.time, "time", lambda: later)
+    assert client.get("/me", headers=bearer(token)).status_code == 401
+
+
+def test_removing_a_member_ends_their_sessions(client, required):
+    luca = client.post("/auth/login", json={"email": "luca.bassi@meridianlabs.org", "password": "canonico-demo"}).json()["token"]
+    giulia = client.post("/auth/login", json=GIULIA).json()["token"]
+    assert client.delete("/org/members/mem-luca-bassi", headers=bearer(giulia)).status_code == 204
+    assert client.get("/me", headers=bearer(luca)).status_code == 401
 
 
 def test_session_member_is_the_actor_in_the_audit(client, required):

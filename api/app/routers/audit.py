@@ -63,7 +63,7 @@ def undo_audit_event(event_id: str, body: UndoRequest):
             raise ApiError(409, f"Event {event_id} was already undone.")
         touched = ops.undo_targets(undo)
         for later in state["audit"][index + 1 :]:
-            if later.get("fact_id") in touched and later["action"] != "approve" and not later["x"].get("undone") and later["action"] != "undo":
+            if later.get("fact_id") in touched and later["action"] not in ("undo", "dismiss") and not later["x"].get("undone"):
                 raise ApiError(409, f"Event {later['id']} changed the same fact later, undo that one first.")
         ops.apply_undo(state, event)
         event["x"]["undone"] = True

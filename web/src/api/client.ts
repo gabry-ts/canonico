@@ -24,25 +24,41 @@ export function setDemoActor(id: string | null) {
   }
 }
 
-/** A signed-in session: the bearer token of `POST /auth/login`, its expiry and the member it belongs to. */
-export type Session = { token: string; expiresAt: string; memberId: string }
+/**
+ * A signed-in session as the page knows it: whose it is and until when. The session token itself is never kept by
+ * the page: the backend sets it as an HttpOnly cookie, which page scripts cannot read, and every request carries it.
+ */
+export type Session = { expiresAt: string; memberId: string }
 
 const SESSION_KEY = 'canonico-session'
 const alive = (s: Session) => Date.parse(s.expiresAt) > Date.now()
 
+function store(s: Session | null) {
+  try {
+    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify({ memberId: s.memberId, expiresAt: s.expiresAt }))
+    else localStorage.removeItem(SESSION_KEY)
+  } catch {
+    // storage unavailable
+  }
+}
+
 function savedSession(): Session | null {
   try {
-    const s = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null') as Session | null
-    return s && typeof s.token === 'string' && typeof s.memberId === 'string' && alive(s) ? s : null
+    const raw = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null') as (Session & { token?: unknown }) | null
+    const s = raw && typeof raw.memberId === 'string' && typeof raw.expiresAt === 'string' ? { memberId: raw.memberId, expiresAt: raw.expiresAt } : null
+    // Older versions kept the bearer token here as well: rewrite the entry without it.
+    if (raw && 'token' in raw) store(s && alive(s) ? s : null)
+    return s && alive(s) ? s : null
   } catch {
     return null
   }
 }
 
 let session: Session | null = savedSession()
-// True when the session was opened by a sign-in on this page. A session restored from storage that the backend no
-// longer knows (sessions live in memory, so after a restart) ends quietly, without the "session ended" notice.
-let sessionUsed = false
+// Bumped on every sign-in and sign-out, so a late 401 to a request sent under an older session is not mistaken
+// for the end of the current one.
+let generation = 0
+const sentWith = new Map<string, number>()
 const sessionListeners = new Set<() => void>()
 let sessionEnded: () => void = () => {}
 
@@ -54,25 +70,22 @@ export const subscribeSession = (cb: () => void) => {
   }
 }
 
-/** Keep the session opened by a sign-in. Null forgets it: requests go back to the demo identity. */
+/** Keep the session opened by a sign-in (only its member and expiry). Null forgets it: back to the demo identity. */
 export function setSession(s: Session | null) {
-  session = s
-  sessionUsed = s !== null
-  try {
-    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s))
-    else localStorage.removeItem(SESSION_KEY)
-  } catch {
-    // storage unavailable
-  }
+  session = s ? { memberId: s.memberId, expiresAt: s.expiresAt } : null
+  generation++
+  store(session)
   sessionListeners.forEach((l) => l())
 }
 
-/** The session stopped being valid without a sign-out: expired, revoked, or the backend restarted. */
+/**
+ * The session stopped being valid without a sign-out: expired, revoked, or unknown to the backend. Only a session
+ * that existed ends, so a first visit never shows the "session ended" notice.
+ */
 export function endSession() {
   if (!session) return
-  const notify = sessionUsed
   setSession(null)
-  if (notify) sessionEnded()
+  sessionEnded()
 }
 
 /** Called once each time a session ends on its own (see `endSession`). */
@@ -82,22 +95,31 @@ export function onSessionEnded(cb: () => void) {
 
 export const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:4010'
 
-export const client = createClient<paths>({ baseUrl: API_URL })
+// `credentials: 'include'` sends the session cookie also when the API is on another origin in development
+// (the web app on :5173, the API on :8000); the backend allows it for the configured CORS origins.
+export const client = createClient<paths>({ baseUrl: API_URL, credentials: 'include' })
+
+const SIGN_IN = /\/auth\/(login|demo-login|logout)$/
 
 client.use({
-  onRequest({ request }) {
+  onRequest({ request, id }) {
     request.headers.set('Accept-Language', currentLocale())
     if (session && !alive(session)) endSession()
     // With a session the backend ignores the demo header: the signed-in member is the actor.
-    if (session) request.headers.set('Authorization', `Bearer ${session.token}`)
+    if (session) sentWith.set(id, generation)
     else if (demoActor) request.headers.set('X-Demo-Actor', demoActor)
     return request
   },
-  onResponse({ request, response }) {
-    // A 401 for the token we still hold means the backend no longer knows it. A wrong password on sign-in is not that.
-    const sent = request.headers.get('Authorization')
-    if (response.status === 401 && session && sent === `Bearer ${session.token}` && !new URL(request.url).pathname.endsWith('/auth/login')) endSession()
+  onResponse({ request, response, id }) {
+    const sent = sentWith.get(id)
+    sentWith.delete(id)
+    // A 401 to a request sent under the current session means the backend no longer knows it. A wrong password on
+    // sign-in is not that, and neither is a 401 to a request sent before the latest sign-in.
+    if (response.status === 401 && session && sent === generation && !SIGN_IN.test(new URL(request.url).pathname)) endSession()
     return response
+  },
+  onError({ id }) {
+    sentWith.delete(id)
   },
 })
 

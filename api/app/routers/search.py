@@ -30,6 +30,11 @@ def search(
             wanted = {t.value for t in type} if type else None
             ranked = engine.facts_index(state, project_id).rank(tokens)
             top = ranked[0][1] if ranked else 1.0
+            # A fact id ("M-105", any case) finds that fact first, ahead of every text match.
+            exact = state["facts"].get(q.strip().upper())
+            if exact is not None and store.in_scope(exact.get("project_id"), project_id):
+                ranked = [(exact["id"], top * 1.5)] + [r for r in ranked if r[0] != exact["id"]]
+                top = ranked[0][1]
             for fact_id, score in ranked:
                 fact = store.view(state, state["facts"][fact_id])
                 if wanted and fact["type"] not in wanted:

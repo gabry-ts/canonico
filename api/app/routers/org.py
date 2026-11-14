@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app import access, github, inbox, ops, sources, store
+from app import access, github, inbox, ops, sources, store, validate
 from app.http import ApiError, dump, not_found, out
 from app.models import (
     Organisation,
@@ -49,6 +49,7 @@ def clean_mail(config) -> dict | None:
         return None
     data = config.model_dump(mode="json")
     data.pop("password", None)
+    data["inbound_address"] = validate.email(data.get("inbound_address"), "inbound_address")
     return data
 
 
@@ -224,5 +225,8 @@ def preview_github_source(body: dict):
     try:
         preview = github.preview(owner, repo, offline)
     except github.GithubError as exc:
-        raise not_found(f"Repository {owner}/{repo} ({exc})") from exc
+        reason = str(exc)
+        if reason in ("repository not found or not public", "not public", "only public repositories are supported"):
+            raise ApiError(404, f"Repository {owner}/{repo} was not found or is not public.") from exc
+        raise ApiError(422, f"Repository {owner}/{repo} could not be looked up: {reason}.") from exc
     return out(GithubPreview, preview)

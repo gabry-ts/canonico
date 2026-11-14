@@ -172,7 +172,7 @@ def test_stale_fact_is_proposed_for_retirement(client):
     queue = assert_contract(client.get("/maintenance/queue"), "GET", "/maintenance/queue")
     assert queue[0]["id"] == "MQ-001" and queue[0]["fact"]["id"] == "M-105"
     assert queue[0]["reason"] == "superseded_still_retrievable"
-    assert queue[0]["detail"] == "Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval."
+    assert queue[0]["detail"] == "Superseded by M-106 (28 Nov 2025), but still active: plain retrieval returns it until someone retires it."
 
 
 def test_retiring_the_binding_fact_falls_back_to_the_previous_decision(client):

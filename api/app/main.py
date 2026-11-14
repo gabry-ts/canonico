@@ -48,6 +48,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins(),
     allow_origin_regex=settings.cors_origin_regex(),
+    # The web app on another origin in development (:5173 calling :8000) signs in with the HttpOnly session cookie.
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

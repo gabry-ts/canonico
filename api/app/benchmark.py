@@ -74,8 +74,9 @@ def answer_document(state: dict, question: str, ranking: list[str], route: list[
     topic_id = engine.alias_topic(state, question, PROJECT) or routed or engine.match_topic(state, question, project_id=PROJECT)
     if topic_id is not None:
         answer = engine.answer_topic(state, topic_id, engine.focus_facts(state, topic_id, tokenize(question)))
-        if answer["binding"] is not None:
-            return answer["binding"]["doc_id"]
+        basis = answer["binding"] or answer.get("_basis")
+        if basis is not None:
+            return basis["doc_id"]
         if answer["conflicts"]:
             return Counter(f["doc_id"] for f in answer["conflicts"]).most_common(1)[0][0]
     return ranking[0] if ranking else ""

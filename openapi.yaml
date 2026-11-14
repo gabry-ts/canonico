@@ -24,11 +24,14 @@ info:
 
     Authentication: optional email and password sessions (`POST /auth/login`, or the one-click
     `POST /auth/demo-login`). The session token is sent back as the `canonico_session` cookie or as
-    `Authorization: Bearer <token>`. When the server runs with `CANONICO_AUTH_REQUIRED=true`, every
-    write (POST, PUT, PATCH, DELETE) needs a session, except `/auth/*` and the `/hooks/*` webhooks,
-    which use their own `X-Canonico-Token`; reads stay public. With a session, the session member is
-    the actor of the request and the `X-Demo-Actor` header and `actor` body fields are ignored.
-    Without the flag, the demo actor rules below apply unchanged.
+    `Authorization: Bearer <token>`. Browsers should rely on the HttpOnly cookie and never store the
+    token where page scripts can read it; the bearer form is for API clients. Sessions survive a restart
+    of the server until they expire. When the server runs with `CANONICO_AUTH_REQUIRED=true`, every
+    request, reads included, needs a session (401 otherwise), except `GET /health`, `/auth/*`, first-run
+    setup (`/org/setup`, `/org/setup/status`) and the `/hooks/*` webhooks, which use their own
+    `X-Canonico-Token`. With a session, the session member is the actor of the request and the
+    `X-Demo-Actor` header and `actor` body fields are ignored. Without the flag, the demo actor rules
+    below apply unchanged.
 
     Scope: the organisation is the global brain over all projects. Projects are isolated:
     a request with `project_id` only sees that project, a request without it has
@@ -752,6 +755,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     post:
       tags:
       - facts
@@ -844,6 +853,12 @@ paths:
                 pinned: false
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     patch:
       tags:
       - facts
@@ -1036,6 +1051,12 @@ paths:
                 - M-206
                 - M-207
                 - M-208
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     post:
       tags:
       - topics
@@ -1177,6 +1198,12 @@ paths:
                 changes: 5
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /documents:
     get:
       tags:
@@ -1220,6 +1247,12 @@ paths:
                 title: Requirements
                 date: '2025-09-29'
                 path: 01-scope/requirements.md
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     post:
       tags:
       - documents
@@ -1314,6 +1347,12 @@ paths:
                   Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     delete:
       tags:
       - documents
@@ -1432,6 +1471,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /ingest:
     post:
       tags:
@@ -1500,6 +1545,12 @@ paths:
                 cost_usd: 1.84
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /eval/latest:
     get:
       tags:
@@ -1560,6 +1611,12 @@ paths:
                 router: model
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /eval/run:
     post:
       tags:
@@ -1755,6 +1812,12 @@ paths:
                   pinned: false
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /facts/{fact_id}/supersede:
     post:
       tags:
@@ -1884,6 +1947,12 @@ paths:
                   status: binding
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /conflicts:
     get:
       tags:
@@ -2113,6 +2182,12 @@ paths:
                     pinned: false
                   detected_at: '2026-11-14T09:15:00Z'
                   resolution: null
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /conflicts/{conflict_id}/resolve:
     post:
       tags:
@@ -2241,6 +2316,12 @@ paths:
                 closed_at: null
                 answer_fact_id: null
                 note: null
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /open-questions/{question_id}/close:
     post:
       tags:
@@ -2355,7 +2436,7 @@ paths:
                   pinned: false
                   tags: []
                 reason: superseded_still_retrievable
-                detail: Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval.
+                detail: 'Superseded by M-106 (28 Nov 2025), but still active: plain retrieval returns it until someone retires it.'
                 proposed_action: retire
                 status: pending
                 proposed_at: '2026-11-14T14:30:00Z'
@@ -2390,6 +2471,12 @@ paths:
                 proposed_at: '2026-11-14T14:30:00Z'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /maintenance/{item_id}/approve:
     post:
       tags:
@@ -2440,7 +2527,7 @@ paths:
                   pinned: false
                   tags: []
                 reason: superseded_still_retrievable
-                detail: Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval.
+                detail: 'Superseded by M-106 (28 Nov 2025), but still active: plain retrieval returns it until someone retires it.'
                 proposed_action: retire
                 status: approved
                 proposed_at: '2026-11-14T14:30:00Z'
@@ -2657,6 +2744,12 @@ paths:
                 pinned: false
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /search:
     get:
       tags:
@@ -2731,6 +2824,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /retrieve/plain:
     post:
       tags:
@@ -2861,6 +2960,12 @@ paths:
                 question: What is the target time for onboarding new consultants?
                 asked_at: '2026-11-14T14:01:30Z'
                 status: binding
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /answers/{answer_id}:
     get:
       tags:
@@ -2980,6 +3085,12 @@ paths:
                   pinned: false
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /answers/{answer_id}/replay:
     post:
       tags:
@@ -3159,6 +3270,12 @@ paths:
                 cost_usd: 1.84
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /eval/runs:
     get:
       tags:
@@ -3183,6 +3300,12 @@ paths:
                 finished_at: '2026-11-14T13:30:00Z'
                 cost_usd: 0.42
                 result: null
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /eval/runs/{run_id}:
     get:
       tags:
@@ -3220,6 +3343,12 @@ paths:
                   measured_at: '2026-11-14T13:30:00Z'
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /eval/queries:
     get:
       tags:
@@ -3256,6 +3385,12 @@ paths:
                   grade: 3
                 - doc_id: 02-subject/bottleneck-analysis
                   grade: 2
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /stats:
     get:
       tags:
@@ -3356,6 +3491,12 @@ paths:
                   median: null
                   samples: 0
                   measured_at: null
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /config:
     get:
       tags:
@@ -3380,6 +3521,12 @@ paths:
                 low_confidence_threshold: 0.5
                 offline_mode: false
                 provider: anthropic
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     patch:
       tags:
       - admin
@@ -3537,6 +3684,9 @@ paths:
       - admin
       operationId: exportMemory
       summary: Export memory and audit log
+      description: Organisation scope exports everything. With `project_id` only that project's documents, topics, facts, audit events and answers.
+      parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
       responses:
         '200':
           description: JSON dump.
@@ -3578,6 +3728,12 @@ paths:
                   fact_id: M-103
                   reason: Replaced by the final report, which sets 3–4 weeks.
                 answers: []
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /import:
     post:
       tags:
@@ -3660,6 +3816,12 @@ paths:
                   imap_user: brain@meridianlabs.org
                   inbound_address: brain@inbound.meridianlabs.org
                   poll_interval_s: 60
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     patch:
       tags:
       - org
@@ -3758,6 +3920,12 @@ paths:
                 offset: 0
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     post:
       tags:
       - projects
@@ -3843,6 +4011,12 @@ paths:
                 - src-clearpath-mail
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     patch:
       tags:
       - projects
@@ -3998,6 +4172,12 @@ paths:
                     - clearpath
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     post:
       tags:
       - sources
@@ -4126,6 +4306,12 @@ paths:
                   - rule-001
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     patch:
       tags:
       - sources
@@ -4257,6 +4443,12 @@ paths:
                 tags: []
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /sources/{source_id}/sync:
     post:
       tags:
@@ -4320,6 +4512,12 @@ paths:
                 finished_at: '2026-11-14T14:30:05Z'
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/mail:
     get:
       tags:
@@ -4340,6 +4538,12 @@ paths:
                 imap_user: brain@meridianlabs.org
                 inbound_address: brain@inbound.meridianlabs.org
                 poll_interval_s: 60
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     put:
       tags:
       - mail
@@ -4412,6 +4616,12 @@ paths:
                 mail_config_override: null
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     put:
       tags:
       - mail
@@ -4532,6 +4742,12 @@ paths:
                   value: '@team.meridianlabs.org'
                   project_id: proj-internal
                   priority: 20
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     post:
       tags:
       - mail
@@ -4831,6 +5047,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /demo/send-email:
     post:
       tags:
@@ -4903,6 +5125,12 @@ paths:
                   - L-400
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     post:
       tags:
       - documents
@@ -4999,6 +5227,12 @@ paths:
                   org_role: viewer
                   created_at: '2026-11-14T09:20:00Z'
                   status: invited
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     post:
       tags:
       - members
@@ -5067,6 +5301,12 @@ paths:
                 status: active
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     patch:
       tags:
       - members
@@ -5165,6 +5405,12 @@ paths:
                 inherited: false
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /projects/{project_id}/members/{member_id}:
     put:
       tags:
@@ -5292,6 +5538,12 @@ paths:
                   - manage_mail
                   - manage_members
                   - admin_demo
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /me:
     get:
       tags:
@@ -5342,13 +5594,17 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/setup:
     post:
       tags:
       - org
       operationId: setupOrg
       summary: First-run organisation setup
-      description: Creates the organisation, its default mail config and the first admin member (role owner). Returns 409 if the organisation is already set up.
+      description: Creates the organisation, its default mail config and the first admin member (role owner). Returns 409 if the organisation is already set up. Needs no session, also when sessions are required, since it only works before anyone can sign in.
       requestBody:
         required: true
         content:
@@ -5389,11 +5645,7 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
-        '401':
-          $ref: '#/components/responses/SessionRequired'
       security:
-      - sessionCookie: []
-      - bearerAuth: []
       - {}
   /org/setup/status:
     get:
@@ -5542,6 +5794,12 @@ paths:
                 url: https://api.canonico.app/hooks/org
                 secret_last4: 9f2a
                 created_at: '2026-11-01T09:00:00Z'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/hooks/rotate-secret:
     post:
       tags:
@@ -5627,6 +5885,12 @@ paths:
                   tag: clearpath
                   project_id: proj-clearpath
                   priority: 10
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     post:
       tags:
       - hooks
@@ -5844,6 +6108,12 @@ paths:
                 offset: 0
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     post:
       tags:
       - items
@@ -5938,6 +6208,12 @@ paths:
                 text_excerpt: We agreed the onboarding target stays at 3–4 weeks.
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /tags:
     get:
       tags:
@@ -5960,6 +6236,12 @@ paths:
                 count: 2
               - tag: topic:onboarding-target
                 count: 2
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /auth/login:
     post:
       tags:
@@ -6191,7 +6473,7 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             code: unauthorized
-            message: Sign in to make changes.
+            message: Sign in to continue.
     Unauthorized:
       description: Missing or invalid webhook token.
       content:
@@ -6503,6 +6785,12 @@ components:
           type: array
           items:
             type: string
+        binding_fact_id:
+          type:
+          - string
+          - 'null'
+          description: The fact that is binding on this topic now, as answers use it (the pinned fact, else the answer of a closed open question, else the latest live decision or constraint). Null when nothing is binding.
+          example: M-106
     TopicChain:
       type: object
       required:
@@ -6629,6 +6917,12 @@ components:
           - string
           - 'null'
           example: you retired requirement R1.1
+        topic:
+          type:
+          - string
+          - 'null'
+          description: Topic the answer is about. Null when no topic matched the question. A `no_answer` can still name a topic, for example when only an estimate is recorded (the estimate is cited, `binding` stays null).
+          example: onboarding-target
         answer_id:
           type: string
           description: Id of the stored answer record, readable with GET /answers/{answer_id}.
@@ -7132,6 +7426,12 @@ components:
         proposed_at:
           type: string
           format: date-time
+        audit_event_id:
+          type:
+          - string
+          - 'null'
+          description: The audit event that approved or dismissed the item. Undoing it (`POST /audit/{event_id}/undo`) puts the item back to pending and, for an approval, restores the fact in the same step. Null while pending.
+          example: a-0003
     MaintenanceDecision:
       type: object
       required:
@@ -7195,9 +7495,16 @@ components:
           default: markdown
         text:
           type: string
+          description: Plain text. Text that is really the bytes of a binary file (an image read as text) is refused with 422.
         ingest:
           type: boolean
           default: true
+        project_id:
+          type: string
+          description: Project of the document. Defaults to the project of `source_id`, else the default project.
+        source_id:
+          type: string
+          description: Source the document belongs to, a `documents` or a `document_library` source. In a document library the id gets the `library/` prefix and the document keeps versions (`POST /documents/{doc_id}/versions`).
     DocumentUpload:
       type: object
       required:
@@ -7898,6 +8205,20 @@ components:
           type: integer
           minimum: 5
           default: 60
+        real_mailbox:
+          description: Returned by `GET` and `PUT /org/mail`. The real mailbox this server is configured for (`CANONICO_IMAP_*`), which mode `imap` reads. Null when the server has none, and then mode `imap` is refused with 422.
+          oneOf:
+          - type: object
+            required:
+            - host
+            properties:
+              host:
+                type: string
+              user:
+                type:
+                - string
+                - 'null'
+          - type: 'null'
       example:
         mode: imap_mock
         imap_host: mock.meridianlabs.org
@@ -7929,6 +8250,7 @@ components:
           type:
           - string
           - 'null'
+          description: Must be an email address (422 otherwise). Blank is stored as null.
         poll_interval_s:
           type: integer
           minimum: 5
@@ -8712,6 +9034,13 @@ components:
           - 'null'
           description: Job title of the actor.
           example: Operations lead
+        session_expires_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Expiry of the sign-in session (cookie or bearer) behind this request. Null when the request carries no session and the demo identity applies.
+          example: '2026-11-15T03:12:00Z'
     OrgSetupRequest:
       type: object
       required:

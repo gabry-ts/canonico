@@ -132,6 +132,11 @@ class Topic(BaseModel):
     id: str = Field(..., examples=['onboarding-target'])
     label: str = Field(..., examples=['Onboarding target'])
     fact_ids: list[str]
+    binding_fact_id: str | None = Field(
+        None,
+        description='The fact that is binding on this topic now, as answers use it (the pinned fact, else the answer of a closed open question, else the latest live decision or constraint). Null when nothing is binding.',
+        examples=['M-106'],
+    )
 
 
 class Fact1(Fact):
@@ -198,6 +203,11 @@ class AskResponse(BaseModel):
         None, description='Present only when include_plain_retrieval is true.'
     )
     changed_because: str | None = Field(..., examples=['you retired requirement R1.1'])
+    topic: str | None = Field(
+        None,
+        description='Topic the answer is about. Null when no topic matched the question. A `no_answer` can still name a topic, for example when only an estimate is recorded (the estimate is cited, `binding` stays null).',
+        examples=['onboarding-target'],
+    )
     answer_id: str | None = Field(
         None,
         description='Id of the stored answer record, readable with GET /answers/{answer_id}.',
@@ -400,6 +410,11 @@ class MaintenanceItem(BaseModel):
     proposed_action: ProposedAction
     status: Status4
     proposed_at: AwareDatetime
+    audit_event_id: str | None = Field(
+        None,
+        description='The audit event that approved or dismissed the item. Undoing it (`POST /audit/{event_id}/undo`) puts the item back to pending and, for an approval, restores the fact in the same step. Null while pending.',
+        examples=['a-0003'],
+    )
 
 
 class MaintenanceDecision(BaseModel):
@@ -435,8 +450,19 @@ class DocumentCreate(BaseModel):
     title: str
     date: date_aliased
     format: Format | None = 'markdown'
-    text: str
+    text: str = Field(
+        ...,
+        description='Plain text. Text that is really the bytes of a binary file (an image read as text) is refused with 422.',
+    )
     ingest: bool | None = True
+    project_id: str | None = Field(
+        None,
+        description='Project of the document. Defaults to the project of `source_id`, else the default project.',
+    )
+    source_id: str | None = Field(
+        None,
+        description='Source the document belongs to, a `documents` or a `document_library` source. In a document library the id gets the `library/` prefix and the document keeps versions (`POST /documents/{doc_id}/versions`).',
+    )
 
 
 class DocumentUpload(BaseModel):
@@ -741,6 +767,11 @@ class MailMode(StrEnum):
     imap = 'imap'
 
 
+class RealMailbox(BaseModel):
+    host: str
+    user: str | None = None
+
+
 class MailConfig(BaseModel):
     mode: MailMode
     imap_host: str | None = None
@@ -749,6 +780,10 @@ class MailConfig(BaseModel):
         None, description='Address the webhook provider forwards to.'
     )
     poll_interval_s: int | None = Field(60, ge=5)
+    real_mailbox: RealMailbox | None = Field(
+        None,
+        description='Returned by `GET` and `PUT /org/mail`. The real mailbox this server is configured for (`CANONICO_IMAP_*`), which mode `imap` reads. Null when the server has none, and then mode `imap` is refused with 422.',
+    )
 
 
 class MailConfigWrite(BaseModel):
@@ -756,7 +791,10 @@ class MailConfigWrite(BaseModel):
     imap_host: str | None = None
     imap_user: str | None = None
     password: str | None = None
-    inbound_address: str | None = None
+    inbound_address: str | None = Field(
+        None,
+        description='Must be an email address (422 otherwise). Blank is stored as null.',
+    )
     poll_interval_s: int | None = Field(60, ge=5)
 
 
@@ -1099,6 +1137,11 @@ class Me(BaseModel):
     )
     title: str | None = Field(
         None, description='Job title of the actor.', examples=['Operations lead']
+    )
+    session_expires_at: AwareDatetime | None = Field(
+        None,
+        description='Expiry of the sign-in session (cookie or bearer) behind this request. Null when the request carries no session and the demo identity applies.',
+        examples=['2026-11-15T03:12:00Z'],
     )
 
 

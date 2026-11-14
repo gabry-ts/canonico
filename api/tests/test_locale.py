@@ -77,9 +77,9 @@ def test_audit_summary_maintenance_and_conflicts_follow_the_locale(client):
 
     client.post("/demo/reset")
     item = assert_contract(client.get("/maintenance/queue", params={"locale": "it"}), "GET", "/maintenance/queue")[0]
-    assert item["detail"] == "Superato da M-106 il 2025-11-28 ma ancora restituito dal retrieval semplice."
+    assert item["detail"] == "Superato da M-106 (28 nov 2025), ma ancora attivo: il retrieval semplice lo restituisce finché qualcuno non lo ritira."
     assert item["detail_code"] == "superseded_still_retrievable" and item["detail_params"] == {"by": "M-106", "date": "2025-11-28"}
-    assert client.get("/maintenance/queue").json()[0]["detail"] == "Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval."
+    assert client.get("/maintenance/queue").json()[0]["detail"] == "Superseded by M-106 (28 Nov 2025), but still active: plain retrieval returns it until someone retires it."
     conflicts = assert_contract(client.get("/conflicts", headers=IT), "GET", "/conflicts")
     assert conflicts[0]["summary"].startswith("La presentazione finale indica ancora 4 settimane")
     assert conflicts[1]["summary"] == "Tre stime del tempo in coda di audit (2–3, 3–4 e 6–8 giorni), nessuno lo ha misurato."
@@ -109,8 +109,8 @@ def test_email_version_and_meeting_are_worded_in_italian(client):
     client.post("/documents/library%2Fonboarding-standard/versions", json={"version_label": "v3", "text": text})
     version = ask(client, Q, IT)
     assert "fissato nella versione 3 di “Onboarding standard”" in version["answer"]
-    assert version["answer"].endswith("L'email di client@meridianlabs.org lo conferma.")
-    assert version["changed_because"] == "la versione 3 di “Onboarding standard” ha sostituito 3–4 settimane (standard di onboarding v2)"
+    assert "conferma" not in version["answer"]
+    assert version["changed_because"] == "la versione 3 di “Onboarding standard” ha sostituito 5 settimane (email di client@meridianlabs.org)"
 
     client.post("/demo/reset")
     meeting = {"type": "meeting", "title": "Steering committee 12 Nov", "date": "2026-11-12T10:00:00Z", "text": "We agreed the onboarding target stays at 3–4 weeks.", "tags": ["clearpath", "topic:onboarding-target"]}

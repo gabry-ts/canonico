@@ -78,8 +78,9 @@ def test_a_project_sees_only_its_own_memory(client):
     assert "M-905" not in [e["fact_id"] for e in client.get("/audit", params={"project_id": CLEARPATH}).json()]
 
 
-def test_mail_config_is_inherited_and_can_be_overridden(client):
-    assert assert_contract(client.get("/org/mail"), "GET", "/org/mail") == ORG_MAIL
+def test_mail_config_is_inherited_and_can_be_overridden(client, monkeypatch):
+    monkeypatch.delenv("CANONICO_IMAP_HOST", raising=False)
+    assert assert_contract(client.get("/org/mail"), "GET", "/org/mail") == {**ORG_MAIL, "real_mailbox": None}
     inherited = assert_contract(client.get(f"/projects/{CLEARPATH}/mail"), "GET", "/projects/{project_id}/mail")
     assert inherited == {"project_id": CLEARPATH, "overridden": False, "effective_mail_config": ORG_MAIL, "mail_config_override": None}
     own = assert_contract(client.get(f"/projects/{INTERNAL}/mail"), "GET", "/projects/{project_id}/mail")
@@ -260,14 +261,17 @@ def test_email_then_new_version_ends_on_the_new_version(client):
     assert client.post("/demo/send-email").json()["supersedes_created"] == [{"fact_id": "E-301", "supersedes": "M-106"}]
     assert ask(client, Q)["binding"]["id"] == "E-301"
     result = upload_v3(client)
-    assert result["facts_created"] == ["L-402"] and result["supersedes_created"] == [{"fact_id": "L-402", "supersedes": "L-401"}]
+    # The new version restates the email's value and becomes its source: the email's fact is superseded, and the
+    # explanation names what the answer used before (the email), not a version of another topic.
+    assert result["facts_created"] == ["L-402"] and result["supersedes_created"] == [{"fact_id": "L-402", "supersedes": "E-301"}, {"fact_id": "L-402", "supersedes": "L-401"}]
     final = ask(client, Q)
     assert final["binding"]["id"] == "L-402" and final["answer"].startswith("5 weeks")
-    assert final["answer"].endswith("The email from client@meridianlabs.org confirms it.")
-    assert final["changed_because"] == "version 3 of “Onboarding standard” replaced 3–4 weeks (onboarding standard v2)"
-    assert [f["id"] for f in final["superseded"]] == ["M-101", "M-102", "M-103", "M-104", "M-106", "L-400", "L-401"]
+    assert "confirms" not in final["answer"] and "It replaced 8 earlier versions." in final["answer"]
+    assert final["changed_because"] == "version 3 of “Onboarding standard” replaced 5 weeks (email from client@meridianlabs.org)"
+    assert [f["id"] for f in final["superseded"]] == ["M-101", "M-102", "M-103", "M-104", "M-106", "L-400", "L-401", "E-301"]
     assert [f["id"] for f in final["conflicts"]] == ["M-105"]
-    assert client.get("/facts/E-301").json()["superseded_by"] is None
+    email = client.get("/facts/E-301").json()
+    assert email["superseded_by"] == "L-402" and email["type"] == "SUPERSEDED" and email["status"] == "active"
     chain = client.get(CHAIN).json()
     assert [f["id"] for f in chain["facts"]][-3:] == ["M-106", "E-301", "L-402"] and chain["changes"] == 6
     assert client.get("/stats").json()["needs_attention"]["stale_active"] == 1
@@ -421,3 +425,42 @@ def test_model_reads_an_email_only_when_the_rule_finds_nothing(client, monkeypat
     calls.clear()
     assert client.post("/mail/poll", json={"project_id": CLEARPATH}).json()["results"][0]["facts_created"] == []
     assert calls == []
+
+
+def test_real_mailbox_mode_is_offered_only_when_the_server_has_one(client, monkeypatch):
+    monkeypatch.delenv("CANONICO_IMAP_HOST", raising=False)
+    imap = {"mode": "imap", "imap_host": "mail", "imap_user": "brain", "inbound_address": "brain@inbound.meridianlabs.org", "poll_interval_s": 60}
+    refused = assert_contract(client.put("/org/mail", json=imap), "PUT", "/org/mail", 422)
+    assert "real mailbox" in refused["message"]
+    monkeypatch.setenv("CANONICO_IMAP_HOST", "mail")
+    monkeypatch.setenv("CANONICO_IMAP_USER", "brain")
+    assert client.get("/org/mail").json()["real_mailbox"] == {"host": "mail", "user": "brain"}
+    # The choice is reversible: away from the real mailbox and back again.
+    assert client.put("/org/mail", json={**imap, "mode": "imap_mock"}).json()["real_mailbox"] == {"host": "mail", "user": "brain"}
+    assert assert_contract(client.put("/org/mail", json=imap), "PUT", "/org/mail")["mode"] == "imap"
+
+
+def test_inbound_addresses_must_be_addresses(client):
+    bad = {**ORG_MAIL, "inbound_address": "not an address"}
+    body = assert_contract(client.put("/org/mail", json=bad), "PUT", "/org/mail", 422)
+    assert body["message"] == "inbound_address: enter an email address like brain@inbound.example.com."
+    assert client.get("/org/mail").json()["inbound_address"] == ORG_MAIL["inbound_address"]
+    assert client.put(f"/projects/{CLEARPATH}/mail", json={"mode": "webhook", "inbound_address": "nope"}).status_code == 422
+    it = client.put("/org/mail", json=bad, headers={"Accept-Language": "it"}).json()["message"]
+    assert it.startswith("inbound_address: inserisci un indirizzo email")
+    blank = client.put("/org/mail", json={**ORG_MAIL, "inbound_address": "  "}).json()
+    assert blank["inbound_address"] is None
+
+
+def test_routing_rule_values_are_checked(client):
+    post = lambda **body: client.post("/org/mail/rules", json={"project_id": CLEARPATH, "priority": 50, **body})  # noqa: E731
+    bad = post(match_type="sender_domain", value="bad domain")
+    assert bad.status_code == 422 and bad.json()["message"] == "value: enter a sender domain like @client.com."
+    assert post(match_type="sender_address", value="not-an-address").status_code == 422
+    assert post(match_type="recipient", value="nobody").status_code == 422
+    good = post(match_type="sender_domain", value="client.com")
+    assert good.status_code == 201 and good.json()["value"] == "@client.com"
+    assert post(match_type="sender_domain", value="@Client.com").status_code == 409
+    rule = good.json()["id"]
+    assert client.patch(f"/org/mail/rules/{rule}", json={"value": "bad domain"}).status_code == 422
+    assert client.patch(f"/org/mail/rules/{rule}", json={"value": "@meridianlabs.org"}).status_code == 409

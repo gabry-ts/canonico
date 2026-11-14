@@ -25,38 +25,53 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [factId, openFact] = useState<string | null>(null)
   const [actorId, setActorId] = useState<string | null>(getDemoActor())
   const session = useSyncExternalStore(subscribeSession, getSession)
-  const token = session?.token
+  const sessionKey = session ? `${session.memberId}|${session.expiresAt}` : null
 
   // Who is acting, the organisation and its projects. Without these the app shows "backend not reachable".
-  // `me` is null when the backend wants a session (CANONICO_AUTH_REQUIRED) and there is none: the sign-in page takes over.
+  // `me` is null when the backend wants a session (CANONICO_AUTH_REQUIRED) and there is none: then every read
+  // answers 401 and the sign-in page takes over.
   const core = useApi(async () => {
     const sent = getSession()
-    const [me, org, projects] = await Promise.all([
-      call(client.GET('/me', { params: { query: { project_id: savedProject } } })).catch((e) => {
+    const unless401 = <T,>(p: Promise<T>) =>
+      p.catch((e: unknown) => {
         if (e instanceof ApiError && e.status === 401) return null
         throw e
-      }),
-      call(client.GET('/org')),
-      call(client.GET('/projects')),
+      })
+    const [me, org, projects] = await Promise.all([
+      unless401(call(client.GET('/me', { params: { query: { project_id: savedProject } } }))),
+      unless401(call(client.GET('/org'))),
+      unless401(call(client.GET('/projects'))),
     ])
-    // A backend that does not require sign-in answers an unknown token with the demo identity: the session is gone.
-    if (me && sent && sent === getSession() && me.member.id !== sent.memberId) endSession()
+    if (!me || !org || !projects) return { me: null, org: null, projects: [] }
+    const current = getSession()
+    if (current && current === sent && (!me.session_expires_at || me.member.id !== current.memberId)) {
+      // The backend answered with the demo identity: the session we knew about is gone (revoked, expired, unknown).
+      endSession()
+    } else if (!current && me.session_expires_at) {
+      // A session cookie this page did not know about (for example after its storage was cleared): adopt it.
+      setSession({ memberId: me.member.id, expiresAt: me.session_expires_at })
+    }
     return { me, org, projects: projects.items }
-  }, [savedProject, actorId, token])
-
+  }, [savedProject, actorId, sessionKey])
+  const needsSignIn = core.data !== undefined && core.data.me === null
   const projects = useMemo(() => core.data?.projects ?? [], [core.data])
   // A remembered project that no longer exists falls back to the first one.
   const projectId = projects.length && !projects.some((p) => p.id === savedProject) ? projects[0].id : savedProject
   const pid = scope === 'org' ? undefined : projectId
 
   // Sidebar counters and sources. Optional: the shell works without them.
-  const side = useApi(async () => {
-    const [stats, src] = await Promise.all([
-      call(client.GET('/stats', { params: { query: { project_id: pid } } })),
-      call(client.GET('/projects/{project_id}/sources', { params: { path: { project_id: projectId } } })),
-    ])
-    return { stats, sources: Array.isArray(src) ? (src as Source[]) : ((src as { items?: Source[] }).items ?? []) }
-  }, [projectId, pid, actorId, token])
+  const side = useApi(
+    needsSignIn
+      ? null
+      : async () => {
+          const [stats, src] = await Promise.all([
+            call(client.GET('/stats', { params: { query: { project_id: pid } } })),
+            call(client.GET('/projects/{project_id}/sources', { params: { path: { project_id: projectId } } })),
+          ])
+          return { stats, sources: Array.isArray(src) ? (src as Source[]) : ((src as { items?: Source[] }).items ?? []) }
+        },
+    [projectId, pid, actorId, sessionKey, needsSignIn],
+  )
 
   const reloadCore = core.reload
   const reloadSide = side.reload
@@ -82,12 +97,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signIn = useCallback((login: Schemas['LoginResponse']) => {
-    setSession({ token: login.token, expiresAt: login.expires_at, memberId: login.member.id })
+    // The token stays in the HttpOnly cookie the backend set; the page keeps only who signed in and until when.
+    setSession({ expiresAt: login.expires_at, memberId: login.member.id })
     setVersion((v) => v + 1)
   }, [])
 
   const signOut = useCallback(async () => {
-    // The token is revoked while it is still sent; a backend that is down just lets it expire.
+    // The cookie goes with the request, so the backend revokes the session and clears the cookie; a backend that is
+    // down just lets it expire.
     await client.POST('/auth/logout').catch(() => undefined)
     setSession(null)
     setVersion((v) => v + 1)
@@ -95,7 +112,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const me = core.data?.me ?? null
   const signedIn = session !== null
-  const signInRequired = core.data !== undefined && me === null
+  const signInRequired = needsSignIn
   const org = core.data?.org ?? null
   const stats = side.data?.stats ?? null
   const sources = useMemo(() => side.data?.sources ?? [], [side.data])

@@ -44,6 +44,8 @@ def close_open_question(question_id: str, body: OpenQuestionClose):
             closed_at=datetime.now(timezone.utc).date().isoformat(),
             answer_fact_id=request.answer_fact_id,
             note=request.note,
+            closed_by=request.actor,
+            closed_ts=store.now(),
         )
-        store.audit(state, "close", request.actor, question["fact_id"], request.note or f"Answered by {request.answer_fact_id}.", x={"undo": {"question": before}})
+        store.audit(state, "close", request.actor, question["fact_id"], request.note or f"Answered by {request.answer_fact_id}.", x={"undo": {"question": before}, "topic": question["topic"]})
         return out(OpenQuestion, question_view(question))

@@ -21,6 +21,7 @@ CHANGE_CODES = {
     "merge": "topic_merged",
     "classify": "fact_reclassified",
     "ingest": "fact_added",
+    "close": "question_closed",
 }
 
 
@@ -117,6 +118,8 @@ def moved_topic(state: dict, topic_id: str | None) -> str | None:
 
 
 def match_topic(state: dict, question: str, min_coverage: float = 0.34, project_id: str | None = None) -> str | None:
+    """Keyword fallback. A question of several terms needs at least two of them on the topic: a single shared
+    word ("France" in "What is the capital of France?") is a coincidence, not a match, and gets no answer."""
     alias = alias_topic(state, question, project_id)
     if alias is not None:
         return alias
@@ -124,7 +127,12 @@ def match_topic(state: dict, question: str, min_coverage: float = 0.34, project_
     if not ranked:
         return None
     topic_id, _, coverage = ranked[0]
-    return topic_id if coverage >= min_coverage else None
+    if coverage < min_coverage:
+        return None
+    terms = list(dict.fromkeys(tokenize(question)))
+    index = topic_index(state, project_id)
+    hits = sum(1 for t in terms if t in index.tf[topic_id])
+    return topic_id if hits >= 2 or len(terms) == 1 else None
 
 
 _DOCS_CACHE: dict = {}
@@ -329,6 +337,10 @@ def answer_topic(state: dict, topic_id: str, focus: set[str] | None = None) -> d
             text = i18n.t("answer.generic", value=binding["value"].rstrip("."), source=where["source"], date=binding["date"])
         if binding.get("pinned"):
             text += i18n.t("answer.pinned")
+        answered = store.closed_answer(state, topic_id)
+        if answered is not None and answered[0] is binding and not binding.get("pinned"):
+            question = answered[1]
+            text += i18n.t("answer.closed_question", question=(question.get("question_it") if italian else None) or question["question"])
         if len(stale) == 1:
             text += i18n.t("answer.stale_one", target=_target(stale[0]))
         elif stale:
@@ -364,9 +376,10 @@ def answer_topic(state: dict, topic_id: str, focus: set[str] | None = None) -> d
     for kind, key in (("EVIDENCE", "answer.evidence"), ("HYPOTHESIS", "answer.hypothesis")):
         pool = [f for f in live if store.effective_type(state, f) == kind]
         if pool:
+            # Nothing was decided: the answer reports the best evidence or estimate, cites it, and is not binding.
             best = max(pool, key=lambda f: (f["confidence"], f["date"], f["id"]))
             text = i18n.t(key, value=best["value"].rstrip("."), source=_source(state, best), date=best["date"])
-            return _result("binding", text, best, [], [], [best], state, sig)
+            return {**_result("no_answer", text, None, [], [], [best], state, sig), "_basis": store.view(state, best)}
 
     opened = [f for f in live if f["type"] == "OPEN"]
     if opened:
@@ -475,11 +488,11 @@ def event_summary(state: dict, event: dict) -> dict:
 
 
 def _net_events(events: list[dict]) -> list[dict]:
-    """Drop retire and restore pairs on the same fact that cancel each other out."""
+    """Drop retire (or approved retirement) and restore pairs on the same fact that cancel each other out."""
     out: list[dict] = []
     for event in events:
         last = next((e for e in reversed(out) if e.get("fact_id") == event.get("fact_id")), None)
-        if last and {last["action"], event["action"]} == {"retire", "restore"}:
+        if last and {last["action"], event["action"]} in ({"retire", "restore"}, {"approve", "restore"}):
             out.remove(last)
             continue
         out.append(event)
@@ -512,9 +525,10 @@ def ask(state: dict, question: str, topic_id: str | None = None, include_plain: 
     else:
         focus = focus_facts(state, matched, tokenize(question))
         response = answer_topic(state, matched, focus)
-    signature = _signature(response)
+    signature = _signature(response) + ([response["_basis"]["id"]] if response.get("_basis") else [])
     response.pop("_sig", None)
-    response = {"question": question, **response, "changed_because": None, "changed_because_code": None, "changed_because_params": None, "locale": i18n.current()}
+    response.pop("_basis", None)
+    response = {"question": question, **response, "topic": matched, "changed_because": None, "changed_because_code": None, "changed_because_params": None, "locale": i18n.current()}
     key = f"{project_id}|" + " ".join(tokenize(question)) if matched is None else matched + ("|" + ",".join(sorted(focus)) if focus else "")
 
     previous = next((a for a in reversed(state["answers"]) if a["x"]["key"] == key), None)

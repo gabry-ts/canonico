@@ -129,8 +129,8 @@ MESSAGES: dict[str, tuple[str, str]] = {
     "verb.classify": ("re-classified", "ha riclassificato"),
     "verb.ingest": ("added", "ha aggiunto"),
     "maintenance.superseded_still_retrievable": (
-        "Superseded by {by} on {date} but still ranked in plain retrieval.",
-        "Superato da {by} il {date} ma ancora restituito dal retrieval semplice.",
+        "Superseded by {by} ({date}), but still active: plain retrieval returns it until someone retires it.",
+        "Superato da {by} ({date}), ma ancora attivo: il retrieval semplice lo restituisce finché qualcuno non lo ritira.",
     ),
     "maintenance.stale": (
         "More than {days} days older than the latest decision on the same topic and not linked to it.",
@@ -138,6 +138,9 @@ MESSAGES: dict[str, tuple[str, str]] = {
     ),
     "maintenance.low_confidence": ("Confidence {confidence} is below the threshold {threshold}.", "La confidenza {confidence} è sotto la soglia {threshold}."),
     "conflict.auto": ("{parts}, and nothing links them.", "{parts}, e nulla li collega."),
+    "conflict.answered": ("Settled by closing the open question “{question}”.", "Risolto chiudendo la domanda aperta “{question}”."),
+    "answer.closed_question": (" It answers the open question “{question}”.", " Risponde alla domanda aperta “{question}”."),
+    "verb.close": ("answered the open question on", "ha risposto alla domanda aperta su"),
     "audit.reset": ("Demo state restored from the seed.", "Stato della demo ripristinato dal seed."),
     "audit.seed": ("Seeded demo memory from the ClearPath corpus.", "Memoria demo caricata dal corpus ClearPath."),
     "audit.email": ("Email “{subject}” from {sender} routed to {project} by {rule}.", "Email “{subject}” di {sender} instradata a {project} dalla regola {rule}."),
@@ -160,6 +163,15 @@ def t(key: str, **params) -> str:
 def long_date(value: str) -> str:
     year, month, day = value.split("-")
     return f"{int(day)} {MONTHS[current()][int(month) - 1]} {year}"
+
+
+def short_date(value: str) -> str:
+    """"28 Nov 2025" ("28 nov 2025" in Italian), the way the web app shows dates."""
+    try:
+        year, month, day = value[:10].split("-")
+        return f"{int(day)} {MONTHS[current()][int(month) - 1][:3]} {year}"
+    except (ValueError, IndexError):
+        return value
 
 
 def join(parts: list[str]) -> str:
@@ -276,7 +288,16 @@ _ERRORS_IT: tuple[tuple[str, str], ...] = (
     (r"^Role (\S+) lacks permission (\S+)\.$", r"Il ruolo \1 non ha il permesso \2."),
     (r"^Invalid X-Canonico-Token\.$", "X-Canonico-Token non valido."),
     (r"^Wrong email or password\.$", "Email o password errate."),
-    (r"^Sign in to make changes\.$", "Accedi per apportare modifiche."),
+    (r"^Sign in to continue\.$", "Accedi per continuare."),
+    (r"^Repository (\S+) was not found or is not public\.$", r"Il repository \1 non esiste o non è pubblico."),
+    (r"^Repository (\S+) could not be looked up: (.+)\.$", r"Impossibile consultare il repository \1: \2."),
+    (r"^(\S+): enter an email address like brain@inbound\.example\.com\.$", r"\1: inserisci un indirizzo email come brain@inbound.example.com."),
+    (r"^value: enter a sender domain like @client\.com\.$", "value: inserisci un dominio mittente come @client.com."),
+    (r"^value: enter an email address like name@client\.com\.$", "value: inserisci un indirizzo email come nome@client.com."),
+    (r"^mode: this server has no real mailbox \(CANONICO_IMAP_HOST is not set\)\. Use imap_mock or webhook\.$", "mode: questo server non ha una casella reale (CANONICO_IMAP_HOST non è impostato). Usa imap_mock o webhook."),
+    (r"^Rule (\S+) already matches (\S+) (.+)\.$", r"La regola \1 corrisponde già a \2 \3."),
+    (r"^text: the content is not readable text \(is it an image or another binary file\?\)\. Send a \.txt, \.md, \.pdf or \.docx file\.$", "text: il contenuto non è testo leggibile (è un'immagine o un altro file binario?). Invia un file .txt, .md, .pdf o .docx."),
+    (r"^file: the file is not a text file\. Send \.txt, \.md, \.pdf or \.docx\.$", "file: il file non è un file di testo. Invia un file .txt, .md, .pdf o .docx."),
     (r"^No project_id and no tag rule matched the item\.$", "Nessun project_id e nessuna regola di tag corrisponde all'elemento."),
     (r"^Malformed JSON body\.$", "Corpo JSON non valido."),
     (r"^Unexpected server error\.$", "Errore imprevisto del server."),

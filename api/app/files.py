@@ -3,6 +3,7 @@
 import io
 import ipaddress
 import os
+import re
 import socket
 from urllib.parse import urljoin, urlparse
 
@@ -16,6 +17,38 @@ MAX_REDIRECTS = 3
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 CONTENT_TYPES = {"text/plain": ".txt", "text/markdown": ".md", "text/x-markdown": ".md", "application/pdf": ".pdf", DOCX: ".docx"}
 EXTENSIONS = (".txt", ".md", ".markdown", ".pdf", ".docx")
+NOT_TEXT = "text: the content is not readable text (is it an image or another binary file?). Send a .txt, .md, .pdf or .docx file."
+_CONTROL = re.compile(r"[\x00-\x08\x0b\x0e-\x1f\x7f]")
+
+
+def looks_binary(text: str) -> bool:
+    """True when a text is really the bytes of a binary file read as text: NUL bytes, or more than a few
+    replacement and control characters (what a browser's `File.text()` makes of an image)."""
+    if not text:
+        return False
+    if "\x00" in text:
+        return True
+    sample = text[:20000]
+    bad = sample.count("\ufffd") + len(_CONTROL.findall(sample))
+    return bad > max(1, len(sample) * 0.02)
+
+
+def require_text(text: str) -> str:
+    """Refuse a body that is not text with 422, so a binary file never becomes a document."""
+    if looks_binary(text):
+        raise ApiError(422, NOT_TEXT)
+    return text
+
+
+def _decode(data: bytes) -> str:
+    """Text of a .txt or .md file: UTF-8 (with or without BOM), else Windows-1252. Binary content is refused."""
+    if b"\x00" in data[:8192]:
+        raise ApiError(415, "file: the file is not a text file. Send .txt, .md, .pdf or .docx.")
+    try:
+        text = data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = data.decode("cp1252", errors="replace")
+    return require_text(text)
 
 
 def text_of(filename: str, content_type: str, data: bytes) -> str:
@@ -45,7 +78,7 @@ def text_of(filename: str, content_type: str, data: bytes) -> str:
         except Exception as exc:
             raise ApiError(422, "file: the PDF could not be read.") from exc
     if name.endswith((".txt", ".md", ".markdown")) or kind.startswith("text/"):
-        return data.decode("utf-8", errors="replace")
+        return _decode(data)
     raise ApiError(415, f"Files of type {kind or name or 'unknown'} are not supported. Send .txt, .md, .pdf or .docx.")
 
 

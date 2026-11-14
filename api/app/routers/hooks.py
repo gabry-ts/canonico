@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 from fastapi import APIRouter, Header, Query, Request
@@ -44,14 +45,20 @@ def _project_hook(state: dict, project_id: str, token: str | None) -> dict:
 
 
 @router.post("/hooks/projects/{project_id}", operation_id="receiveProjectHook", status_code=202, response_model=InboundItemResult)
-def receive_project_hook(project_id: str, body: InboundItem, x_canonico_token: str | None = Header(None)):
+async def receive_project_hook(project_id: str, request: Request, x_canonico_token: str | None = Header(None)):
+    # The token is checked before the body is read: a caller without it learns nothing about the payload shape.
     with STORE.read() as state:
         _project_hook(state, project_id, x_canonico_token)
-    item = files.with_linked_text(item_dict(body))
-    with STORE.write() as state:
-        source = _project_hook(state, project_id, x_canonico_token)
-        result = items.receive(state, project_id, item, routed_by="url", rule_id=None, source=source, actor="webhook")
-    return finish(result)
+    item = await _parse_upload(request)
+
+    def store_item() -> JSONResponse:
+        linked = files.with_linked_text(item)
+        with STORE.write() as state:
+            source = _project_hook(state, project_id, x_canonico_token)
+            result = items.receive(state, project_id, linked, routed_by="url", rule_id=None, source=source, actor="webhook")
+        return finish(result)
+
+    return await asyncio.to_thread(store_item)
 
 
 def _org_route(state: dict, item: dict, token: str | None) -> tuple[str, str, str | None]:
@@ -66,15 +73,22 @@ def _org_route(state: dict, item: dict, token: str | None) -> tuple[str, str, st
 
 
 @router.post("/hooks/org", operation_id="receiveOrgHook", status_code=202, response_model=InboundItemResult)
-def receive_org_hook(body: InboundItem, x_canonico_token: str | None = Header(None)):
-    item = item_dict(body)
+async def receive_org_hook(request: Request, x_canonico_token: str | None = Header(None)):
+    with STORE.read() as state:
+        if not items.token_matches(state["hooks"].get("org"), x_canonico_token):
+            raise UNAUTHORIZED
+    item = await _parse_upload(request)
     with STORE.read() as state:
         _org_route(state, item, x_canonico_token)
-    item = files.with_linked_text(item)
-    with STORE.write() as state:
-        project_id, routed_by, rule_id = _org_route(state, item, x_canonico_token)
-        result = items.receive(state, project_id, item, routed_by=routed_by, rule_id=rule_id, source=items.webhook_source(state, project_id), actor="webhook")
-    return finish(result)
+
+    def store_item() -> JSONResponse:
+        linked = files.with_linked_text(item)
+        with STORE.write() as state:
+            project_id, routed_by, rule_id = _org_route(state, linked, x_canonico_token)
+            result = items.receive(state, project_id, linked, routed_by=routed_by, rule_id=rule_id, source=items.webhook_source(state, project_id), actor="webhook")
+        return finish(result)
+
+    return await asyncio.to_thread(store_item)
 
 
 @router.get("/org/hooks", operation_id="getOrgHooks", status_code=200, response_model=OrgHookConfig)
