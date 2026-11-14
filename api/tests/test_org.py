@@ -399,7 +399,7 @@ def test_model_reads_an_email_only_when_the_rule_finds_nothing(client, monkeypat
 
     calls = []
 
-    def fake(model, system, user, schema, meter, name="result", max_tokens=8000, effort="low"):
+    def fake(model, system, user, schema, meter, name="result", max_tokens=8000, effort="low", **limits):
         calls.append(name)
         meter.settle(0.0, 0.002, 100, 50)
         return {"facts": [{"topic": "onboarding target", "value": "The onboarding checklist rollout starts Monday", "short": "Monday", "type": "DECISION",
