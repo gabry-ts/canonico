@@ -125,7 +125,7 @@ fun RootTabs(state: AppState, onLang: (String) -> Unit) {
                                 Icon(t.icon, contentDescription = null)
                             }
                         },
-                        label = { Text(stringResource(t.label)) },
+                        label = { Text(stringResource(t.label), maxLines = 1, softWrap = false, fontSize = 11.sp) },
                         modifier = Modifier.testTag(t.tag),
                     )
                 }
