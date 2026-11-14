@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canonico</title>
+<style>
+:root{--ink:#18181B;--paper:#FFFFFF;--surface:#F4F4F5;--muted:#64748B;--line:#E4E4E7;--accent:#2563EB;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#F4F4F5;--paper:#111113;--surface:#1C1C1F;--muted:#A1A1AA;--line:#2A2A2E;--accent:#60A5FA;color-scheme:dark}}
+:root[data-theme="dark"]{--ink:#F4F4F5;--paper:#111113;--surface:#1C1C1F;--muted:#A1A1AA;--line:#2A2A2E;--accent:#60A5FA;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 "Inter","Geist",system-ui,-apple-system,"Segoe UI",sans-serif;text-align:left}
+main{max-width:720px;margin:0 auto;padding:48px 16px 64px}
+h1{font-size:2.2rem;line-height:1.15;margin:0 0 8px;letter-spacing:-0.02em}
+.lede{font-size:1.15rem;color:var(--muted);margin:0 0 32px}
+h2{font-size:1.05rem;margin:40px 0 8px;display:flex;gap:10px;align-items:baseline}
+h2 span{color:var(--accent);font-variant-numeric:tabular-nums;font-weight:600}
+p{margin:0 0 12px}
+a{color:var(--accent)}
+.links{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 8px}
+.links a{display:inline-block;padding:8px 14px;border:1px solid var(--line);border-radius:8px;text-decoration:none;background:var(--surface)}
+ol{padding-left:22px;margin:0 0 12px}
+li{margin:0 0 6px}
+.num{background:var(--surface);border-left:3px solid var(--accent);padding:16px 18px;border-radius:6px;margin:8px 0 12px}
+.num strong{color:var(--accent);font-size:1.6rem;font-variant-numeric:tabular-nums}
+.small{font-size:.9rem;color:var(--muted)}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<main>
+<h1>Canonico</h1>
+<p class="lede">The company assistant knows which decision is binding now, and the people who own the decision can fix it.</p>
+
+<h2><span>01</span>Monday morning</h2>
+<p>A new hire asks the company assistant how long onboarding takes. It says four weeks. That figure was replaced. The final report of 28 November 2025 says three to four weeks, and there are four older versions in the documents as well. The new hire plans the month on the wrong number. Today the only way to find out why the assistant said it is to open a ticket and wait for an engineer.</p>
+
+<h2><span>02</span>What Canonico does</h2>
+<p>Giulia runs operations. She asks the same question in Canonico and sees the binding answer, three to four weeks, with the sentence from the final report it comes from. Under it she sees the four versions it replaced and the old "4 weeks" that is still active. She retires it. The assistant's next answer is "three to four weeks". She did it in the browser, without a ticket.</p>
+<div class="links">
+<a href="[DEMO_URL]">Live demo</a>
+<a href="https://github.com/gabry-ts/canonico">Code on GitHub</a>
+</div>
+
+<h2><span>03</span>How it works</h2>
+<ol>
+<li>A company connects its sources to a project: documents, a versioned document library, public GitHub, mail, and webhooks for meetings, notes and tickets.</li>
+<li>Canonico pulls out each decision with its verbatim quote and links it to the one it replaces, so it can say which version binds today.</li>
+<li>People find, correct, retire or pin a fact. The next answer uses the change. Every action is in the audit log and can be undone.</li>
+</ol>
+
+<h2><span>04</span>The one number</h2>
+<div class="num"><strong>3 of 5</strong> against <strong>0 of 5</strong></div>
+<p>We asked five questions about decisions that changed over time, on ClearPath, the 46-document corpus from KVA's own OIDA benchmark. Canonico gave the binding version three times. Plain retrieval gave it zero times. It is a first test on five queries, so read it as a signal.</p>
+
+<h2><span>05</span>Why now</h2>
+<p>Companies are putting assistants with memory in front of their staff. The memory tools on the market are built for developers or for one person's chat. Nobody gives the organisation one place to see what the system believes, where it came from, what it replaced, and to change it so the next answer changes.</p>
+
+<h2><span>06</span>Competition</h2>
+<p>Mem0, Zep and Letta store memory for developers. Zep keeps fact history but has no screen for a process owner. Claude and ChatGPT let one user edit their own memory, without sources or versions. Enterprise search finds documents and leaves you to guess which one still holds.</p>
+<p>Among today's teams, others track an old and a new supplier file or replay credit decisions under rules. Canonico is the layer underneath: which version binds, across any source, fixed by the person who owns it.</p>
+
+<h2><span>07</span>Business model</h2>
+<p>We sell to the AI programme lead of a company rolling out an internal assistant, with process owners and compliance at the table. A paid eight-week pilot on one process costs €6,000, then an annual licence of €15,000. Our year-two assumption is 12 pilots and 8 licences, about €192,000 of revenue. Acquisition costs about €14,000 per licensed customer, which pays back in about 12 months, or about 4 net of pilot fees. Every one of these figures is our estimate, still to check with buyers.</p>
+
+<h2><span>08</span>What's next</h2>
+<p>Run the find-and-fix test with five people outside the team and time it. Add real erasure for personal data, because retiring keeps history and the GDPR sometimes needs it gone. Grow the test from five questions to the full ClearPath set. Then a first pilot with one company.</p>
+
+<h2><span>09</span>Team</h2>
+<p>Emanuele Beffa comes from banking and finance. Davide Chiattelli and Gabriele Partiti built the product with him today: a FastAPI backend with 112 API operations and about 95 tests, a React frontend, deployed with Docker on our own server, in English and Italian.</p>
+
+<footer class="small">
+<p><strong>AI tools used.</strong> Claude Code as coding assistant. Anthropic Claude models through the API inside the product, Haiku for extraction and routing and Sonnet for topics and links, about $0.41 of model cost so far. The demo path also runs offline. Whisper for transcription.</p>
+<p><strong>Prior work.</strong> The night before, a team member built an exploratory prototype in another domain. We declared it to the organisers. No code from it is reused here.</p>
+<p><strong>Data.</strong> OIDA Benchmark Corpora by KVA, ClearPath corpus, licensed CC BY 4.0. No real personal data.</p>
+</footer>
+</main>
+</body>
+</html>
