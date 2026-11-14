@@ -128,3 +128,17 @@ def test_video_flow_signed_in_as_giulia_with_auth_required(client, required):
     assert after["conflicts"] == [] and after["changed_because"] == "Giulia retired 4 weeks (final presentation)"
     assert after["answer"] != before["answer"]
     assert client.post("/demo/reset").status_code == 200
+
+
+def test_cookie_is_secure_when_public_url_is_https(client, monkeypatch):
+    monkeypatch.setenv("CANONICO_PUBLIC_URL", "https://brain.example.org/api")
+    response = client.post("/auth/login", json=GIULIA, headers={"X-Forwarded-Proto": "http"})
+    cookie = response.headers["set-cookie"]
+    assert "Secure" in cookie and "HttpOnly" in cookie and "SameSite=lax" in cookie and "Path=/" in cookie
+    assert "Secure" in client.post("/auth/logout").headers["set-cookie"]
+
+
+def test_cookie_is_not_secure_on_plain_http_without_public_url(client, monkeypatch):
+    monkeypatch.delenv("CANONICO_PUBLIC_URL", raising=False)
+    cookie = client.post("/auth/login", json=GIULIA).headers["set-cookie"]
+    assert "Secure" not in cookie

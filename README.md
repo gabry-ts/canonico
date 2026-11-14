@@ -111,6 +111,7 @@ The seeded memory answers `POST /ask {"question": "How long does onboarding take
 
 - `CANONICO_AUTH_REQUIRED` (default `false`): when `true`, every write (POST, PUT, PATCH, DELETE) needs a session, except `/auth/*` and the `/hooks/*` webhooks, which check their own `X-Canonico-Token`. Reads stay public, `GET /me` needs a session.
 - `CANONICO_DEMO_LOGIN` (default `true`): enables `POST /auth/demo-login`.
+- `CANONICO_PUBLIC_URL` (docker compose: `PUBLIC_URL`): when it starts with `https://`, or the request arrives with `X-Forwarded-Proto: https`, the session cookie is marked `Secure`. Set it to the public HTTPS address when running behind a proxy or tunnel that forwards plain http.
 - With a session, the signed-in member is the actor: the `X-Demo-Actor` header and the `actor` field of the body are ignored, and role permissions apply to that member.
 
 Demo credentials (demo only): `giulia.ferri@meridianlabs.org` (owner), `sara.conti@meridianlabs.org` (editor), `luca.bassi@meridianlabs.org` (viewer), password `canonico-demo` for all three.

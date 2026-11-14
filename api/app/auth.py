@@ -123,7 +123,7 @@ def token_of(request: Request) -> str | None:
 
 def is_https(request: Request) -> bool:
     forwarded = request.headers.get("x-forwarded-proto", "").split(",")[0].strip().lower()
-    return request.url.scheme == "https" or forwarded == "https"
+    return settings.public_url().lower().startswith("https://") or request.url.scheme == "https" or forwarded == "https"
 
 
 def session_member(request: Request) -> dict | None:
