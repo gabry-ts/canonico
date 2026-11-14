@@ -45,3 +45,10 @@ def test_a_decision_naming_the_steering_committee_is_filed_under_the_onboarding_
     result = client.post("/mail/inbound", json=email("committee", text)).json()
     assert [link["supersedes"] for link in result["supersedes_created"]] == ["M-106"]
     assert binding(client)["value"] == "6 weeks"
+
+
+def test_a_quantity_on_an_extracted_topic_is_left_to_the_model(client):
+    text = "Rachel asked that every client deliverable gets a quality review within 48 hours, and the primary contact on the client side signs off."
+    item = {"type": "note", "title": "Delivery sync", "date": "2026-11-13T10:00:00Z", "text": text}
+    result = client.post("/projects/proj-clearpath/items", json=item).json()
+    assert result["facts_created"] == []

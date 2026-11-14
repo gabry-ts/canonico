@@ -88,7 +88,10 @@ def find(state: dict, text: str, project_id: str | None, prefer_topics: set[str]
                 }
             continue
         words = set(tokenize(sentence))
-        ranked = [t for t, _, _ in engine.rank_topics(state, sentence, project_id)]
+        # Extracted topics are too broad for a word match: "a quality review within 48 hours" would become
+        # "Audit bottleneck location: 48 hours". Only curated topics, and the topics of the previous version
+        # of a document, are matched by rule; everything else is left to the model.
+        ranked = [t for t, _, _ in engine.rank_topics(state, sentence, project_id) if state["topics"][t].get("x", {}).get("curated") or (prefer_topics and t in prefer_topics)]
         if prefer_topics:
             ranked = [t for t in ranked if t in prefer_topics] + [t for t in ranked if t not in prefer_topics]
         shared = {t: words & _anchors(state["topics"][t]) for t in ranked}
