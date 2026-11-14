@@ -140,7 +140,7 @@ def test_demo_email_changes_the_answer_end_to_end(client):
     assert result["supersedes_created"] == [{"fact_id": "E-301", "supersedes": "M-106"}]
 
     fact = client.get("/facts/E-301").json()
-    assert (fact["value"], fact["type"], fact["doc_id"], fact["supersedes"], fact["project_id"]) == ("Onboarding time: 5 weeks", "DECISION", "mail/demo-0001", "M-106", CLEARPATH)
+    assert (fact["value"], fact["type"], fact["doc_id"], fact["supersedes"], fact["project_id"]) == ("5 weeks", "DECISION", "mail/demo-0001", "M-106", CLEARPATH)
     assert fact["quote"] == "Following our call, we confirm the onboarding target at 5 weeks."
     old = client.get("/facts/M-106").json()
     assert old["superseded_by"] == "E-301" and old["type"] == "SUPERSEDED" and old["status"] == "active"
@@ -197,41 +197,108 @@ def test_inbound_webhook_and_mock_inbox(client):
     assert ask(client, Q)["binding"]["id"] == "M-106"
 
 
-def test_new_library_version_supersedes_the_previous_one(client):
-    doc = "/documents/library%2Fonboarding-standard"
-    question = "What does the onboarding standard say?"
-    first = ask(client, question, project_id=CLEARPATH)
-    assert first["binding"]["id"] == "L-401" and [f["id"] for f in first["superseded"]] == ["L-400"]
-    versions = assert_contract(client.get(doc + "/versions"), "GET", "/documents/{doc_id}/versions")
+DOC = "/documents/library%2Fonboarding-standard"
+STANDARD = "What does the onboarding standard say?"
+CHAIN = "/topics/onboarding-target/chain"
+
+
+def upload_v3(client):
+    text = client.get(DOC).json()["text"].replace("Version 2", "Version 3").replace("3–4 weeks", "5 weeks")
+    return assert_contract(client.post(DOC + "/versions", json={"version_label": "v3", "text": text}), "POST", "/documents/{doc_id}/versions", 201)
+
+
+def test_new_library_version_replaces_the_binding_onboarding_time(client):
+    first = ask(client, Q)
+    assert first["binding"]["id"] == "M-106" and len(client.get(CHAIN).json()["facts"]) == 6
+    standard = ask(client, STANDARD, project_id=CLEARPATH)
+    assert standard["binding"]["id"] == "L-401" and [f["id"] for f in standard["superseded"]] == ["L-400"]
+    versions = assert_contract(client.get(DOC + "/versions"), "GET", "/documents/{doc_id}/versions")
     assert [(v["version"], v["version_label"], v["facts_superseded"]) for v in versions] == [(1, "v1", []), (2, "v2", ["L-400"])]
     assert versions[1]["supersedes_document_id"] == "library/onboarding-standard" and versions[0]["supersedes_document_id"] is None
 
-    text = client.get(doc).json()["text"].replace("Version 2", "Version 3").replace("3–4 weeks", "5 weeks")
-    result = assert_contract(client.post(doc + "/versions", json={"version_label": "v3", "text": text}), "POST", "/documents/{doc_id}/versions", 201)
+    result = upload_v3(client)
     assert result["version"]["version"] == 3 and result["version"]["facts_superseded"] == ["L-401"]
-    assert result["facts_created"] == ["L-402"] and result["supersedes_created"] == [{"fact_id": "L-402", "supersedes": "L-401"}]
+    assert result["facts_created"] == ["L-402"]
+    assert result["supersedes_created"] == [{"fact_id": "L-402", "supersedes": "M-106"}, {"fact_id": "L-402", "supersedes": "L-401"}]
     new = client.get("/facts/L-402").json()
-    assert (new["value"], new["type"], new["supersedes"], new["doc_id"]) == ("Onboarding standard v3: 5 weeks", "DECISION", "L-401", "library/onboarding-standard")
+    assert (new["value"], new["type"], new["topic"], new["supersedes"], new["doc_id"]) == ("5 weeks", "DECISION", "onboarding-target", "M-106", "library/onboarding-standard")
     assert new["quote"] == "Onboarding target: 5 weeks to autonomy."
-    old = client.get("/facts/L-401").json()
-    assert old["type"] == "SUPERSEDED" and old["superseded_by"] == "L-402" and old["status"] == "active"
+    for fact_id in ("M-106", "L-401"):
+        old = client.get(f"/facts/{fact_id}").json()
+        assert old["type"] == "SUPERSEDED" and old["superseded_by"] == "L-402" and old["status"] == "active"
     events = client.get("/audit", params={"fact_id": "L-402"}).json()
-    assert events[0]["action"] == "supersede" and "Onboarding standard v3 supersedes L-401" in events[0]["reason"]
+    assert events[0]["action"] == "supersede" and events[0]["reason"] == "Onboarding standard v3 supersedes M-106 (3–4 weeks), L-401 (3–4 weeks)."
 
-    after = ask(client, question, project_id=CLEARPATH)
-    assert after["binding"]["id"] == "L-402" and after["answer"].startswith("5 weeks")
-    assert [f["id"] for f in after["superseded"]] == ["L-400", "L-401"]
-    assert after["changed_because"] == "version 3 of “Onboarding standard” replaced 3–4 weeks (onboarding standard v2)"
-    current = client.get(doc).json()
+    after = ask(client, Q)
+    assert after["status"] == "binding" and after["binding"]["id"] == "L-402" and after["binding"]["doc_id"] == "library/onboarding-standard"
+    assert after["answer"].startswith("5 weeks") and "version 3 of “Onboarding standard”" in after["answer"]
+    assert after["changed_because"] == "version 3 of “Onboarding standard” replaced 3–4 weeks (final report)"
+    assert [f["id"] for f in after["superseded"]] == ["M-101", "M-102", "M-103", "M-104", "M-106", "L-400", "L-401"]
+    assert [f["id"] for f in after["conflicts"]] == ["M-105"]
+    chain = client.get(CHAIN).json()
+    assert [f["id"] for f in chain["facts"]] == ["M-101", "M-102", "M-103", "M-104", "M-105", "M-106", "L-402"] and chain["changes"] == 6
+    assert ask(client, STANDARD, project_id=CLEARPATH)["binding"]["id"] == "L-402"
+    current = client.get(DOC).json()
     assert current["version"] == 3 and "5 weeks" in current["text"] and current["version_of"] == "library/onboarding-standard"
-    assert len(client.get(doc + "/versions").json()) == 3
-    assert ask(client, Q)["binding"]["id"] == "M-106"
+    assert len(client.get(DOC + "/versions").json()) == 3
 
-    assert_contract(client.post(doc + "/versions", json={"version_label": "v4", "text": text}), "POST", "/documents/{doc_id}/versions", 409)
-    assert_contract(client.post(doc + "/versions", json={"version_label": "v3", "text": text + "\\nMore."}), "POST", "/documents/{doc_id}/versions", 409)
-    assert_contract(client.post(doc + "/versions", json={}), "POST", "/documents/{doc_id}/versions", 422)
+    text = current["text"]
+    assert_contract(client.post(DOC + "/versions", json={"version_label": "v4", "text": text}), "POST", "/documents/{doc_id}/versions", 409)
+    assert_contract(client.post(DOC + "/versions", json={"version_label": "v3", "text": text + "\nMore."}), "POST", "/documents/{doc_id}/versions", 409)
+    assert_contract(client.post(DOC + "/versions", json={}), "POST", "/documents/{doc_id}/versions", 422)
     assert_contract(client.post("/documents/nope/versions", json={"text": "x"}), "POST", "/documents/{doc_id}/versions", 404)
     assert_contract(client.get("/documents/nope/versions"), "GET", "/documents/{doc_id}/versions", 404)
+
+    undo = client.post(f"/audit/{events[0]['id']}/undo", json={"actor": "Giulia", "reason": "Wrong version."})
+    assert undo.status_code == 200 and client.get("/facts/L-402").status_code == 404
+    assert client.get("/facts/M-106").json()["type"] == "DECISION" and client.get("/facts/L-401").json()["superseded_by"] is None
+    assert ask(client, Q)["binding"]["id"] == "M-106"
+
+
+def test_email_then_new_version_ends_on_the_new_version(client):
+    video = ask(client, Q)
+    assert client.post("/demo/send-email").json()["supersedes_created"] == [{"fact_id": "E-301", "supersedes": "M-106"}]
+    assert ask(client, Q)["binding"]["id"] == "E-301"
+    result = upload_v3(client)
+    assert result["facts_created"] == ["L-402"] and result["supersedes_created"] == [{"fact_id": "L-402", "supersedes": "L-401"}]
+    final = ask(client, Q)
+    assert final["binding"]["id"] == "L-402" and final["answer"].startswith("5 weeks")
+    assert final["answer"].endswith("The email from client@meridianlabs.org confirms it.")
+    assert final["changed_because"] == "version 3 of “Onboarding standard” replaced 3–4 weeks (onboarding standard v2)"
+    assert [f["id"] for f in final["superseded"]] == ["M-101", "M-102", "M-103", "M-104", "M-106", "L-400", "L-401"]
+    assert [f["id"] for f in final["conflicts"]] == ["M-105"]
+    assert client.get("/facts/E-301").json()["superseded_by"] is None
+    chain = client.get(CHAIN).json()
+    assert [f["id"] for f in chain["facts"]][-3:] == ["M-106", "E-301", "L-402"] and chain["changes"] == 6
+    assert client.get("/stats").json()["needs_attention"]["stale_active"] == 1
+    assert not [c for c in client.get("/conflicts", params={"topic": "onboarding-target"}).json() if {"E-301", "L-402"} <= {f["id"] for f in c["facts"]}]
+
+    client.post("/demo/reset")
+    assert ask(client, Q) == video and len(client.get(CHAIN).json()["facts"]) == 6 and client.get(CHAIN).json()["changes"] == 5
+    assert client.get(DOC).json()["version"] == 2 and client.get("/facts/L-402").status_code == 404
+
+
+def test_new_version_then_email_ends_on_the_email(client):
+    video = ask(client, Q)
+    upload_v3(client)
+    assert ask(client, Q)["binding"]["id"] == "L-402"
+    sent = client.post("/demo/send-email").json()
+    assert sent["facts_created"] == ["E-301"] and sent["supersedes_created"] == []
+    final = ask(client, Q)
+    assert final["binding"]["id"] == "E-301" and final["binding"]["doc_id"] == "mail/demo-0001" and final["answer"].startswith("5 weeks")
+    assert final["answer"].endswith("Version 3 of “Onboarding standard” confirms it.")
+    assert final["changed_because"] == "an email from client@meridianlabs.org stated 5 weeks"
+    assert [f["id"] for f in final["superseded"]] == ["M-101", "M-102", "M-103", "M-104", "M-106", "L-400", "L-401"]
+    assert [f["id"] for f in final["conflicts"]] == ["M-105"]
+    assert client.get("/facts/L-402").json()["superseded_by"] is None
+    assert [f["id"] for f in client.get(CHAIN).json()["facts"]][-3:] == ["M-106", "E-301", "L-402"]
+
+    older = client.post("/mail/inbound", json={**EMAIL, "message_id": "<x-9@meridianlabs.org>", "date": "2026-11-15T09:00:00Z", "text": "Correction: we confirm the onboarding target at 6 weeks."}).json()
+    assert {link["supersedes"] for link in older["supersedes_created"]} >= {"E-301"}
+    assert ask(client, Q)["binding"]["id"] == older["facts_created"][0]
+
+    client.post("/demo/reset")
+    assert ask(client, Q) == video and len(client.get(CHAIN).json()["facts"]) == 6
 
 
 def test_new_version_of_a_corpus_document_matches_the_contract_example(client):
