@@ -429,6 +429,43 @@ describe('AddSourceDialog', () => {
       expect(screen.queryByText(/items added/)).not.toBeInTheDocument()
     })
 
+    it('shows the sync as failed and lets the person close when the sync cannot start', async () => {
+      api.post('/projects/:project_id/sources', source({ id: 'src-gh', type: 'github' }))
+      api.post('/sources/:source_id/sync', fail(500, 'Internal error'))
+      const { user, app, onClose, onCreated, container } = open()
+      await previewed(user)
+      await user.click(button('Connect and sync'))
+
+      expect(await toast('That did not work. Internal error')).toBeInTheDocument()
+      expect(await screen.findByText('The sync failed. You can try again from the sources table.')).toBeInTheDocument()
+      expect(screen.getByText('Failed')).toBeInTheDocument()
+      expect(screen.queryByText('Queued')).not.toBeInTheDocument()
+      expect(container.querySelector<HTMLElement>('.bar i')).toHaveStyle({ width: '100%' })
+      expect(screen.queryByRole('button', { name: 'Syncing…' })).not.toBeInTheDocument()
+      // The source exists: the list was refreshed.
+      expect(onCreated).toHaveBeenCalled()
+      expect(app.refresh).toHaveBeenCalled()
+
+      await user.click(button('Done'))
+      expect(onClose).toHaveBeenCalledTimes(1)
+    })
+
+    it('shows the sync as failed and lets the person close when following the job fails', async () => {
+      api.post('/projects/:project_id/sources', source({ id: 'src-gh', type: 'github' }))
+      api.post('/sources/:source_id/sync', job({ status: 'running' }))
+      api.get('/sync-jobs/:job_id', fail(500, 'Internal error'))
+      const { user, onClose } = open()
+      await previewed(user)
+      await user.click(button('Connect and sync'))
+
+      expect(await toast('That did not work. Internal error')).toBeInTheDocument()
+      expect(await screen.findByText('The sync failed. You can try again from the sources table.')).toBeInTheDocument()
+      expect(screen.getByText('Failed')).toBeInTheDocument()
+      expect(api.callsTo('GET', '/sync-jobs/:job_id')).toHaveLength(1)
+      await user.click(button('Done'))
+      expect(onClose).toHaveBeenCalledTimes(1)
+    })
+
     it('stays on the form and says why when the source cannot be created', async () => {
       api.post('/projects/:project_id/sources', fail(409, 'This repository is already connected'))
       const { user, app, onCreated } = open()

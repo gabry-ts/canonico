@@ -96,7 +96,11 @@ export default function AddSourceDialog({ projectId, onClose, onCreated }: { pro
     finish()
     const job = await runSync(src.id, (j) =>
       setDone((d) => d && { ...d, pct: j.status === 'queued' ? 20 : j.status === 'running' ? Math.min(90, (d.pct || 20) + 10) : 100, phase: t('home.add.job.' + j.status) }),
-    )
+    ).catch((e: unknown) => {
+      // The source exists and the list was refreshed above: show the sync as failed so the dialog can be closed.
+      setDone({ title, pct: 100, ok: false, phase: t('home.add.job.error'), text: t('home.add.syncError') })
+      throw e
+    })
     setDone({
       title,
       pct: 100,
