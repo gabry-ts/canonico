@@ -201,7 +201,9 @@ class Api:
     def wait_job(self, path: str, timeout: float = 900, done=("done", "error")) -> dict:
         deadline = time.time() + timeout
         while time.time() < deadline:
-            body = self.get(path).json()
+            response = self.get(path)
+            assert response.status_code != 404, f"{path} disappeared: the server was restarted or reset"
+            body = response.json()
             if body.get("status") in done:
                 return body
             time.sleep(2)
