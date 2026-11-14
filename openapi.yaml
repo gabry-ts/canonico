@@ -697,6 +697,21 @@ paths:
       summary: List documents (without text)
       parameters:
       - $ref: '#/components/parameters/ProjectIdQuery'
+      - name: source_id
+        in: query
+        description: Only documents from this source.
+        schema:
+          type: string
+      - name: source_type
+        in: query
+        description: Only documents from sources of this type.
+        schema:
+          type: string
+          enum:
+          - documents
+          - document_library
+          - github
+          - mail
       responses:
         '200':
           description: All ingested documents.
@@ -2455,6 +2470,7 @@ paths:
                   spent_usd: 2.31
                   cap_usd: 10.0
                 last_ingest_at: '2026-11-14T09:12:00Z'
+                last_reset_at: null
   /config:
     get:
       tags:
@@ -2477,6 +2493,8 @@ paths:
                 active_corpus: org-consulting-clearpath
                 stale_after_days: 90
                 low_confidence_threshold: 0.5
+                offline_mode: false
+                provider: anthropic
     patch:
       tags:
       - admin
@@ -2492,6 +2510,8 @@ paths:
               $ref: '#/components/schemas/ConfigPatch'
             example:
               cost_cap_usd: 15.0
+              offline_mode: true
+              provider: gateway
       responses:
         '200':
           description: Updated config.
@@ -2508,6 +2528,8 @@ paths:
                 active_corpus: org-consulting-clearpath
                 stale_after_days: 90
                 low_confidence_threshold: 0.5
+                offline_mode: true
+                provider: gateway
         '400':
           $ref: '#/components/responses/BadRequest'
         '422':
@@ -3127,6 +3149,64 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+  /sources/{source_id}/documents:
+    get:
+      tags:
+      - sources
+      operationId: listSourceDocuments
+      summary: List documents of a source
+      parameters:
+      - $ref: '#/components/parameters/SourceId'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Documents ingested from this source, without text.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+              example:
+              - id: library/onboarding-standard-v3
+                title: Onboarding standard
+                date: '2026-11-14'
+                path: library/onboarding-standard-v3.md
+                source_id: src-library
+                source_type: document_library
+                version: 3
+                version_of: library/onboarding-standard-v2
+                current_version: 3
+              - id: library/onboarding-standard-v2
+                title: Onboarding standard
+                date: '2026-11-10'
+                path: library/onboarding-standard-v2.md
+                source_id: src-library
+                source_type: document_library
+                version: 2
+                version_of: library/onboarding-standard-v1
+                current_version: 3
+              - id: library/onboarding-standard-v1
+                title: Onboarding standard
+                date: '2026-11-03'
+                path: library/onboarding-standard-v1.md
+                source_id: src-library
+                source_type: document_library
+                version: 1
+                version_of: null
+                current_version: 3
+              - id: library/sample
+                title: Sample
+                date: '2026-11-14'
+                path: library/sample.md
+                source_id: src-library
+                source_type: document_library
+                version: 1
+                version_of: null
+                current_version: 1
+        '404':
+          $ref: '#/components/responses/NotFound'
   /sources/{source_id}/sync:
     post:
       tags:
@@ -4450,6 +4530,21 @@ components:
         text:
           type: string
           description: Full text, only on GET /documents/{doc_id}.
+        current_version:
+          type:
+          - integer
+          - 'null'
+          description: Latest version number of the document's version chain.
+        source_type:
+          type:
+          - string
+          - 'null'
+          enum:
+          - documents
+          - document_library
+          - github
+          - mail
+          - null
     Citation:
       type: object
       required:
@@ -5492,6 +5587,12 @@ components:
           - string
           - 'null'
           format: date-time
+        last_reset_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the demo was last reset. Null if never.
     Config:
       type: object
       required:
@@ -5526,6 +5627,16 @@ components:
           type: number
           minimum: 0
           maximum: 1
+        offline_mode:
+          type: boolean
+          default: false
+          description: When true, answers and demo actions use cached or deterministic results and make no live
+            LLM calls.
+        provider:
+          type: string
+          enum:
+          - anthropic
+          - gateway
     ConfigPatch:
       type: object
       minProperties: 1
@@ -5551,6 +5662,16 @@ components:
           type: number
           minimum: 0
           maximum: 1
+        offline_mode:
+          type: boolean
+          default: false
+          description: When true, answers and demo actions use cached or deterministic results and make no live
+            LLM calls.
+        provider:
+          type: string
+          enum:
+          - anthropic
+          - gateway
     ExportBundle:
       type: object
       required:
