@@ -229,7 +229,12 @@
       "unit_items": "items",
       "never": "never",
       "comingSoon": "Real mail, SharePoint and Google Drive connectors are coming soon. This demo uses sample data.",
-      "st_waiting": "Waiting for first event"
+      "st_waiting": "Waiting for first event",
+      "unit_documents_one": "document",
+      "unit_versions_one": "version",
+      "unit_issues_one": "issue",
+      "unit_emails_one": "email",
+      "unit_items_one": "item"
     },
     "mail": {
       "title": "Mail settings",

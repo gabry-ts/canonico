@@ -90,7 +90,7 @@ function SourcesCard({ pid, onAdd }: { pid: string; onAdd: () => void }) {
                   )}
                 </td>
                 <td className="text-right whitespace-nowrap">
-                  <span className="mono">{s.items ?? 0}</span> <span className="text-muted-foreground text-[12.5px]">{t('org.sources.unit_' + unit(s))}</span>
+                  <span className="mono">{s.items ?? 0}</span> <span className="text-muted-foreground text-[12.5px]">{t('org.sources.unit_' + unit(s), { count: s.items ?? 0 })}</span>
                 </td>
                 <td className="mono text-[12.5px] text-muted-foreground whitespace-nowrap hidden md:table-cell">{s.last_synced_at ? fmtDateTime(s.last_synced_at) : t('org.sources.never')}</td>
                 <td className="text-right whitespace-nowrap">

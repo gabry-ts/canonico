@@ -229,7 +229,12 @@
       "unit_items": "elementi",
       "never": "mai",
       "comingSoon": "I collegamenti reali a posta, SharePoint e Google Drive arrivano presto. Questa demo usa dati di esempio.",
-      "st_waiting": "In attesa del primo evento"
+      "st_waiting": "In attesa del primo evento",
+      "unit_documents_one": "documento",
+      "unit_versions_one": "versione",
+      "unit_issues_one": "issue",
+      "unit_emails_one": "email",
+      "unit_items_one": "elemento"
     },
     "mail": {
       "title": "Impostazioni posta",
