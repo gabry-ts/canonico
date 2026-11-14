@@ -18,7 +18,7 @@ Before the event a team member built an exploratory prototype in a different dom
 
 ## Setup
 
-Copy `.env.example` to `.env` and fill in the values. Keys stay server-side.
+Copy `.env.example` to `api/.env` and fill in the values. Keys stay server-side. The demo path (seeded memory, ask, retire, restore, reset) makes no model calls and works offline.
 
 ## Repository layout
 
@@ -27,7 +27,7 @@ openapi.yaml   shared API contract
 api/           backend, Python FastAPI (models generated from openapi.yaml)
 web/           frontend, Vite + React + TypeScript + Tailwind
 eval/          benchmark notes, plain retrieval vs Canonico
-data/          evaluation corpora
+data/          evaluation corpus and seeded memory
 prototypes/    static UI prototypes
 ```
 
@@ -36,12 +36,19 @@ prototypes/    static UI prototypes
 ```
 make install   # python venv + npm install
 make api       # backend on :8000
+make test      # backend tests (contract, demo flow, verbatim quotes)
 make web       # frontend on :5173
 make mock      # Prism mock of openapi.yaml on :4010
 make types     # regenerate api/app/models.py and web/src/api/schema.ts
 ```
 
-The frontend talks to `VITE_API_URL` (see `web/.env.example`), by default the mock on `:4010`.
+The frontend talks to `VITE_API_URL` (see `web/.env.example`), by default the mock on `:4010`. Point it to `http://localhost:8000` to use the real backend.
+
+Backend notes:
+
+- Memory lives in process and is persisted to `api/.runtime/state.json` (gitignored). It is seeded from `data/seed/*.json` and `data/clearpath/corpus.jsonl`; `POST /demo/reset` restores the seed.
+- Run it as a single process: state is not shared between workers or serverless instances.
+- CORS origins come from `CORS_ORIGINS` (comma-separated) and `CORS_ORIGIN_REGEX` (default allows `*.vercel.app` previews).
 
 ## License
 
