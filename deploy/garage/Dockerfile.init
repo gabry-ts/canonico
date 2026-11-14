@@ -1,0 +1,4 @@
+# One-shot Garage setup (layout, bucket, access key) with init.sh baked in.
+FROM curlimages/curl:8.11.1
+COPY deploy/garage/init.sh /init.sh
+ENTRYPOINT ["sh", "/init.sh"]
