@@ -34,6 +34,12 @@ def test_a_change_from_one_value_to_another_files_the_new_value(client):
     assert now["value"] == "6 weeks" and now["doc_id"] == result["document_id"]
 
 
+def test_the_demo_question_in_italian_is_a_known_phrasing(client):
+    for question in ("Quanto dura l'onboarding?", "Tempo di onboarding?", "Qual è il target di onboarding?"):
+        body = client.post("/ask", json={"question": question, "locale": "it"}).json()
+        assert body["status"] == "binding" and body["binding"]["id"] == "M-106", question
+
+
 def test_a_decision_naming_the_steering_committee_is_filed_under_the_onboarding_time(client):
     text = "The steering committee confirmed the onboarding target at 6 weeks."
     result = client.post("/mail/inbound", json=email("committee", text)).json()

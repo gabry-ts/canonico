@@ -36,7 +36,15 @@
         "How long does onboarding take for a new consultant?",
         "What is the onboarding time?",
         "What is the target time for onboarding new consultants?",
-        "What onboarding time target did Meridian Labs ultimately recommend, and how did that target shift from the client's original goal over the engagement?"
+        "What onboarding time target did Meridian Labs ultimately recommend, and how did that target shift from the client's original goal over the engagement?",
+        "Quanto dura l'onboarding?",
+        "Quanto dura l'onboarding di un nuovo consulente?",
+        "Quanto tempo richiede l'onboarding?",
+        "Quanto tempo serve per l'onboarding?",
+        "Qual è il tempo di onboarding?",
+        "Tempo di onboarding?",
+        "Durata dell'onboarding?",
+        "Qual è il target di onboarding?"
       ],
       "description": "How long onboarding of a new consultant takes: the client's goal, the requirement, the estimates, the recommended target and the final SLA.",
       "what": "the onboarding time",
