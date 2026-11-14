@@ -66,14 +66,20 @@ make docker-logs           # follow the logs
 make docker-down           # stop, the volume keeps the state
 ```
 
+Checked end to end: both containers become healthy, `curl http://localhost:8080/` returns the site, `curl http://localhost:8080/api/health` returns 200 through the proxy, and after `curl -X POST http://localhost:8080/api/demo/reset` the question `How long does onboarding take?` returns `3–4 weeks` (in Italian with `Accept-Language: it`). State survives `docker compose restart api`.
+
 Open `http://localhost:8080`. The API answers under the same address, for example `http://localhost:8080/api/health`. Set `WEB_PORT` to publish another port (`WEB_PORT=80 make docker-up`) and `PUBLIC_URL` to the address people use, it is shown in webhook URLs (`PUBLIC_URL=https://brain.example.org make docker-up`).
 
-- Key: `api/.env` is read by compose at start and never copied into an image. For the live demo set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY`, or `LLM_PROVIDER=gateway` and `AI_GATEWAY_API_KEY`. Without `api/.env` the stack still starts: the seeded memory and every demo flow work without a model.
+- Key: `api/.env` is read by compose at start and never copied into an image. For the live demo set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY`, or `LLM_PROVIDER=gateway` and `AI_GATEWAY_API_KEY`, see "Switching the LLM provider". Without `api/.env` the stack still starts: the seeded memory and every demo flow work without a model.
 - State: the named volume `canonico-runtime` holds the memory, the audit log, stored answers and the caches of model and GitHub responses. `docker compose down -v` deletes it.
 - Reset the demo: `curl -X POST http://localhost:8080/api/demo/reset`.
 - Offline mode: `curl -X PATCH http://localhost:8080/api/config -H 'content-type: application/json' -d '{"offline_mode": true}'`, or `CANONICO_OFFLINE=1` in `api/.env` to start that way. A reset goes back to the value of `CANONICO_OFFLINE`.
 - One replica only: memory lives in the `api` process. Do not scale the service.
 - To reach the server from outside without opening ports, point a Cloudflare Tunnel or a Tailscale Funnel at `http://localhost:8080`; both give an HTTPS address, which then goes into `PUBLIC_URL`. There is no authentication in this demo, so share that address only with the people who need it.
+
+## Switching the LLM provider
+
+Put both keys in `api/.env` (`ANTHROPIC_API_KEY` and `AI_GATEWAY_API_KEY`) and choose the one in use with `LLM_PROVIDER=anthropic` or `LLM_PROVIDER=gateway`, then restart: `make docker-up` re-reads the file, locally restart `uvicorn`. The gateway is the OpenAI-compatible Vercel AI Gateway at `https://ai-gateway.vercel.sh/v1`. Default model ids are `claude-haiku-5-5` and `claude-sonnet-5-5` on `anthropic`, and `anthropic/claude-haiku-5.5` and `anthropic/claude-sonnet-5.5` on `gateway`; set `LLM_MODEL_FAST` and `LLM_MODEL_SMART` to change them. If the selected provider has no key, the API logs a warning at startup and runs on the seeded memory only. `GET /config` shows the active provider and model ids, never a key. The cost cap and offline mode apply to both providers.
 
 ## Demo path
 
