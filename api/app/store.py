@@ -29,6 +29,7 @@ PUBLIC_FACT_FIELDS = (
     "project_id",
     "retired_by",
     "retired_at",
+    "tags",
 )
 DEFAULT_PROJECT = "proj-clearpath"
 BINDING_TYPES = ("DECISION", "CONSTRAINT")
@@ -141,6 +142,30 @@ def load_seed_documents() -> dict:
     return docs
 
 
+def secret_hash(secret: str) -> str:
+    return hashlib.sha256(secret.encode("utf-8")).hexdigest()
+
+
+def new_secret() -> str:
+    import secrets
+
+    return "whsec_" + secrets.token_urlsafe(24)
+
+
+def _seed_secret(raw: dict) -> dict:
+    """Seeded hooks carry a fixed demo secret. Only its hash and last four characters are kept in memory."""
+    secret = raw.get("demo_secret") or new_secret()
+    return {"hash": secret_hash(secret), "last4": secret[-4:], "created_at": raw.get("created_at") or settings.SEED_AT}
+
+
+def _seed_source(raw: dict) -> dict:
+    source = {"x": {}, **copy.deepcopy(raw)}
+    demo = source.pop("demo_secret", None)
+    if source["type"] == "webhook":
+        source["x"]["secret"] = _seed_secret({"demo_secret": demo, "created_at": source.get("created_at")})
+    return source
+
+
 def build_seed() -> dict:
     facts = {}
     for fact in _read_json(seed_dir() / "facts.json", []):
@@ -185,10 +210,13 @@ def build_seed() -> dict:
     state = {
         "seed_hash": seed_hash(),
         "version": 0,
-        "seq": {"audit": 0, "answer": 0, "oq": 0, "mq": 0, "fact": 300, "sync": 0, "rule": 0},
+        "seq": {"audit": 0, "answer": 0, "oq": 0, "mq": 0, "fact": 300, "sync": 0, "rule": 0, "item": 0, "tag_rule": 0},
         "org": copy.deepcopy(org.get("organisation") or {"id": "org-default", "name": "Organisation", "mail_config": None}),
         "projects": {p["id"]: copy.deepcopy(p) for p in org.get("projects", [{"id": DEFAULT_PROJECT, "name": "ClearPath engagement", "description": None, "created_at": settings.SEED_AT, "mail_config_override": None}])},
-        "sources": {x["id"]: {"x": {}, **copy.deepcopy(x)} for x in org.get("sources", [])},
+        "sources": {x["id"]: _seed_source(x) for x in org.get("sources", [])},
+        "hooks": {"org": _seed_secret((org.get("hooks") or {}).get("org") or {})},
+        "tag_rules": {r["id"]: copy.deepcopy(r) for r in org.get("tag_rules", [])},
+        "items": [],
         "mail_rules": {r["id"]: copy.deepcopy(r) for r in org.get("mail_rules", [])},
         "mailbox": mailbox,
         "messages": [],
@@ -214,6 +242,9 @@ def build_seed() -> dict:
     for rule_id in state["mail_rules"]:
         if rule_id.split("-")[-1].isdigit():
             state["seq"]["rule"] = max(state["seq"]["rule"], int(rule_id.split("-")[-1]))
+    for rule_id in state["tag_rules"]:
+        if rule_id.split("-")[-1].isdigit():
+            state["seq"]["tag_rule"] = max(state["seq"]["tag_rule"], int(rule_id.split("-")[-1]))
     state["config"]["offline_mode"] = os.environ.get("CANONICO_OFFLINE") == "1"
     provider = (os.environ.get("LLM_PROVIDER") or "gateway").strip().lower()
     state["config"]["provider"] = provider if provider in ("anthropic", "gateway") else "gateway"
@@ -299,6 +330,7 @@ def view(state: dict, fact: dict) -> dict:
     out["project_id"] = fact.get("project_id")
     out["retired_by"] = fact.get("retired_by") if fact["status"] == "retired" else None
     out["retired_at"] = fact.get("retired_at") if fact["status"] == "retired" else None
+    out["tags"] = list(fact.get("tags") or [])
     return out
 
 
@@ -320,10 +352,18 @@ def binding_of(state: dict, topic_id: str, focus: set[str] | None = None) -> dic
         return pinned[0]
     if focus is not None:
         active = [f for f in active if f["id"] in focus]
-    live = [f for f in active if not is_superseded(state, f) and effective_type(state, f) in BINDING_TYPES]
+    live = [f for f in active if not is_superseded(state, f) and effective_type(state, f) in BINDING_TYPES and confirmed_by(state, f) is None]
     if not live:
         return None
     return max(live, key=lambda f: (f["date"], f.get("x", {}).get("seq", 0), effective_type(state, f) == "DECISION", f["confidence"], f["id"]))
+
+
+def confirmed_by(state: dict, fact: dict) -> dict | None:
+    """The live fact this one only confirms. A confirmation never becomes binding while that fact stands."""
+    target = state["facts"].get(fact.get("x", {}).get("confirms") or "")
+    if target is None or target["status"] != "active" or is_superseded(state, target):
+        return None
+    return target
 
 
 def conflict_live(state: dict, conflict: dict) -> list[dict]:

@@ -47,6 +47,11 @@ def cors_origin_regex() -> str | None:
     return env("CORS_ORIGIN_REGEX", r"https://.*\.vercel\.app") or None
 
 
+def public_url() -> str:
+    """Base URL shown in webhook addresses."""
+    return env("CANONICO_PUBLIC_URL", "http://localhost:8000").rstrip("/")
+
+
 VERSION = "0.1.0"
 CORPUS = "org-consulting-clearpath"
 SEED_AT = "2026-11-14T09:12:00Z"

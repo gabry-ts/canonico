@@ -70,6 +70,21 @@
       }
     },
     {
+      "id": "src-clearpath-hook",
+      "project_id": "proj-clearpath",
+      "type": "webhook",
+      "label": "ClearPath webhook",
+      "status": "ok",
+      "last_synced_at": null,
+      "config": {
+        "default_tags": [
+          "clearpath"
+        ]
+      },
+      "demo_secret": "whsec_clearpathdemo51c7",
+      "created_at": "2026-11-01T09:00:00Z"
+    },
+    {
       "id": "src-internal-docs",
       "project_id": "proj-internal",
       "type": "documents",
@@ -142,5 +157,19 @@
       "status": "invited"
     }
   ],
-  "project_members": []
+  "project_members": [],
+  "hooks": {
+    "org": {
+      "demo_secret": "whsec_x7Kq2demo9f2a",
+      "created_at": "2026-11-01T09:00:00Z"
+    }
+  },
+  "tag_rules": [
+    {
+      "id": "tr-001",
+      "tag": "clearpath",
+      "project_id": "proj-clearpath",
+      "priority": 10
+    }
+  ]
 }
