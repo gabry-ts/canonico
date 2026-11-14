@@ -323,7 +323,7 @@ def binding_of(state: dict, topic_id: str, focus: set[str] | None = None) -> dic
     live = [f for f in active if not is_superseded(state, f) and effective_type(state, f) in BINDING_TYPES]
     if not live:
         return None
-    return max(live, key=lambda f: (f["date"], effective_type(state, f) == "DECISION", f["confidence"], f["id"]))
+    return max(live, key=lambda f: (f["date"], f.get("x", {}).get("seq", 0), effective_type(state, f) == "DECISION", f["confidence"], f["id"]))
 
 
 def conflict_live(state: dict, conflict: dict) -> list[dict]:

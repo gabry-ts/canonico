@@ -115,7 +115,7 @@ def create_fact(state: dict, *, topic: str, value: str, type: str, doc_id: str |
         "retired_reason": None,
         "pinned": False,
         "project_id": store.project_of_topic(state, topic),
-        "x": {"manual": True, **(x or {})},
+        "x": {"manual": True, "seq": state["seq"]["audit"] + 1, **(x or {})},
     }
     state["facts"][fact_id] = fact
     store.move_fact(state, fact, topic)

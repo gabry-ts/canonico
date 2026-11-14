@@ -118,7 +118,7 @@ def add_fact(state: dict, *, fact_id: str, topic_id: str, value: str, kind: str,
         "retired_reason": None,
         "pinned": False,
         "project_id": store.project_of_topic(state, topic_id),
-        "x": {"manual": False, **internal},
+        "x": {"manual": False, "seq": state["seq"]["audit"] + 1, **internal},
     }
     restore, befores = [], {}
     for old in olds:
@@ -184,17 +184,18 @@ def apply_email_statements(state: dict, found: list[dict], *, doc_id: str, date:
         fact_id = store.next_fact_id(state, "E")
         names = ", ".join(f"{o['id']} ({o['x'].get('short') or o['value']})" for o in olds)
         reason = f"Email from {sender}: {item['short']} supersedes {names}." if olds else f"Email from {sender}: {item['value']}."
+        figures = bool(state["topics"][item["topic"]].get("x", {}).get("what"))
         event = add_fact(
             state,
             fact_id=fact_id,
             topic_id=item["topic"],
-            value=item["value"],
+            value=item["short"] if figures else item["value"],
             kind=item["type"],
             doc_id=doc_id,
             quote=item["quote"],
             date=date,
             confidence=0.9,
-            internal={"short": item["short"], "label": f"the email from {sender}", "source_label": f"the email from {sender}"},
+            internal={"short": item["short"], "label": f"the email from {sender}", "source_label": f"the email from {sender}", "source_short": f"email from {sender}"},
             olds=olds,
             cause=f"an email from {sender}",
             reason=reason,
@@ -273,30 +274,36 @@ def new_version(state: dict, document: dict, *, text: str, label: str | None, ti
         same_topic = [f for f in current if f["topic"] == item["topic"] and statements.restates(f, item["short"])]
         if same_topic and all(statements.same_value(f, item["short"]) for f in same_topic):
             continue
-        olds = sorted((f for f in same_topic if not statements.same_value(f, item["short"])), key=lambda f: (f["date"], f["id"]), reverse=True)
-        if not olds and not any(f["topic"] == item["topic"] for f in current) and current:
+        previous = sorted((f for f in same_topic if not statements.same_value(f, item["short"])), key=lambda f: (f["date"], f["id"]), reverse=True)
+        if not previous and not any(f["topic"] == item["topic"] for f in current) and current:
             continue
+        # A standard feeds the topic it governs: the new value is filed there and replaces its binding fact.
+        feeds = state["topics"][item["topic"]].get("x", {}).get("feeds")
+        target = feeds if feeds in state["topics"] else item["topic"]
+        governed = replaced_by_decision(state, target, item["short"], date) if target != item["topic"] and item["type"] == "DECISION" else []
+        olds = governed + [f for f in previous if f not in governed]
         fact_id = store.next_library_fact_id(state, document["id"]) if library else store.next_fact_id(state)
         names = ", ".join(f"{o['id']} ({o['x'].get('short') or o['value']})" for o in olds)
         reason = f"{document['title']} {label} supersedes {names}." if olds else f"{document['title']} {label}: {item['short']}."
+        figures = bool(state["topics"][target].get("x", {}).get("what")) and (target != item["topic"] or not library)
         add_fact(
             state,
             fact_id=fact_id,
-            topic_id=item["topic"],
-            value=f"{document['title']} {label}: {item['short']}",
+            topic_id=target,
+            value=item["short"] if figures else f"{document['title']} {label}: {item['short']}",
             kind=item["type"],
             doc_id=document["id"],
             quote=item["quote"],
             date=date,
             confidence=0.95,
-            internal={"short": item["short"], "label": name, "source_label": name, "doc_version": number},
+            internal={"short": item["short"], "label": name, "source_label": name, "source_short": f"{document['title'].lower()} {label}", "doc_version": number},
             olds=olds,
             cause=name,
             reason=reason,
         )
         created.append(fact_id)
         links.extend({"fact_id": fact_id, "supersedes": old["id"]} for old in olds)
-        entry["facts_superseded"].extend(old["id"] for old in olds)
+        entry["facts_superseded"].extend(old["id"] for old in previous)
     source = state["sources"].get(document.get("source_id") or "")
     if source is not None:
         source.update(status="ok", last_synced_at=store.now())

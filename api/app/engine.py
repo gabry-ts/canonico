@@ -97,6 +97,22 @@ def model_route(question: str, lines: dict[str, str], model: str, meter) -> list
     return [t for t in dict.fromkeys(data.get("topics", [])) if t in lines][:2]
 
 
+def moved_topic(state: dict, topic_id: str | None) -> str | None:
+    """Follow a topic whose facts were all replaced by facts of one other topic.
+
+    A library standard feeds the topic it governs: once a new version is filed there,
+    questions about the standard are answered from that topic.
+    """
+    if topic_id is None:
+        return None
+    facts = [f for f in store.topic_facts(state, topic_id) if f["status"] == "active"]
+    if not facts or any(not store.is_superseded(state, f) for f in facts):
+        return topic_id
+    targets = {end["topic"] for end in (store.final_successor(state, f) for f in facts) if end is not None}
+    targets.discard(topic_id)
+    return targets.pop() if len(targets) == 1 else topic_id
+
+
 def match_topic(state: dict, question: str, min_coverage: float = 0.34, project_id: str | None = None) -> str | None:
     alias = alias_topic(state, question, project_id)
     if alias is not None:
@@ -278,17 +294,20 @@ def topic_state(state: dict, topic_id: str, focus: set[str] | None = None) -> di
     binding = store.binding_of(state, topic_id, focus)
     contested: list[dict] = []
     confirming: list[dict] = []
+    if binding is not None:
+        confirming = [
+            f
+            for f in active
+            if f is not binding and not store.is_superseded(state, f) and store.effective_type(state, f) in store.BINDING_TYPES and store.value_key(f) == store.value_key(binding)
+        ]
     for record in open_records:
         for fact in store.conflict_live(state, record):
-            if fact in contested or fact in confirming or fact is binding:
-                continue
-            if binding is not None and store.value_key(fact) == store.value_key(binding):
-                confirming.append(fact)
-            else:
+            if fact not in contested and fact not in confirming and fact is not binding:
                 contested.append(fact)
     superseded, dropped, stale = [], [], []
     if binding is not None:
-        replaced = [f for f in active if f is not binding and store.final_successor(state, f) is binding]
+        ends = [binding] + confirming
+        replaced = [f for f in state["facts"].values() if f["status"] == "active" and f not in ends and any(store.final_successor(state, f) is end for end in ends)]
         stale = [f for f in replaced if store.stale_active(state, f)]
         superseded = sorted((f for f in replaced if f not in stale), key=lambda f: (f["date"], f["id"]))
         for fact in stale:
@@ -298,7 +317,7 @@ def topic_state(state: dict, topic_id: str, focus: set[str] | None = None) -> di
         dropped = [
             f
             for f in facts
-            if f["status"] == "retired" and (f["id"] in peers or f.get("superseded_by") == binding["id"]) and f["type"] in store.BINDING_TYPES
+            if f["status"] == "retired" and (f["id"] in peers or f.get("superseded_by") in {e["id"] for e in ends}) and f["type"] in store.BINDING_TYPES
         ]
     return {
         "facts": facts,
@@ -427,7 +446,7 @@ def _describe(state: dict, events: list[dict]) -> str | None:
             if event["action"] == "supersede":
                 phrase = f"{cause} replaced {_target(old) if old else target}"
             elif cause not in replaced:
-                phrase = f"{cause} added {target}"
+                phrase = f"{cause} stated {_short(fact) if fact else target}"
             else:
                 continue
             if phrase not in arrived:
@@ -477,6 +496,7 @@ def ask(state: dict, question: str, topic_id: str | None = None, include_plain: 
     """
     routed = next((t for t in route or [] if t in state["topics"] and store.in_scope(state["topics"][t].get("project_id"), project_id)), None)
     matched = topic_id or alias_topic(state, question, project_id) or routed or match_topic(state, question, project_id=project_id)
+    matched = moved_topic(state, matched)
     focus = None
     if matched is None:
         response = _result("no_answer", NO_ANSWER, None, [], [], [], state)
