@@ -500,6 +500,8 @@ paths:
                 superseded_by: M-106
                 confidence: 0.88
                 retired_reason: Replaced by the final report, which sets 3–4 weeks.
+                retired_by: Giulia
+                retired_at: '2026-11-14T15:20:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -546,6 +548,8 @@ paths:
                 superseded_by: null
                 confidence: 0.88
                 retired_reason: null
+                retired_by: null
+                retired_at: null
         '404':
           $ref: '#/components/responses/NotFound'
         '422':
@@ -4465,6 +4469,19 @@ components:
           minimum: 0
           maximum: 1
           example: 0.94
+        retired_by:
+          type:
+          - string
+          - 'null'
+          description: Member name or id of who retired the fact.
+          example: Giulia
+        retired_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the fact was retired.
+          example: '2026-11-14T15:20:00Z'
         retired_reason:
           type:
           - string
