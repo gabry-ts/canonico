@@ -6,7 +6,7 @@ knows. It needs no model call, so the canned demo flows work offline and never f
 
 import re
 
-from app import engine, store
+from app import engine, llm, store
 from app.text import tokenize
 
 UNITS = r"business days?|working days?|weeks?|days?|months?|hours?|years?|percent|euros?|eur|%|€"
@@ -77,6 +77,8 @@ def find(state: dict, text: str, project_id: str | None, prefer_topics: set[str]
     the first sentence that states a quantity is filed under that topic.
     """
     found: dict[str, dict] = {}
+    if llm.forced():
+        return []
     for sentence in sentences(text):
         short = stated_short(sentence)
         if short is None or (RETROSPECTIVE.search(sentence) and not CHANGE_WORDS.search(sentence)):

@@ -93,6 +93,12 @@ def available() -> bool:
     return bool(os.environ.get(key_name()))
 
 
+def forced() -> bool:
+    """CANONICO_FORCE_LLM=1, for live tests only: every extraction, routing and linking decision goes
+    to the model, the deterministic shortcuts are skipped and no cached response is reused."""
+    return os.environ.get("CANONICO_FORCE_LLM") == "1"
+
+
 def default_models() -> dict[str, str]:
     """Model ids for the selected provider. LLM_MODEL_FAST and LLM_MODEL_SMART override the defaults."""
     if provider() == "gateway":
@@ -130,7 +136,9 @@ def _cache_key(model: str, system: str, user: str, schema: dict, max_tokens: int
 def complete_json(model: str, system: str, user: str, schema: dict, meter: Meter, name: str = "result", max_tokens: int = 8000, effort: str = "low", timeout: float = 240.0, retries: int = 4) -> dict:
     """Return a JSON object that follows the schema. Cached by input hash, capped by the meter."""
     path = cache_dir() / f"{_cache_key(model, system, user, schema, max_tokens, effort)}.json"
-    if path.exists():
+    if forced():
+        path = path.with_name(f"{path.stem}-{os.urandom(4).hex()}.json")
+    elif path.exists():
         try:
             data = json.loads(path.read_text(encoding="utf-8"))["data"]
             with meter.lock:

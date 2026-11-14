@@ -166,16 +166,20 @@ def enrich_document(doc_id: str, prefix: str = "M") -> list[str]:
         model = state["config"]["models"]["extraction"]
         linker = state["config"]["models"]["classification"]
         budget = max(0.0, state["config"]["cost_cap_usd"] - state.get("cost_spent", 0.0))
+        from app import engine
+
+        lines = engine.topic_lines(state, document["project_id"]) if llm.forced() else {}
     meter = llm.Meter(cap_usd=budget)
     try:
         found = extract.extract_document(document, model, meter)
     except Exception:
         found = []
+    routes = forced_routes(document, found, lines, model, meter) if llm.forced() else None
     with STORE.write() as state:
         state["cost_spent"] = round(state.get("cost_spent", 0.0) + meter.spent, 6)
         if doc_id not in state["documents"]:
             return []
-        created = file_extracted_facts(state, state["documents"][doc_id], found, prefix)
+        created = file_extracted_facts(state, state["documents"][doc_id], found, prefix, routes)
         touched: dict[str, list[str]] = {}
         for fact_id in created:
             touched.setdefault(state["facts"][fact_id]["topic"], []).append(fact_id)
@@ -211,15 +215,38 @@ def link_new_facts(topics: dict, touched: dict, model: str, meter: llm.Meter) ->
                 continue
 
 
-def file_extracted_facts(state: dict, document: dict, found: list[dict], prefix: str = "M") -> list[str]:
-    """File model-extracted facts under topics of the document's project. Curated topics are never touched."""
+def forced_routes(document: dict, found: list[dict], lines: dict[str, str], model: str, meter: llm.Meter) -> list[list[str]]:
+    """With CANONICO_FORCE_LLM the model also picks the topic of every extracted fact, curated topics included.
+    A `topic:<id>` tag of the document still wins."""
+    from app import engine
+
+    tagged = [t.split(":", 1)[1].strip() for t in document.get("tags") or [] if t.lower().startswith("topic:")]
+    tagged = [t for t in tagged if t in lines]
+    routes = []
+    for raw in found:
+        if tagged:
+            routes.append(tagged[:1])
+            continue
+        try:
+            routes.append(engine.model_route(f"{raw['topic_hint']}: {raw['value']}", lines, model, meter)[:1])
+        except Exception:
+            routes.append([])
+    return routes
+
+
+def file_extracted_facts(state: dict, document: dict, found: list[dict], prefix: str = "M", routes: list[list[str]] | None = None) -> list[str]:
+    """File model-extracted facts under topics of the document's project. Curated topics are never touched,
+    except when the model picked the topic (`routes`, only with CANONICO_FORCE_LLM)."""
     from app import engine
 
     project_id = document.get("project_id")
     created = []
-    for raw in found:
+    for n, raw in enumerate(found):
         ranked = [t for t in engine.rank_topics(state, raw["topic_hint"] + " " + raw["value"], project_id) if not state["topics"][t[0]].get("x", {}).get("curated")]
-        if ranked and ranked[0][2] >= 0.5:
+        routed = routes[n] if routes is not None and n < len(routes) else None
+        if routed and routed[0] in state["topics"] and state["topics"][routed[0]].get("project_id") == project_id:
+            topic_id = routed[0]
+        elif routed is None and ranked and ranked[0][2] >= 0.5:
             topic_id = ranked[0][0]
         else:
             topic_id = store.slugify(raw["topic_hint"])

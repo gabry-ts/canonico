@@ -60,8 +60,10 @@ def rank_topics(state: dict, question: str, project_id: str | None = None) -> li
 
 def alias_topic(state: dict, question: str, project_id: str | None = None) -> str | None:
     """Topic that lists this question among its known phrasings. Curated topics come first."""
+    from app import llm
+
     wanted = frozenset(tokenize(question))
-    if not wanted:
+    if not wanted or llm.forced():
         return None
     topics = [t for t in state["topics"].values() if store.in_scope(t.get("project_id"), project_id)]
     topics.sort(key=lambda t: (not t.get("x", {}).get("curated"), t.get("project_id") != store.DEFAULT_PROJECT))
