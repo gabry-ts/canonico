@@ -22,7 +22,13 @@ info:
     generated sentence has a structured companion (`*_code` and `*_params`) so a client can
     compose its own text.
 
-    Authentication: none. This is a hackathon demo only, do not expose it publicly.
+    Authentication: optional email and password sessions (`POST /auth/login`, or the one-click
+    `POST /auth/demo-login`). The session token is sent back as the `canonico_session` cookie or as
+    `Authorization: Bearer <token>`. When the server runs with `CANONICO_AUTH_REQUIRED=true`, every
+    write (POST, PUT, PATCH, DELETE) needs a session, except `/auth/*` and the `/hooks/*` webhooks,
+    which use their own `X-Canonico-Token`; reads stay public. With a session, the session member is
+    the actor of the request and the `X-Demo-Actor` header and `actor` body fields are ignored.
+    Without the flag, the demo actor rules below apply unchanged.
 
     Scope: the organisation is the global brain over all projects. Projects are isolated:
     a request with `project_id` only sees that project, a request without it has
@@ -84,6 +90,8 @@ tags:
   description: Items (meetings, documents, notes, tickets) sent into a project by webhook or manual upload
 - name: tags
   description: Tags on facts and documents
+- name: auth
+  description: Email and password sessions, demo sign-in and sign-out
 paths:
   /health:
     get:
@@ -680,6 +688,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /facts:
     get:
       tags:
@@ -790,6 +804,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /facts/{fact_id}:
     get:
       tags:
@@ -861,6 +881,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /facts/{fact_id}/retire:
     post:
       tags:
@@ -912,6 +938,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /facts/{fact_id}/restore:
     post:
       tags:
@@ -958,6 +990,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /topics:
     get:
       tags:
@@ -1027,6 +1065,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /topics/{topic_id}/chain:
     get:
       tags:
@@ -1228,6 +1272,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /documents/{doc_id}:
     get:
       tags:
@@ -1300,6 +1350,12 @@ paths:
                 audit_event_id: a-0043
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /audit:
     get:
       tags:
@@ -1410,6 +1466,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /ingest/{job_id}:
     get:
       tags:
@@ -1522,6 +1584,12 @@ paths:
                 result: null
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /facts/{fact_id}/pin:
     post:
       tags:
@@ -1575,6 +1643,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /facts/{fact_id}/unpin:
     post:
       tags:
@@ -1608,6 +1682,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /facts/{fact_id}/history:
     get:
       tags:
@@ -1712,6 +1792,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /facts/{fact_id}/supersedes:
     delete:
       tags:
@@ -1750,6 +1836,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /facts/{fact_id}/dependents:
     get:
       tags:
@@ -2101,6 +2193,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /open-questions:
     get:
       tags:
@@ -2191,6 +2289,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /maintenance/queue:
     get:
       tags:
@@ -2346,6 +2450,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /maintenance/{item_id}/dismiss:
     post:
       tags:
@@ -2407,6 +2517,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /topics/{topic_id}:
     patch:
       tags:
@@ -2446,6 +2562,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /topics/{topic_id}/merge:
     post:
       tags:
@@ -2490,6 +2612,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /documents/{doc_id}/facts:
     get:
       tags:
@@ -2648,6 +2776,12 @@ paths:
                     and billing-ready.
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /ask/stream:
     post:
       tags:
@@ -2693,6 +2827,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /ask/history:
     get:
       tags:
@@ -2876,6 +3016,12 @@ paths:
                     or less) is no longer binding.
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /audit/{event_id}/undo:
     post:
       tags:
@@ -2922,6 +3068,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /classify:
     post:
       tags:
@@ -2959,6 +3111,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /ingest/jobs:
     get:
       tags:
@@ -3261,6 +3419,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /demo/reset:
     post:
       tags:
@@ -3361,6 +3525,12 @@ paths:
                   median: null
                   samples: 0
                   measured_at: null
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /export:
     get:
       tags:
@@ -3461,6 +3631,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org:
     get:
       tags:
@@ -3517,6 +3693,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /projects:
     get:
       tags:
@@ -3621,6 +3803,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /projects/{project_id}:
     get:
       tags:
@@ -3700,6 +3888,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     delete:
       tags:
       - projects
@@ -3730,6 +3924,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /projects/{project_id}/sources:
     get:
       tags:
@@ -3850,6 +4050,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /sources/github/preview:
     post:
       tags:
@@ -3884,6 +4090,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /sources/{source_id}:
     get:
       tags:
@@ -3957,6 +4169,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     delete:
       tags:
       - sources
@@ -3988,6 +4206,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /sources/{source_id}/documents:
     get:
       tags:
@@ -4064,6 +4288,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /sync-jobs/{job_id}:
     get:
       tags:
@@ -4148,6 +4378,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /projects/{project_id}/mail:
     get:
       tags:
@@ -4223,6 +4459,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     delete:
       tags:
       - mail
@@ -4251,6 +4493,12 @@ paths:
                 mail_config_override: null
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/mail/rules:
     get:
       tags:
@@ -4323,6 +4571,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/mail/rules/test:
     post:
       tags:
@@ -4362,6 +4616,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/mail/rules/{rule_id}:
     patch:
       tags:
@@ -4399,6 +4659,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     delete:
       tags:
       - mail
@@ -4428,6 +4694,12 @@ paths:
                 deleted: true
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /mail/inbound:
     post:
       tags:
@@ -4475,6 +4747,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /mail/poll:
     post:
       tags:
@@ -4513,6 +4791,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /projects/{project_id}/messages:
     get:
       tags:
@@ -4574,6 +4858,12 @@ paths:
                 audit_event_id: a-0004
         '409':
           $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /documents/{doc_id}/versions:
     get:
       tags:
@@ -4665,6 +4955,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/members:
     get:
       tags:
@@ -4741,6 +5037,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/members/{member_id}:
     get:
       tags:
@@ -4805,6 +5107,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     delete:
       tags:
       - members
@@ -4822,6 +5130,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /projects/{project_id}/members:
     get:
       tags:
@@ -4890,6 +5204,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     delete:
       tags:
       - members
@@ -4915,6 +5235,12 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /roles:
     get:
       tags:
@@ -5014,6 +5340,8 @@ paths:
                 title: Operations lead
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
   /org/setup:
     post:
       tags:
@@ -5061,6 +5389,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/setup/status:
     get:
       tags:
@@ -5228,6 +5562,12 @@ paths:
                 secret: whsec_x7Kq2demo9f2a
                 secret_last4: 9f2a
                 rotated_at: '2026-11-14T15:00:00Z'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /sources/{source_id}/rotate-secret:
     post:
       tags:
@@ -5254,6 +5594,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/tag-rules:
     get:
       tags:
@@ -5319,6 +5665,12 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/tag-rules/test:
     post:
       tags:
@@ -5357,6 +5709,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /org/tag-rules/{rule_id}:
     patch:
       tags:
@@ -5394,6 +5752,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
     delete:
       tags:
       - hooks
@@ -5424,6 +5788,12 @@ paths:
                 deleted: true
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /projects/{project_id}/items:
     get:
       tags:
@@ -5522,6 +5892,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      - {}
   /items/{item_id}:
     get:
       tags:
@@ -5584,7 +5960,100 @@ paths:
                 count: 2
               - tag: topic:onboarding-target
                 count: 2
+  /auth/login:
+    post:
+      tags:
+      - auth
+      operationId: login
+      summary: Sign in with email and password
+      description: Checks the credentials and opens a session of 12 hours. The token is returned in the body and set as the HttpOnly `canonico_session` cookie (SameSite=Lax, Secure over https). An unknown email and a wrong password give the same 401.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: giulia.ferri@meridianlabs.org
+              password: canonico-demo
+      responses:
+        '200':
+          description: Signed in.
+          headers:
+            Set-Cookie:
+              description: The `canonico_session` cookie.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Wrong email or password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: unauthorized
+                message: Wrong email or password.
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /auth/demo-login:
+    post:
+      tags:
+      - auth
+      operationId: demoLogin
+      summary: One-click demo sign-in
+      description: Opens a session for a seeded member without a password, Giulia (owner) by default. Available only while `CANONICO_DEMO_LOGIN` is on (the default); otherwise 404.
+      security: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemoLoginRequest'
+            example:
+              member_id: mem-giulia-ferri
+      responses:
+        '200':
+          description: Signed in.
+          headers:
+            Set-Cookie:
+              description: The `canonico_session` cookie.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /auth/logout:
+    post:
+      tags:
+      - auth
+      operationId: logout
+      summary: Sign out
+      description: Revokes the session token, when there is one, and clears the cookie. Always 204.
+      security: []
+      responses:
+        '204':
+          description: Signed out.
 components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: canonico_session
+      description: Session cookie set by `POST /auth/login` or `POST /auth/demo-login`.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: The session token returned by `POST /auth/login` in the Authorization header with the Bearer scheme.
   parameters:
     AcceptLanguage:
       name: Accept-Language
@@ -5714,6 +6183,15 @@ components:
         type: string
       example: mem-sara-conti
   responses:
+    SessionRequired:
+      description: Sign-in required. Returned only when the server runs with `CANONICO_AUTH_REQUIRED=true` and the request has no valid session.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: unauthorized
+            message: Sign in to make changes.
     Unauthorized:
       description: Missing or invalid webhook token.
       content:
@@ -5769,6 +6247,45 @@ components:
             code: forbidden
             message: Role viewer lacks permission retire_fact.
   schemas:
+    LoginRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+          minLength: 1
+          examples:
+          - giulia.ferri@meridianlabs.org
+        password:
+          type: string
+          minLength: 1
+          examples:
+          - canonico-demo
+    DemoLoginRequest:
+      type: object
+      properties:
+        member_id:
+          type: string
+          description: Seeded member to sign in as. Giulia (owner) when omitted.
+          examples:
+          - mem-giulia-ferri
+    LoginResponse:
+      type: object
+      required:
+      - member
+      - token
+      - expires_at
+      properties:
+        member:
+          $ref: '#/components/schemas/Member'
+        token:
+          type: string
+          description: Session token, also set as the `canonico_session` cookie. Send it in the Authorization header with the Bearer scheme when cookies are not an option.
+        expires_at:
+          type: string
+          format: date-time
     Locale:
       type: string
       enum:

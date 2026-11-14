@@ -9,6 +9,19 @@ from typing import Any
 from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, RootModel
 
 
+class LoginRequest(BaseModel):
+    email: str = Field(..., examples=['giulia.ferri@meridianlabs.org'], min_length=1)
+    password: str = Field(..., examples=['canonico-demo'], min_length=1)
+
+
+class DemoLoginRequest(BaseModel):
+    member_id: str | None = Field(
+        None,
+        description='Seeded member to sign in as. Giulia (owner) when omitted.',
+        examples=['mem-giulia-ferri'],
+    )
+
+
 class Locale(StrEnum):
     en = 'en'
     it = 'it'
@@ -1271,6 +1284,15 @@ class TagRuleTestResult(BaseModel):
 class TagCount(BaseModel):
     tag: str
     count: int = Field(..., ge=0)
+
+
+class LoginResponse(BaseModel):
+    member: Member
+    token: str = Field(
+        ...,
+        description='Session token, also set as the `canonico_session` cookie. Send it in the Authorization header with the Bearer scheme when cookies are not an option.',
+    )
+    expires_at: AwareDatetime
 
 
 class AuditEvent(BaseModel):
