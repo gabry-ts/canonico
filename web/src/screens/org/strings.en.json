@@ -43,6 +43,8 @@
     "overrideTitle": "Override mail for this project",
     "overrideSub": "Give this project its own inbound address. Everything else stays as set on the organisation.",
     "modeImap": "IMAP mailbox",
+    "modeImapReal": "Real mailbox",
+    "modeImapRealSub": "Real IMAP, polled",
     "modeImapSub": "Mocked, polled",
     "modeWebhook": "Inbound webhook",
     "modeWebhookSub": "Pushed by the mail provider",
