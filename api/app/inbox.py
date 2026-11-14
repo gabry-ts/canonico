@@ -273,8 +273,15 @@ def new_version(state: dict, document: dict, *, text: str, label: str | None, ti
     store.audit(state, "ingest", "system", None, f"{label} of “{document['title']}” uploaded to the document library.", x={"project": document.get("project_id"), "document": document["id"], "info": {"kind": "version", "label": label, "title": document["title"]}, "undo": {"document_version": {document["id"]: snapshot}}}, bump=False)
     library = any(f["id"].startswith("L-") for f in previous_facts) or (state["sources"].get(document.get("source_id") or "", {}).get("type") == "document_library")
     found = statements.find(state, text, document.get("project_id"), prefer_topics={f["topic"] for f in current})
+    # A statement filed under the topic a standard governs belongs to the standard ("Target: 5 weeks").
+    governing = {state["topics"][f["topic"]].get("x", {}).get("feeds"): f["topic"] for f in current if f["topic"] in state["topics"]}
     created, links = [], []
     for item in found:
+        if library and item["topic"] in governing and not any(f["topic"] == item["topic"] for f in current):
+            item = {**item, "topic": governing[item["topic"]]}
+        if library and item["type"] == "EVIDENCE":
+            # a new version of a library document restates its rules: what it says is decided
+            item = {**item, "type": "DECISION"}
         same_topic = [f for f in current if f["topic"] == item["topic"] and statements.restates(f, item["short"])]
         if same_topic and all(statements.same_value(f, item["short"]) for f in same_topic):
             continue

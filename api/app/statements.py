@@ -37,6 +37,21 @@ def short_of(text: str) -> str | None:
     return f"{amount} {unit.lower()}" if unit not in ("%", "€") else f"{amount}{unit}"
 
 
+_NUMBER_WORDS = {w: str(n) for n, w in enumerate("zero one two three four five six seven eight nine ten eleven twelve".split())}
+_NUMBER_WORD = re.compile(r"\b(" + "|".join(_NUMBER_WORDS) + r")\b(?=(?:\s*(?:[–—-]|to)\s*\w+)?\s+(?:" + UNITS + r"))", re.IGNORECASE)
+
+
+def with_digits(sentence: str) -> str:
+    """ "five to six weeks" reads as "5 to 6 weeks". Only number words in front of a unit change."""
+    def one(match: re.Match) -> str:
+        return _NUMBER_WORDS[match.group(1).lower()]
+
+    previous = None
+    while previous != sentence:
+        previous, sentence = sentence, _NUMBER_WORD.sub(one, sentence)
+    return sentence
+
+
 _PRIOR = re.compile(r"\b(from|old|previous|former|original|instead of|rather than|replac\w*|was|were)(\s+(the|an?|old|previous|former|original|current))?\s*$", re.IGNORECASE)
 
 
@@ -80,7 +95,7 @@ def find(state: dict, text: str, project_id: str | None, prefer_topics: set[str]
     if llm.forced():
         return []
     for sentence in sentences(text):
-        short = stated_short(sentence)
+        short = stated_short(with_digits(sentence))
         if short is None or (RETROSPECTIVE.search(sentence) and not CHANGE_WORDS.search(sentence)):
             continue
         if force_topic is not None:
