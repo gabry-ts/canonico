@@ -85,7 +85,7 @@ function SourcesCard({ pid, onAdd }: { pid: string; onAdd: () => void }) {
                   ) : (
                     <span className="inline-flex items-center gap-2 text-[13px]">
                       <span className={'dot' + (s.status === 'syncing' ? ' sync' : '')}></span>
-                      {t('org.sources.st_' + s.status)}
+                      {t('org.sources.st_' + (s.type === 'webhook' && !s.last_synced_at && s.status !== 'syncing' ? 'waiting' : s.status))}
                     </span>
                   )}
                 </td>
