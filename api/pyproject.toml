@@ -1,0 +1,20 @@
+[project]
+name = "canonico-api"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic>=2",
+  "httpx",
+]
+
+[project.optional-dependencies]
+dev = ["datamodel-code-generator"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app", "app.routers"]
