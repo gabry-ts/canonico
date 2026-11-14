@@ -1941,7 +1941,7 @@ export interface components {
                 /** @example q01 */
                 query_id: string;
                 text: string;
-                /** @description What the query tests */
+                /** @description What the query tests, the `tests` tag of the corpus query, for example onboarding_target_evolution or audit_cycle_time_estimates. */
                 tests: string;
                 plain_top_doc: string;
                 canonico_top_doc: string;
@@ -2505,6 +2505,8 @@ export interface components {
         /** @description Shape depends on the source `type`. */
         SourceConfig: components["schemas"]["GithubSourceConfig"] | components["schemas"]["MailSourceConfig"] | components["schemas"]["DocumentLibraryConfig"] | components["schemas"]["DocumentsSourceConfig"] | components["schemas"]["WebhookSourceConfig"];
         Source: {
+            /** @description Webhook secret. Present only in the response that creates a source of type `webhook`, shown once. Later reads return `config.secret_last4` only. */
+            secret?: string;
             id: string;
             project_id: string;
             type: components["schemas"]["SourceType"];
@@ -3495,19 +3497,20 @@ export interface operations {
                     /**
                      * @example [
                      *       {
+                     *         "project_id": "proj-clearpath",
                      *         "id": "onboarding-target",
-                     *         "label": "Onboarding target",
+                     *         "label": "Onboarding time",
                      *         "fact_ids": [
                      *           "M-101",
                      *           "M-102",
                      *           "M-103",
                      *           "M-104",
                      *           "M-105",
-                     *           "M-106",
-                     *           "M-107"
+                     *           "M-106"
                      *         ]
                      *       },
                      *       {
+                     *         "project_id": "proj-clearpath",
                      *         "id": "audit-queue-time",
                      *         "label": "Audit queue time",
                      *         "fact_ids": [
@@ -4936,12 +4939,18 @@ export interface operations {
                     /**
                      * @example [
                      *       {
+                     *         "detail_code": "superseded_still_retrievable",
+                     *         "detail_params": {
+                     *           "by": "M-106",
+                     *           "date": "2025-11-28"
+                     *         },
                      *         "id": "MQ-001",
                      *         "fact": {
+                     *           "project_id": "proj-clearpath",
                      *           "id": "M-105",
                      *           "topic": "onboarding-target",
-                     *           "value": "Target recommendation: 4 weeks",
-                     *           "type": "SUPERSEDED",
+                     *           "value": "4 weeks",
+                     *           "type": "DECISION",
                      *           "status": "active",
                      *           "doc_id": "05-meetings/meeting-005-final-presentation",
                      *           "quote": "Our target recommendation is four weeks total for new consultants to be fully autonomous and billing-ready.",
@@ -4949,37 +4958,49 @@ export interface operations {
                      *           "supersedes": null,
                      *           "superseded_by": "M-106",
                      *           "confidence": 0.9,
+                     *           "retired_by": null,
+                     *           "retired_at": null,
                      *           "retired_reason": null,
-                     *           "pinned": false
+                     *           "pinned": false,
+                     *           "tags": []
                      *         },
                      *         "reason": "superseded_still_retrievable",
                      *         "detail": "Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval.",
                      *         "proposed_action": "retire",
                      *         "status": "pending",
-                     *         "proposed_at": "2026-11-14T09:20:00Z"
+                     *         "proposed_at": "2026-11-14T14:30:00Z"
                      *       },
                      *       {
+                     *         "detail_code": "low_confidence",
+                     *         "detail_params": {
+                     *           "confidence": "0.40",
+                     *           "threshold": "0.50"
+                     *         },
                      *         "id": "MQ-002",
                      *         "fact": {
-                     *           "id": "M-103",
-                     *           "topic": "onboarding-target",
-                     *           "value": "Requirement R1.1: 3 weeks or less",
+                     *           "project_id": "proj-clearpath",
+                     *           "id": "M-1411",
+                     *           "topic": "future-initiatives",
+                     *           "value": "AI governance and standards are scheduled for April 28 to May 9, 2026.",
                      *           "type": "CONSTRAINT",
                      *           "status": "active",
-                     *           "doc_id": "01-scope/requirements",
-                     *           "quote": "Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.",
-                     *           "date": "2025-09-29",
+                     *           "doc_id": "07-documents/implementation-roadmap",
+                     *           "quote": "Establish AI governance and standards; priority: P3; estimated_effort_person_weeks: 1; dependencies: P3.1b; target_start: Apr 28 2026; target_end: May 9 2026",
+                     *           "date": "2026-01-06",
                      *           "supersedes": null,
                      *           "superseded_by": null,
-                     *           "confidence": 0.88,
+                     *           "confidence": 0.4,
+                     *           "retired_by": null,
+                     *           "retired_at": null,
                      *           "retired_reason": null,
-                     *           "pinned": false
+                     *           "pinned": false,
+                     *           "tags": []
                      *         },
-                     *         "reason": "stale",
-                     *         "detail": "Older than the latest decision on the same topic and not linked to it.",
+                     *         "reason": "low_confidence",
+                     *         "detail": "Confidence 0.40 is below the threshold 0.50.",
                      *         "proposed_action": "retire",
                      *         "status": "pending",
-                     *         "proposed_at": "2026-11-14T09:20:00Z"
+                     *         "proposed_at": "2026-11-14T14:30:00Z"
                      *       }
                      *     ]
                      */
@@ -5019,27 +5040,36 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "id": "MQ-002",
+                     *       "detail_code": "superseded_still_retrievable",
+                     *       "detail_params": {
+                     *         "by": "M-106",
+                     *         "date": "2025-11-28"
+                     *       },
+                     *       "id": "MQ-001",
                      *       "fact": {
-                     *         "id": "M-103",
+                     *         "project_id": "proj-clearpath",
+                     *         "id": "M-105",
                      *         "topic": "onboarding-target",
-                     *         "value": "Requirement R1.1: 3 weeks or less",
-                     *         "type": "CONSTRAINT",
+                     *         "value": "4 weeks",
+                     *         "type": "DECISION",
                      *         "status": "retired",
-                     *         "doc_id": "01-scope/requirements",
-                     *         "quote": "Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.",
-                     *         "date": "2025-09-29",
+                     *         "doc_id": "05-meetings/meeting-005-final-presentation",
+                     *         "quote": "Our target recommendation is four weeks total for new consultants to be fully autonomous and billing-ready.",
+                     *         "date": "2025-11-21",
                      *         "supersedes": null,
                      *         "superseded_by": "M-106",
-                     *         "confidence": 0.88,
-                     *         "retired_reason": "Replaced by the final report, which sets 3–4 weeks.",
-                     *         "pinned": false
+                     *         "confidence": 0.9,
+                     *         "retired_by": "Giulia",
+                     *         "retired_at": "2026-11-14T14:30:00Z",
+                     *         "retired_reason": "Replaced by the final report.",
+                     *         "pinned": false,
+                     *         "tags": []
                      *       },
-                     *       "reason": "stale",
-                     *       "detail": "Older than the latest decision on the same topic and not linked to it.",
+                     *       "reason": "superseded_still_retrievable",
+                     *       "detail": "Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval.",
                      *       "proposed_action": "retire",
                      *       "status": "approved",
-                     *       "proposed_at": "2026-11-14T09:20:00Z"
+                     *       "proposed_at": "2026-11-14T14:30:00Z"
                      *     }
                      */
                     "application/json": components["schemas"]["MaintenanceItem"];
@@ -5080,27 +5110,36 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "id": "MQ-001",
-                     *       "fact": {
-                     *         "id": "M-105",
-                     *         "topic": "onboarding-target",
-                     *         "value": "Target recommendation: 4 weeks",
-                     *         "type": "SUPERSEDED",
-                     *         "status": "active",
-                     *         "doc_id": "05-meetings/meeting-005-final-presentation",
-                     *         "quote": "Our target recommendation is four weeks total for new consultants to be fully autonomous and billing-ready.",
-                     *         "date": "2025-11-21",
-                     *         "supersedes": null,
-                     *         "superseded_by": "M-106",
-                     *         "confidence": 0.9,
-                     *         "retired_reason": null,
-                     *         "pinned": false
+                     *       "detail_code": "low_confidence",
+                     *       "detail_params": {
+                     *         "confidence": "0.40",
+                     *         "threshold": "0.50"
                      *       },
-                     *       "reason": "superseded_still_retrievable",
-                     *       "detail": "Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval.",
+                     *       "id": "MQ-002",
+                     *       "fact": {
+                     *         "project_id": "proj-clearpath",
+                     *         "id": "M-1411",
+                     *         "topic": "future-initiatives",
+                     *         "value": "AI governance and standards are scheduled for April 28 to May 9, 2026.",
+                     *         "type": "CONSTRAINT",
+                     *         "status": "active",
+                     *         "doc_id": "07-documents/implementation-roadmap",
+                     *         "quote": "Establish AI governance and standards; priority: P3; estimated_effort_person_weeks: 1; dependencies: P3.1b; target_start: Apr 28 2026; target_end: May 9 2026",
+                     *         "date": "2026-01-06",
+                     *         "supersedes": null,
+                     *         "superseded_by": null,
+                     *         "confidence": 0.4,
+                     *         "retired_by": null,
+                     *         "retired_at": null,
+                     *         "retired_reason": null,
+                     *         "pinned": false,
+                     *         "tags": []
+                     *       },
+                     *       "reason": "low_confidence",
+                     *       "detail": "Confidence 0.40 is below the threshold 0.50.",
                      *       "proposed_action": "retire",
                      *       "status": "dismissed",
-                     *       "proposed_at": "2026-11-14T09:20:00Z"
+                     *       "proposed_at": "2026-11-14T14:30:00Z"
                      *     }
                      */
                     "application/json": components["schemas"]["MaintenanceItem"];
@@ -5988,6 +6027,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
+                     *       "locale": "en",
                      *       "documents": 49,
                      *       "topics": 65,
                      *       "facts_total": 432,
@@ -6010,8 +6050,8 @@ export interface operations {
                      *         "spent_usd": 0,
                      *         "cap_usd": 2
                      *       },
-                     *       "last_ingest_at": "2026-11-14T09:12:00Z",
-                     *       "last_reset_at": "2026-11-14T12:43:57Z",
+                     *       "last_ingest_at": "2026-11-14T14:30:00Z",
+                     *       "last_reset_at": "2026-11-14T14:30:00Z",
                      *       "needs_attention": {
                      *         "stale_active": 1,
                      *         "conflicts_open": 21,
@@ -6030,10 +6070,10 @@ export interface operations {
                      *         "retired": 0
                      *       },
                      *       "answers": {
-                     *         "binding": 1,
+                     *         "binding": 0,
                      *         "contested": 0,
                      *         "no_answer": 0,
-                     *         "since": "2026-11-14T12:43:57Z"
+                     *         "since": "2026-11-14T14:30:00Z"
                      *       },
                      *       "sources": [
                      *         {
@@ -6041,28 +6081,35 @@ export interface operations {
                      *           "type": "documents",
                      *           "label": "ClearPath documents",
                      *           "status": "ok",
-                     *           "last_synced_at": "2026-11-14T09:12:00Z"
+                     *           "last_synced_at": "2026-11-14T14:30:00Z"
                      *         },
                      *         {
                      *           "source_id": "src-clearpath-library",
                      *           "type": "document_library",
                      *           "label": "ClearPath library",
                      *           "status": "ok",
-                     *           "last_synced_at": "2026-11-14T09:12:00Z"
+                     *           "last_synced_at": "2026-11-14T14:30:00Z"
                      *         },
                      *         {
                      *           "source_id": "src-clearpath-mail",
                      *           "type": "mail",
                      *           "label": "ClearPath mailbox",
                      *           "status": "ok",
-                     *           "last_synced_at": "2026-11-14T09:12:00Z"
+                     *           "last_synced_at": "2026-11-14T14:30:00Z"
+                     *         },
+                     *         {
+                     *           "source_id": "src-clearpath-hook",
+                     *           "type": "webhook",
+                     *           "label": "ClearPath webhook",
+                     *           "status": "ok",
+                     *           "last_synced_at": null
                      *         },
                      *         {
                      *           "source_id": "src-internal-docs",
                      *           "type": "documents",
                      *           "label": "Internal documents",
                      *           "status": "ok",
-                     *           "last_synced_at": "2026-11-14T09:12:00Z"
+                     *           "last_synced_at": "2026-11-14T14:30:00Z"
                      *         },
                      *         {
                      *           "source_id": "src-internal-gh",
@@ -6074,7 +6121,7 @@ export interface operations {
                      *       ],
                      *       "recent_changes": [
                      *         {
-                     *           "at": "2026-11-14T09:12:00Z",
+                     *           "at": "2026-11-14T14:30:00Z",
                      *           "actor": "system",
                      *           "action": "ingest",
                      *           "fact_id": null,
@@ -6111,11 +6158,11 @@ export interface operations {
                     /**
                      * @example {
                      *       "models": {
-                     *         "extraction": "model-extract-v1",
-                     *         "classification": "model-classify-v1",
-                     *         "answer": "model-answer-v1"
+                     *         "extraction": "claude-haiku-5-5",
+                     *         "classification": "claude-sonnet-5-5",
+                     *         "answer": "claude-sonnet-5-5"
                      *       },
-                     *       "cost_cap_usd": 10,
+                     *       "cost_cap_usd": 2,
                      *       "active_corpus": "org-consulting-clearpath",
                      *       "stale_after_days": 90,
                      *       "low_confidence_threshold": 0.5,
@@ -6157,16 +6204,16 @@ export interface operations {
                     /**
                      * @example {
                      *       "models": {
-                     *         "extraction": "model-extract-v1",
-                     *         "classification": "model-classify-v1",
-                     *         "answer": "model-answer-v1"
+                     *         "extraction": "claude-haiku-5-5",
+                     *         "classification": "claude-sonnet-5-5",
+                     *         "answer": "claude-sonnet-5-5"
                      *       },
                      *       "cost_cap_usd": 15,
                      *       "active_corpus": "org-consulting-clearpath",
                      *       "stale_after_days": 90,
                      *       "low_confidence_threshold": 0.5,
-                     *       "offline_mode": true,
-                     *       "provider": "gateway"
+                     *       "offline_mode": false,
+                     *       "provider": "anthropic"
                      *     }
                      */
                     "application/json": components["schemas"]["Config"];
@@ -6193,29 +6240,112 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "documents": 46,
-                     *       "topics": 24,
-                     *       "facts_total": 312,
+                     *       "locale": "en",
+                     *       "documents": 49,
+                     *       "topics": 65,
+                     *       "facts_total": 432,
                      *       "by_type": {
-                     *         "DECISION": 38,
-                     *         "CONSTRAINT": 31,
-                     *         "EVIDENCE": 140,
-                     *         "HYPOTHESIS": 52,
-                     *         "SUPERSEDED": 29,
-                     *         "OPEN": 22
+                     *         "DECISION": 84,
+                     *         "CONSTRAINT": 55,
+                     *         "EVIDENCE": 87,
+                     *         "HYPOTHESIS": 74,
+                     *         "SUPERSEDED": 89,
+                     *         "OPEN": 43
                      *       },
                      *       "by_status": {
-                     *         "active": 312,
+                     *         "active": 432,
                      *         "retired": 0
                      *       },
-                     *       "open_conflicts": 2,
-                     *       "open_questions": 22,
-                     *       "maintenance_pending": 5,
+                     *       "open_conflicts": 21,
+                     *       "open_questions": 43,
+                     *       "maintenance_pending": 11,
                      *       "cost": {
                      *         "spent_usd": 0,
-                     *         "cap_usd": 10
+                     *         "cap_usd": 2
                      *       },
-                     *       "last_ingest_at": null
+                     *       "last_ingest_at": "2026-11-14T14:30:00Z",
+                     *       "last_reset_at": "2026-11-14T14:30:00Z",
+                     *       "needs_attention": {
+                     *         "stale_active": 1,
+                     *         "conflicts_open": 21,
+                     *         "open_questions": 43
+                     *       },
+                     *       "facts_by_type": {
+                     *         "DECISION": 84,
+                     *         "CONSTRAINT": 55,
+                     *         "EVIDENCE": 87,
+                     *         "HYPOTHESIS": 74,
+                     *         "SUPERSEDED": 89,
+                     *         "OPEN": 43
+                     *       },
+                     *       "facts_by_status": {
+                     *         "active": 432,
+                     *         "retired": 0
+                     *       },
+                     *       "answers": {
+                     *         "binding": 0,
+                     *         "contested": 0,
+                     *         "no_answer": 0,
+                     *         "since": "2026-11-14T14:30:00Z"
+                     *       },
+                     *       "sources": [
+                     *         {
+                     *           "source_id": "src-clearpath-docs",
+                     *           "type": "documents",
+                     *           "label": "ClearPath documents",
+                     *           "status": "ok",
+                     *           "last_synced_at": "2026-11-14T14:30:00Z"
+                     *         },
+                     *         {
+                     *           "source_id": "src-clearpath-library",
+                     *           "type": "document_library",
+                     *           "label": "ClearPath library",
+                     *           "status": "ok",
+                     *           "last_synced_at": "2026-11-14T14:30:00Z"
+                     *         },
+                     *         {
+                     *           "source_id": "src-clearpath-mail",
+                     *           "type": "mail",
+                     *           "label": "ClearPath mailbox",
+                     *           "status": "ok",
+                     *           "last_synced_at": "2026-11-14T14:30:00Z"
+                     *         },
+                     *         {
+                     *           "source_id": "src-clearpath-hook",
+                     *           "type": "webhook",
+                     *           "label": "ClearPath webhook",
+                     *           "status": "ok",
+                     *           "last_synced_at": null
+                     *         },
+                     *         {
+                     *           "source_id": "src-internal-docs",
+                     *           "type": "documents",
+                     *           "label": "Internal documents",
+                     *           "status": "ok",
+                     *           "last_synced_at": "2026-11-14T14:30:00Z"
+                     *         },
+                     *         {
+                     *           "source_id": "src-internal-gh",
+                     *           "type": "github",
+                     *           "label": "gabry-ts/canonico",
+                     *           "status": "idle",
+                     *           "last_synced_at": null
+                     *         }
+                     *       ],
+                     *       "recent_changes": [
+                     *         {
+                     *           "at": "2026-11-14T14:30:00Z",
+                     *           "actor": "system",
+                     *           "action": "ingest",
+                     *           "fact_id": null,
+                     *           "summary": "Seeded demo memory from the ClearPath corpus."
+                     *         }
+                     *       ],
+                     *       "time_to_fix_seconds": {
+                     *         "median": null,
+                     *         "samples": 0,
+                     *         "measured_at": null
+                     *       }
                      *     }
                      */
                     "application/json": components["schemas"]["Stats"];
@@ -6434,7 +6564,7 @@ export interface operations {
                      *           "id": "proj-clearpath",
                      *           "name": "ClearPath engagement",
                      *           "description": "Consulting engagement for ClearPath, 46 documents.",
-                     *           "created_at": "2026-11-14T09:00:00Z",
+                     *           "created_at": "2026-11-14T14:30:00Z",
                      *           "mail_config_override": null,
                      *           "effective_mail_config": {
                      *             "mode": "imap_mock",
@@ -6445,6 +6575,7 @@ export interface operations {
                      *           },
                      *           "source_ids": [
                      *             "src-clearpath-docs",
+                     *             "src-clearpath-hook",
                      *             "src-clearpath-library",
                      *             "src-clearpath-mail"
                      *           ]
@@ -6453,7 +6584,7 @@ export interface operations {
                      *           "id": "proj-internal",
                      *           "name": "Internal",
                      *           "description": "Internal documents and tooling repository.",
-                     *           "created_at": "2026-11-14T09:05:00Z",
+                     *           "created_at": "2026-11-14T14:30:00Z",
                      *           "mail_config_override": {
                      *             "mode": "webhook",
                      *             "imap_host": null,
@@ -6516,7 +6647,7 @@ export interface operations {
                      *       "id": "proj-clearpath",
                      *       "name": "ClearPath engagement",
                      *       "description": "Consulting engagement for ClearPath, 46 documents.",
-                     *       "created_at": "2026-11-14T09:00:00Z",
+                     *       "created_at": "2026-11-14T14:30:00Z",
                      *       "mail_config_override": null,
                      *       "effective_mail_config": {
                      *         "mode": "imap_mock",
@@ -6527,6 +6658,7 @@ export interface operations {
                      *       },
                      *       "source_ids": [
                      *         "src-clearpath-docs",
+                     *         "src-clearpath-hook",
                      *         "src-clearpath-library",
                      *         "src-clearpath-mail"
                      *       ]
@@ -6563,7 +6695,7 @@ export interface operations {
                      *       "id": "proj-clearpath",
                      *       "name": "ClearPath engagement",
                      *       "description": "Consulting engagement for ClearPath, 46 documents.",
-                     *       "created_at": "2026-11-14T09:00:00Z",
+                     *       "created_at": "2026-11-14T14:30:00Z",
                      *       "mail_config_override": null,
                      *       "effective_mail_config": {
                      *         "mode": "imap_mock",
@@ -6574,6 +6706,7 @@ export interface operations {
                      *       },
                      *       "source_ids": [
                      *         "src-clearpath-docs",
+                     *         "src-clearpath-hook",
                      *         "src-clearpath-library",
                      *         "src-clearpath-mail"
                      *       ]
@@ -6651,7 +6784,7 @@ export interface operations {
                      *       "id": "proj-clearpath",
                      *       "name": "ClearPath engagement",
                      *       "description": "Consulting engagement for ClearPath, 46 documents.",
-                     *       "created_at": "2026-11-14T09:00:00Z",
+                     *       "created_at": "2026-11-14T14:30:00Z",
                      *       "mail_config_override": null,
                      *       "effective_mail_config": {
                      *         "mode": "imap_mock",
@@ -6662,6 +6795,7 @@ export interface operations {
                      *       },
                      *       "source_ids": [
                      *         "src-clearpath-docs",
+                     *         "src-clearpath-hook",
                      *         "src-clearpath-library",
                      *         "src-clearpath-mail"
                      *       ]
@@ -6702,7 +6836,7 @@ export interface operations {
                      *           "type": "documents",
                      *           "label": "ClearPath documents",
                      *           "status": "ok",
-                     *           "last_synced_at": "2026-11-14T13:00:00Z",
+                     *           "last_synced_at": "2026-11-14T14:30:00Z",
                      *           "items": 46,
                      *           "config": {}
                      *         },
@@ -6712,11 +6846,11 @@ export interface operations {
                      *           "type": "document_library",
                      *           "label": "ClearPath library",
                      *           "status": "ok",
-                     *           "last_synced_at": "2026-11-14T13:00:00Z",
-                     *           "items": 46,
+                     *           "last_synced_at": "2026-11-14T14:30:00Z",
+                     *           "items": 2,
                      *           "config": {
                      *             "provider": "local_mock",
-                     *             "root_path": "/corpus/org-consulting-clearpath"
+                     *             "root_path": "/seed/library"
                      *           }
                      *         },
                      *         {
@@ -6725,13 +6859,29 @@ export interface operations {
                      *           "type": "mail",
                      *           "label": "ClearPath mailbox",
                      *           "status": "ok",
-                     *           "last_synced_at": "2026-11-14T14:30:05Z",
-                     *           "items": 1,
+                     *           "last_synced_at": "2026-11-14T14:30:00Z",
+                     *           "items": 0,
                      *           "config": {
                      *             "mode": "imap_mock",
                      *             "mailbox": "brain@meridianlabs.org",
                      *             "match_rules": [
                      *               "rule-001"
+                     *             ]
+                     *           }
+                     *         },
+                     *         {
+                     *           "id": "src-clearpath-hook",
+                     *           "project_id": "proj-clearpath",
+                     *           "type": "webhook",
+                     *           "label": "ClearPath webhook",
+                     *           "status": "ok",
+                     *           "last_synced_at": null,
+                     *           "items": 0,
+                     *           "config": {
+                     *             "url": "http://localhost:8000/hooks/projects/proj-clearpath",
+                     *             "secret_last4": "51c7",
+                     *             "default_tags": [
+                     *               "clearpath"
                      *             ]
                      *           }
                      *         }
@@ -7007,48 +7157,30 @@ export interface operations {
                     /**
                      * @example [
                      *       {
-                     *         "id": "library/onboarding-standard-v3",
-                     *         "title": "Onboarding standard",
-                     *         "date": "2026-11-14",
-                     *         "path": "library/onboarding-standard-v3.md",
-                     *         "source_id": "src-library",
-                     *         "source_type": "document_library",
-                     *         "version": 3,
-                     *         "version_of": "library/onboarding-standard-v2",
-                     *         "current_version": 3
-                     *       },
-                     *       {
-                     *         "id": "library/onboarding-standard-v2",
-                     *         "title": "Onboarding standard",
-                     *         "date": "2026-11-10",
-                     *         "path": "library/onboarding-standard-v2.md",
-                     *         "source_id": "src-library",
-                     *         "source_type": "document_library",
+                     *         "project_id": "proj-clearpath",
+                     *         "source_id": "src-clearpath-library",
                      *         "version": 2,
-                     *         "version_of": "library/onboarding-standard-v1",
-                     *         "current_version": 3
-                     *       },
-                     *       {
-                     *         "id": "library/onboarding-standard-v1",
+                     *         "version_of": "library/onboarding-standard",
+                     *         "id": "library/onboarding-standard",
                      *         "title": "Onboarding standard",
-                     *         "date": "2026-11-03",
-                     *         "path": "library/onboarding-standard-v1.md",
-                     *         "source_id": "src-library",
+                     *         "date": "2026-01-12",
+                     *         "path": "library/onboarding-standard.txt",
+                     *         "current_version": 2,
                      *         "source_type": "document_library",
-                     *         "version": 1,
-                     *         "version_of": null,
-                     *         "current_version": 3
+                     *         "tags": []
                      *       },
                      *       {
-                     *         "id": "library/sample",
-                     *         "title": "Sample",
-                     *         "date": "2026-11-14",
-                     *         "path": "library/sample.md",
-                     *         "source_id": "src-library",
-                     *         "source_type": "document_library",
+                     *         "project_id": "proj-clearpath",
+                     *         "source_id": "src-clearpath-library",
                      *         "version": 1,
                      *         "version_of": null,
-                     *         "current_version": 1
+                     *         "id": "library/audit-handbook",
+                     *         "title": "Audit handbook",
+                     *         "date": "2025-10-20",
+                     *         "path": "library/audit-handbook.txt",
+                     *         "current_version": 1,
+                     *         "source_type": "document_library",
+                     *         "tags": []
                      *       }
                      *     ]
                      */
@@ -7366,6 +7498,13 @@ export interface operations {
                      *           "value": "@meridianlabs.org",
                      *           "project_id": "proj-clearpath",
                      *           "priority": 10
+                     *         },
+                     *         {
+                     *           "id": "rule-002",
+                     *           "match_type": "sender_domain",
+                     *           "value": "@team.meridianlabs.org",
+                     *           "project_id": "proj-internal",
+                     *           "priority": 20
                      *         }
                      *       ]
                      *     }
@@ -7590,15 +7729,15 @@ export interface operations {
                      *       "rule_id": "rule-001",
                      *       "document_id": "mail/demo-0001",
                      *       "facts_created": [
-                     *         "M-301"
+                     *         "E-301"
                      *       ],
                      *       "supersedes_created": [
                      *         {
-                     *           "fact_id": "M-301",
+                     *           "fact_id": "E-301",
                      *           "supersedes": "M-106"
                      *         }
                      *       ],
-                     *       "audit_event_id": "a-0043"
+                     *       "audit_event_id": "a-0004"
                      *     }
                      */
                     "application/json": components["schemas"]["InboundEmailResult"];
@@ -7638,20 +7777,13 @@ export interface operations {
                      *       "polled": 1,
                      *       "results": [
                      *         {
-                     *           "message_id": "<demo-0001@meridianlabs.org>",
+                     *           "message_id": "<status-0046@meridianlabs.org>",
                      *           "routed_project_id": "proj-clearpath",
                      *           "rule_id": "rule-001",
-                     *           "document_id": "mail/demo-0001",
-                     *           "facts_created": [
-                     *             "M-301"
-                     *           ],
-                     *           "supersedes_created": [
-                     *             {
-                     *               "fact_id": "M-301",
-                     *               "supersedes": "M-106"
-                     *             }
-                     *           ],
-                     *           "audit_event_id": "a-0043"
+                     *           "document_id": "mail/status-0046",
+                     *           "facts_created": [],
+                     *           "supersedes_created": [],
+                     *           "audit_event_id": "a-0003"
                      *         }
                      *       ]
                      *     }
@@ -7740,7 +7872,7 @@ export interface operations {
                      *           "supersedes": "M-106"
                      *         }
                      *       ],
-                     *       "audit_event_id": "a-0005"
+                     *       "audit_event_id": "a-0004"
                      *     }
                      */
                     "application/json": components["schemas"]["InboundEmailResult"];
@@ -8464,15 +8596,10 @@ export interface operations {
                      *       "rule_id": null,
                      *       "document_id": "hooks/meeting-2026-11-12-steering-committee",
                      *       "facts_created": [
-                     *         "M-201"
+                     *         "M-301"
                      *       ],
-                     *       "supersedes_created": [
-                     *         {
-                     *           "fact_id": "M-201",
-                     *           "supersedes": "M-103"
-                     *         }
-                     *       ],
-                     *       "audit_event_id": "A-0301",
+                     *       "supersedes_created": [],
+                     *       "audit_event_id": "a-0004",
                      *       "duplicate": false
                      *     }
                      */
@@ -8533,10 +8660,10 @@ export interface operations {
                      *       "rule_id": "tr-001",
                      *       "document_id": "hooks/meeting-2026-11-12-steering-committee",
                      *       "facts_created": [
-                     *         "M-201"
+                     *         "M-301"
                      *       ],
                      *       "supersedes_created": [],
-                     *       "audit_event_id": "A-0301",
+                     *       "audit_event_id": "a-0004",
                      *       "duplicate": false
                      *     }
                      */
@@ -8895,7 +9022,7 @@ export interface operations {
                      *           "source_id": "src-clearpath-hook",
                      *           "document_id": "hooks/meeting-2026-11-12-steering-committee",
                      *           "facts_count": 1,
-                     *           "received_at": "2026-11-12T10:05:00Z",
+                     *           "received_at": "2026-11-14T14:30:00Z",
                      *           "routed_by": "tag_rule"
                      *         }
                      *       ],
@@ -8946,16 +9073,16 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "item_id": "itm-0002",
+                     *       "item_id": "itm-0001",
                      *       "project_id": "proj-clearpath",
                      *       "routed_by": "project_id",
                      *       "rule_id": null,
                      *       "document_id": "hooks/note-2026-11-13-call-with-clearpath-ops",
                      *       "facts_created": [
-                     *         "M-202"
+                     *         "M-301"
                      *       ],
                      *       "supersedes_created": [],
-                     *       "audit_event_id": "A-0302",
+                     *       "audit_event_id": "a-0004",
                      *       "duplicate": false
                      *     }
                      */
@@ -9003,7 +9130,7 @@ export interface operations {
                      *       "source_id": "src-clearpath-hook",
                      *       "document_id": "hooks/meeting-2026-11-12-steering-committee",
                      *       "facts_count": 1,
-                     *       "received_at": "2026-11-12T10:05:00Z",
+                     *       "received_at": "2026-11-14T14:30:00Z",
                      *       "routed_by": "tag_rule",
                      *       "text_excerpt": "We agreed the onboarding target stays at 3–4 weeks."
                      *     }
@@ -9039,11 +9166,11 @@ export interface operations {
                      * @example [
                      *       {
                      *         "tag": "clearpath",
-                     *         "count": 12
+                     *         "count": 2
                      *       },
                      *       {
                      *         "tag": "topic:onboarding-target",
-                     *         "count": 4
+                     *         "count": 2
                      *       }
                      *     ]
                      */

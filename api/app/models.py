@@ -238,7 +238,10 @@ class Metrics(BaseModel):
 class PerQueryItem(BaseModel):
     query_id: str = Field(..., examples=['q01'])
     text: str
-    tests: str = Field(..., description='What the query tests')
+    tests: str = Field(
+        ...,
+        description='What the query tests, the `tests` tag of the corpus query, for example onboarding_target_evolution or audit_cycle_time_estimates.',
+    )
     plain_top_doc: str
     canonico_top_doc: str
     gold_doc: str
@@ -1389,6 +1392,10 @@ class SourceConfig(
 
 
 class Source(BaseModel):
+    secret: str | None = Field(
+        None,
+        description='Webhook secret. Present only in the response that creates a source of type `webhook`, shown once. Later reads return `config.secret_last4` only.',
+    )
     id: str
     project_id: str
     type: SourceType1
