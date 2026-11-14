@@ -224,6 +224,13 @@ private fun EmptyAsk(suggestions: List<String>, onAsk: (String) -> Unit) {
             color = p.text,
             textAlign = TextAlign.Center,
         )
+        Text(
+            stringResource(R.string.ask_emptySubtitle),
+            fontSize = 14.sp,
+            color = p.secondary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
         Spacer(Modifier.height(4.dp))
         suggestions.forEachIndexed { i, s ->
             Row(

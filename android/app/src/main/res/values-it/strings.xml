@@ -124,4 +124,5 @@
     <string name="common_more">Altro</string>
     <string name="common_refresh">Aggiorna</string>
     <string name="review_open">Apri tema</string>
+    <string name="ask_emptySubtitle">Le risposte arrivano dalla decisione vincolante, con la fonte citata.</string>
 </resources>

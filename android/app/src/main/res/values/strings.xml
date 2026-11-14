@@ -124,4 +124,5 @@
     <string name="common_more">More</string>
     <string name="common_refresh">Refresh</string>
     <string name="review_open">Open topic</string>
+    <string name="ask_emptySubtitle">Answers come from the binding decision, with the source quoted.</string>
 </resources>
