@@ -117,6 +117,9 @@ export default function FactDrawer({ id, onClose }: { id: string; onClose: () =>
     }
   }
 
+  // A hand retire links the fact to the topic's binding fact, but nothing really replaced it.
+  const retireLinked = isRet && (history.data ?? []).some((h) => h.action === 'retire' && h.changes.superseded_by)
+
   const startAct = (kind: ActKind) => {
     setAct({ kind, value: f.value, reason: '' })
     setTimeout(() => (kind === 'correct' ? valueRef.current : reasonRef.current)?.focus(), 20)
@@ -301,7 +304,7 @@ export default function FactDrawer({ id, onClose }: { id: string; onClose: () =>
               <span className="text-muted-foreground text-[13px]">{t('memory.drawer.noTags')}</span>
             )}
           </dd>
-          {f.superseded_by && (
+          {f.superseded_by && !retireLinked && (
             <>
               <dt>{t('memory.drawer.replacedBy')}</dt>
               <dd>
