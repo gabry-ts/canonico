@@ -44,9 +44,9 @@ def test_wrong_password_and_unknown_email_give_the_same_401(client):
 
 def test_passwords_are_stored_hashed():
     hashes = auth.password_hashes()
-    assert set(hashes) == {"mem-giulia-ferri", "mem-sara-conti", "mem-luca-bassi"}
+    assert set(hashes) == {"mem-giulia-ferri", "mem-sara-conti", "mem-luca-bassi", "mem-gabriele-partiti", "mem-emanuele-beffa", "mem-davide-chiattelli"}
     assert all(h.startswith("pbkdf2_sha256$") and "canonico-demo" not in h for h in hashes.values())
-    assert len({h.split("$")[2] for h in hashes.values()}) == 3
+    assert len({h.split("$")[2] for h in hashes.values()}) == 6
 
 
 def test_demo_login_defaults_to_giulia_and_accepts_a_member(client):

@@ -17,7 +17,9 @@ def test_roles_matrix_matches_the_contract(client, spec):
 
 def test_members_can_be_invited_changed_and_removed(client, spec):
     page = assert_contract(client.get("/org/members"), "GET", "/org/members")
-    assert_matches(page, spec["paths"]["/org/members"]["get"]["responses"]["200"]["content"]["application/json"]["example"])
+    example = spec["paths"]["/org/members"]["get"]["responses"]["200"]["content"]["application/json"]["example"]
+    assert_matches({**page, "items": page["items"][:3], "total": 3}, example)
+    assert page["total"] == 6
     invited = assert_contract(client.post("/org/members", json={"name": "Marta Riva", "email": "marta.riva@meridianlabs.org", "org_role": "viewer"}), "POST", "/org/members", 201)
     assert invited["id"] == "mem-marta-riva" and invited["status"] == "invited" and invited["org_role"] == "viewer"
     assert_contract(client.post("/org/members", json={"name": "Marta Riva", "email": "other@meridianlabs.org", "org_role": "viewer"}), "POST", "/org/members", 409)
@@ -28,6 +30,8 @@ def test_members_can_be_invited_changed_and_removed(client, spec):
     assert client.get("/me", headers={"X-Demo-Actor": "Marta"}).json()["role"] == "admin"
     assert client.delete("/org/members/mem-marta-riva").status_code == 204
     assert_contract(client.get("/org/members/mem-marta-riva"), "GET", "/org/members/{member_id}", 404)
+    for team in ("gabriele-partiti", "emanuele-beffa", "davide-chiattelli"):
+        assert client.delete(f"/org/members/mem-{team}").status_code == 204
     assert_contract(client.delete("/org/members/mem-giulia-ferri"), "DELETE", "/org/members/{member_id}", 409)
     assert_contract(client.patch("/org/members/mem-giulia-ferri", json={"org_role": "viewer"}), "PATCH", "/org/members/{member_id}", 409)
     assert client.get("/org/members").json()["total"] == 3
@@ -36,7 +40,8 @@ def test_members_can_be_invited_changed_and_removed(client, spec):
 def test_project_role_is_inherited_until_overridden(client):
     members = assert_contract(client.get(f"/projects/{CLEARPATH}/members"), "GET", "/projects/{project_id}/members")
     assert {m["member_id"]: (m["role"], m["inherited"]) for m in members} == {
-        "mem-giulia-ferri": ("owner", True), "mem-sara-conti": ("editor", True), "mem-luca-bassi": ("viewer", True)}
+        "mem-giulia-ferri": ("owner", True), "mem-sara-conti": ("editor", True), "mem-luca-bassi": ("viewer", True),
+        "mem-gabriele-partiti": ("owner", True), "mem-emanuele-beffa": ("owner", True), "mem-davide-chiattelli": ("owner", True)}
     body = {"member_id": "mem-luca-bassi", "role": "editor"}
     changed = assert_contract(client.put(f"/projects/{CLEARPATH}/members/mem-luca-bassi", json=body), "PUT", "/projects/{project_id}/members/{member_id}")
     assert changed == {"member_id": "mem-luca-bassi", "project_id": CLEARPATH, "role": "editor", "inherited": False}

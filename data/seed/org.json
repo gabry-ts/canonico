@@ -155,6 +155,36 @@
       "org_role": "viewer",
       "created_at": "2026-11-14T09:20:00Z",
       "status": "invited"
+    },
+    {
+      "id": "mem-gabriele-partiti",
+      "name": "Gabriele Partiti",
+      "display_name": "Gabriele",
+      "title": "Backend",
+      "email": "gabriele@partiti.dev",
+      "org_role": "owner",
+      "created_at": "2026-11-14T09:30:00Z",
+      "status": "active"
+    },
+    {
+      "id": "mem-emanuele-beffa",
+      "name": "Emanuele Beffa",
+      "display_name": "Emanuele",
+      "title": "Frontend",
+      "email": "emanuele.beffa@gmail.com",
+      "org_role": "owner",
+      "created_at": "2026-11-14T09:40:00Z",
+      "status": "active"
+    },
+    {
+      "id": "mem-davide-chiattelli",
+      "name": "Davide Chiattelli",
+      "display_name": "Davide",
+      "title": "Business",
+      "email": "davidechiattelli@gmail.com",
+      "org_role": "owner",
+      "created_at": "2026-11-14T09:50:00Z",
+      "status": "active"
     }
   ],
   "project_members": [],
