@@ -206,12 +206,17 @@ def topic_facts(state: dict, topic_id: str) -> list[dict]:
     return [state["facts"][i] for i in topic["fact_ids"] if i in state["facts"]]
 
 
-def binding_of(state: dict, topic_id: str) -> dict | None:
-    """Pinned fact, else the latest active DECISION or CONSTRAINT that nothing replaced."""
+def binding_of(state: dict, topic_id: str, focus: set[str] | None = None) -> dict | None:
+    """Pinned fact, else the latest active DECISION or CONSTRAINT that nothing replaced.
+
+    With a focus, only the facts of the topic that the question is about are candidates.
+    """
     active = [f for f in topic_facts(state, topic_id) if f["status"] == "active"]
     pinned = [f for f in active if f.get("pinned")]
     if pinned:
         return pinned[0]
+    if focus is not None:
+        active = [f for f in active if f["id"] in focus]
     live = [f for f in active if not is_superseded(state, f) and effective_type(state, f) in BINDING_TYPES]
     if not live:
         return None
