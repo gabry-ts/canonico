@@ -164,6 +164,7 @@ def enrich_document(doc_id: str, prefix: str = "M") -> list[str]:
         if document is None or document.get("project_id") is None or not inbox.can_use_model(state):
             return []
         model = state["config"]["models"]["extraction"]
+        linker = state["config"]["models"]["classification"]
         budget = max(0.0, state["config"]["cost_cap_usd"] - state.get("cost_spent", 0.0))
     meter = llm.Meter(cap_usd=budget)
     try:
@@ -174,7 +175,40 @@ def enrich_document(doc_id: str, prefix: str = "M") -> list[str]:
         state["cost_spent"] = round(state.get("cost_spent", 0.0) + meter.spent, 6)
         if doc_id not in state["documents"]:
             return []
-        return file_extracted_facts(state, state["documents"][doc_id], found, prefix)
+        created = file_extracted_facts(state, state["documents"][doc_id], found, prefix)
+        touched: dict[str, list[str]] = {}
+        for fact_id in created:
+            touched.setdefault(state["facts"][fact_id]["topic"], []).append(fact_id)
+        topics = {t: ({"label": state["topics"][t]["label"], "question": ""}, [dict(f, tid=f["id"]) for f in copy.deepcopy(store.topic_facts(state, t))]) for t in touched}
+    link_new_facts(topics, touched, linker, meter)
+    return created
+
+
+def link_new_facts(topics: dict, touched: dict, model: str, meter: llm.Meter) -> None:
+    """Let the model link the new facts of a document to the facts of their topic: a decision reversed
+    later in the same meeting replaces the earlier one. Failures leave the facts unlinked."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    def one(topic_id: str) -> list[dict]:
+        topic, members = topics[topic_id]
+        return [link for link in extract.link_topic(topic, members, model, meter)["links"] if link["newer"] in touched[topic_id]]
+
+    spent = meter.spent
+    try:
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            links = [link for found in pool.map(one, [t for t, (_, members) in topics.items() if len(members) >= 2]) for link in found]
+    except Exception:
+        links = []
+    with STORE.write() as state:
+        state["cost_spent"] = round(state.get("cost_spent", 0.0) + meter.spent - spent, 6)
+        for link in links:
+            older, newer = state["facts"].get(link["older"]), state["facts"].get(link["newer"])
+            if older is None or newer is None or older.get("superseded_by"):
+                continue
+            try:
+                ops.supersede(state, older, newer, link.get("reason") or "Replaced later in the same document.", "system")
+            except ApiError:
+                continue
 
 
 def file_extracted_facts(state: dict, document: dict, found: list[dict], prefix: str = "M") -> list[str]:
