@@ -4,9 +4,9 @@ import json
 from fastapi import APIRouter, Query, Request
 from pydantic import ValidationError
 
-from app import ingest, llm, ops, store
+from app import inbox, ingest, llm, ops, store
 from app.http import ApiError, not_found, out
-from app.models import Document, DocumentCreate, DocumentCreated, DocumentDeleted, Fact
+from app.models import Document, DocumentCreate, DocumentCreated, DocumentDeleted, DocumentVersion, DocumentVersionCreate, DocumentVersionResult, Fact
 from app.store import STORE
 
 router = APIRouter()
@@ -14,7 +14,9 @@ router = APIRouter()
 
 def doc_view(doc: dict, with_text: bool = False) -> dict:
     keys = ("id", "title", "date", "path") + (("text",) if with_text else ())
-    return {k: doc[k] for k in keys}
+    view = {k: doc[k] for k in keys}
+    view.update(project_id=doc.get("project_id"), source_id=doc.get("source_id"), version=doc.get("version", 1), version_of=doc.get("version_of"))
+    return view
 
 
 def require_doc(state: dict, doc_id: str) -> dict:
@@ -62,9 +64,10 @@ async def _parse(request: Request) -> DocumentCreate:
 
 
 @router.get("/documents", operation_id="listDocuments", status_code=200, response_model=list[Document])
-def list_documents():
+def list_documents(project_id: str | None = None):
     with STORE.read() as state:
-        return out(list[Document], [doc_view(d) for d in state["documents"].values()])
+        ops.scope(state, project_id)
+        return out(list[Document], [doc_view(d) for d in state["documents"].values() if store.in_scope(d.get("project_id"), project_id)])
 
 
 @router.post("/documents", operation_id="createDocument", status_code=201, response_model=DocumentCreated)
@@ -77,17 +80,43 @@ async def create_document(request: Request):
         if doc_id in state["documents"]:
             raise ApiError(409, f"Document {doc_id} already exists.")
         extension = "txt" if body.format and body.format.value == "text" else "md"
-        document = {"id": doc_id, "title": body.title, "date": body.date.isoformat(), "path": f"{doc_id}.{extension}", "text": body.text}
+        project_id = getattr(body, "project_id", None) or store.DEFAULT_PROJECT
+        ops.require_project(state, project_id)
+        source = next((x["id"] for x in state["sources"].values() if x["project_id"] == project_id and x["type"] == "documents"), None)
+        document = {"id": doc_id, "title": body.title, "date": body.date.isoformat(), "path": f"{doc_id}.{extension}", "text": body.text,
+                    "project_id": project_id, "source_id": source, "version": 1, "version_of": None}
         state["documents"][doc_id] = document
         job = None
         if body.ingest is not False:
             job = ingest.new_job(state, "ingest")
-            if not llm.available() or ingest.remaining_budget(state) <= 0:
+            if not inbox.can_use_model(state):
                 job["status"] = "error"
         view = {"document": doc_view(document), "ingest_job": ingest.job_view(job) if job else None}
     if job and job["status"] == "queued":
         ingest.start(ingest.run_document_job, job["id"], doc_id)
     return out(DocumentCreated, view, 201)
+
+
+@router.get("/documents/{doc_id:path}/versions", operation_id="listDocumentVersions", status_code=200, response_model=list[DocumentVersion])
+def list_document_versions(doc_id: str):
+    with STORE.read() as state:
+        return out(list[DocumentVersion], inbox.versions_view(require_doc(state, doc_id)))
+
+
+@router.post("/documents/{doc_id:path}/versions", operation_id="uploadDocumentVersion", status_code=201, response_model=DocumentVersionResult)
+def upload_document_version(doc_id: str, body: DocumentVersionCreate):
+    if not body.text.strip():
+        raise ApiError(422, "text: the new version is empty.")
+    with STORE.write() as state:
+        document = require_doc(state, doc_id)
+        if body.text.strip() == document["text"].strip():
+            raise ApiError(409, "This text is identical to the current version.")
+        labels = {v.get("version_label") for v in inbox.ensure_versions(document)}
+        if body.version_label and body.version_label in labels:
+            raise ApiError(409, f"Version {body.version_label} already exists.")
+        date = body.date.isoformat() if body.date else store.now()[:10]
+        result = inbox.new_version(state, document, text=body.text, label=body.version_label, title=body.title, date=date)
+        return out(DocumentVersionResult, result, 201)
 
 
 @router.get("/documents/{doc_id:path}/facts", operation_id="listDocumentFacts", status_code=200, response_model=list[Fact])

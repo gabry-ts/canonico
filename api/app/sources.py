@@ -1,0 +1,215 @@
+"""Sources of a project and their sync jobs."""
+
+import copy
+import re
+import threading
+
+from app import extract, github, inbox, llm, ops, store
+from app.http import ApiError, not_found
+from app.store import STORE
+
+SHORT = {"documents": "docs", "document_library": "library", "github": "gh", "mail": "mail"}
+
+
+def require(state: dict, source_id: str) -> dict:
+    source = state["sources"].get(source_id)
+    if source is None:
+        raise not_found(f"Source {source_id}")
+    return source
+
+
+def view(state: dict, source: dict) -> dict:
+    return {
+        "id": source["id"],
+        "project_id": source["project_id"],
+        "type": source["type"],
+        "label": source["label"],
+        "status": source.get("status", "idle"),
+        "last_synced_at": source.get("last_synced_at"),
+        "items": sum(1 for d in state["documents"].values() if d.get("source_id") == source["id"]),
+        "config": source.get("config") or {},
+    }
+
+
+def check_config(kind: str, config: dict) -> dict:
+    """Validate the settings of a source against its type."""
+    config = dict(config or {})
+    if kind == "github":
+        try:
+            github.parse_repo(config.get("repo_url", ""))
+        except github.GithubError as exc:
+            raise ApiError(422, f"config.repo_url: {exc}") from exc
+        config["repo_url"] = str(config["repo_url"]).rstrip("/")
+        config.setdefault("include", ["issues", "readme"])
+        if "discussions" in config["include"]:
+            raise ApiError(422, "config.include: discussions are not available without authentication.")
+    elif kind == "document_library":
+        if config.get("provider") != "local_mock":
+            raise ApiError(422, "config.provider: only local_mock is implemented.")
+        if not config.get("root_path"):
+            raise ApiError(422, "config.root_path: field required")
+    elif kind == "mail":
+        if config.get("mode") not in ("imap_mock", "webhook") or not config.get("mailbox"):
+            raise ApiError(422, "config: a mail source needs mode and mailbox.")
+        config.setdefault("match_rules", [])
+    elif config:
+        raise ApiError(422, "config: a documents source has no settings.")
+    return config
+
+
+def new_id(state: dict, project_id: str, kind: str) -> str:
+    base = f"src-{re.sub(r'^proj-', '', project_id)}-{SHORT[kind]}"
+    candidate, n = base, 2
+    while candidate in state["sources"]:
+        candidate, n = f"{base}-{n}", n + 1
+    return candidate
+
+
+def job_view(job: dict) -> dict:
+    return {k: job[k] for k in ("id", "source_id", "status", "items_added", "facts_created", "cost_usd", "started_at", "finished_at")}
+
+
+def start_sync(state: dict, source: dict) -> dict:
+    if source.get("status") == "syncing":
+        raise ApiError(409, f"Source {source['id']} is already syncing.")
+    state["seq"]["sync"] = state["seq"].get("sync", 0) + 1
+    job = {"id": f"sync-{state['seq']['sync']:04d}", "source_id": source["id"], "status": "queued", "items_added": 0, "facts_created": 0, "cost_usd": 0.0, "started_at": None, "finished_at": None}
+    state["sync_jobs"].append(job)
+    source["status"] = "syncing"
+    return job
+
+
+def run_sync(job_id: str) -> None:
+    with STORE.write() as state:
+        job = next(j for j in state["sync_jobs"] if j["id"] == job_id)
+        job.update(status="running", started_at=store.now())
+        source = copy.deepcopy(state["sources"].get(job["source_id"]))
+        offline = bool(state["config"].get("offline_mode"))
+    if source is None:
+        _finish(job_id, "error")
+        return
+    try:
+        if source["type"] == "mail":
+            with STORE.write() as state:
+                result = inbox.poll(state, source["project_id"])
+                job = next(j for j in state["sync_jobs"] if j["id"] == job_id)
+                job["items_added"] = len(result["results"])
+                job["facts_created"] = sum(len(r["facts_created"]) for r in result["results"])
+        elif source["type"] == "github":
+            documents = github.fetch(source["config"]["repo_url"], source["config"].get("include"), offline=offline)
+            _add_github_documents(job_id, source, documents)
+    except (github.GithubError, llm.LLMError, ApiError):
+        _finish(job_id, "error")
+        return
+    _finish(job_id, "done")
+
+
+def _add_github_documents(job_id: str, source: dict, documents: list[dict]) -> None:
+    added = []
+    with STORE.write() as state:
+        if source["id"] not in state["sources"]:
+            return
+        for raw in documents:
+            existing = state["documents"].get(raw["id"])
+            if existing is not None:
+                if existing.get("source_id") == source["id"] and existing["text"] != raw["text"]:
+                    existing.update(text=raw["text"], title=raw["title"])
+                continue
+            state["documents"][raw["id"]] = {**raw, "project_id": source["project_id"], "source_id": source["id"], "version": 1, "version_of": None}
+            added.append(raw["id"])
+        job = next(j for j in state["sync_jobs"] if j["id"] == job_id)
+        job["items_added"] = len(added)
+        if added:
+            owner, repo = github.parse_repo(source["config"]["repo_url"])
+            store.audit(state, "ingest", "system", None, f"{owner}/{repo}: {len(added)} new documents from GitHub.", x={"project": source["project_id"]}, bump=False)
+        use_model = inbox.can_use_model(state)
+        models = dict(state["config"]["models"])
+        budget = max(0.0, state["config"]["cost_cap_usd"] - state.get("cost_spent", 0.0))
+        texts = {i: copy.deepcopy(state["documents"][i]) for i in added}
+    if not use_model or not added:
+        return
+    meter = llm.Meter(cap_usd=budget)
+    facts = 0
+    for doc_id, document in texts.items():
+        try:
+            found = extract.extract_document(document, models["extraction"], meter)
+        except llm.LLMError:
+            break
+        with STORE.write() as state:
+            facts += len(file_extracted_facts(state, document, found))
+    with STORE.write() as state:
+        job = next(j for j in state["sync_jobs"] if j["id"] == job_id)
+        job["facts_created"] = facts
+        job["cost_usd"] = round(meter.spent, 4)
+        state["cost_spent"] = round(state.get("cost_spent", 0.0) + meter.spent, 6)
+
+
+def file_extracted_facts(state: dict, document: dict, found: list[dict]) -> list[str]:
+    """File model-extracted facts under topics of the document's project. Curated topics are never touched."""
+    from app import engine
+
+    project_id = document.get("project_id")
+    created = []
+    for raw in found:
+        ranked = [t for t in engine.rank_topics(state, raw["topic_hint"] + " " + raw["value"], project_id) if not state["topics"][t[0]].get("x", {}).get("curated")]
+        if ranked and ranked[0][2] >= 0.5:
+            topic_id = ranked[0][0]
+        else:
+            topic_id = store.slugify(raw["topic_hint"])
+            existing = state["topics"].get(topic_id)
+            if existing is not None and (existing.get("project_id") != project_id or existing.get("x", {}).get("curated")):
+                topic_id = f"{topic_id}-{store.slugify(project_id or 'org')}"
+            state["topics"].setdefault(topic_id, {"id": topic_id, "label": raw["topic_hint"].capitalize(), "fact_ids": [], "project_id": project_id, "x": {"keywords": [raw["topic_hint"]]}})
+        fact = ops.create_fact(
+            state,
+            topic=topic_id,
+            value=raw["value"],
+            type=raw["type"],
+            doc_id=document["id"],
+            quote=raw["quote"],
+            date=raw["date"],
+            confidence=raw["confidence"],
+            actor="system",
+            action="ingest",
+            x={"manual": False, "short": raw.get("short") or "", "label": f"the fact “{raw.get('short') or raw['value'][:60]}” from “{document['title']}”"},
+        )
+        created.append(fact["id"])
+    return created
+
+
+def _finish(job_id: str, status: str) -> None:
+    with STORE.write() as state:
+        job = next(j for j in state["sync_jobs"] if j["id"] == job_id)
+        job.update(status=status, finished_at=store.now())
+        source = state["sources"].get(job["source_id"])
+        if source is not None:
+            source["status"] = "ok" if status == "done" else "error"
+            if status == "done":
+                source["last_synced_at"] = job["finished_at"]
+
+
+def launch(job_id: str) -> None:
+    threading.Thread(target=run_sync, args=(job_id,), daemon=True).start()
+
+
+def delete_project(state: dict, project_id: str) -> None:
+    """Remove a project with its sources, documents, facts and the mail rules that point to it."""
+    if any(j["status"] in ("queued", "running") and state["sources"].get(j["source_id"], {}).get("project_id") == project_id for j in state["sync_jobs"]):
+        raise ApiError(409, f"Project {project_id} has a sync in progress.")
+    topics = {i for i, t in state["topics"].items() if t.get("project_id") == project_id}
+    facts = {i for i, f in state["facts"].items() if f.get("project_id") == project_id}
+    for fact in state["facts"].values():
+        for key in ("supersedes", "superseded_by"):
+            if fact.get(key) in facts:
+                fact[key] = None
+    state["facts"] = {i: f for i, f in state["facts"].items() if i not in facts}
+    state["topics"] = {i: t for i, t in state["topics"].items() if i not in topics}
+    state["documents"] = {i: d for i, d in state["documents"].items() if d.get("project_id") != project_id}
+    state["conflicts"] = {i: c for i, c in state["conflicts"].items() if c["topic"] not in topics}
+    state["open_questions"] = {i: q for i, q in state["open_questions"].items() if q["fact_id"] not in facts}
+    state["maintenance"] = {i: m for i, m in state["maintenance"].items() if m["fact_id"] not in facts}
+    state["sources"] = {i: s for i, s in state["sources"].items() if s["project_id"] != project_id}
+    state["mail_rules"] = {i: r for i, r in state["mail_rules"].items() if r["project_id"] != project_id}
+    state["messages"] = [m for m in state["messages"] if m.get("project_id") != project_id]
+    del state["projects"][project_id]
+    store.audit(state, "delete_document", "system", None, f"Project {project_id} deleted with {len(facts)} facts.", x={"project": None})

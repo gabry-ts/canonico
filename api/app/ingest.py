@@ -19,8 +19,7 @@ def materialize(result: dict, curated_facts: list[dict], curated_topics: list[di
     """Turn a pipeline result into memory records. Curated topics win over extracted ones."""
     reserved = {t["id"] for t in curated_topics}
     by_tid = {f["tid"]: f for f in result["facts"]}
-    numbers = [int(f["id"].split("-")[1]) for f in curated_facts if f["id"].split("-")[1].isdigit()]
-    counter = max(numbers + [300])
+    counter = 1000
     facts, topics, id_map = [], [], {}
     for topic in sorted(result["topics"], key=lambda t: min((by_tid[i]["date"] for i in t["fact_ids"]), default="9999")):
         if topic["id"] in reserved:
@@ -134,7 +133,8 @@ def run_ingest_job(job_id: str) -> None:
     with STORE.write() as state:
         job = next(j for j in state["jobs"] if j["id"] == job_id)
         job["status"] = "running"
-        documents = copy.deepcopy(state["documents"])
+        corpus = set(store.load_corpus_documents())
+        documents = {i: copy.deepcopy(d) for i, d in state["documents"].items() if i in corpus}
         models = dict(state["config"]["models"])
         curated_facts = _curated(list(copy.deepcopy(state["facts"]).values()))
         curated_topics = _curated(list(copy.deepcopy(state["topics"]).values()))
@@ -152,12 +152,19 @@ def run_ingest_job(job_id: str) -> None:
                 continue
             state["facts"][fact["id"]] = fact
         keep = {f["id"] for f in memory["facts"]}
-        for fact_id in [i for i in state["facts"] if i not in keep and not state["facts"][i]["x"].get("manual")]:
+        for fact_id in [i for i, f in state["facts"].items() if i not in keep and not f["x"].get("manual") and f.get("doc_id") in documents]:
             del state["facts"][fact_id]
-        state["topics"] = {t["id"]: (state["topics"].get(t["id"]) if t["x"].get("curated") and t["id"] in state["topics"] else t) for t in memory["topics"]}
+        for fact in memory["facts"]:
+            state["facts"][fact["id"]].setdefault("project_id", store.DEFAULT_PROJECT)
+        fresh = {t["id"]: (state["topics"].get(t["id"]) if t["x"].get("curated") and t["id"] in state["topics"] else {"project_id": store.DEFAULT_PROJECT, **t}) for t in memory["topics"]}
+        kept = {i: t for i, t in state["topics"].items() if i not in fresh and (t.get("x", {}).get("curated") or t.get("project_id") != store.DEFAULT_PROJECT)}
+        state["topics"] = {**kept, **fresh}
+        for topic in state["topics"].values():
+            topic["fact_ids"] = [i for i in topic["fact_ids"] if i in state["facts"]]
         for fact in state["facts"].values():
             store.move_fact(state, fact, fact["topic"])
         state["conflicts"] = {c["id"]: state["conflicts"].get(c["id"], c) if c["x"].get("curated") else c for c in memory["conflicts"]}
+        state["maintenance"] = {k: m for k, m in state["maintenance"].items() if m["fact_id"] in state["facts"]}
         state["open_questions"] = {k: q for k, q in state["open_questions"].items() if q["fact_id"] in state["facts"]}
         store.sync_open_questions(state)
         ops.sync_conflicts(state)
@@ -207,8 +214,6 @@ def run_classify_job(job_id: str, doc_id: str | None, fact_ids: list[str] | None
 
 def run_document_job(job_id: str, doc_id: str) -> None:
     """Extract facts from one new document, file them under existing topics and link them."""
-    from app import engine
-
     with STORE.write() as state:
         job = next(j for j in state["jobs"] if j["id"] == job_id)
         job["status"] = "running"
@@ -228,27 +233,10 @@ def run_document_job(job_id: str, doc_id: str) -> None:
         if doc_id not in state["documents"]:
             _finish(job_id, meter, "error")
             return
-        for raw in found:
-            ranked = engine.rank_topics(state, raw["topic_hint"] + " " + raw["value"])
-            if ranked and ranked[0][2] >= 0.5:
-                topic_id = ranked[0][0]
-            else:
-                topic_id = store.slugify(raw["topic_hint"])
-                state["topics"].setdefault(topic_id, {"id": topic_id, "label": raw["topic_hint"].capitalize(), "fact_ids": [], "x": {"keywords": [raw["topic_hint"]]}})
-            fact = ops.create_fact(
-                state,
-                topic=topic_id,
-                value=raw["value"],
-                type=raw["type"],
-                doc_id=doc_id,
-                quote=raw["quote"],
-                date=raw["date"],
-                confidence=raw["confidence"],
-                actor="system",
-                action="ingest",
-                x={"manual": False, "short": raw.get("short") or "", "label": f"the fact “{raw.get('short') or raw['value'][:60]}” from “{document['title']}”"},
-            )
-            touched.setdefault(topic_id, []).append(fact["id"])
+        from app import sources
+
+        for fact_id in sources.file_extracted_facts(state, state["documents"][doc_id], found):
+            touched.setdefault(state["facts"][fact_id]["topic"], []).append(fact_id)
         job = next(j for j in state["jobs"] if j["id"] == job_id)
         job["docs"], job["facts"] = 1, len(found)
         snapshot = {t: [dict(f, tid=f["id"]) for f in copy.deepcopy(store.topic_facts(state, t))] for t in touched}

@@ -1,0 +1,96 @@
+"""Deterministic extraction of restated values, used when a new email or document version arrives.
+
+It finds sentences that state a quantity ("5 weeks", "3–4 days") on a topic the memory already
+knows. It needs no model call, so the canned demo flows work offline and never fail live.
+"""
+
+import re
+
+from app import engine, store
+from app.text import tokenize
+
+UNITS = r"business days?|working days?|weeks?|days?|months?|hours?|years?|percent|euros?|eur|%|€"
+QUANTITY = re.compile(rf"(\d+(?:[.,]\d+)?)(?:\s*(?:[–—-]|to)\s*(\d+(?:[.,]\d+)?))?\s*({UNITS})(?![a-z])", re.IGNORECASE)
+DECISION_WORDS = re.compile(r"\b(confirm\w*|agree\w*|decid\w*|approv\w*|final\w*|commit\w*|sla|target\w*|standard|must|shall)\b", re.IGNORECASE)
+_SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
+_UNIT_FAMILY = {"business day": "day", "working day": "day", "eur": "euro", "€": "euro", "%": "percent"}
+
+
+def unit_of(text: str) -> str | None:
+    match = QUANTITY.search(text or "")
+    if not match:
+        return None
+    unit = match.group(3).lower().rstrip("s")
+    return _UNIT_FAMILY.get(unit, unit)
+
+
+def short_of(text: str) -> str | None:
+    """Normalised quantity of a sentence, for example "3–4 weeks"."""
+    match = QUANTITY.search(text or "")
+    if not match:
+        return None
+    low, high, unit = match.group(1), match.group(2), match.group(3)
+    amount = f"{low}–{high}" if high else low
+    return f"{amount} {unit.lower()}" if unit not in ("%", "€") else f"{amount}{unit}"
+
+
+def amount_of(text: str) -> str | None:
+    match = QUANTITY.search(text or "")
+    return f"{match.group(1)}-{match.group(2) or ''}" if match else None
+
+
+def _anchors(topic: dict) -> set[str]:
+    extra = topic.get("x", {})
+    return set(tokenize(" ".join([topic["label"], *extra.get("keywords", [])])))
+
+
+def sentences(text: str) -> list[str]:
+    parts = [re.sub(r"^[\s#>*\-\d.)]+", "", part).strip() for part in _SENTENCE.split(text)]
+    return [part for part in parts if len(part) >= 8]
+
+
+def find(state: dict, text: str, project_id: str | None, prefer_topics: set[str] | None = None) -> list[dict]:
+    """Statements of a quantity on a known topic, one per topic, in order of appearance.
+
+    A sentence is assigned to the best matching topic that shares at least two anchor words
+    (label and keywords) with it. Topics in `prefer_topics` are tried first.
+    """
+    found: dict[str, dict] = {}
+    for sentence in sentences(text):
+        short = short_of(sentence)
+        if short is None:
+            continue
+        words = set(tokenize(sentence))
+        ranked = [t for t, _, _ in engine.rank_topics(state, sentence, project_id)]
+        if prefer_topics:
+            ranked = [t for t in ranked if t in prefer_topics] + [t for t in ranked if t not in prefer_topics]
+        for topic_id in ranked:
+            topic = state["topics"][topic_id]
+            shared = words & _anchors(topic)
+            if len(shared) >= 2 or (prefer_topics and topic_id in prefer_topics and shared):
+                if topic_id not in found:
+                    found[topic_id] = {
+                        "topic": topic_id,
+                        "value": f"{topic['label']}: {short}",
+                        "short": short,
+                        "type": "DECISION" if DECISION_WORDS.search(sentence) else "EVIDENCE",
+                        "quote": sentence,
+                        "confidence": 0.9,
+                    }
+                break
+    return list(found.values())
+
+
+def restates(old: dict, new_short: str) -> bool:
+    """True when an existing fact states the same kind of quantity, so the new value can replace it."""
+    old_text = old.get("x", {}).get("short") or old["value"]
+    return unit_of(old_text) is not None and unit_of(old_text) == unit_of(new_short)
+
+
+def same_value(old: dict, new_short: str) -> bool:
+    old_text = old.get("x", {}).get("short") or old["value"]
+    return amount_of(old_text) == amount_of(new_short) and unit_of(old_text) == unit_of(new_short)
+
+
+def live(state: dict, fact: dict) -> bool:
+    return fact["status"] == "active" and not store.is_superseded(state, fact)

@@ -11,6 +11,8 @@ router = APIRouter()
 
 
 def require_model(state: dict) -> None:
+    if state["config"].get("offline_mode"):
+        raise ApiError(422, "Offline mode is on, no model calls are made.", "offline_mode")
     if not llm.available():
         raise ApiError(422, "No model provider is configured on the server.", "llm_unavailable")
     if ingest.remaining_budget(state) <= 0:
