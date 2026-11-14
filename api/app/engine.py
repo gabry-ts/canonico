@@ -73,6 +73,8 @@ def alias_topic(state: dict, question: str, project_id: str | None = None) -> st
 
 ROUTE_SYSTEM = """You route a question to the topics of a company memory.
 Each topic is one question the memory can answer. Pick the topics whose facts answer the user's question: at most two, the best one first.
+The question can be in any language, have typos or name the client. Match it by meaning.
+When a question asks how long something takes or what a value is, and says nothing about the current, measured or observed situation, put the topic of the agreed target or decision first and the topic of the measured current state second.
 Return an empty list when no topic fits. Use only ids from the list."""
 ROUTE_SCHEMA = {"type": "object", "properties": {"topics": {"type": "array", "items": {"type": "string"}}}, "required": ["topics"], "additionalProperties": False}
 
@@ -92,7 +94,7 @@ def model_route(question: str, lines: dict[str, str], model: str, meter) -> list
     from app import llm
 
     user = "Topics (id | label | question):\n" + "\n".join(lines.values()) + f"\n\nQuestion: {question}"
-    data = llm.complete_json(model, ROUTE_SYSTEM, user, ROUTE_SCHEMA, meter, name="route", max_tokens=2000, timeout=8.0, retries=0)
+    data = llm.complete_json(model, ROUTE_SYSTEM, user, ROUTE_SCHEMA, meter, name="route", max_tokens=2000, timeout=8.0, retries=1)
     return [t for t in dict.fromkeys(data.get("topics", [])) if t in lines][:2]
 
 
