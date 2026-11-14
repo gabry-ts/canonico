@@ -71,6 +71,14 @@ The seeded memory answers `POST /ask {"question": "How long does onboarding take
 
 Other flows that work offline: `POST /demo/send-email` (a client email confirms 5 weeks and supersedes the final report figure), `POST /documents/{doc_id}/versions` (a new version of a library document supersedes what the previous version said on the same topic), `POST /mail/poll` on the mocked inbox in `data/seed/mail/`. Values are found by a deterministic rule first (a sentence that states a quantity on a known topic), so these flows need no model. Only when the rule finds nothing, a provider is configured and offline mode is off, the model reads the email or the new version; facts it extracts are filed outside the hand-curated topics. `PATCH /config {"offline_mode": true}` blocks every live model call.
 
+## Language of generated text
+
+Text the backend writes is in English by default and in Italian on request: the answer of `POST /ask`, `changed_because`, the `summary` of audit events and of `recent_changes` in `GET /stats`, the `detail` of maintenance items, the summaries of curated and automatically detected conflicts, curated open questions and error messages. The locale is the `locale` field of the ask request or the `locale` query parameter (`en` or `it`), else the `Accept-Language` header, else English. Responses with generated text say which locale they used.
+
+Values and verbatim quotes of facts are never translated, they stay in the language of their source; only the sentence around them changes ("Giulia retired 4 weeks (final presentation)" becomes "Giulia ha ritirato 4 settimane (presentazione finale)"). Summaries that the model wrote during extraction and reasons typed by people are returned as they are.
+
+Every generated sentence has a structured companion so a client can compose its own text: `changed_because_code` and `changed_because_params` on answers and replays, `summary_code` and `summary_params` on audit events, `detail_code` and `detail_params` on maintenance items. Parameters are language neutral (actor, fact id, value, source).
+
 ## Organisation, projects and sources
 
 One organisation holds several projects. A request with `project_id` (query parameter, or body field on `POST /ask`) sees only that project: its documents, topics, facts, conflicts and audit events. Without it the request has organisation scope and sees everything. The seed has two projects, `proj-clearpath` (the 46 corpus documents, a document library, a mailbox) and `proj-internal` (an internal handbook and a GitHub source).
