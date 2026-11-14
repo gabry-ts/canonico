@@ -1512,6 +1512,17 @@ export interface components {
             superseded_by: string | null;
             /** @example 0.94 */
             confidence: number;
+            /**
+             * @description Member name or id of who retired the fact.
+             * @example Giulia
+             */
+            retired_by?: string | null;
+            /**
+             * Format: date-time
+             * @description When the fact was retired.
+             * @example 2026-11-14T15:20:00Z
+             */
+            retired_at?: string | null;
             retired_reason: string | null;
             /**
              * @description True when a person marked this fact as binding.
@@ -2819,7 +2830,9 @@ export interface operations {
                      *       "supersedes": null,
                      *       "superseded_by": "M-106",
                      *       "confidence": 0.88,
-                     *       "retired_reason": "Replaced by the final report, which sets 3–4 weeks."
+                     *       "retired_reason": "Replaced by the final report, which sets 3–4 weeks.",
+                     *       "retired_by": "Giulia",
+                     *       "retired_at": "2026-11-14T15:20:00Z"
                      *     }
                      */
                     "application/json": components["schemas"]["Fact"];
@@ -2872,7 +2885,9 @@ export interface operations {
                      *       "supersedes": null,
                      *       "superseded_by": null,
                      *       "confidence": 0.88,
-                     *       "retired_reason": null
+                     *       "retired_reason": null,
+                     *       "retired_by": null,
+                     *       "retired_at": null
                      *     }
                      */
                     "application/json": components["schemas"]["Fact"];

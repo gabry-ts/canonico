@@ -42,6 +42,16 @@ class Fact(BaseModel):
         ..., description='Id of the newer fact that replaces this one.'
     )
     confidence: float = Field(..., examples=[0.94], ge=0.0, le=1.0)
+    retired_by: str | None = Field(
+        None,
+        description='Member name or id of who retired the fact.',
+        examples=['Giulia'],
+    )
+    retired_at: AwareDatetime | None = Field(
+        None,
+        description='When the fact was retired.',
+        examples=['2026-11-14T15:20:00Z'],
+    )
     retired_reason: str | None
     pinned: bool | None = Field(
         False, description='True when a person marked this fact as binding.'
