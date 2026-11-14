@@ -68,7 +68,7 @@ export default function Admin() {
     code,
     body,
     err,
-    at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    at: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
   })
   const put = (k: string, r: Result) => setResults((x) => ({ ...x, [k]: r }))
 
