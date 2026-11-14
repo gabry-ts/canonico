@@ -1,0 +1,59 @@
+PLATFORM DOCS, DRAFT
+Publish with upsert_document. The jury card shows the first 700 characters of each page.
+Replace [DEMO_URL] before publishing. Lines marked [team: ...] need a fact only the team has.
+
+================================================================
+SECTION 1
+slug: 8hack-start
+title: 8hack · start
+content (from the next line to the end of the section):
+================================================================
+Track: Making memory visible to people
+
+A new hire asks the company assistant how long onboarding takes. It says four weeks, a figure the final report of 28 Nov 2025 replaced with three to four weeks.
+
+Live: Giulia, the operations lead, opens Canonico and sees the binding fact with its verbatim source, the four versions it replaced and the stale "4 weeks" still active. She retires it and the next answer is "three to four weeks". No ticket, no engineer.
+
+First test, 5 evolving-decision questions from KVA's ClearPath corpus: binding version right 3/5, plain retrieval 0/5.
+
+Demo: [DEMO_URL]
+Code: https://github.com/gabry-ts/canonico
+
+Team
+Emanuele Beffa (banking and finance background), Davide Chiattelli (pitch and demo), Gabriele Partiti. [team: confirm roles]
+
+Plan
+Canonico keeps an organisation's memory split into isolated projects, each fed by sources: documents, a versioned document library, public GitHub, mail and webhooks for meetings, notes and tickets. It extracts facts with their verbatim quote, links each fact to the one it replaces and says which decision is binding now. People find, correct, retire or pin a fact, and the assistant uses the change in its next answer. Every action is audited and can be undone.
+
+Riskiest assumption [declared]
+The AI programme lead of a company rolling out an internal assistant will pay for a separate layer that decides which fact is binding, instead of waiting for the assistant vendor's memory settings.
+
+Kill criterion [declared]
+If three of the first five AI programme leads we talk to say their vendor's memory already lets a process owner retire a stale fact, we stop selling the layer and look at the compliance buyer instead.
+
+================================================================
+SECTION 2
+slug: 8hack-check
+title: 8hack · check
+content (from the next line to the end of the section):
+================================================================
+Onboarding question: the assistant says "four weeks", a figure the final report of 28 Nov 2025 replaced with three to four weeks.
+
+Works live: Giulia, the operations lead, sees the binding version with its verbatim source and the four it replaced, retires the stale "4 weeks", and the next answer becomes "three to four weeks".
+
+Check set: a first test on 5 evolving-decision questions from KVA's ClearPath corpus. Binding version right 3/5 for Canonico, 0/5 for plain retrieval. Five queries is a first signal, not a benchmark.
+
+Demo: [DEMO_URL]
+Code: https://github.com/gabry-ts/canonico
+
+Also working: audit with undo, conflicts, maintenance queue, dashboard, members and roles, English and Italian.
+
+Riskiest assumption: AI programme leads will pay for a binding-fact layer next to their assistant [declared]. What we learned today: [team: fill in, or write "not tested with a buyer yet"].
+
+Slipped: the timed test with a person outside the team (can they find and fix a wrong fact alone, in how many minutes) [team: replace with the result if done].
+
+One cut: real erasure for GDPR requests. Retire keeps the history, which is right for a superseded procedure and wrong for personal data that must leave the memory. It stays on the plan, not in the demo.
+
+Question for the mentor: who signs the purchase order in a company rolling out an internal assistant, the AI programme lead or the process owner whose procedure is wrong?
+
+Built with: FastAPI backend (112 API operations, about 95 tests), React frontend, Docker on our own server. Anthropic Claude models for extraction, routing and links; LLM cost so far about USD 0.41. The demo path also runs offline.
