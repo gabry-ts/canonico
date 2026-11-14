@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Small-size cut of the Canonico mark, for 32 px and below (favicon, in-app logo).
+       Same construction as icon.svg, drawn heavier and more open so the C and its bead
+       stay apart at 16 px: ring 356/204 (stroke 152), bead radius 112, gap 104. -->
+  <g id="background">
+    <rect width="1024" height="1024" fill="#2563EB"/>
+  </g>
+  <g id="glyph" fill="#FFFFFF">
+    <path d="M777 296.02A356 356 0 1 0 777 727.98A216 216 0 0 1 625 668.38A204 204 0 1 1 625 355.62A216 216 0 0 1 777 296.02Z"/>
+    <circle cx="774" cy="512" r="112"/>
+  </g>
+</svg>
