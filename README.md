@@ -10,7 +10,7 @@ Emanuele Beffa, Davide Chiattelli, Gabriele Partiti.
 
 ## Data
 
-Evaluation uses the [OIDA Benchmark Corpora](https://github.com/kakashi-ventures) companion data of the paper "Retrieval Is Not Enough: Why Organizational AI Needs Epistemic Infrastructure" (Bottino, Ferrero, Dosio, Beneventano), licensed CC BY 4.0. No real personal data is used.
+Evaluation uses the [OIDA Benchmark Corpora](https://github.com/kakashi-ventures/oida-benchmark-corpora) companion data of the paper "Retrieval Is Not Enough: Why Organizational AI Needs Epistemic Infrastructure" (Bottino, Ferrero, Dosio, Beneventano), licensed CC BY 4.0. No real personal data is used.
 
 ## Prior work
 
