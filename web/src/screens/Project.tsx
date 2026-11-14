@@ -244,7 +244,7 @@ function MailCard({ pid }: { pid: string }) {
         <div className="p-5">
           <dl className="kv !grid-cols-[88px_1fr]">
             <dt>{t('home.mail.mode')}</dt>
-            <dd className="mono text-[12.5px]">{eff.mode}</dd>
+            <dd className="text-[12.5px]">{t(eff.mode === 'imap' ? 'org.mail.modeImapReal' : eff.mode === 'webhook' ? 'org.mail.modeWebhook' : 'org.mail.modeImap')}</dd>
             <dt>{t('home.mail.inbound')}</dt>
             <dd className="mono text-[12.5px] truncate">{eff.inbound_address ?? '—'}</dd>
             <dt>{t('home.mail.setOn')}</dt>

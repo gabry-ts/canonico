@@ -181,7 +181,7 @@ function MailCard({ pid }: { pid: string }) {
           <p className="text-[13px] text-muted-foreground leading-relaxed">{m.overridden ? t('org.mail.ownConfig') : t('org.mail.inheritedFrom', { org: app.org?.name ?? '' })}</p>
           <dl className="kv mt-4 !grid-cols-[100px_1fr]">
             <dt>{t('org.mail.mode')}</dt>
-            <dd className="mono text-[12.5px]">{eff.mode}</dd>
+            <dd className="text-[12.5px]">{t(eff.mode === 'imap' ? 'org.mail.modeImapReal' : eff.mode === 'webhook' ? 'org.mail.modeWebhook' : 'org.mail.modeImap')}</dd>
             {eff.imap_host && (
               <>
                 <dt>{t('org.mail.imapHost')}</dt>
