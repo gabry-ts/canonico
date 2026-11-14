@@ -9341,6 +9341,36 @@
     }
   },
   {
+    "id": "M-972",
+    "topic": "canonico-business-plan",
+    "value": "Abbonamento annuale per organizzazione con piani Team 490, Business 990 e Compliance 2.500 euro al mese; CAC medio 4.800 euro, payback del CAC 10,6 mesi, break-even intorno al mese 32 con un round di circa 400.000 euro",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Canonico si vende in abbonamento annuale per organizzazione (piano Team 490 euro al mese, Business 990 euro al mese, Compliance 2.500 euro al mese dal mese 18), con un CAC medio di 4.800 euro, un payback del CAC di 10,6 mesi e il break-even intorno al mese 32 con un round di circa 400.000 euro.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "la sintesi del business plan nel diario",
+      "short": "un abbonamento annuale per organizzazione (Team 490, Business 990 e Compliance 2.500 euro al mese dal mese 18), con CAC medio di 4.800 euro, payback del CAC di 10,6 mesi e break-even intorno al mese 32 con un round di circa 400.000 euro",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "la sintesi del business plan nel diario",
+        "short": "un abbonamento annuale per organizzazione (Team 490, Business 990 e Compliance 2.500 euro al mese dal mese 18), con CAC medio di 4.800 euro, payback del CAC di 10,6 mesi e break-even intorno al mese 32 con un round di circa 400.000 euro",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      }
+    }
+  },
+  {
     "id": "M-2026",
     "topic": "hackathon-challenge",
     "value": "The hackathon challenge is to build company brains, memory systems for AI agents that manage company knowledge.",
@@ -10626,7 +10656,10 @@
       "short": "track 3b, Making memory visible to people",
       "label": "the fact “track 3b, Making memory visible to people” from “Control8: track e regole dell'hackathon”",
       "base_type": "DECISION",
-      "superseded_reason": "Both give the track on the same date; the decision diary restates it and explicitly records that it replaces the first choice, so it is the more authoritative version."
+      "superseded_reason": "Both give the track on the same date; the decision diary restates it and explicitly records that it replaces the first choice, so it is the more authoritative version.",
+      "it": {
+        "short": "track 3b, \"Making memory visible to people\""
+      }
     },
     "project_id": "proj-canonico"
   },
@@ -10646,7 +10679,10 @@
     "pinned": false,
     "x": {
       "short": "Making memory visible to people",
-      "label": "the fact “Making memory visible to people” from “Diario delle decisioni (14 nov 2026)”"
+      "label": "the fact “Making memory visible to people” from “Diario delle decisioni (14 nov 2026)”",
+      "it": {
+        "short": "\"Making memory visible to people\", al posto della prima scelta \"Decision models\""
+      }
     },
     "project_id": "proj-canonico"
   },
@@ -10911,6 +10947,31 @@
     "project_id": "proj-canonico"
   },
   {
+    "id": "M-2150",
+    "topic": "model-api-key",
+    "value": "Model calls used Gabriele's personal Anthropic key.",
+    "type": "SUPERSEDED",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Le chiamate al modello usano la chiave Anthropic personale di Gabriele.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": "M-2151",
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Gabriele's personal Anthropic key",
+      "label": "the fact “Gabriele's personal Anthropic key” from “Diario delle decisioni (14 nov 2026)”",
+      "base_type": "DECISION",
+      "superseded_reason": "At 17:14 the decision diary records that model calls moved to the team's Vercel AI Gateway, replacing Gabriele's personal key.",
+      "it": {
+        "short": "la chiave Anthropic personale di Gabriele"
+      }
+    },
+    "project_id": "proj-canonico"
+  },
+  {
     "id": "M-2151",
     "topic": "model-api-key",
     "value": "Model calls go through the team's Vercel AI Gateway instead of Gabriele's personal Anthropic key; the team key stays server-side only.",
@@ -10919,14 +10980,17 @@
     "doc_id": "canonico/diario-decisioni",
     "quote": "Le chiamate al modello passano dal Vercel AI Gateway del team, al posto della chiave personale di Gabriele; la chiave del team resta solo lato server.",
     "date": "2026-11-14",
-    "supersedes": null,
+    "supersedes": "M-2150",
     "superseded_by": null,
     "confidence": 0.9,
     "retired_reason": null,
     "pinned": false,
     "x": {
       "short": "Vercel AI Gateway, team key",
-      "label": "the fact “Vercel AI Gateway, team key” from “Diario delle decisioni (14 nov 2026)”"
+      "label": "the fact “Vercel AI Gateway, team key” from “Diario delle decisioni (14 nov 2026)”",
+      "it": {
+        "short": "il Vercel AI Gateway del team, al posto della chiave Anthropic personale di Gabriele; la chiave del team resta solo lato server"
+      }
     },
     "project_id": "proj-canonico"
   },

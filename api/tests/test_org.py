@@ -130,7 +130,7 @@ def test_routing_rules_match_by_priority(client):
     assert_contract(client.post("/org/mail/rules", json={"match_type": "sender_domain", "value": "@x.org", "project_id": "nope"}), "POST", "/org/mail/rules", 404)
     assert_contract(client.patch("/org/mail/rules/rule-999", json={"priority": 1}), "PATCH", "/org/mail/rules/{rule_id}", 404)
     assert_contract(client.delete("/org/mail/rules/rule-999"), "DELETE", "/org/mail/rules/{rule_id}", 404)
-    assert client.get("/messages").status_code == 404 and client.get("/facts", params={"limit": 500}).json()["total"] == 525
+    assert client.get("/messages").status_code == 404 and client.get("/facts", params={"limit": 500}).json()["total"] == 527
 
 
 def test_demo_email_changes_the_answer_end_to_end(client):

@@ -1799,7 +1799,9 @@
         "Chi segue il frontend?",
         "Chi ha fatto il frontend?",
         "Who does the frontend?",
-        "Who owns the frontend?"
+        "Who owns the frontend?",
+        "Chi ha fatto l'interfaccia?",
+        "Chi si occupa del video?"
       ],
       "it": {
         "subject": "Il responsabile del frontend"
@@ -1831,7 +1833,9 @@
         "Chi fa il backend?",
         "Chi si occupa del deploy?",
         "Chi fa le app iOS e Android?",
-        "Who does the backend?"
+        "Who does the backend?",
+        "Chi ha fatto il backend?",
+        "Chi ha fatto le app native?"
       ],
       "it": {
         "subject": "Il responsabile del backend"
@@ -1862,7 +1866,9 @@
         "Chi fa il pitch?",
         "Chi si occupa del business?",
         "Chi si occupa del modello economico?",
-        "Who does the pitch?"
+        "Who does the pitch?",
+        "Chi ha fatto il modello economico?",
+        "Chi si occupa del deck?"
       ],
       "it": {
         "subject": "Il responsabile di pitch e business"
@@ -1899,7 +1905,9 @@
         "Dove gira l'app?",
         "Dove è online l'app?",
         "Dove è ospitata l'app?",
-        "Where is the app deployed?"
+        "Where is the app deployed?",
+        "Dove abbiamo deployato l'app?",
+        "Dove abbiamo messo online l'app?"
       ],
       "it": {
         "subject": "Il deploy dell'app"
@@ -1929,7 +1937,9 @@
         "Qual è l'indirizzo dell'app?",
         "Qual è il link dell'app?",
         "Qual è l'URL della demo?",
-        "What is the app URL?"
+        "What is the app URL?",
+        "Dove trovo la demo online?",
+        "Qual è il sito dell'app?"
       ],
       "it": {
         "subject": "L'indirizzo dell'app"
@@ -1962,7 +1972,10 @@
         "Quali modelli usa Canonico?",
         "Che modelli usiamo?",
         "Quali LLM usiamo?",
-        "Which models do we use?"
+        "Which models do we use?",
+        "Che modelli sono stati presi?",
+        "Che modelli abbiamo scelto?",
+        "Usiamo Haiku o Sonnet?"
       ],
       "it": {
         "subject": "La scelta dei modelli"
@@ -1995,7 +2008,9 @@
         "Che feedback ha dato il mentor?",
         "Cosa ha detto Dario?",
         "Cosa ha detto Dario Martinelli?",
-        "What did the mentor say?"
+        "What did the mentor say?",
+        "Cosa ci ha detto il mentor?",
+        "Cosa abbiamo deciso dopo il feedback del mentor?"
       ],
       "it": {
         "subject": "Il mentor Dario Martinelli ha detto \"noi siamo per le cose semplici, forse sembra troppo, vedere cosa tagliare\"; la decisione presa"
@@ -2025,7 +2040,10 @@
         "piano",
         "Team",
         "Business",
-        "euro"
+        "euro",
+        "prezzi",
+        "piani",
+        "costano"
       ],
       "questions": [
         "Quanto costa la licenza annuale?",
@@ -2033,10 +2051,53 @@
         "Quanto costa Canonico?",
         "Qual è il prezzo?",
         "Qual è il prezzo della licenza?",
-        "How much is the annual licence?"
+        "How much is the annual licence?",
+        "Quanto costano i piani?",
+        "Costo team e business plan",
+        "Prezzi",
+        "Quanto costa il piano Team?",
+        "Quanto costa il piano Business?",
+        "Quali sono i prezzi?"
       ],
       "it": {
         "subject": "Il prezzo della licenza annuale"
+      }
+    }
+  },
+  {
+    "id": "canonico-business-plan",
+    "label": "Business plan",
+    "fact_ids": [
+      "M-972"
+    ],
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "subject": "Il business plan",
+      "keywords": [
+        "business plan",
+        "piano di business",
+        "modello di business",
+        "guadagniamo",
+        "ricavi",
+        "abbonamento",
+        "CAC",
+        "payback",
+        "break-even"
+      ],
+      "questions": [
+        "Qual è il business plan e come guadagniamo (prezzi dei piani, CAC, payback, break-even)?",
+        "Racconta il business plan",
+        "Racconta business plan",
+        "Qual è il business plan?",
+        "Come guadagniamo?",
+        "Qual è il modello di business?",
+        "Business plan",
+        "What is the business plan?"
+      ],
+      "it": {
+        "subject": "Il business plan",
+        "label": "Piano di business"
       }
     }
   },
@@ -2056,7 +2117,9 @@
         "company knowledge"
       ],
       "questions": [
-        "What is the hackathon challenge?"
+        "What is the hackathon challenge?",
+        "Qual è la sfida dell'hackathon?",
+        "Qual è la challenge dell'hackathon?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2077,7 +2140,9 @@
         "appointment"
       ],
       "questions": [
-        "What role was KVA appointed to for OGR in Turin?"
+        "What role was KVA appointed to for OGR in Turin?",
+        "Che ruolo ha KVA per OGR?",
+        "KVA è partner di OGR?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2098,7 +2163,9 @@
         "presentation"
       ],
       "questions": [
-        "When is the first checkpoint and what do teams present?"
+        "When is the first checkpoint and what do teams present?",
+        "Quando è il primo checkpoint?",
+        "Cosa presentiamo al primo checkpoint?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2118,7 +2185,9 @@
         "10 hackathons"
       ],
       "questions": [
-        "How many hackathons does KVA plan next year?"
+        "How many hackathons does KVA plan next year?",
+        "Quanti hackathon farà KVA l'anno prossimo?",
+        "Quanti hackathon prevede KVA?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2138,7 +2207,9 @@
         "company brains"
       ],
       "questions": [
-        "What is the final idea for the project built on the collected data?"
+        "What is the final idea for the project built on the collected data?",
+        "Qual è l'idea finale?",
+        "Cosa si farà con i dati raccolti?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2159,7 +2230,9 @@
         "agreement"
       ],
       "questions": [
-        "Were any formal decisions taken in the opening call?"
+        "Were any formal decisions taken in the opening call?",
+        "Sono state prese decisioni formali nella call?",
+        "Abbiamo deciso qualcosa nella call di apertura?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2178,7 +2251,9 @@
         "share"
       ],
       "questions": [
-        "Who shares the presentation link and where?"
+        "Who shares the presentation link and where?",
+        "Chi condivide il link della presentazione?",
+        "Dove troviamo il link della presentazione?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2198,7 +2273,9 @@
         "hackathon"
       ],
       "questions": [
-        "When did the hackathon opening call start and how long did it last?"
+        "When did the hackathon opening call start and how long did it last?",
+        "Quanto è durata la call di apertura?",
+        "A che ora è iniziata la call di apertura?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2222,7 +2299,9 @@
         "out of scope"
       ],
       "questions": [
-        "Is the MCP server included in the current development scope?"
+        "Is the MCP server included in the current development scope?",
+        "Facciamo il server MCP?",
+        "Il server MCP è nel perimetro?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2242,7 +2321,9 @@
         "source"
       ],
       "questions": [
-        "Who produced the call summary and when?"
+        "Who produced the call summary and when?",
+        "Chi ha fatto il riassunto della call?",
+        "Da dove viene il riassunto della call?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2265,7 +2346,9 @@
         "style"
       ],
       "questions": [
-        "What UI style and UX direction does the team want?"
+        "What UI style and UX direction does the team want?",
+        "Che stile vogliamo per l'interfaccia?",
+        "Come deve essere la UI?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2287,7 +2370,9 @@
         "decision"
       ],
       "questions": [
-        "What is the app architecture, including the recording setup?"
+        "What is the app architecture, including the recording setup?",
+        "Qual è l'architettura dell'app?",
+        "Abbiamo deciso l'architettura dell'app?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2308,7 +2393,9 @@
         "maintenance"
       ],
       "questions": [
-        "Does the app run locally or on a server?"
+        "Does the app run locally or on a server?",
+        "L'app gira in locale o su server?",
+        "Teniamo l'app in locale o su un server?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2328,7 +2415,9 @@
         "layout"
       ],
       "questions": [
-        "What does the main screen look like?"
+        "What does the main screen look like?",
+        "Com'è la schermata principale?",
+        "Cosa c'è nella schermata principale?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2348,7 +2437,9 @@
         "interaction"
       ],
       "questions": [
-        "How are users expected to query decisions through the chatbot?"
+        "How are users expected to query decisions through the chatbot?",
+        "Come si usa il chatbot?",
+        "Cosa chiedono gli utenti al chatbot?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2368,7 +2459,9 @@
         "permissions"
       ],
       "questions": [
-        "Can a project access another project?"
+        "Can a project access another project?",
+        "Un progetto può accedere a un altro progetto?",
+        "I progetti sono isolati tra loro?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2389,7 +2482,9 @@
         "email settings"
       ],
       "questions": [
-        "At what level is SMTP configured and how is it inherited?"
+        "At what level is SMTP configured and how is it inherited?",
+        "Dove si configura l'SMTP?",
+        "A che livello si imposta l'SMTP?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2409,7 +2504,9 @@
         "connector"
       ],
       "questions": [
-        "How is GitHub connected to projects?"
+        "How is GitHub connected to projects?",
+        "Come si collega GitHub?",
+        "Come colleghiamo GitHub al progetto?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2429,7 +2526,9 @@
         "demo"
       ],
       "questions": [
-        "How will live email reception be shown in the demo?"
+        "How will live email reception be shown in the demo?",
+        "Come mostriamo la mail nella demo?",
+        "Che SMTP usiamo nella demo?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2449,7 +2548,9 @@
         "conversations"
       ],
       "questions": [
-        "Can emails from a domain be associated with a project?"
+        "Can emails from a domain be associated with a project?",
+        "Si possono associare le mail di un dominio a un progetto?",
+        "Le mail di un dominio finiscono in un progetto?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2469,7 +2570,9 @@
         "link"
       ],
       "questions": [
-        "How are projects connected to the organization's global brain?"
+        "How are projects connected to the organization's global brain?",
+        "I progetti sono collegati al brain globale?",
+        "Come si collegano i progetti al brain dell'organizzazione?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2490,7 +2593,9 @@
         "direction"
       ],
       "questions": [
-        "Was the autopitch feature kept or removed, and why?"
+        "Was the autopitch feature kept or removed, and why?",
+        "Perché abbiamo tolto l'autopitch?",
+        "L'autopitch c'è ancora?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2510,7 +2615,9 @@
         "QA"
       ],
       "questions": [
-        "Who or what runs the app's tests?"
+        "Who or what runs the app's tests?",
+        "Chi fa i test dell'app?",
+        "Chi esegue i test end-to-end?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2534,7 +2641,9 @@
         "3 su 5"
       ],
       "questions": [
-        "How many of the five test questions did the router/Canonico find the binding version for?"
+        "How many of the five test questions did the router/Canonico find the binding version for?",
+        "Com'è andato il benchmark?",
+        "Quante domande su cinque ha indovinato Canonico?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2554,7 +2663,9 @@
         "ClearPath test"
       ],
       "questions": [
-        "How many of the five test questions did simple retrieval find the binding version for?"
+        "How many of the five test questions did simple retrieval find the binding version for?",
+        "Come va il retrieval semplice?",
+        "Quante domande su cinque trova il retrieval semplice?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2574,7 +2685,9 @@
         "validity"
       ],
       "questions": [
-        "Is the five-question evaluation large enough to be valid?"
+        "Is the five-question evaluation large enough to be valid?",
+        "Il test su cinque domande è valido?",
+        "Cinque domande bastano per la valutazione?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2598,7 +2711,9 @@
         "pricing model"
       ],
       "questions": [
-        "What was the pilot and annual licence pricing, and was it superseded?"
+        "What was the pilot and annual licence pricing, and was it superseded?",
+        "Quanto costava il pilota?",
+        "Qual era la prima stima di prezzo?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2641,7 +2756,9 @@
         "price"
       ],
       "questions": [
-        "What does the Compliance plan cost and when does it start?"
+        "What does the Compliance plan cost and when does it start?",
+        "Quanto costa il piano Compliance?",
+        "Da quando c'è il piano Compliance?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2661,7 +2778,9 @@
         "pay"
       ],
       "questions": [
-        "What is the team's riskiest assumption?"
+        "What is the team's riskiest assumption?",
+        "Qual è l'ipotesi più rischiosa?",
+        "Qual è l'assunzione più rischiosa?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2681,7 +2800,9 @@
         "compliance customer"
       ],
       "questions": [
-        "When does the team stop selling the layer and look at the compliance customer?"
+        "When does the team stop selling the layer and look at the compliance customer?",
+        "Quando smettiamo di vendere il layer?",
+        "Qual è il criterio di stop?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2701,7 +2822,9 @@
         "customer projection"
       ],
       "questions": [
-        "How many customers are projected at month 12?"
+        "How many customers are projected at month 12?",
+        "Quanti clienti avremo al mese 12?",
+        "Quanti clienti al mese 12?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2721,7 +2844,9 @@
         "ARR"
       ],
       "questions": [
-        "What is the projected annual run-rate at month 12?"
+        "What is the projected annual run-rate at month 12?",
+        "Qual è il run-rate al mese 12?",
+        "Quanto fatturiamo all'anno al mese 12?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2741,7 +2866,9 @@
         "projection"
       ],
       "questions": [
-        "What is the projected first-year invoiced revenue?"
+        "What is the projected first-year invoiced revenue?",
+        "Quanto fatturiamo il primo anno?",
+        "Quali sono i ricavi del primo anno?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2762,7 +2889,9 @@
         "target"
       ],
       "questions": [
-        "What is projected at month 36?"
+        "What is projected at month 36?",
+        "Cosa prevediamo al mese 36?",
+        "Quanti clienti al mese 36?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2782,7 +2911,9 @@
         "assumption"
       ],
       "questions": [
-        "What annual churn is assumed?"
+        "What annual churn is assumed?",
+        "Qual è il churn?",
+        "Che churn annuo assumiamo?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2803,7 +2934,9 @@
         "consulting firms"
       ],
       "questions": [
-        "How many Italian consulting firms are in the target market?"
+        "How many Italian consulting firms are in the target market?",
+        "Quanto è grande il mercato?",
+        "Quante società di consulenza ci sono in Italia?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2822,7 +2955,9 @@
         "founder cost"
       ],
       "questions": [
-        "What is the average customer acquisition cost?"
+        "What is the average customer acquisition cost?",
+        "Qual è il CAC?",
+        "Quanto costa acquisire un cliente?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2842,7 +2977,9 @@
         "conversion"
       ],
       "questions": [
-        "What is the CAC payback period?"
+        "What is the CAC payback period?",
+        "Qual è il payback del CAC?",
+        "In quanto tempo si ripaga il CAC?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2862,7 +2999,9 @@
         "cost"
       ],
       "questions": [
-        "What is the measured model cost per document?"
+        "What is the measured model cost per document?",
+        "Quanto costa il modello per documento?",
+        "Quanto spendiamo di modello per documento?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2884,7 +3023,9 @@
         "Compliance"
       ],
       "questions": [
-        "What is the estimated gross margin per plan?"
+        "What is the estimated gross margin per plan?",
+        "Qual è il margine lordo?",
+        "Che margine abbiamo per piano?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2906,7 +3047,10 @@
         "funding"
       ],
       "questions": [
-        "When is break-even and how much funding is needed?"
+        "When is break-even and how much funding is needed?",
+        "Quando arriviamo al break-even?",
+        "Quanto dobbiamo raccogliere?",
+        "Di quanti soldi abbiamo bisogno?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2926,7 +3070,9 @@
         "selection rule"
       ],
       "questions": [
-        "Which fact is binding for a topic?"
+        "Which fact is binding for a topic?",
+        "Quale fatto è vincolante?",
+        "Come si sceglie il fatto vincolante?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2946,7 +3092,9 @@
         "date"
       ],
       "questions": [
-        "Which model extracts facts and in what form?"
+        "Which model extracts facts and in what form?",
+        "Che modello estrae i fatti?",
+        "Chi estrae i fatti?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2967,7 +3115,9 @@
         "demo path"
       ],
       "questions": [
-        "Are answers and the demo path generated with model calls?"
+        "Are answers and the demo path generated with model calls?",
+        "Le risposte usano un modello?",
+        "La demo funziona offline?"
       ]
     },
     "project_id": "proj-canonico"
@@ -2989,7 +3139,9 @@
         "retract planted error"
       ],
       "questions": [
-        "What must the next test show for the project to continue?"
+        "What must the next test show for the project to continue?",
+        "Cosa deve mostrare il prossimo test?",
+        "Quali sono i criteri per andare avanti?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3009,7 +3161,9 @@
         "customers"
       ],
       "questions": [
-        "Is there early customer interest in Canonico?"
+        "Is there early customer interest in Canonico?",
+        "Ci sono clienti interessati?",
+        "Qualcuno vuole già Canonico?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3029,7 +3183,9 @@
         "corpus"
       ],
       "questions": [
-        "Where does the product's demo data come from?"
+        "Where does the product's demo data come from?",
+        "Da dove vengono i dati della demo?",
+        "I dati della demo sono veri?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3050,8 +3206,14 @@
         "team track"
       ],
       "questions": [
-        "Which track did the team choose?"
-      ]
+        "Which track did the team choose?",
+        "Che track abbiamo scelto?",
+        "Qual è la nostra track?"
+      ],
+      "subject": "The team track",
+      "it": {
+        "subject": "La track del team"
+      }
     },
     "project_id": "proj-canonico"
   },
@@ -3070,7 +3232,9 @@
         "good answer"
       ],
       "questions": [
-        "What must the demo memory contain?"
+        "What must the demo memory contain?",
+        "Cosa deve contenere la memoria della demo?",
+        "Che fatti servono nella memoria della demo?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3090,7 +3254,9 @@
         "retract"
       ],
       "questions": [
-        "Must a correction change the agent's next answer in the demo?"
+        "Must a correction change the agent's next answer in the demo?",
+        "Una correzione deve cambiare la risposta?",
+        "Cosa deve succedere dopo una correzione nella demo?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3110,7 +3276,9 @@
         "timing"
       ],
       "questions": [
-        "What external user test is required?"
+        "What external user test is required?",
+        "Che test con un utente esterno serve?",
+        "Serve un test con una persona esterna?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3130,7 +3298,9 @@
         "retract fact"
       ],
       "questions": [
-        "Which design traps must be avoided?"
+        "Which design traps must be avoided?",
+        "Quali trappole evitare?",
+        "Cosa dobbiamo evitare nel design?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3152,7 +3322,9 @@
         "demo clarity"
       ],
       "questions": [
-        "How does the jury weight its scoring criteria?"
+        "How does the jury weight its scoring criteria?",
+        "Come valuta la giuria?",
+        "Quali sono i criteri della giuria?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3173,7 +3345,9 @@
         "Rome time"
       ],
       "questions": [
-        "When are mentor calls open?"
+        "When are mentor calls open?",
+        "Quando si possono chiamare i mentor?",
+        "A che ora sono le call con i mentor?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3192,7 +3366,9 @@
         "Rome time"
       ],
       "questions": [
-        "When must teams stop choosing or changing tracks?"
+        "When must teams stop choosing or changing tracks?",
+        "Entro quando si può cambiare track?",
+        "Fino a quando si sceglie la track?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3211,7 +3387,9 @@
         "Rome time"
       ],
       "questions": [
-        "When does video upload close?"
+        "When does video upload close?",
+        "Quando scade il caricamento del video?",
+        "Entro quando carichiamo il video?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3233,7 +3411,9 @@
         "submission"
       ],
       "questions": [
-        "When and where must the pitch be submitted?"
+        "When and where must the pitch be submitted?",
+        "Quando scade il pitch?",
+        "Entro quando consegniamo il pitch?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3253,7 +3433,9 @@
         "text"
       ],
       "questions": [
-        "What approval is needed before publishing on Control8?"
+        "What approval is needed before publishing on Control8?",
+        "Possiamo pubblicare su Control8?",
+        "Chi approva le pubblicazioni su Control8?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3274,7 +3456,9 @@
         "team server"
       ],
       "questions": [
-        "Where and how is the app deployed?"
+        "Where and how is the app deployed?",
+        "Come facciamo il deploy?",
+        "Come viene deployata l'app?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3294,7 +3478,9 @@
         "storage"
       ],
       "questions": [
-        "Which S3 backend is used for the document library?"
+        "Which S3 backend is used for the document library?",
+        "Che S3 usiamo?",
+        "Usiamo Garage o MinIO?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3303,6 +3489,7 @@
     "id": "model-api-key",
     "label": "Model API key",
     "fact_ids": [
+      "M-2150",
       "M-2151"
     ],
     "x": {
@@ -3312,11 +3499,24 @@
         "Anthropic key",
         "Gabriele",
         "server-side",
-        "model calls"
+        "model calls",
+        "chiave",
+        "chiave Anthropic",
+        "gateway",
+        "Vercel",
+        "Anthropic"
       ],
       "questions": [
-        "Which API key or gateway do model calls use?"
-      ]
+        "Which API key or gateway do model calls use?",
+        "Abbiamo usato Anthropic o Vercel?",
+        "Che chiave usiamo per i modelli?",
+        "Usiamo il gateway?",
+        "Usiamo la chiave Anthropic?"
+      ],
+      "subject": "The model API key",
+      "it": {
+        "subject": "La chiave per le chiamate al modello"
+      }
     },
     "project_id": "proj-canonico"
   },
@@ -3336,7 +3536,9 @@
         "14 bugs"
       ],
       "questions": [
-        "What is the backend test coverage and bug count?"
+        "What is the backend test coverage and bug count?",
+        "Quanti test ha il backend?",
+        "Quanti bug abbiamo trovato?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3356,7 +3558,9 @@
         "rating"
       ],
       "questions": [
-        "What score did the external code review give?"
+        "What score did the external code review give?",
+        "Che voto ha dato la code review?",
+        "Com'è andata la code review?"
       ]
     },
     "project_id": "proj-canonico"
@@ -3376,7 +3580,9 @@
         "writes"
       ],
       "questions": [
-        "Are sessions persistent across deploys and are writes role-checked?"
+        "Are sessions persistent across deploys and are writes role-checked?",
+        "Le sessioni sono persistenti?",
+        "Si perdono le sessioni al deploy?"
       ]
     },
     "project_id": "proj-canonico"
