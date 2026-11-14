@@ -78,6 +78,35 @@ def test_writes_are_refused_without_the_permission(client):
     assert client.post("/facts/M-105/restore", json={"actor": "Giulia"}, headers={"X-Demo-Actor": "someone unknown"}).status_code == 200
 
 
+def test_writes_that_had_no_check_now_need_a_role(client):
+    viewer = [
+        ("post", "/facts", {"json": {"topic": "onboarding-target", "value": "x", "type": "DECISION", "date": "2026-01-01", "quote": "x", "actor": "Luca"}}),
+        ("post", "/facts/M-105/supersede", {"json": {"by_fact_id": "M-106", "reason": "x", "actor": "Luca"}}),
+        ("post", "/topics", {"json": {"label": "New topic"}}),
+        ("post", "/documents", {"json": {"title": "Note", "date": "2026-01-01", "text": "hello", "ingest": False}}),
+        ("post", "/mail/poll", {"json": {}}),
+    ]
+    for method, path, kwargs in viewer:
+        response = getattr(client, method)(path, headers=AS_LUCA, **kwargs)
+        assert response.status_code == 403, (path, response.text)
+    editor = [
+        ("patch", "/org", {"json": {"name": "Other"}}),
+        ("post", "/projects", {"json": {"name": "Side project"}}),
+        ("delete", f"/projects/{INTERNAL}", {}),
+        ("patch", "/config", {"json": {"offline_mode": True}}),
+        ("post", "/eval/run", {}),
+        ("post", "/ingest", {"json": {"force": True}}),
+    ]
+    for method, path, kwargs in editor:
+        response = getattr(client, method)(path, headers=AS_SARA, **kwargs)
+        assert response.status_code == 403, (path, response.text)
+    assert client.patch("/config", json={"offline_mode": True}, headers=AS_SARA).json()["message"] == "Role editor needs at least role admin."
+    assert client.post("/mail/poll", json={}, headers=AS_SARA).status_code == 200
+    assert client.post("/topics", json={"label": "Editor topic"}, headers=AS_SARA).status_code == 201
+    assert client.get("/org").json()["name"] != "Other"
+    assert client.get(f"/projects/{INTERNAL}").status_code == 200
+
+
 def test_setup_status_and_first_run(client):
     status = assert_contract(client.get("/org/setup/status"), "GET", "/org/setup/status")
     assert status == {"completed": True, "steps": {"org": "done", "mail": "done", "first_project": "done", "first_source": "done"}}

@@ -186,7 +186,7 @@ async def _parse_upload(request: Request) -> dict:
 async def upload_project_item(project_id: str, request: Request, demo_actor: str | None = access.Actor):
     with STORE.read() as state:
         ops.require_project(state, project_id)
-        access.allow(state, demo_actor, "ask", project_id)
+        access.allow(state, demo_actor, "correct_fact", project_id)
         member = access.find_member(state, demo_actor) or access.default_member(state)
         actor = (member or {}).get("display_name") or (member or {}).get("name") or "anonymous"
     item = files.with_linked_text(await _parse_upload(request))

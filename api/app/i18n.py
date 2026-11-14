@@ -274,6 +274,7 @@ _NOUNS_IT = {
 }
 _ERRORS_IT: tuple[tuple[str, str], ...] = (
     (r"^Role (\S+) lacks permission (\S+)\.$", r"Il ruolo \1 non ha il permesso \2."),
+    (r"^Role (\S+) needs at least role (\S+)\.$", r"Il ruolo \1 non basta, serve almeno il ruolo \2."),
     (r"^Invalid X-Canonico-Token\.$", "X-Canonico-Token non valido."),
     (r"^Wrong email or password\.$", "Email o password errate."),
     (r"^Sign in to make changes\.$", "Accedi per apportare modifiche."),

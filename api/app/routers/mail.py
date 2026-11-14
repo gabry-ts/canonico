@@ -139,18 +139,20 @@ def with_model_facts(result: dict) -> dict:
 
 
 @router.post("/mail/inbound", operation_id="receiveInboundEmail", status_code=200, response_model=InboundEmailResult)
-def receive_inbound_email(body: InboundEmail):
+def receive_inbound_email(body: InboundEmail, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
+        access.allow(state, demo_actor, "correct_fact")
         result = inbox.receive(state, email_dict(body))
     return out(InboundEmailResult, with_model_facts(result))
 
 
 @router.post("/mail/poll", operation_id="pollMail", status_code=200, response_model=MailPollResult)
-def poll_mail(body: MailPollRequest | None = None):
+def poll_mail(body: MailPollRequest | None = None, demo_actor: str | None = access.Actor):
     project_id = body.project_id if body else None
     with STORE.read() as state:
         if project_id is not None:
             ops.require_project(state, project_id)
+        access.allow(state, demo_actor, "correct_fact", project_id)
         real = imap_client.active(state, project_id)
     if real:
         result = imap_client.poll(project_id)
@@ -171,9 +173,10 @@ def list_project_messages(project_id: str, limit: int = Query(50, ge=1, le=500),
 
 
 @router.post("/demo/send-email", operation_id="demoSendEmail", status_code=200, response_model=InboundEmailResult)
-def demo_send_email():
+def demo_send_email(demo_actor: str | None = access.Actor):
     """Canned client email of the live demo. Deterministic, no model call. With a real mailbox it goes through SMTP and IMAP."""
     with STORE.read() as state:
+        access.allow(state, demo_actor, "correct_fact")
         real = imap_client.active(state, None)
     if real:
         return out(InboundEmailResult, imap_client.demo_send(inbox.DEMO_EMAIL))

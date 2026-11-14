@@ -236,8 +236,8 @@ export default function Ask() {
       setStep(5)
       setInput(q2)
       await ask(q2)
-    } else if (step === 5) await sendEmail()
-    else if (step === 6) await uploadVersion()
+    } else if (step === 5) perm.guard('correct_fact', () => void sendEmail())()
+    else if (step === 6) perm.guard('correct_fact', () => void uploadVersion())()
     else perm.guard('admin_demo', () => void reset())()
   }
 
@@ -295,7 +295,7 @@ export default function Ask() {
               : step === 6
                 ? t('ask.next.uploadVersion')
                 : t('ask.restart')
-  const nextPerm = step === 2 && retireTarget ? 'retire_fact' : step === 3 ? 'retire_fact' : step === LAST ? 'admin_demo' : null
+  const nextPerm = step === 2 && retireTarget ? 'retire_fact' : step === 3 ? 'retire_fact' : step === LAST ? 'admin_demo' : step === 5 || step === 6 ? 'correct_fact' : null
   const scopeName = app.scope === 'org' ? t('shell.wholeOrg') : (app.project?.name ?? '')
 
   return (

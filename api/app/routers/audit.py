@@ -50,12 +50,13 @@ def list_audit(
 
 
 @router.post("/audit/{event_id}/undo", operation_id="undoAuditEvent", status_code=200, response_model=AuditEvent)
-def undo_audit_event(event_id: str, body: UndoRequest):
+def undo_audit_event(event_id: str, body: UndoRequest, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         index = next((n for n, e in enumerate(state["audit"]) if e["id"] == event_id), None)
         if index is None:
             raise not_found(f"Audit event {event_id}")
         event = state["audit"][index]
+        access.allow(state, demo_actor, "correct_fact", event.get("project_id"))
         undo = event["x"].get("undo")
         if undo is None:
             raise ApiError(409, f"Event {event_id} ({event['action']}) cannot be undone.")

@@ -3,7 +3,7 @@ from typing import Literal
 
 from fastapi import APIRouter
 
-from app import i18n, ops, store
+from app import access, i18n, ops, store
 from app.http import ApiError, not_found, out
 from app.models import OpenQuestion, OpenQuestionClose
 from app.store import STORE
@@ -28,12 +28,13 @@ def list_open_questions(status: Literal["open", "closed"] = "open", topic: str |
 
 
 @router.post("/open-questions/{question_id}/close", operation_id="closeOpenQuestion", status_code=200, response_model=OpenQuestion)
-def close_open_question(question_id: str, body: OpenQuestionClose):
+def close_open_question(question_id: str, body: OpenQuestionClose, demo_actor: str | None = access.Actor):
     request = body.root
     with STORE.write() as state:
         question = state["open_questions"].get(question_id)
         if question is None:
             raise not_found(f"Open question {question_id}")
+        access.allow(state, demo_actor, "correct_fact", store.project_of_topic(state, question["topic"]))
         if question["status"] == "closed":
             raise ApiError(409, f"Open question {question_id} is already closed.")
         if request.answer_fact_id and request.answer_fact_id not in state["facts"]:
