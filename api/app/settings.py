@@ -38,6 +38,11 @@ def state_file() -> Path | None:
     return Path(value) if value else None
 
 
+def cache_dir() -> Path:
+    """Where model and GitHub responses are cached. A volume in the Docker deployment."""
+    return Path(env("CANONICO_CACHE_DIR") or API_DIR / ".cache")
+
+
 def cors_origins() -> list[str]:
     raw = env("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
     return [o.strip() for o in raw.split(",") if o.strip()]

@@ -1,0 +1,35 @@
+# Canonico on one server: static site and reverse proxy (web) in front of the API (api).
+# Start with `make docker-up`, then open http://localhost:${WEB_PORT:-8080}
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    env_file:
+      - path: api/.env
+        required: false
+    environment:
+      CANONICO_STATE_FILE: /var/lib/canonico/state.json
+      CANONICO_CACHE_DIR: /var/lib/canonico/cache
+      CANONICO_PUBLIC_URL: ${PUBLIC_URL:-http://localhost:${WEB_PORT:-8080}}/api
+    volumes:
+      - canonico-runtime:/var/lib/canonico
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      args:
+        VITE_API_URL: /api
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    restart: unless-stopped
+
+volumes:
+  # Runtime state (memory, audit log, answers) and caches of model and GitHub responses.
+  canonico-runtime:

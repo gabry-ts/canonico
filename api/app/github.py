@@ -33,7 +33,7 @@ def parse_repo(url: str) -> tuple[str, str]:
 
 
 def cache_dir() -> Path:
-    return settings.API_DIR / ".cache" / "github"
+    return settings.cache_dir() / "github"
 
 
 def snapshot_path(owner: str, repo: str) -> Path:

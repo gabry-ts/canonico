@@ -105,7 +105,7 @@ def cost_of(model: str, input_tokens: int, output_tokens: int) -> float:
 
 
 def cache_dir() -> Path:
-    return Path(os.environ.get("CANONICO_LLM_CACHE") or settings.API_DIR / ".cache" / "llm")
+    return Path(os.environ.get("CANONICO_LLM_CACHE") or settings.cache_dir() / "llm")
 
 
 def _cache_key(model: str, system: str, user: str, schema: dict, max_tokens: int, effort: str) -> str:

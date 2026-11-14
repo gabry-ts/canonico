@@ -1,4 +1,4 @@
-.PHONY: install api web mock types test
+.PHONY: install api web mock types test docker-up docker-down docker-logs
 
 install:
 	uv venv api/.venv 2>/dev/null || python3 -m venv api/.venv
@@ -20,3 +20,12 @@ mock:
 types:
 	cd api && .venv/bin/datamodel-codegen --input ../openapi.yaml --input-file-type openapi --output app/models.py --output-model-type pydantic_v2.BaseModel --use-standard-collections --use-union-operator --field-constraints --target-python-version 3.11 --custom-file-header "# generated from openapi.yaml, do not edit"
 	cd web && npm run types
+
+docker-up:
+	docker compose up -d --build
+
+docker-down:
+	docker compose down
+
+docker-logs:
+	docker compose logs -f --tail=100

@@ -1,0 +1,20 @@
+# Context of the api image (repository root)
+.git
+.github
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.DS_Store
+api/.venv
+api/.env
+api/.env.*
+api/.runtime
+api/.cache
+api/tests
+api/*.egg-info
+web
+prototypes
+eval
+video
+*.md
+docker-compose.yml

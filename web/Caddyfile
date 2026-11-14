@@ -1,0 +1,17 @@
+:80 {
+	encode gzip
+
+	# Same origin for site and API, so the browser needs no CORS.
+	handle_path /api/* {
+		reverse_proxy api:8000 {
+			# Server-Sent Events of /ask/stream must not be buffered.
+			flush_interval -1
+		}
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
