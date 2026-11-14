@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -379,6 +380,11 @@ private fun Callout(text: String) {
 private fun Composer(state: AppState) {
     val p = pal
     val canSend = !state.askBusy && state.askInput.isNotBlank()
+    val focus = LocalFocusManager.current
+    val send = {
+        focus.clearFocus()
+        state.ask()
+    }
     Row(
         Modifier
             .fillMaxWidth()
@@ -401,7 +407,7 @@ private fun Composer(state: AppState) {
                 cursorBrush = SolidColor(p.binding),
                 maxLines = 4,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { state.ask() }),
+                keyboardActions = KeyboardActions(onSend = { send() }),
                 modifier = Modifier.fillMaxWidth().testTag("ask_input"),
             )
         }
@@ -411,7 +417,7 @@ private fun Composer(state: AppState) {
                 .size(36.dp)
                 .clip(CircleShape)
                 .background(if (canSend) p.text else p.tertiary.copy(alpha = 0.4f))
-                .clickable(enabled = canSend) { state.ask() }
+                .clickable(enabled = canSend) { send() }
                 .testTag("ask_send"),
             contentAlignment = Alignment.Center,
         ) {
