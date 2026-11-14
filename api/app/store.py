@@ -44,7 +44,7 @@ DEFAULT_CONFIG = {
     "stale_after_days": 90,
     "low_confidence_threshold": 0.5,
     "offline_mode": False,
-    "provider": "gateway",
+    "provider": "anthropic",
 }
 
 
@@ -246,8 +246,8 @@ def build_seed() -> dict:
         if rule_id.split("-")[-1].isdigit():
             state["seq"]["tag_rule"] = max(state["seq"]["tag_rule"], int(rule_id.split("-")[-1]))
     state["config"]["offline_mode"] = os.environ.get("CANONICO_OFFLINE") == "1"
-    provider = (os.environ.get("LLM_PROVIDER") or "gateway").strip().lower()
-    state["config"]["provider"] = provider if provider in ("anthropic", "gateway") else "gateway"
+    provider = (os.environ.get("LLM_PROVIDER") or "anthropic").strip().lower()
+    state["config"]["provider"] = provider if provider in ("anthropic", "gateway") else "anthropic"
     cap = os.environ.get("CANONICO_COST_CAP_USD")
     if cap:
         state["config"]["cost_cap_usd"] = float(cap)

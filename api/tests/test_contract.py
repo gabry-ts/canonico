@@ -97,3 +97,24 @@ def test_stats_and_reset(client):
     assert stats["open_conflicts"] >= 2
     assert stats["facts_total"] >= 15
     assert_contract(client.post("/demo/reset"), "POST", "/demo/reset")
+
+
+def test_contract_examples_describe_the_demo_seed(client, spec):
+    example = spec["paths"]["/stats"]["get"]["responses"]["200"]["content"]["application/json"]["example"]
+    live = client.get("/stats").json()
+    for key in ("documents", "topics", "facts_total", "by_type", "by_status", "open_conflicts", "open_questions", "maintenance_pending", "needs_attention"):
+        assert live[key] == example[key], key
+    assert [s["source_id"] for s in live["sources"]] == [s["source_id"] for s in example["sources"]]
+    topics = spec["paths"]["/topics"]["get"]["responses"]["200"]["content"]["application/json"]["example"]
+    assert_matches(client.get("/topics", params={"project_id": "proj-clearpath"}).json()[:2], topics)
+    tests = spec["components"]["schemas"]["EvalResult"]["properties"]["per_query"]["items"]["properties"]["tests"]
+    assert set(tests) == {"type", "description"}
+
+
+def test_anthropic_is_the_default_provider(monkeypatch):
+    from app import llm
+
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    assert llm.provider() == "anthropic"
+    monkeypatch.setenv("LLM_PROVIDER", "gateway")
+    assert llm.provider() == "gateway"

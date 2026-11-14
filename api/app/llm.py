@@ -80,7 +80,7 @@ class Meter:
 
 
 def provider() -> str:
-    return (os.environ.get("LLM_PROVIDER") or "gateway").strip().lower()
+    return (os.environ.get("LLM_PROVIDER") or "anthropic").strip().lower()
 
 
 def available() -> bool:
