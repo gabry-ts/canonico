@@ -68,6 +68,8 @@ tags:
   description: Per-project sources (documents, document library, GitHub, mail, chat) and their sync jobs
 - name: mail
   description: Mail configuration, routing rules, inbound webhook and mocked IMAP polling
+- name: members
+  description: Organisation and project members, roles and the demo actor
 paths:
   /health:
     get:
@@ -440,6 +442,8 @@ paths:
               reason: Clarified wording after review with the engagement lead.
               actor: gabriele
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Updated fact.
           content:
@@ -475,6 +479,8 @@ paths:
               reason: Replaced by the final report, which sets 3–4 weeks.
               actor: gabriele
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The updated fact.
           content:
@@ -519,6 +525,8 @@ paths:
               actor: gabriele
               reason: Retired by mistake.
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The updated fact.
           content:
@@ -1029,6 +1037,8 @@ paths:
               reason: Final report is the approved deliverable.
               actor: gabriele
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The pinned fact.
           content:
@@ -1062,6 +1072,8 @@ paths:
               reason: Pin no longer needed.
               actor: gabriele
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The unpinned fact.
           content:
@@ -1397,6 +1409,8 @@ paths:
               reason: Final report is later and approved by the client.
               actor: gabriele
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The resolved conflict.
           content:
@@ -2507,6 +2521,8 @@ paths:
       description: Replaces memory, audit log, stored answers and eval runs with the seeded demo snapshot (q01 with
         conflict R1.1 active, q02 contested). Synchronous and fast, it makes no model calls.
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: State after the reset.
           content:
@@ -2978,6 +2994,8 @@ paths:
                 - issues
                 - readme
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '201':
           description: Created source.
           content:
@@ -3051,6 +3069,8 @@ paths:
             example:
               label: ClearPath mailbox
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Updated source.
           content:
@@ -3084,6 +3104,8 @@ paths:
       parameters:
       - $ref: '#/components/parameters/SourceId'
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Deleted.
           content:
@@ -3115,6 +3137,8 @@ paths:
       parameters:
       - $ref: '#/components/parameters/SourceId'
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '202':
           description: Sync job accepted.
           content:
@@ -3200,6 +3224,8 @@ paths:
               inbound_address: brain@inbound.meridianlabs.org
               poll_interval_s: 60
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Saved mail config.
           content:
@@ -3262,6 +3288,8 @@ paths:
               inbound_address: internal@inbound.meridianlabs.org
               poll_interval_s: 60
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Project mail config.
           content:
@@ -3297,6 +3325,8 @@ paths:
       parameters:
       - $ref: '#/components/parameters/ProjectId'
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Inherited mail config.
           content:
@@ -3360,6 +3390,8 @@ paths:
               project_id: proj-clearpath
               priority: 10
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '201':
           description: Created rule.
           content:
@@ -3436,6 +3468,8 @@ paths:
             example:
               priority: 5
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Updated rule.
           content:
@@ -3462,6 +3496,8 @@ paths:
       parameters:
       - $ref: '#/components/parameters/RuleId'
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Deleted.
           content:
@@ -3721,6 +3757,416 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+  /org/members:
+    get:
+      tags:
+      - members
+      operationId: listOrgMembers
+      summary: List organisation members
+      description: Sample data only. All names are invented.
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Members of the organisation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberPage'
+              example:
+                total: 3
+                items:
+                - id: mem-giulia-ferri
+                  name: Giulia Ferri
+                  email: giulia.ferri@meridianlabs.example
+                  org_role: owner
+                  created_at: '2026-11-14T09:00:00Z'
+                  status: active
+                - id: mem-sara-conti
+                  name: Sara Conti
+                  email: sara.conti@meridianlabs.example
+                  org_role: editor
+                  created_at: '2026-11-14T09:10:00Z'
+                  status: active
+                - id: mem-luca-bassi
+                  name: Luca Bassi
+                  email: luca.bassi@meridianlabs.example
+                  org_role: viewer
+                  created_at: '2026-11-14T09:20:00Z'
+                  status: invited
+    post:
+      tags:
+      - members
+      operationId: inviteOrgMember
+      summary: Invite a member
+      description: Creates a member with status `invited`. Requires `manage_members`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberCreate'
+            example:
+              name: Luca Bassi
+              email: luca.bassi@meridianlabs.example
+              org_role: viewer
+      responses:
+        '201':
+          description: The invited member.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+              example:
+                id: mem-luca-bassi
+                name: Luca Bassi
+                email: luca.bassi@meridianlabs.example
+                org_role: viewer
+                created_at: '2026-11-14T09:20:00Z'
+                status: invited
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /org/members/{member_id}:
+    get:
+      tags:
+      - members
+      operationId: getOrgMember
+      summary: Get a member
+      parameters:
+      - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: The member.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+              example:
+                id: mem-sara-conti
+                name: Sara Conti
+                email: sara.conti@meridianlabs.example
+                org_role: editor
+                created_at: '2026-11-14T09:10:00Z'
+                status: active
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+      - members
+      operationId: patchOrgMember
+      summary: Update a member
+      description: Changes name, email or organisation role. Requires `manage_members`.
+      parameters:
+      - $ref: '#/components/parameters/MemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberPatch'
+            example:
+              org_role: admin
+      responses:
+        '200':
+          description: The updated member.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+              example:
+                id: mem-sara-conti
+                name: Sara Conti
+                email: sara.conti@meridianlabs.example
+                org_role: admin
+                created_at: '2026-11-14T09:10:00Z'
+                status: active
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      tags:
+      - members
+      operationId: deleteOrgMember
+      summary: Remove a member
+      description: Removes the member and their project roles. The last owner cannot be removed (409). Requires `manage_members`.
+      parameters:
+      - $ref: '#/components/parameters/MemberId'
+      responses:
+        '204':
+          description: Removed.
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /projects/{project_id}/members:
+    get:
+      tags:
+      - members
+      operationId: listProjectMembers
+      summary: List effective project members
+      description: Effective role of each organisation member on the project. A project role overrides the organisation role for that project; `inherited` is true when the role comes from the organisation role.
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Effective project members.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectMember'
+              example:
+              - member_id: mem-giulia-ferri
+                project_id: proj-clearpath
+                role: owner
+                inherited: true
+              - member_id: mem-luca-bassi
+                project_id: proj-clearpath
+                role: editor
+                inherited: false
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /projects/{project_id}/members/{member_id}:
+    put:
+      tags:
+      - members
+      operationId: setProjectMemberRole
+      summary: Set a project role
+      description: Sets an explicit project role that overrides the organisation role for this project. Requires `manage_members`.
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/MemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectMemberSet'
+            example:
+              member_id: mem-luca-bassi
+              role: editor
+      responses:
+        '200':
+          description: The effective project member.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMember'
+              example:
+                member_id: mem-luca-bassi
+                project_id: proj-clearpath
+                role: editor
+                inherited: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      tags:
+      - members
+      operationId: clearProjectMemberRole
+      summary: Reset to the inherited role
+      description: Removes the explicit project role so the organisation role applies again. Requires `manage_members`.
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: The effective project member, now inherited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMember'
+              example:
+                member_id: mem-luca-bassi
+                project_id: proj-clearpath
+                role: viewer
+                inherited: true
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /roles:
+    get:
+      tags:
+      - members
+      operationId: listRoles
+      summary: Role permission matrix
+      responses:
+        '200':
+          description: Permissions of each role.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RolePermissions'
+              example:
+              - role: viewer
+                permissions:
+                - ask
+                - read_facts
+              - role: editor
+                permissions:
+                - ask
+                - read_facts
+                - retire_fact
+                - restore_fact
+                - correct_fact
+                - resolve_conflict
+              - role: admin
+                permissions:
+                - ask
+                - read_facts
+                - retire_fact
+                - restore_fact
+                - correct_fact
+                - resolve_conflict
+                - manage_sources
+                - manage_mail
+                - manage_members
+              - role: owner
+                permissions:
+                - ask
+                - read_facts
+                - retire_fact
+                - restore_fact
+                - correct_fact
+                - resolve_conflict
+                - manage_sources
+                - manage_mail
+                - manage_members
+                - admin_demo
+  /me:
+    get:
+      tags:
+      - members
+      operationId: getMe
+      summary: Current actor (demo only)
+      description: Demo only, no real authentication. The actor is chosen with the `X-Demo-Actor` header or the `actor` query parameter (a member id or name); the header wins when both are set. Without either, a default demo actor is returned. Effective permissions are those of the actor's organisation role, or of the project role when `project_id` is given.
+      parameters:
+      - $ref: '#/components/parameters/DemoActorHeader'
+      - name: actor
+        in: query
+        required: false
+        description: Demo actor, member id or name. Same as the X-Demo-Actor header.
+        schema:
+          type: string
+        example: mem-sara-conti
+      - $ref: '#/components/parameters/ProjectIdQuery'
+      responses:
+        '200':
+          description: The current demo actor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+              example:
+                member:
+                  id: mem-sara-conti
+                  name: Sara Conti
+                  email: sara.conti@meridianlabs.example
+                  org_role: editor
+                  created_at: '2026-11-14T09:10:00Z'
+                  status: active
+                role: editor
+                permissions:
+                - ask
+                - read_facts
+                - retire_fact
+                - restore_fact
+                - correct_fact
+                - resolve_conflict
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /org/setup:
+    post:
+      tags:
+      - org
+      operationId: setupOrg
+      summary: First-run organisation setup
+      description: Creates the organisation, its default mail config and the first admin member (role owner). Returns 409 if the organisation is already set up.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgSetupRequest'
+            example:
+              organisation_name: Meridian Labs
+              primary_email_domain: meridianlabs.example
+              mail_config:
+                mode: imap_mock
+                imap_host: mock.meridianlabs.example
+                imap_user: brain@meridianlabs.example
+                inbound_address: brain@inbound.meridianlabs.example
+                poll_interval_s: 60
+              first_admin:
+                name: Giulia Ferri
+                email: giulia.ferri@meridianlabs.example
+      responses:
+        '201':
+          description: The created organisation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organisation'
+              example:
+                id: org-meridian
+                name: Meridian Labs
+                mail_config:
+                  mode: imap_mock
+                  imap_host: mock.meridianlabs.example
+                  imap_user: brain@meridianlabs.example
+                  inbound_address: brain@inbound.meridianlabs.example
+                  poll_interval_s: 60
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /org/setup/status:
+    get:
+      tags:
+      - org
+      operationId: getOrgSetupStatus
+      summary: Onboarding status
+      responses:
+        '200':
+          description: Setup progress.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetupStatus'
+              example:
+                completed: false
+                steps:
+                  org: done
+                  mail: done
+                  first_project: pending
+                  first_source: pending
 components:
   parameters:
     FactId:
@@ -3802,6 +4248,21 @@ components:
       schema:
         type: string
       example: sync-0001
+    MemberId:
+      name: member_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: mem-sara-conti
+    DemoActorHeader:
+      name: X-Demo-Actor
+      in: header
+      required: false
+      description: Demo only, no real authentication. Member id or name of the acting demo identity.
+      schema:
+        type: string
+      example: mem-sara-conti
   responses:
     BadRequest:
       description: Malformed request.
@@ -3839,6 +4300,15 @@ components:
           example:
             code: conflict
             message: Conflict C-001 is already resolved.
+    Forbidden:
+      description: The actor lacks the permission required for this write (see GET /roles). Demo actor is set with X-Demo-Actor.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: forbidden
+            message: Role viewer lacks permission retire_fact.
   schemas:
     FactType:
       type: string
@@ -4149,6 +4619,11 @@ components:
         actor:
           type: string
           description: User name, or `system` for ingest and classify.
+        actor_role:
+          oneOf:
+          - $ref: '#/components/schemas/Role'
+          - type: 'null'
+          description: Role of the actor when the event was written. Optional.
         action:
           $ref: '#/components/schemas/AuditAction'
         fact_id:
@@ -5825,6 +6300,209 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SupersedeLink'
+    Role:
+      type: string
+      enum:
+      - owner
+      - admin
+      - editor
+      - viewer
+    Permission:
+      type: string
+      enum:
+      - ask
+      - read_facts
+      - retire_fact
+      - restore_fact
+      - correct_fact
+      - resolve_conflict
+      - manage_sources
+      - manage_mail
+      - manage_members
+      - admin_demo
+    MemberStatus:
+      type: string
+      enum:
+      - active
+      - invited
+    Member:
+      type: object
+      description: Organisation member. Sample data only, names are invented.
+      required:
+      - id
+      - name
+      - email
+      - org_role
+      - created_at
+      - status
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        org_role:
+          $ref: '#/components/schemas/Role'
+        created_at:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/MemberStatus'
+    MemberCreate:
+      type: object
+      description: Invite a member.
+      required:
+      - name
+      - email
+      - org_role
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        org_role:
+          $ref: '#/components/schemas/Role'
+    MemberPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        org_role:
+          $ref: '#/components/schemas/Role'
+    MemberPage:
+      type: object
+      required:
+      - total
+      - items
+      properties:
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+    ProjectMember:
+      type: object
+      required:
+      - member_id
+      - project_id
+      - role
+      - inherited
+      properties:
+        member_id:
+          type: string
+        project_id:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        inherited:
+          type: boolean
+          description: True when the role comes from the organisation role, false when set explicitly on the project.
+    ProjectMemberSet:
+      type: object
+      required:
+      - member_id
+      - role
+      properties:
+        member_id:
+          type: string
+          description: Must match the member_id in the path.
+        role:
+          $ref: '#/components/schemas/Role'
+    RolePermissions:
+      type: object
+      required:
+      - role
+      - permissions
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    Me:
+      type: object
+      description: Current demo actor. Demo only, no real authentication.
+      required:
+      - member
+      - role
+      - permissions
+      properties:
+        member:
+          $ref: '#/components/schemas/Member'
+        role:
+          $ref: '#/components/schemas/Role'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    OrgSetupRequest:
+      type: object
+      required:
+      - organisation_name
+      - primary_email_domain
+      - first_admin
+      properties:
+        organisation_name:
+          type: string
+          minLength: 1
+        primary_email_domain:
+          type: string
+          minLength: 1
+        mail_config:
+          oneOf:
+          - $ref: '#/components/schemas/MailConfigWrite'
+          - type: 'null'
+        first_admin:
+          type: object
+          required:
+          - name
+          - email
+          properties:
+            name:
+              type: string
+              minLength: 1
+            email:
+              type: string
+              format: email
+    SetupStepState:
+      type: string
+      enum:
+      - done
+      - pending
+    SetupStatus:
+      type: object
+      required:
+      - completed
+      - steps
+      properties:
+        completed:
+          type: boolean
+        steps:
+          type: object
+          required:
+          - org
+          - mail
+          - first_project
+          - first_source
+          properties:
+            org:
+              $ref: '#/components/schemas/SetupStepState'
+            mail:
+              $ref: '#/components/schemas/SetupStepState'
+            first_project:
+              $ref: '#/components/schemas/SetupStepState'
+            first_source:
+              $ref: '#/components/schemas/SetupStepState'
   examples:
     FactM103:
       value:
@@ -5976,3 +6654,4 @@ components:
         confidence: 0.6
         retired_reason: null
         pinned: false
+
