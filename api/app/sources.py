@@ -61,7 +61,7 @@ def check_config(kind: str, config: dict) -> dict:
             raise ApiError(422, "config.default_tags: a list of strings is required")
         config = {"default_tags": tags}
     elif kind == "mail":
-        if config.get("mode") not in ("imap_mock", "webhook") or not config.get("mailbox"):
+        if config.get("mode") not in ("imap_mock", "webhook", "imap") or not config.get("mailbox"):
             raise ApiError(422, "config: a mail source needs mode and mailbox.")
         config.setdefault("match_rules", [])
     elif config:

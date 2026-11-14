@@ -70,6 +70,16 @@ def _read_json(path: Path, default):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _with_real_mailbox(org: dict) -> dict:
+    """When CANONICO_IMAP_HOST is set, the organisation reads that mailbox instead of the mocked inbox."""
+    host = os.environ.get("CANONICO_IMAP_HOST")
+    config = (org.get("organisation") or {}).get("mail_config")
+    if host and config:
+        org = copy.deepcopy(org)
+        org["organisation"]["mail_config"] = {**config, "mode": "imap", "imap_host": host, "imap_user": os.environ.get("CANONICO_IMAP_USER") or config.get("imap_user")}
+    return org
+
+
 def seed_hash() -> str:
     digest = hashlib.sha256()
     files = sorted(p for p in seed_dir().rglob("*") if p.is_file() and p.suffix in (".json", ".txt")) + [corpus_dir() / "corpus.jsonl"]
@@ -205,6 +215,7 @@ def build_seed() -> dict:
         conflicts[conflict["id"]] = conflict
     org = _read_json(seed_dir() / "org.json", {})
     mailbox = []
+    org = _with_real_mailbox(org)
     for path in sorted((seed_dir() / "mail").glob("*.json")) if (seed_dir() / "mail").exists() else []:
         mailbox.extend({**copy.deepcopy(item), "fetched": False} for item in _read_json(path, []))
     state = {

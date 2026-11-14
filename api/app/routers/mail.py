@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app import access, inbox, ops, sources, store
+from app import access, imap_client, inbox, ops, sources, store
 from app.http import ApiError, dump, not_found, out
 from app.models import (
     InboundEmail,
@@ -148,10 +148,15 @@ def receive_inbound_email(body: InboundEmail):
 @router.post("/mail/poll", operation_id="pollMail", status_code=200, response_model=MailPollResult)
 def poll_mail(body: MailPollRequest | None = None):
     project_id = body.project_id if body else None
-    with STORE.write() as state:
+    with STORE.read() as state:
         if project_id is not None:
             ops.require_project(state, project_id)
-        result = inbox.poll(state, project_id)
+        real = imap_client.active(state, project_id)
+    if real:
+        result = imap_client.poll(project_id)
+    else:
+        with STORE.write() as state:
+            result = inbox.poll(state, project_id)
     result["results"] = [with_model_facts(item) for item in result["results"]]
     return out(MailPollResult, result)
 
@@ -167,7 +172,11 @@ def list_project_messages(project_id: str, limit: int = Query(50, ge=1, le=500),
 
 @router.post("/demo/send-email", operation_id="demoSendEmail", status_code=200, response_model=InboundEmailResult)
 def demo_send_email():
-    """Canned client email of the live demo. Deterministic, no model call."""
+    """Canned client email of the live demo. Deterministic, no model call. With a real mailbox it goes through SMTP and IMAP."""
+    with STORE.read() as state:
+        real = imap_client.active(state, None)
+    if real:
+        return out(InboundEmailResult, imap_client.demo_send(inbox.DEMO_EMAIL))
     with STORE.write() as state:
         email = {**inbox.DEMO_EMAIL, "date": store.now()}
         return out(InboundEmailResult, inbox.receive(state, email))
