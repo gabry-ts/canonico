@@ -8,6 +8,9 @@ from app import extract, github, inbox, llm, ops, settings, store
 from app.http import ApiError, not_found
 from app.store import STORE
 
+# Model calls made while an HTTP request waits (an item, an email, a version) give up early
+# instead of holding the request for minutes on a slow or rate-limited provider.
+WAITING = {"timeout": 45.0, "retries": 1}
 SHORT = {"documents": "docs", "document_library": "library", "github": "gh", "mail": "mail", "webhook": "hook"}
 
 
@@ -171,7 +174,7 @@ def enrich_document(doc_id: str, prefix: str = "M") -> list[str]:
         lines = engine.topic_lines(state, document["project_id"]) if llm.forced() else {}
     meter = llm.Meter(cap_usd=budget)
     try:
-        found = extract.extract_document(document, model, meter)
+        found = extract.extract_document(document, model, meter, **WAITING)
     except Exception:
         found = []
     routes = forced_routes(document, found, lines, model, meter) if llm.forced() else None
@@ -195,7 +198,7 @@ def link_new_facts(topics: dict, touched: dict, model: str, meter: llm.Meter) ->
 
     def one(topic_id: str) -> list[dict]:
         topic, members = topics[topic_id]
-        return [link for link in extract.link_topic(topic, members, model, meter)["links"] if link["newer"] in touched[topic_id]]
+        return [link for link in extract.link_topic(topic, members, model, meter, **WAITING)["links"] if link["newer"] in touched[topic_id]]
 
     spent = meter.spent
     try:

@@ -78,14 +78,14 @@ def test_a_decision_reversed_in_the_same_item_is_linked_by_the_model(client, mon
         {"topic_hint": "intake response SLA", "value": "The intake SLA is 5 business days.", "short": "5 business days", "type": "DECISION", "doc_id": "", "quote": "The intake SLA is set at 5 business days.", "date": "2026-11-13", "confidence": 0.9},
     ]
 
-    def link(topic, members, model, meter):
+    def link(topic, members, model, meter, **limits):
         new = [m for m in members if m["doc_id"].startswith("hooks/")]
         three = next(m for m in new if m["value"].endswith("3 business days."))
         five = next(m for m in new if m["value"].endswith("5 business days."))
         return {"links": [{"older": five["tid"], "newer": three["tid"], "reason": "Reversed later in the meeting."}], "conflicts": []}
 
     monkeypatch.setattr(llm, "available", lambda: True)
-    monkeypatch.setattr(extract, "extract_document", lambda doc, model, meter: [dict(f, doc_id=doc["id"]) for f in extracted])
+    monkeypatch.setattr(extract, "extract_document", lambda doc, model, meter, **limits: [dict(f, doc_id=doc["id"]) for f in extracted])
     monkeypatch.setattr(extract, "link_topic", link)
     item = {"type": "meeting", "title": "Ops meeting", "date": "2026-11-13T10:00:00Z", "text": text}
     result = client.post("/projects/proj-clearpath/items", json=item).json()

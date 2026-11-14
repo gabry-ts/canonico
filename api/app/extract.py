@@ -175,10 +175,12 @@ def locate_quote(text: str, quote: str) -> str | None:
     return match.group(0) if match else None
 
 
-def extract_document(doc: dict, model: str, meter: llm.Meter) -> list[dict]:
-    """Extract typed facts from one document. Facts whose quote is not verbatim are dropped."""
+def extract_document(doc: dict, model: str, meter: llm.Meter, **limits) -> list[dict]:
+    """Extract typed facts from one document. Facts whose quote is not verbatim are dropped.
+
+    `limits` (timeout, retries) bound the call when a request waits for it."""
     user = f"Document id: {doc['id']}\nTitle: {doc['title']}\nDocument date: {doc['date']}\n\n<document>\n{doc['text']}\n</document>"
-    data = llm.complete_json(model, EXTRACT_SYSTEM, user, EXTRACT_SCHEMA, meter, name="facts", max_tokens=8000)
+    data = llm.complete_json(model, EXTRACT_SYSTEM, user, EXTRACT_SCHEMA, meter, name="facts", max_tokens=8000, **limits)
     facts, seen = [], set()
     for raw in data.get("facts", []):
         quote = locate_quote(doc["text"], str(raw.get("quote", "")))
@@ -236,12 +238,12 @@ def group_topics(facts: list[dict], existing: list[dict], model: str, meter: llm
     return list(topics.values())
 
 
-def link_topic(topic: dict, facts: list[dict], model: str, meter: llm.Meter) -> dict:
+def link_topic(topic: dict, facts: list[dict], model: str, meter: llm.Meter, **limits) -> dict:
     """Supersedes links and conflicts among the facts of one topic."""
     ordered = sorted(facts, key=lambda f: (f["date"], f["tid"]))
     lines = [f"{f['tid']} | {f['date']} | {f['doc_id']} | {f['type']} | {f['value']} | quote: {f['quote']}" for f in ordered]
     user = f"Topic: {topic['label']}\nQuestion: {topic.get('question', '')}\n\nFacts (id | date | document | type | statement | quote):\n" + "\n".join(lines)
-    data = llm.complete_json(model, LINK_SYSTEM, user, LINK_SCHEMA, meter, name="links", max_tokens=6000)
+    data = llm.complete_json(model, LINK_SYSTEM, user, LINK_SCHEMA, meter, name="links", max_tokens=6000, **limits)
     by_id = {f["tid"]: f for f in ordered}
     links, successor = [], {}
     for raw in data.get("links", []):
