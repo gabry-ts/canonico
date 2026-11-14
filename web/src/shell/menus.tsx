@@ -83,25 +83,13 @@ const THEME_ICON: Record<ThemePref, string> = { light: 'sun', dark: 'moon', syst
 export function ThemeMenu() {
   const { t } = useI18n()
   const [pref, setPref] = useTheme()
-  const label: Record<ThemePref, string> = { light: t('shell.themeLight'), dark: t('shell.themeDark'), system: t('shell.themeSystem') }
+  const dark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const next: ThemePref = dark ? 'light' : 'dark'
+  const label = `${t('shell.theme')}: ${dark ? t('shell.themeDark') : t('shell.themeLight')}`
   return (
-    <Menu
-      align="right"
-      trigger={(toggle) => (
-        <button className="btn btn-ghost btn-icon btn-sm" onClick={toggle} aria-label={t('shell.theme')} data-tip={t('shell.theme')}>
-          <Ic n={THEME_ICON[pref]} />
-        </button>
-      )}
-    >
-      <div className="menu-label">{t('shell.theme')}</div>
-      {(['light', 'dark', 'system'] as ThemePref[]).map((p) => (
-        <button key={p} className="menu-item" role="menuitemradio" aria-checked={pref === p} onClick={() => setPref(p)}>
-          <Ic n={THEME_ICON[p]} />
-          <span className="flex-1">{label[p]}</span>
-          {pref === p && <Ic n="check" className="sm" />}
-        </button>
-      ))}
-    </Menu>
+    <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setPref(next)} aria-label={label} aria-pressed={dark} data-tip={label}>
+      <Ic n={THEME_ICON[dark ? 'dark' : 'light']} />
+    </button>
   )
 }
 
