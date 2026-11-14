@@ -105,7 +105,7 @@ services:
     restart: unless-stopped
 
 volumes:
-  # Runtime state (memory, audit log, answers) and caches of model and GitHub responses.
+  # Runtime state (memory, audit log, answers), signed-in sessions and caches of model and GitHub responses.
   canonico-runtime:
   # Garage metadata and object data of the document library
   garage-meta:

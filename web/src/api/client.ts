@@ -41,7 +41,7 @@ function savedSession(): Session | null {
 
 let session: Session | null = savedSession()
 // True when the session was opened by a sign-in on this page. A session restored from storage that the backend no
-// longer knows (sessions live in memory, so after a restart) ends quietly, without the "session ended" notice.
+// longer knows (expired or revoked) ends quietly, without the "session ended" notice.
 let sessionUsed = false
 const sessionListeners = new Set<() => void>()
 let sessionEnded: () => void = () => {}

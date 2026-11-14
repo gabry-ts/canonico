@@ -123,7 +123,7 @@ The seeded memory answers `POST /ask {"question": "How long does onboarding take
 
 ## Sign-in
 
-`POST /auth/login {"email", "password"}` opens a 12 hour session: the token comes back in the body and as the HttpOnly `canonico_session` cookie, and can also be sent as `Authorization: Bearer <token>`. `POST /auth/demo-login` signs in without a password (Giulia by default, or `{"member_id": ...}`), `POST /auth/logout` ends the session. Passwords are stored as salted PBKDF2 hashes in `data/seed/credentials.json`, sessions live in memory.
+`POST /auth/login {"email", "password"}` opens a 7 day session: the token comes back in the body and as the HttpOnly `canonico_session` cookie, and can also be sent as `Authorization: Bearer <token>`. `POST /auth/demo-login` signs in without a password (Giulia by default, or `{"member_id": ...}`), `POST /auth/logout` ends the session. Passwords are stored as salted PBKDF2 hashes in `data/seed/credentials.json`. Sessions are kept as SHA-256 digests of the token in `sessions.json` next to the state file (`CANONICO_SESSIONS_FILE` overrides the path, empty keeps them in memory only), so they survive a restart or a redeploy on the same volume, and `POST /demo/reset` does not sign anyone out.
 
 - `CANONICO_AUTH_REQUIRED` (default `false`): when `true`, every write (POST, PUT, PATCH, DELETE) needs a session, except `/auth/*` and the `/hooks/*` webhooks, which check their own `X-Canonico-Token`. Reads stay public, `GET /me` needs a session.
 - `CANONICO_DEMO_LOGIN` (default `true`): enables `POST /auth/demo-login`.

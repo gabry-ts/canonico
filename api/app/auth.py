@@ -1,7 +1,9 @@
 """Username and password sessions.
 
-Sessions live in memory: a random token is handed to the client (cookie or bearer) and only its
-SHA-256 is kept. With CANONICO_AUTH_REQUIRED=true every write needs a session; reads stay public.
+A random token is handed to the client (cookie or bearer) and only its SHA-256 is kept, with the
+member, the creation time and the expiry. Sessions are written to their own file next to the state
+(settings.sessions_file), so they survive a restart or a redeploy and are left alone by a demo reset.
+With CANONICO_AUTH_REQUIRED=true every write needs a session; reads stay public.
 When a session is present its member is the actor of the request, whatever the demo header or the
 `actor` field of the body say.
 """
@@ -9,6 +11,7 @@ When a session is present its member is the actor of the request, whatever the d
 import hashlib
 import hmac
 import json
+import os
 import secrets
 import threading
 import time
@@ -21,13 +24,14 @@ from app import i18n, settings, store
 from app.store import STORE
 
 COOKIE = "canonico_session"
-TTL_S = 12 * 3600
+TTL_S = 7 * 24 * 3600
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 PUBLIC_WRITE_PREFIXES = ("/auth/", "/hooks/")
 PUBLIC_WRITE_PATHS = {"/health"}
 DEFAULT_DEMO_MEMBER = "mem-giulia-ferri"
 
-_sessions: dict[str, tuple[str, float]] = {}
+_sessions: dict[str, dict] = {}
+_loaded = False
 _lock = threading.Lock()
 
 
@@ -87,31 +91,81 @@ def _digest(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def _load() -> None:
+    """Read the sessions file once per process. Call with the lock held."""
+    global _loaded
+    if _loaded:
+        return
+    _loaded = True
+    path = settings.sessions_file()
+    if not path or not path.exists():
+        return
+    try:
+        stored = json.loads(path.read_text(encoding="utf-8")).get("sessions", {})
+    except (OSError, ValueError, AttributeError):
+        return
+    now = time.time()
+    _sessions.update({d: s for d, s in stored.items() if isinstance(s, dict) and s.get("member_id") and s.get("expires_at", 0) > now})
+
+
+def _save() -> None:
+    """Write the live sessions to disk, dropping expired ones. Call with the lock held."""
+    now = time.time()
+    for digest in [d for d, s in _sessions.items() if s["expires_at"] <= now]:
+        del _sessions[digest]
+    path = settings.sessions_file()
+    if not path:
+        return
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"sessions": _sessions}), encoding="utf-8")
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, path)
+    except OSError:
+        pass
+
+
+def reload() -> None:
+    """Forget the sessions held in memory: the next lookup reads the file again, as after a restart."""
+    global _loaded
+    with _lock:
+        _sessions.clear()
+        _loaded = False
+
+
 def issue(member_id: str) -> tuple[str, str]:
     token = secrets.token_urlsafe(32)
-    expires = time.time() + TTL_S
+    created = time.time()
+    expires = created + TTL_S
     with _lock:
-        _sessions[_digest(token)] = (member_id, expires)
+        _load()
+        _sessions[_digest(token)] = {"member_id": member_id, "created_at": created, "expires_at": expires}
+        _save()
     return token, datetime.fromtimestamp(expires, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def revoke(token: str | None) -> None:
     if token:
         with _lock:
-            _sessions.pop(_digest(token), None)
+            _load()
+            if _sessions.pop(_digest(token), None) is not None:
+                _save()
 
 
 def session_member_id(token: str | None) -> str | None:
     if not token:
         return None
     with _lock:
+        _load()
         entry = _sessions.get(_digest(token))
         if entry is None:
             return None
-        if entry[1] < time.time():
+        if entry["expires_at"] <= time.time():
             _sessions.pop(_digest(token), None)
+            _save()
             return None
-        return entry[0]
+        return entry["member_id"]
 
 
 def token_of(request: Request) -> str | None:
