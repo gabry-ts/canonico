@@ -24,3 +24,10 @@ def test_a_passing_mention_of_the_old_target_does_not_supersede_the_binding_fact
     assert result["routed_project_id"] == "proj-clearpath"
     assert result["supersedes_created"] == []
     assert binding(client)["id"] == "M-106"
+
+
+def test_a_decision_naming_the_steering_committee_is_filed_under_the_onboarding_time(client):
+    text = "The steering committee confirmed the onboarding target at 6 weeks."
+    result = client.post("/mail/inbound", json=email("committee", text)).json()
+    assert [link["supersedes"] for link in result["supersedes_created"]] == ["M-106"]
+    assert binding(client)["value"] == "6 weeks"

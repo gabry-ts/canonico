@@ -80,20 +80,25 @@ def find(state: dict, text: str, project_id: str | None, prefer_topics: set[str]
         ranked = [t for t, _, _ in engine.rank_topics(state, sentence, project_id)]
         if prefer_topics:
             ranked = [t for t in ranked if t in prefer_topics] + [t for t in ranked if t not in prefer_topics]
-        for topic_id in ranked:
+        shared = {t: words & _anchors(state["topics"][t]) for t in ranked}
+        fitting = [t for t in ranked if len(shared[t]) >= 2 or (prefer_topics and t in prefer_topics and shared[t])]
+        if not fitting:
+            continue
+        topic_id = fitting[0]
+        if not (prefer_topics and topic_id in prefer_topics):
+            # Among the best ranked candidates, the topic that shares most anchor words wins:
+            # "the steering committee confirmed the onboarding target" is about onboarding, not the committee.
+            topic_id = max(fitting[:5], key=lambda t: len(shared[t]))
+        if topic_id not in found:
             topic = state["topics"][topic_id]
-            shared = words & _anchors(topic)
-            if len(shared) >= 2 or (prefer_topics and topic_id in prefer_topics and shared):
-                if topic_id not in found:
-                    found[topic_id] = {
-                        "topic": topic_id,
-                        "value": f"{topic['label']}: {short}",
-                        "short": short,
-                        "type": "DECISION" if DECISION_WORDS.search(sentence) else "EVIDENCE",
-                        "quote": sentence,
-                        "confidence": 0.9,
-                    }
-                break
+            found[topic_id] = {
+                "topic": topic_id,
+                "value": f"{topic['label']}: {short}",
+                "short": short,
+                "type": "DECISION" if DECISION_WORDS.search(sentence) else "EVIDENCE",
+                "quote": sentence,
+                "confidence": 0.9,
+            }
     return list(found.values())
 
 
