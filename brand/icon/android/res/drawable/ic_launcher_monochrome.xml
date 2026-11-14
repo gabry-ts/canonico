@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Canonico launcher icon: monochrome layer for themed icons (Android 13+).
+     Generated from brand/icon/icon.svg. The 1024 master maps onto the 72 dp
+     visible area of the 108 dp adaptive canvas (scale 72/1024, offset 18). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.0703125"
+        android:scaleY="0.0703125"
+        android:translateX="18"
+        android:translateY="18">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M779.62 365.74A320 320 0 1 0 779.62 658.26A148 148 0 0 1 663.62 626.82A204 204 0 1 1 663.62 397.18A148 148 0 0 1 779.62 365.74Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M665 512a92 92 0 1 0 184 0a92 92 0 1 0 -184 0Z" />
+    </group>
+</vector>

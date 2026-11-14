@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Canonico glyph in one colour (currentColor), no background.
+       C: ring centred 495,512, outer radius 320, inner radius 204 (stroke 116).
+       Fixed point: bead of radius 92 at 757,512, on the centre line of the stroke.
+       The terminals of the C are arcs of radius 148 around the bead: an even gap of 56. -->
+  <g id="glyph" fill="currentColor">
+    <path d="M779.62 365.74A320 320 0 1 0 779.62 658.26A148 148 0 0 1 663.62 626.82A204 204 0 1 1 663.62 397.18A148 148 0 0 1 779.62 365.74Z"/>
+    <circle cx="757" cy="512" r="92"/>
+  </g>
+</svg>
