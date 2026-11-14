@@ -153,7 +153,7 @@
 
   /* form */
   .input { width: 100%; height: 36px; padding: 0 12px; border-radius: 8px; background: hsl(var(--background)); color: hsl(var(--foreground)); box-shadow: inset 0 0 0 1px hsl(var(--input)); font-size: 14px; outline: none; transition: box-shadow .15s; }
-  .dark .input { background: hsl(var(--muted) / .5); }
+  .dark .input { background-color: hsl(var(--muted) / .5); }
   textarea.input { height: auto; min-height: 76px; padding: 8px 12px; line-height: 1.5; resize: vertical; }
   .input::placeholder { color: hsl(var(--muted-foreground) / .85); }
   .input:hover { box-shadow: inset 0 0 0 1px hsl(var(--muted-foreground) / .45); }
@@ -274,7 +274,6 @@
   .dark .scrim { background: rgb(0 0 0 / .6); }
   .dialog { position: fixed; z-index: 50; left: 50%; top: 14vh; transform: translateX(-50%); width: min(520px, calc(100vw - 32px)); animation: pop .18s cubic-bezier(.2,.8,.2,1) both; }
   .drawer { position: fixed; z-index: 45; top: 8px; bottom: 8px; right: 8px; width: min(560px, calc(100vw - 16px)); display: flex; flex-direction: column; animation: slide .22s cubic-bezier(.2,.8,.2,1) both; }
-  .sheet { position: fixed; z-index: 45; top: 8px; bottom: 8px; left: 256px; width: min(420px, calc(100vw - 272px)); animation: slidel .22s cubic-bezier(.2,.8,.2,1) both; }
   .menu { position: fixed; z-index: 60; min-width: 220px; padding: 4px; animation: pop2 .12s ease-out both; }
   .menu-item { width: 100%; display: flex; align-items: center; gap: 9px; height: 32px; padding: 0 8px; border-radius: 6px; font-size: 13.5px; text-align: left; color: hsl(var(--foreground)); }
   .menu-item:hover, .menu-item.active { background: hsl(var(--accent)); }
@@ -301,8 +300,30 @@
   .flash { animation: flash 1.4s ease-out; }
   @keyframes flash { 0%, 30% { background: hsl(var(--primary) / .12); } }
   .dropzone { border-radius: 12px; border: 1px dashed hsl(var(--input)); background: hsl(var(--muted) / .4); }
+  /* expandable rows */
+  .xr .xp { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .26s cubic-bezier(.2,.8,.2,1), opacity .2s ease; }
+  .xr.open .xp { grid-template-rows: 1fr; opacity: 1; }
+  .xp > div { overflow: hidden; min-height: 0; }
+  tr.xr > td { padding: 0 !important; border-bottom: 0 !important; }
+  tr.xr.open > td { border-bottom: 1px solid hsl(var(--border)) !important; }
+  tr.xr.open:last-child > td { border-bottom: 0 !important; }
+  .tbl tr.hov:nth-last-child(2) > td { border-bottom-color: transparent; }
+  tr.xo > td { border-bottom-color: transparent !important; background: hsl(var(--muted) / .45); }
+  .xbody { background: hsl(var(--muted) / .45); }
+  .xchev { transition: transform .22s cubic-bezier(.2,.8,.2,1); color: hsl(var(--muted-foreground)); }
+  [aria-expanded="true"] > .xchev, .xo .xchev { transform: rotate(180deg); }
+  /* tags */
+  .tag { display: inline-flex; align-items: center; gap: 3px; height: 20px; padding: 0 7px; border-radius: 6px; font-family: 'Geist Mono', monospace; font-size: 11.5px; line-height: 1; white-space: nowrap; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); box-shadow: inset 0 0 0 1px hsl(var(--border)); flex-shrink: 0; }
+  .tag.topic { background: hsl(var(--open-soft)); color: hsl(var(--open-text)); box-shadow: inset 0 0 0 1px hsl(var(--open) / .25); }
+  button.tag { transition: box-shadow .12s, color .12s; }
+  button.tag:hover { color: hsl(var(--foreground)); box-shadow: inset 0 0 0 1px hsl(var(--muted-foreground) / .5); }
+  .tag svg.i { width: 12px; height: 12px; }
+  .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 36px; padding: 5px 8px; border-radius: 8px; background: hsl(var(--background)); box-shadow: inset 0 0 0 1px hsl(var(--input)); cursor: text; transition: box-shadow .15s; }
+  .dark .chips { background: hsl(var(--muted) / .5); }
+  .chips:focus-within { box-shadow: inset 0 0 0 1px hsl(var(--ring)), 0 0 0 3px hsl(var(--ring) / .18); }
+  .chips input { flex: 1; min-width: 120px; background: transparent; outline: none; font-size: 13.5px; height: 24px; }
+  .code { font-family: 'Geist Mono', monospace; font-size: 12px; line-height: 1.6; background: hsl(var(--muted) / .7); border-radius: 8px; padding: 10px 12px; padding-right: 76px; white-space: pre; overflow-x: auto; box-shadow: inset 0 0 0 1px hsl(var(--border)); }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
-  @media (max-width: 1023px) { .sheet { left: 8px; width: calc(100vw - 16px); } }
 </style>
 </head>
 <body>
@@ -378,9 +399,11 @@ const FACTS = {
   'L-400': { q:'q01', type:'Superseded', date:'2025-12-02', doc:'library/onboarding-standard v1', loc:'§ Target', claim:'Onboarding standard v1: 4 weeks', quote:'Onboarding target: 4 weeks to autonomy.', by:'L-401', note:'Sample document version in the library.', src:'library', sample:true, val:'4 weeks', label:'onboarding standard v1' },
   'L-401': { q:'q01', type:'Evidence', date:'2026-01-12', doc:'library/onboarding-standard v2', loc:'§ Target', claim:'Onboarding standard v2: 3–4 weeks', quote:'Onboarding target: 3–4 weeks to autonomy.', note:'Sample document in the document library.', src:'library', sample:true, val:'3–4 weeks', label:'onboarding standard v2' },
   'E-301': { q:'q01', type:'Decision', date:'2026-11-14', doc:'mail/client@meridianlabs.org', loc:'Onboarding target confirmed', claim:'Onboarding target: 5 weeks', quote:'…we confirm the onboarding target at 5 weeks.', note:'Sample email, routed to ClearPath engagement by the rule @meridianlabs.org.', src:'mail', sample:true, val:'5 weeks', label:'client email', say:'Five weeks.' },
-  'L-402': { q:'q01', type:'Decision', date:'2026-11-14', doc:'library/onboarding-standard v3', loc:'§ Target', claim:'Onboarding standard v3: 5 weeks', quote:'Onboarding target: 5 weeks to autonomy.', note:'Sample version uploaded to the document library.', src:'library', sample:true, val:'5 weeks', label:'onboarding standard v3', say:'Five weeks.' }
+  'L-402': { q:'q01', type:'Decision', date:'2026-11-14', doc:'library/onboarding-standard v3', loc:'§ Target', claim:'Onboarding standard v3: 5 weeks', quote:'Onboarding target: 5 weeks to autonomy.', note:'Sample version uploaded to the document library.', src:'library', sample:true, val:'5 weeks', label:'onboarding standard v3', say:'Five weeks.' },
+  // Sample manual upload (not from the corpus): visible once the demo item is uploaded.
+  'U-501': { q:'q01', type:'Evidence', date:'2026-11-12', doc:'uploads/steering-committee-12-nov', loc:'Meeting transcript', claim:'Steering committee: target stays at 3–4 weeks', quote:'We agreed the onboarding target stays at 3–4 weeks.', note:'Sample manual upload. Same value as the binding fact, so the binding does not change.', src:'upload', sample:true, val:'3–4 weeks', label:'steering committee', tags:['clearpath','topic:onboarding-target'] }
 };
-const FACT_ORDER = ['M-106','M-105','M-107','L-401','L-400','M-104','M-103','M-102','M-101','E-301','L-402','M-201','M-202','M-203','M-204','M-205','M-206','M-207','M-208','M-301','M-302','M-403','M-402','M-401','M-501','M-601','M-602','M-703','M-702','M-701'];
+const FACT_ORDER = ['M-106','M-105','M-107','L-401','L-400','M-104','M-103','M-102','M-101','E-301','L-402','U-501','M-201','M-202','M-203','M-204','M-205','M-206','M-207','M-208','M-301','M-302','M-403','M-402','M-401','M-501','M-601','M-602','M-703','M-702','M-701'];
 
 const DEPENDENTS = {
   'M-106': [{ id:'M-107', rel:'Corroborates' }, { label:'Answer to the onboarding question', rel:'Cited by', mono:'ans-q01' }],
@@ -392,8 +415,15 @@ const DEPENDENTS = {
   'M-401': [{ label:'Open question OQ-002 · Team leader count', rel:'Raises', go:'open-questions' }]
 };
 
-const SRC_LABEL = { docs:'Documents', library:'Document library', github:'GitHub', mail:'Mail' };
-const TYPE_KEY = { documents:'docs', document_library:'library', github:'github', mail:'mail' };
+const SRC_LABEL = { docs:'Documents', library:'Document library', github:'GitHub', mail:'Mail', webhook:'Inbound webhook', upload:'Manual upload' };
+const TYPE_KEY = { documents:'docs', document_library:'library', github:'github', mail:'mail', webhook:'webhook' };
+const TOPIC_TAG = { q01:'topic:onboarding-target', q02:'topic:audit-queue', q03:'topic:client-load', q16:'topic:team-leaders', q04:'topic:turnover', q15:'topic:knowledge-base', q05:'topic:milan-scope' };
+const TAG_TOPIC = Object.fromEntries(Object.entries(TOPIC_TAG).map(([q, t]) => [t, q]));
+const ITEM_TYPES = [['meeting','Meeting transcript','mic'], ['document','Document','doc'], ['note','Note','note'], ['ticket','Ticket','ticket'], ['email','Email','mail']];
+const ITEM_LABEL = Object.fromEntries(ITEM_TYPES.map(t => [t[0], t[1]]));
+const ITEM_ICON = Object.fromEntries(ITEM_TYPES.map(t => [t[0], t[2]]));
+const DOCS_PICK = [['onboarding-standard','Onboarding standard'], ['report-final','Final report'], ['implementation-roadmap','Implementation roadmap']];
+const SAMPLE_UPLOAD = { utype:'meeting', title:'Steering committee 12 Nov', date:'2026-11-12', participants:'Thomas Reed, Priya Anand, Marcus Webb', text:'We agreed the onboarding target stays at 3–4 weeks.', tags:['clearpath','topic:onboarding-target'] };
 const QS = 'How long does onboarding take?';
 const STEPS = [
   { label:'Last Monday', caption:'Last Monday the company assistant answered four weeks. It came from the final presentation, which was already out of date.' },
@@ -459,10 +489,37 @@ function seed() {
     sources: [
       { id:'src-clearpath-docs', project_id:'proj-clearpath', type:'documents', label:'Documents', status:'ok', items:46, last:'09:01', facts:198 },
       { id:'src-clearpath-library', project_id:'proj-clearpath', type:'document_library', label:'Document library', status:'ok', items:2, last:'09:00', facts:3 },
-      { id:'src-clearpath-gh', project_id:'proj-clearpath', type:'github', label:'gabry-ts/canonico', status:'ok', items:20, last:'09:00', facts:13 },
+      { id:'src-clearpath-gh', project_id:'proj-clearpath', type:'github', label:'gabry-ts/canonico', status:'ok', items:20, last:'09:00', facts:13, include:{ issues:true, readme:true, prs:false } },
       { id:'src-clearpath-mail', project_id:'proj-clearpath', type:'mail', label:'Mailbox', status:'ok', items:0, last:'09:00', facts:0 },
       { id:'src-internal-docs', project_id:'proj-internal', type:'documents', label:'Documents', status:'ok', items:9, last:'09:00', facts:31 }
     ],
+    // received items (sample): ids, tags and dates are sample data, titles follow the corpus files
+    items: [
+      { id:'itm-0122', project_id:'proj-clearpath', source_id:'src-clearpath-gh', type:'ticket', title:'Issue #18 · One pin per topic', date:'2026-11-13', tags:['canonico','ticket'], n:2 },
+      { id:'itm-0121', project_id:'proj-clearpath', source_id:'src-clearpath-gh', type:'ticket', title:'Issue #12 · Route mail by sender domain', date:'2026-11-12', tags:['canonico','ticket','mail'], n:1 },
+      { id:'itm-0120', project_id:'proj-clearpath', source_id:'src-clearpath-gh', type:'document', title:'README', date:'2026-11-10', tags:['canonico','readme'], n:4 },
+      { id:'itm-0113', project_id:'proj-clearpath', source_id:'src-clearpath-mail', type:'email', title:'Onboarding target confirmed', date:'2026-11-14', tags:['clearpath','email','topic:onboarding-target'], facts:['E-301'], when:'email' },
+      { id:'itm-0112', project_id:'proj-clearpath', source_id:'src-clearpath-library', type:'document', title:'Onboarding standard v3', date:'2026-11-14', tags:['clearpath','standard','topic:onboarding-target'], facts:['L-402'], when:'v3' },
+      { id:'itm-0111', project_id:'proj-clearpath', source_id:'src-clearpath-library', type:'document', title:'Onboarding standard v2', date:'2026-01-12', tags:['clearpath','standard','topic:onboarding-target'], facts:['L-401'] },
+      { id:'itm-0110', project_id:'proj-clearpath', source_id:'src-clearpath-library', type:'document', title:'Onboarding standard v1', date:'2025-12-02', tags:['clearpath','standard','topic:onboarding-target'], facts:['L-400'] },
+      { id:'itm-0103', project_id:'proj-clearpath', source_id:'src-clearpath-docs', type:'document', title:'Implementation roadmap', date:'2026-01-06', tags:['clearpath','document','topic:onboarding-target'], facts:['M-107'] },
+      { id:'itm-0101', project_id:'proj-clearpath', source_id:'src-clearpath-docs', type:'document', title:'Final report', date:'2025-11-28', tags:['clearpath','document','topic:onboarding-target'], facts:['M-106','M-206','M-501'] },
+      { id:'itm-0102', project_id:'proj-clearpath', source_id:'src-clearpath-docs', type:'meeting', title:'Meeting 005 · Final presentation', date:'2025-11-21', tags:['clearpath','meeting','topic:onboarding-target'], facts:['M-105','M-207'], participants:'Thomas Reed, Priya Anand, Marcus Webb' },
+      { id:'itm-0104', project_id:'proj-clearpath', source_id:'src-clearpath-docs', type:'meeting', title:'Meeting 003 · Interim review', date:'2025-10-15', tags:['clearpath','meeting','topic:onboarding-target'], facts:['M-104'] },
+      { id:'itm-0106', project_id:'proj-clearpath', source_id:'src-clearpath-docs', type:'note', title:'Observation 005 · Knowledge sharing', date:'2025-10-10', tags:['clearpath','observation','topic:knowledge-base'], facts:['M-402','M-601','M-602'] },
+      { id:'itm-0105', project_id:'proj-clearpath', source_id:'src-clearpath-docs', type:'note', title:'Observation 003 · Audit workflow', date:'2025-10-02', tags:['clearpath','observation','topic:audit-queue'], facts:['M-201','M-202','M-203','M-205'] },
+      { id:'itm-0107', project_id:'proj-clearpath', source_id:'src-clearpath-docs', type:'document', title:'Requirements', date:'2025-09-29', tags:['clearpath','document'], facts:['M-103','M-401','M-403'] },
+      { id:'itm-0108', project_id:'proj-clearpath', source_id:'src-clearpath-docs', type:'document', title:'Project brief', date:'2025-08-22', tags:['clearpath','document'], facts:['M-101','M-102','M-208'] },
+      { id:'itm-0201', project_id:'proj-internal', source_id:'src-internal-docs', type:'note', title:'Weekly status, week 46', date:'2026-11-11', tags:['internal','status'], n:1 }
+    ],
+    tagRules: [
+      { id:'tr-001', tag:'clearpath', project_id:'proj-clearpath', priority:10 },
+      { id:'tr-002', tag:'internal', project_id:'proj-internal', priority:20 },
+      { id:'tr-003', tag:'canonico', project_id:'proj-internal', priority:30 }
+    ],
+    orgHook: { url:'https://api.canonico.app/hooks/org', last4:'9f2a', secret:null, rotated:null },
+    uploadedFacts: {},
+    upSeq: 301,
     messages: [],
     imapQueue: [{ from:'pm@team.meridianlabs.org', subject:'Weekly status, week 46', text:'Rollout of the new onboarding checklist starts Monday.' }],
     members: MEMBERS0.map(m => ({ ...m })),
@@ -486,9 +543,9 @@ function seed() {
     ],
     auditSeq: 41,
     // view-local ui
-    ui: { drawer:null, sheet:null, dialog:null, palette:null, menu:null, nav:false },
+    ui: { drawer:null, dialog:null, palette:null, menu:null, nav:false, open:{ src:null, item:null }, srcRemove:null, srcTag:{}, itemFilter:{ type:'all', tag:'all' } },
     app: { open:null, showAll:false, timeline:true, compare:false, reveal:null, correcting:null },
-    mem: { q:'', type:'all', status:'all', topic:'all' },
+    mem: { q:'', type:'all', status:'all', topic:'all', tag:'all' },
     tabs: { conflicts:'open', oq:'open', mq:'pending', settings:'org', audit:'all' },
     setup: null,
     lastReset: '09:00'
@@ -535,7 +592,7 @@ function heldTopics(){
   return Object.keys(TOPICS).map(bindingFor).filter(b => b && S.fx[b]?.pinned && S.c001?.kept !== b && heldBy(b).length);
 }
 const bindingQ1 = () => bindingFor('q01');
-const visible = id => (id !== 'E-301' || emailIn()) && (id !== 'L-402' || v3());
+const visible = id => (id !== 'E-301' || emailIn()) && (id !== 'L-402' || v3()) && (FACTS[id].src !== 'upload' || !!S.uploadedFacts[id]);
 const CHAIN = () => ['M-101','M-102','M-103','M-104','M-105','M-106'].concat(emailIn() ? ['E-301'] : [], v3() ? ['L-402'] : []);
 function changes(chain){ let n = 0; for (let i = 1; i < chain.length; i++) if (FACTS[chain[i]].val !== FACTS[chain[i-1]].val) n++; return n; }
 function retiredInfo(id){
@@ -558,6 +615,8 @@ function factStatus(id){
   const b = bindingFor(f.q);
   if (id === b) return { key:'binding', badge:'Binding', cls:'binding', binding:true, pinned:!!u.pinned };
   if (heldBy(b).includes(id)) return { key:'held', badge:'Newer · held by pin', cls:'held', held:true };
+  const up = S.uploadedFacts[id];
+  if (up && up.confirms) return up.confirms === b ? { key:'active', badge:'Confirms', cls:'ok' } : { key:'superseded', badge:'Superseded', cls:'superseded', dim:true };
   if (id === 'M-105') return { key:'conflict', badge:'Still active', cls:'conflict', conflict:true };
   if (id === 'M-106' && S.c001?.kept === 'M-105') return { key:'superseded', badge:'Superseded', cls:'superseded', dim:true };
   if (id === 'E-301' && v3()) return { key:'active', badge:'Confirms', cls:'ok' };
@@ -570,7 +629,7 @@ function factStatus(id){
 }
 function badge(st){ return `<span class="badge ${st.cls}">${st.pinned ? ic('pin','sm') : ''}${st.cls === 'conflict' || st.cls === 'open' ? '<span class="bd"></span>' : ''}${esc(st.badge)}</span>`; }
 
-function srcOfFact(f){ if (f.src === 'mail') return 'Mail'; if (f.src === 'library') return 'Document library'; return 'Documents'; }
+function srcOfFact(f){ if (f.src === 'upload') return 'Manual upload'; if (f.src === 'mail') return 'Mail'; if (f.src === 'library') return 'Document library'; return 'Documents'; }
 function factSource(f){ return f.src === 'mail' ? 'client@meridianlabs.org' : shortDoc(f.doc); }
 const claimOf = id => S.fx[id]?.corrected || FACTS[id].claim;
 
@@ -629,10 +688,16 @@ const IP = {
   wifioff:'<path d="M12 20h.01M8.5 16.43a5 5 0 0 1 7 0M2 8.82a15 15 0 0 1 4.17-2.65M10.66 5c4.01-.36 8.14.9 11.34 3.76M16.85 11.25a10 10 0 0 1 2.22 1.68M5 13a10 10 0 0 1 5.24-2.76M2 2l20 20"/>',
   play:'<path d="M7 4.5v15l12-7.5z"/>',
   key:'<path d="M2.5 18v3a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.17a2 2 0 0 0 1.42-.59l.81-.81a6.5 6.5 0 1 0-4.17-4.17z"/><circle cx="16.5" cy="7.5" r="1"/>',
+  tag:'<path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".6"/>',
+  webhook:'<path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2"/><path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06"/><path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8"/>',
+  mic:'<rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M19 10.5a7 7 0 0 1-14 0M12 17.5v4"/>',
+  note:'<path d="M4 5.5h16M4 10h16M4 14.5h10M4 19h7"/>',
+  ticket:'<path d="M2.5 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2h-15a2 2 0 0 0-2 2Z"/><path d="M13.5 5v2M13.5 17v2M13.5 11v2"/>',
+  copy:'<rect width="13" height="13" x="8.5" y="8.5" rx="2"/><path d="M4.5 15.5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2"/>',
   logo:''
 };
 const ic = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${IP[n] || ''}</svg>`;
-const SRC_ICON = { docs:'doc', library:'library', github:'github', mail:'mail' };
+const SRC_ICON = { docs:'doc', library:'library', github:'github', mail:'mail', webhook:'webhook', upload:'upload' };
 const LOGO = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="6" fill="hsl(var(--primary))"/><path d="M8.5 9.25h7M8.5 12h7M8.5 14.75h4" stroke="white" stroke-width="1.7" stroke-linecap="round"/></svg>`;
 const av = m => m ? `<span class="avatar" aria-hidden="true">${m.initials}</span>` : `<span class="avatar sys" aria-hidden="true">${ic('settings','sm')}</span>`;
 
@@ -693,7 +758,7 @@ function nav(path){ if (location.hash === '#/' + path) { route = parseHash(); re
 window.addEventListener('hashchange', () => {
   const prev = route.r; route = parseHash();
   S.ui.menu = null; S.ui.palette = null; S.ui.nav = false;
-  if (prev !== route.r) { S.ui.sheet = null; if (route.r !== 'memory') S.ui.drawer = null; }
+  if (prev !== route.r) { if (route.r !== 'memory') S.ui.drawer = null; }
   if (route.r === 'memory' && route.sub && FACTS[route.sub]) S.ui.drawer = route.sub;
   if (route.r === 'settings' && route.sub) S.tabs.settings = route.sub;
   if (route.r === 'setup' && !S.setup) S.setup = setupSeed();
@@ -713,10 +778,10 @@ function sourcesOf(pid = S.project){ return S.sources.filter(s => s.project_id =
 function sidebarSources(){
   return sourcesOf().map(x => {
     const k = TYPE_KEY[x.type];
-    const count = k === 'library' ? (v3() ? 'v3' : 'v2') : (k === 'mail' ? String(x.items + (emailIn() ? 1 : 0)) : String(x.items));
-    const syncing = x.status === 'syncing';
-    return `<button class="nav-item !h-7 ${S.ui.sheet === k ? 'on' : ''}" data-action="sheet" data-src="${k}" data-endpoint="GET /sources/{source_id}">
-      <span class="dot ${syncing ? 'sync' : ''}"></span><span class="flex-1 truncate">${SRC_LABEL[k]}</span><span class="mono text-[11.5px] text-muted-foreground">${count}</span></button>`;
+    const count = k === 'library' && x.project_id === 'proj-clearpath' ? (v3() ? 'v3' : 'v2') : String(srcItems(x).n);
+    const syncing = x.status === 'syncing'; const on = route.r === 'projects' && S.ui.open.src === x.id;
+    return `<button class="nav-item !h-7 ${on ? 'on' : ''}" data-action="srcgo" data-id="${x.id}" data-endpoint="GET /sources/{source_id}" ${on ? 'aria-current="true"' : ''}>
+      <span class="dot ${syncing ? 'sync' : ''}"></span><span class="flex-1 truncate">${esc(k === 'webhook' ? x.label : SRC_LABEL[k])}</span><span class="mono text-[11.5px] text-muted-foreground">${count}</span></button>`;
   }).join('');
 }
 function navItem(r, icon, label, extra = ''){
@@ -1066,7 +1131,8 @@ function memMatches(id){
   if (m.topic !== 'all' && f.q !== m.topic) return false;
   if (m.type !== 'all' && f.type !== m.type) return false;
   if (m.status !== 'all' && st.key !== m.status) return false;
-  if (m.q) { const q = m.q.toLowerCase(); if (!(claimOf(id) + ' ' + f.quote + ' ' + f.doc + ' ' + id + ' ' + topicName(f.q)).toLowerCase().includes(q)) return false; }
+  if (m.tag && m.tag !== 'all' && !factTags(id).includes(m.tag)) return false;
+  if (m.q) { const q = m.q.toLowerCase(); if (!(claimOf(id) + ' ' + f.quote + ' ' + f.doc + ' ' + id + ' ' + topicName(f.q) + ' ' + factTags(id).join(' ')).toLowerCase().includes(q)) return false; }
   return true;
 }
 function memRow(id){
@@ -1077,6 +1143,7 @@ function memRow(id){
     <span class="min-w-0 flex-1">
       <span class="block text-[14.5px] leading-snug ${st.dim ? 'strike' : st.binding ? 'font-medium' : ''}">${esc(claimOf(id))}</span>
       <span class="mt-1 flex items-center gap-1.5 text-[12.5px] text-muted-foreground min-w-0"><span class="truncate">${esc(factSource(f))}</span><span>·</span><span class="shrink-0">${esc(f.loc)}</span><span>·</span><span class="mono shrink-0">${fmtDate(f.date)}</span>${f.sample ? '<span class="badge line !h-[18px] !text-[11px] ml-1">sample</span>' : ''}</span>
+      <span class="mt-1.5 flex flex-wrap gap-1">${factTags(id).map(tagChip).join('')}</span>
     </span>
     <span class="hidden md:inline text-[12.5px] text-muted-foreground w-[92px] shrink-0 pt-0.5">${f.type}</span>
     <span class="w-[118px] shrink-0 flex justify-end pt-px">${badge(st)}</span>
@@ -1117,6 +1184,7 @@ function renderMemory(){
       <div class="max-w-[1080px] mx-auto px-6 py-6">
         <div class="flex items-end justify-between gap-4 flex-wrap">
           <div><h1 class="page-title">Memory</h1><p class="page-sub">Every fact as a sentence, with its source and date. Find one, check it, fix it: the next answer changes.</p></div>
+          <button class="btn btn-outline btn-sm" data-action="dialog" data-dialog="upload" data-perm="correct_fact" data-endpoint="POST /projects/{project_id}/items">${ic('upload','sm')}Upload</button>
         </div>
         <div class="mt-5 flex items-center gap-2 flex-wrap">
           <div class="relative flex-1 min-w-[240px]">
@@ -1125,10 +1193,11 @@ function renderMemory(){
           </div>
           <select class="input input-sm !w-auto !h-9" data-filter="type" aria-label="Type" data-endpoint="GET /facts">${opt('all','All types',m.type)}${TYPE_FILTER.map(t => opt(t,t,m.type)).join('')}</select>
           <select class="input input-sm !w-auto !h-9" data-filter="status" aria-label="Status" data-endpoint="GET /facts">${opt('all','Any status',m.status)}${STATUS_FILTER.map(([v,l]) => opt(v,l,m.status)).join('')}</select>
+          <select class="input input-sm !w-auto !h-9 max-w-[220px]" data-filter="tag" aria-label="Tag" data-endpoint="GET /facts?tag=">${opt('all','Any tag',m.tag)}${allTags().map(t => opt(esc(t), esc(t) + ' · ' + tagCount(t), m.tag)).join('')}</select>
           <select class="input input-sm !w-auto !h-9 xl:hidden" data-filter="topic" aria-label="Topic" data-endpoint="GET /topics">${opt('all','All topics',m.topic)}${Object.keys(TOPICS).map(q => opt(q, topicName(q), m.topic)).join('')}</select>
         </div>
         <div class="mt-3 mb-3 flex items-center gap-2 text-[12.5px] text-muted-foreground"><span id="memCount" class="mono"></span><span>facts shown</span>
-          ${m.q || m.type !== 'all' || m.status !== 'all' || m.topic !== 'all' ? `<button class="link !text-[12.5px] ml-1" data-action="memclear">Clear filters</button>` : ''}</div>
+          ${m.q || m.type !== 'all' || m.status !== 'all' || m.topic !== 'all' || m.tag !== 'all' ? `<button class="link !text-[12.5px] ml-1" data-action="memclear">Clear filters</button>` : ''}</div>
         <div id="memList" class="space-y-4 pb-8"></div>
       </div>
     </div></div>`;
@@ -1138,7 +1207,7 @@ function renderMemory(){
 /* ---------------- fact drawer ---------------- */
 function factHistory(id){
   const f = FACTS[id]; const ev = S.audit.filter(a => a.fact === id);
-  const created = { at: f.sample ? '14:0' + (id === 'E-301' ? '9' : id === 'L-402' ? '9' : '0') : '09:01', actor:'system', action:'ingest', reason: f.src === 'mail' ? 'Extracted from an inbound email.' : `Extracted from ${shortDoc(f.doc)}.` };
+  const created = { at: S.uploadedFacts[id]?.at || (f.sample ? '14:0' + (id === 'E-301' ? '9' : id === 'L-402' ? '9' : '0') : '09:01'), actor: S.uploadedFacts[id] ? S.actor : 'system', action:'ingest', reason: f.src === 'upload' ? 'Extracted from a manual upload.' : f.src === 'mail' ? 'Extracted from an inbound email.' : `Extracted from ${shortDoc(f.doc)}.` };
   return ev.concat([created]);
 }
 const ACTION_LABEL = { retire:'Retired', restore:'Restored', ingest:'Ingested', classify:'Classified', create:'Created', patch:'Corrected', pin:'Pinned', unpin:'Unpinned', supersede:'Superseded', unlink:'Unlinked', resolve:'Resolved', close:'Closed', approve:'Approved', dismiss:'Dismissed', invite:'Invited', setup:'Set up' };
@@ -1169,7 +1238,7 @@ function drawerHtml(id){
         <div class="flex items-center justify-between gap-3"><span class="text-[13.5px] ${xs.dim ? 'strike' : 'font-medium'} truncate">${esc(xf.val || claimOf(x))}</span>${badge(xs)}</div>
         <div class="mt-0.5 text-[12px] text-muted-foreground"><span class="mono">${fmtDate(xf.date)}</span> · ${esc(xf.label || shortDoc(xf.doc))}${cur ? ' · this fact' : ''}</div>
       </${cur ? 'div' : 'button'}></div>`; }).join('');
-  const deps = (DEPENDENTS[id] || []).map(d => d.id
+  const deps = (DEPENDENTS[id] || []).concat(confirmedBy(id).map(x => ({ id:x, rel:'Confirmed by' }))).map(d => d.id
     ? `<button class="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent text-left" data-action="fact" data-id="${d.id}" data-endpoint="GET /facts/{fact_id}/dependents"><span class="text-[12px] text-muted-foreground w-24 shrink-0">${d.rel}</span><span class="flex-1 truncate text-[13.5px]">${esc(claimOf(d.id))}</span><span class="mono text-[11.5px] text-muted-foreground">${d.id}</span></button>`
     : `<${d.go ? `a href="#/${d.go}"` : 'div'} class="w-full flex items-center gap-3 px-3 py-2 rounded-md ${d.go ? 'hover:bg-accent' : ''}"><span class="text-[12px] text-muted-foreground w-24 shrink-0">${d.rel}</span><span class="flex-1 truncate text-[13.5px]">${esc(d.label)}</span>${d.mono ? `<span class="mono text-[11.5px] text-muted-foreground">${d.mono}</span>` : ''}</${d.go ? 'a' : 'div'}>`).join('');
   const hist = factHistory(id).map(h => { const m = member(h.actor);
@@ -1194,9 +1263,12 @@ function drawerHtml(id){
       ${changed ? `<div class="mt-4 flex gap-2.5 rounded-[10px] bg-muted/60 px-3.5 py-2.5 text-[13px] leading-relaxed"><span class="mt-0.5 text-muted-foreground">${ic('changed','sm')}</span><div><span class="font-medium">Changed because…</span> <span class="text-muted-foreground">${changed}</span></div></div>` : ''}
       <blockquote class="quote mt-4 ${st.binding ? 'binding' : ''}">“${esc(f.quote)}”${f.quote2 ? ` … “${esc(f.quote2)}”` : ''}</blockquote>
       <dl class="kv mt-5">
-        <dt>Source</dt><dd class="break-words"><button class="link !font-normal" data-action="sheet" data-src="${f.src || 'docs'}">${srcOfFact(f)}</button> <span class="text-muted-foreground">·</span> <span class="mono text-[12.5px] break-all">${esc(f.doc)}</span></dd>
+        <dt>Source</dt><dd class="break-words"><button class="link !font-normal" data-action="srcgo" data-kind="${f.src || 'docs'}" data-fact="${id}" data-endpoint="GET /sources/{source_id}">${srcOfFact(f)}</button> <span class="text-muted-foreground">·</span> <span class="mono text-[12.5px] break-all">${esc(f.doc)}</span></dd>
         <dt>Location</dt><dd>${esc(f.loc)}</dd>
         <dt>Date</dt><dd class="mono text-[13px]">${fmtDate(f.date)}</dd>
+        <dt>Tags</dt><dd class="flex flex-wrap gap-1.5">${factTags(id).map(tagBtn).join('')}</dd>
+        ${S.uploadedFacts[id]?.confirms ? `<dt>Confirms</dt><dd><button class="link !font-normal text-left" data-action="fact" data-id="${S.uploadedFacts[id].confirms}">${esc(claimOf(S.uploadedFacts[id].confirms))}</button></dd>` : ''}
+        ${confirmedBy(id).length ? `<dt>Confirmed by</dt><dd class="space-y-0.5">${confirmedBy(id).map(x => `<button class="link !font-normal block text-left" data-action="fact" data-id="${x}">${esc(FACTS[x].label)} · <span class="mono text-[12.5px]">${fmtDate(FACTS[x].date)}</span></button>`).join('')}</dd>` : ''}
         ${by ? `<dt>Replaced by</dt><dd><button class="link !font-normal" data-action="fact" data-id="${by}">${esc(claimOf(by))}</button></dd>` : ''}
         ${f.note ? `<dt>Note</dt><dd class="text-muted-foreground">${esc(f.note)}</dd>` : ''}
         ${f.sample ? `<dt>Content</dt><dd class="text-muted-foreground">Sample, not from the corpus.</dd>` : ''}
@@ -1230,6 +1302,7 @@ function srcItems(x){
   if (k === 'mail') return { n: x.items + (x.project_id === 'proj-clearpath' && emailIn() ? 1 : 0), unit:'emails' };
   if (k === 'library') return { n: x.items, unit: x.items === 1 ? 'document' : 'versions', extra: x.project_id === 'proj-clearpath' ? (v3() ? 'v3 current' : 'v2 current') : '' };
   if (k === 'github') return { n: x.items, unit:'issues' };
+  if (k === 'webhook') return { n: x.items, unit: x.items === 1 ? 'item' : 'items' };
   return { n: x.items, unit:'documents' };
 }
 function srcStatus(x){
@@ -1239,16 +1312,17 @@ function srcStatus(x){
 }
 function sourcesTable(pid){
   const list = sourcesOf(pid);
-  if (!list.length) return empty('sources', 'No sources yet', 'Connect documents, a document library, a public GitHub repository or a mailbox. Canonico extracts facts and keeps their versions.', `<button class="btn btn-primary btn-sm mt-4" data-action="dialog" data-dialog="source" data-perm="manage_sources" data-endpoint="POST /projects/{project_id}/sources">${ic('plus','sm')}Add source</button>`);
-  return `<table class="tbl"><thead><tr><th>Source</th><th>Status</th><th class="text-right">Items</th><th>Last sync</th><th></th></tr></thead><tbody>
-    ${list.map(x => { const k = TYPE_KEY[x.type]; const it = srcItems(x);
-      return `<tr class="hov" data-action="sheet" data-src="${k}" data-endpoint="GET /sources/{source_id}">
-        <td><div class="flex items-center gap-3 min-w-0"><span class="w-8 h-8 rounded-md bg-muted grid place-items-center text-muted-foreground shrink-0">${ic(SRC_ICON[k])}</span>
-          <div class="min-w-0"><div class="font-medium truncate">${esc(k === 'github' ? x.label : SRC_LABEL[k])}</div><div class="text-[12px] text-muted-foreground mono truncate">${x.id}</div></div></div></td>
+  if (!list.length) return empty('sources', 'No sources yet', 'Connect documents, a document library, a public GitHub repository, a mailbox or an inbound webhook. Canonico extracts facts and keeps their versions.', `<button class="btn btn-primary btn-sm mt-4" data-action="dialog" data-dialog="source" data-perm="manage_sources" data-endpoint="POST /projects/{project_id}/sources">${ic('plus','sm')}Add source</button>`);
+  return `<table class="tbl"><thead><tr><th>Source</th><th>Status</th><th class="text-right">Items</th><th class="hidden md:table-cell">Last sync</th><th></th></tr></thead><tbody>
+    ${list.map(x => { const k = TYPE_KEY[x.type]; const it = srcItems(x); const open = S.ui.open.src === x.id;
+      return `<tr class="hov ${open ? 'xo' : ''}" data-action="xrow" data-group="src" data-id="${x.id}" data-endpoint="GET /sources/{source_id}">
+        <td><button class="flex items-center gap-3 min-w-0 text-left rounded-md" data-action="xrow" data-group="src" data-id="${x.id}" data-xt aria-expanded="${open}" aria-controls="xp-src-${x.id}"><span class="w-8 h-8 rounded-md bg-muted grid place-items-center text-muted-foreground shrink-0">${ic(SRC_ICON[k])}</span>
+          <span class="min-w-0"><span class="block font-medium truncate">${esc(srcTitle(x))}</span><span class="block text-[12px] text-muted-foreground mono truncate">${x.id}</span></span></button></td>
         <td>${srcStatus(x)}</td>
         <td class="text-right whitespace-nowrap"><span class="mono">${it.n}</span> <span class="text-muted-foreground text-[12.5px]">${it.unit}</span>${it.extra ? `<div class="text-[12px] text-muted-foreground">${it.extra}</div>` : ''}</td>
-        <td class="mono text-[12.5px] text-muted-foreground whitespace-nowrap">${x.status === 'syncing' ? '…' : 'today ' + x.last}</td>
-        <td class="text-right"><button class="btn btn-ghost btn-sm" data-action="sync" data-id="${x.id}" data-perm="manage_sources" data-endpoint="POST /sources/{source_id}/sync">${ic('refresh','sm')}Sync</button></td></tr>`; }).join('')}
+        <td class="mono text-[12.5px] text-muted-foreground whitespace-nowrap hidden md:table-cell">${x.status === 'syncing' ? '…' : 'today ' + x.last}</td>
+        <td class="text-right whitespace-nowrap">${k === 'webhook' ? '' : `<button class="btn btn-ghost btn-sm" data-action="sync" data-id="${x.id}" data-perm="manage_sources" data-endpoint="POST /sources/{source_id}/sync">${ic('refresh','sm')}Sync</button>`}<span class="inline-grid place-items-center w-7 h-7 align-middle" aria-hidden="true">${ic('down','xchev')}</span></td></tr>
+      <tr class="xr ${open ? 'open' : ''}" data-xp="src" data-id="${x.id}" id="xp-src-${x.id}" ${open ? '' : 'inert'}><td colspan="5"><div class="xp"><div><div class="xbody px-4 sm:px-5 pt-2 pb-5">${srcDetail(x)}</div></div></div></td></tr>`; }).join('')}
     </tbody></table>`;
 }
 function feedItems(pid){
@@ -1344,10 +1418,11 @@ function renderProject(){
       <span class="text-[13px]">${cap(pr || m.org_role)}</span>${pr ? '<span class="badge line">project role</span>' : '<span class="badge">inherited</span>'}</li>`; }).join('');
   const mail = p.mail; const rules = S.rules.filter(r => r.project_id === p.id);
   $('view').innerHTML = pageWrap(`
-    ${pageHead(esc(p.name), esc(p.description), `<div class="flex gap-2"><a href="#/app" class="btn btn-outline btn-sm">${ic('ask','sm')}Ask this project</a><button class="btn btn-primary btn-sm" data-action="dialog" data-dialog="source" data-perm="manage_sources" data-endpoint="POST /projects/{project_id}/sources">${ic('plus','sm')}Add source</button></div>`)}
+    ${pageHead(esc(p.name), esc(p.description), `<div class="flex gap-2 flex-wrap"><a href="#/app" class="btn btn-outline btn-sm">${ic('ask','sm')}Ask this project</a><button class="btn btn-outline btn-sm" data-action="dialog" data-dialog="upload" data-perm="correct_fact" data-endpoint="POST /projects/{project_id}/items">${ic('upload','sm')}Upload</button><button class="btn btn-primary btn-sm" data-action="dialog" data-dialog="source" data-perm="manage_sources" data-endpoint="POST /projects/{project_id}/sources">${ic('plus','sm')}Add source</button></div>`)}
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
       <div class="xl:col-span-2 space-y-5">
         <div class="card overflow-hidden" data-endpoint="GET /projects/{project_id}/sources">${cardHead('Sources', `<a href="#/sources" class="btn btn-ghost btn-sm">Manage ${ic('arrow','sm')}</a>`)}${sourcesTable(p.id)}</div>
+        ${itemsCard(p.id)}
         <div class="card overflow-hidden">${cardHead('Needs attention')}${attention(p.id)}</div>
         <div class="card overflow-hidden" data-endpoint="GET /audit">${cardHead('Recent changes')}${feed(p.id)}</div>
       </div>
@@ -1508,6 +1583,7 @@ function renderSettings(){
           <p class="text-[12.5px] text-muted-foreground">Inherited by ${S.projects.filter(p => !p.mail).length} of ${S.projects.length} projects.</p>
         </div>
         <footer class="px-5 py-3 border-t bg-muted/30 flex justify-end"><button class="btn btn-primary btn-sm" data-action="orgmailsave" data-perm="manage_mail" data-endpoint="PUT /org/mail">Save mail settings</button></footer></div></div>`;
+    body += orgHooks();
   }
   if (tab === 'members') {
     body = `<div class="card overflow-hidden" data-endpoint="GET /org/members"><div class="overflow-x-auto"><table class="tbl"><thead><tr><th>Member</th><th>Organisation role</th><th>Status</th>${S.projects.map(p => `<th>${esc(p.name)}</th>`).join('')}<th></th></tr></thead><tbody>
@@ -1530,7 +1606,7 @@ function renderSettings(){
       ${perms.map(p => `<tr><td><div class="font-medium">${PERM_LABEL[p]}</div><div class="mono text-[11.5px] text-muted-foreground">${p}</div></td>${ROLE_ORDER.map(r => `<td class="text-center">${ROLE_PERMS[r].includes(p) ? `<span class="inline-grid place-items-center w-5 h-5 rounded-full bg-primary-soft text-primary-text" aria-label="Allowed">${ic('check','sm')}</span>` : '<span class="text-muted-foreground/50" aria-label="Not allowed">—</span>'}</td>`).join('')}</tr>`).join('')}
       </tbody></table></div><footer class="px-5 py-3 border-t bg-muted/30 text-[12.5px] text-muted-foreground">Roles are fixed. Read only.</footer></div>`;
   }
-  $('view').innerHTML = pageWrap(`${pageHead('Settings', `${esc(S.org.name)} · organisation, members and roles.`, tabs('settings', [['org','Organisation'], ['members','Members', S.members.length], ['roles','Roles']]))}${body}`, 1180);
+  $('view').innerHTML = pageWrap(`${pageHead('Settings', `${esc(S.org.name)} · organisation, webhooks, tag rules, members and roles.`, tabs('settings', [['org','Organisation'], ['members','Members', S.members.length], ['roles','Roles']]))}${body}`, 1180);
 }
 
 /* =====================================================================
@@ -1606,26 +1682,253 @@ function renderAdmin(){
 }
 
 /* =====================================================================
-   overlays: drawer, source sheet, dialogs, palette, menus
+   tags, items, webhooks, uploads; overlays: drawer, dialogs, palette, menus
    ===================================================================== */
-function sheetHtml(k){
-  const p = proj(); const x = sourcesOf().find(s => TYPE_KEY[s.type] === k);
-  const head = (title, sub) => `<header class="shrink-0 px-5 h-[52px] border-b flex items-center gap-3"><span class="w-7 h-7 rounded-md bg-muted grid place-items-center text-muted-foreground">${ic(SRC_ICON[k], 'sm')}</span><div class="min-w-0 flex-1"><div class="text-[14px] font-semibold truncate">${title}</div></div><button class="btn btn-ghost btn-icon btn-sm" data-action="close" aria-label="Close">${ic('x')}</button></header>
-    <div class="px-5 pt-4 text-[13px] text-muted-foreground">${sub}</div>`;
-  if (!x) return `<div class="overlay sheet flex flex-col">${head(SRC_LABEL[k], 'Not connected to this project.')}<div class="p-5"><button class="btn btn-primary btn-sm" data-action="dialog" data-dialog="source" data-perm="manage_sources">${ic('plus','sm')}Add source</button></div></div>`;
-  const it = srcItems(x);
-  let body = `<dl class="kv"><dt>Status</dt><dd>${srcStatus(x)}</dd><dt>Items</dt><dd><span class="mono">${it.n}</span> ${it.unit}</dd><dt>Facts</dt><dd class="mono">${x.facts}</dd><dt>Last sync</dt><dd class="mono text-[13px]">today ${x.last}</dd><dt>Source id</dt><dd class="mono text-[12.5px]">${x.id}</dd>`;
-  if (k === 'docs') body += `<dt>Corpus</dt><dd>OIDA ClearPath, CC BY 4.0</dd><dt>Folders</dt><dd class="text-muted-foreground">01-scope, 02-subject, 03-internal-comms, 04-external-comms, 05-meetings, 06-market-context, 07-documents, 08-agenda</dd></dl>`;
-  if (k === 'github') body += `<dt>Repository</dt><dd class="mono text-[12.5px]">${esc(x.label)}</dd><dt>Reads</dt><dd>Issues, comments, README</dd></dl>`;
-  if (k === 'library') body += `<dt>Provider</dt><dd>Local library <span class="text-muted-foreground">· SharePoint and Google Drive coming soon</span></dd></dl>
-    <h3 class="mt-6 mb-2 text-[13px] font-medium">Onboarding standard</h3>
-    <ul class="rounded-[10px] shadow-[inset_0_0_0_1px_hsl(var(--border))] divide-y">${(v3() ? [['v3','14 Nov 2026','Current']] : []).concat([['v2','12 Jan 2026', v3() ? 'Superseded' : 'Current'], ['v1','2 Dec 2025','Superseded']]).map(v => `<li class="flex items-center gap-3 px-4 py-2.5 text-[13.5px]"><span class="mono w-6">${v[0]}</span><span class="flex-1 mono text-[12.5px] text-muted-foreground">${v[1]} · sample</span><span class="badge ${v[2] === 'Current' ? 'binding' : 'superseded'}">${v[2]}</span></li>`).join('')}</ul>
-    ${v3() ? '' : `<button class="btn btn-primary btn-sm mt-4" data-action="uploadv3" data-perm="manage_sources" data-endpoint="POST /documents/{doc_id}/versions">${ic('upload','sm')}Upload new version · v3</button>`}`;
-  if (k === 'mail') body += `<dt>Configuration</dt><dd>${p.mail ? '<span class="badge line">Overridden</span>' : '<span class="badge">Inherited from organisation</span>'}</dd><dt>Inbound</dt><dd class="mono text-[12.5px]">${(p.mail || S.orgMail).inbound_address}</dd><dt>Rule</dt><dd class="mono text-[12.5px]">@meridianlabs.org → ${esc(proj('proj-clearpath').name)}</dd></dl>
-    ${emailIn() ? `<h3 class="mt-6 mb-2 text-[13px] font-medium">Inbox</h3><div class="rounded-[10px] shadow-[inset_0_0_0_1px_hsl(var(--border))] px-4 py-3 text-[13.5px]"><div class="flex justify-between"><span class="font-medium">client@meridianlabs.org</span><span class="mono text-[12px] text-muted-foreground">14:09</span></div><div>Onboarding target confirmed</div><div class="text-muted-foreground">…we confirm the onboarding target at 5 weeks.</div></div>`
-      : `<button class="btn btn-primary btn-sm mt-5" data-action="demoemail" data-perm="admin_demo" data-endpoint="POST /demo/send-email">${ic('send','sm')}Send demo email</button><p class="help">Sends a sample email from client@meridianlabs.org to the inbound webhook.</p>`}
-    <p class="mt-4 text-[12.5px] text-muted-foreground">Gmail and Outlook connectors coming soon.</p>`;
-  return `<div class="overlay sheet flex flex-col" role="dialog" aria-label="${SRC_LABEL[k]}">${head(k === 'github' ? esc(x.label) : SRC_LABEL[k], `${esc(p.name)} · source`)}<div class="flex-1 overflow-y-auto scroll p-5">${body}</div></div>`;
+/* ---------- tags ---------- */
+const TODAY = '2026-11-14';
+const tagCls = t => t.startsWith('topic:') ? 'topic' : '';
+const tagChip = t => `<span class="tag ${tagCls(t)}">${esc(t)}</span>`;
+const tagBtn = t => `<button class="tag ${tagCls(t)}" data-action="tagfilter" data-tag="${esc(t)}" data-endpoint="GET /facts?tag=" data-tip="Show facts with this tag">${esc(t)}</button>`;
+const kindTag = f => f.src === 'mail' ? 'email' : f.src === 'library' ? 'standard' : /05-meetings/.test(f.doc) ? 'meeting' : /email/.test(f.doc) ? 'email' : /02-subject/.test(f.doc) ? 'observation' : 'document';
+function factTags(id){
+  const f = FACTS[id];
+  if (f.src === 'upload') return [...new Set(f.tags || [])];
+  return [...new Set(['clearpath', TOPIC_TAG[f.q], kindTag(f)].concat(f.tags || []))];
+}
+const tagSort = (a, b) => (a.startsWith('topic:') - b.startsWith('topic:')) || a.localeCompare(b);
+function allTags(){
+  const set = new Set();
+  visibleFacts().forEach(id => factTags(id).forEach(t => set.add(t)));
+  S.items.filter(itemVisible).forEach(i => i.tags.forEach(t => set.add(t)));
+  return [...set].sort(tagSort);
+}
+const tagCount = t => visibleFacts().filter(id => factTags(id).includes(t)).length;
+const tagRoute = tags => [...S.tagRules].sort((a, b) => a.priority - b.priority).find(r => tags.includes(r.tag));
+const confirmedBy = id => Object.keys(S.uploadedFacts).filter(x => S.uploadedFacts[x].confirms === id && visible(x));
+function addTag(key, v){
+  const d = D(); if (!d) return;
+  const t = String(v || '').trim().toLowerCase().replace(/,/g, '').replace(/\s+/g, '-');
+  d[key + 'Input'] = '';
+  if (t && !d[key].includes(t)) d[key].push(t);
+  renderLayer(); $('tagInput-' + key)?.focus();
+}
+function chipsInput(key, arr){
+  return `<div class="chips" data-action="chipsfocus" data-key="${key}">${arr.map((t, i) => `<span class="tag ${tagCls(t)}">${esc(t)}<button class="-mr-1 opacity-60 hover:opacity-100" data-action="tagdel" data-key="${key}" data-i="${i}" aria-label="Remove tag ${esc(t)}">${ic('x')}</button></span>`).join('')}
+    <input id="tagInput-${key}" data-chips="${key}" placeholder="${arr.length ? 'Add tag' : 'Add a tag, press Enter'}" aria-label="Add tag" value="${esc(D()?.[key + 'Input'] || '')}" autocomplete="off"></div>`;
+}
+
+/* ---------- items ---------- */
+const itemVisible = it => !it.when || (it.when === 'email' ? emailIn() : it.when === 'v3' ? v3() : true);
+function itemsOf(pid){ return S.items.filter(it => it.project_id === pid && itemVisible(it)).sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)); }
+const itemFactIds = it => (it.facts || []).filter(id => FACTS[id] && visible(id));
+const itemFactN = it => it.facts && it.facts.length ? itemFactIds(it).length : (it.n || 0);
+const srcTitle = x => { const k = TYPE_KEY[x.type]; return k === 'github' || k === 'webhook' ? x.label : SRC_LABEL[k]; };
+function srcFacts(x){
+  const k = TYPE_KEY[x.type]; const cp = x.project_id === 'proj-clearpath';
+  return x.facts + (k === 'mail' && cp && emailIn() ? 1 : 0) + (k === 'library' && cp && v3() ? 1 : 0);
+}
+function itemDetail(i){
+  const ids = itemFactIds(i);
+  const facts = ids.length ? `<ul class="-mx-3">${ids.map(id => { const st = factStatus(id);
+      return `<li><button class="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent text-left" data-action="fact" data-id="${id}" data-endpoint="GET /facts/{fact_id}"><span class="flex-1 min-w-0 truncate text-[13.5px] ${st.dim ? 'strike' : ''}">${esc(claimOf(id))}</span>${badge(st)}<span class="mono text-[11.5px] text-muted-foreground w-[44px] text-right">${id}</span></button></li>`; }).join('')}</ul>`
+    : `<p class="text-[13px] text-muted-foreground">${i.n ? `${i.n} ${i.n === 1 ? 'fact' : 'facts'} extracted, outside the sample shown in Memory.` : 'No facts extracted from this item.'}</p>`;
+  return `<dl class="kv !grid-cols-[96px_1fr]">${i.participants ? `<dt>Participants</dt><dd>${esc(i.participants)}</dd>` : ''}${i.text ? `<dt>Text</dt><dd class="text-muted-foreground">“${esc(i.text)}”</dd>` : ''}${i.version ? `<dt>Version of</dt><dd>${esc(i.version)}</dd>` : ''}<dt>Received</dt><dd class="mono text-[12.5px]">${fmtDate(i.date)} · ${i.id}</dd></dl>
+    <div class="mt-4 mb-1 text-[12.5px] font-medium text-muted-foreground">Facts</div>${facts}`;
+}
+function itemsCard(pid){
+  const f = S.ui.itemFilter; const all = itemsOf(pid);
+  const tags = [...new Set(all.flatMap(i => i.tags))].sort(tagSort);
+  const list = all.filter(i => (f.type === 'all' || i.type === f.type) && (f.tag === 'all' || i.tags.includes(f.tag)));
+  const opt = (v, l, cur) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`;
+  const filters = `<div class="flex items-center gap-2"><select class="input input-sm !w-auto !h-8" data-action-change="itemtype" aria-label="Filter items by type" data-endpoint="GET /projects/{project_id}/items">${opt('all', 'All types', f.type)}${ITEM_TYPES.map(([k, l]) => opt(k, l, f.type)).join('')}</select>
+    <select class="input input-sm !w-auto !h-8 max-w-[190px]" data-action-change="itemtag" aria-label="Filter items by tag" data-endpoint="GET /projects/{project_id}/items">${opt('all', 'Any tag', f.tag)}${tags.map(t => opt(t, t, f.tag)).join('')}</select></div>`;
+  const rows = list.map(i => { const open = S.ui.open.item === i.id; const src = i.source_id && S.sources.find(s => s.id === i.source_id); const n = itemFactN(i);
+    const origin = src ? srcTitle(src) : i.via === 'webhook' ? 'Organisation webhook' : 'Manual upload';
+    return `<div class="border-b last:border-b-0">
+      <button class="w-full flex items-center gap-3 px-5 py-3 text-left transition hover:bg-accent/40 ${open ? 'bg-muted/45' : ''}" data-action="xrow" data-group="item" data-id="${i.id}" data-xt aria-expanded="${open}" aria-controls="xp-item-${i.id}" data-endpoint="GET /items/{item_id}">
+        <span class="w-8 h-8 rounded-md bg-muted grid place-items-center text-muted-foreground shrink-0">${ic(ITEM_ICON[i.type])}</span>
+        <span class="min-w-0 flex-1"><span class="block text-[14px] font-medium truncate">${esc(i.title)}</span>
+          <span class="mt-1 flex items-center gap-1.5 flex-wrap text-[12px] text-muted-foreground"><span>${ITEM_LABEL[i.type]}</span><span aria-hidden="true">·</span><span class="mr-1">${esc(origin)}</span>${i.tags.map(tagChip).join('')}</span></span>
+        <span class="mono text-[12px] text-muted-foreground shrink-0 hidden sm:block w-[88px] text-right">${fmtDate(i.date)}</span>
+        <span class="shrink-0 w-[62px] text-right text-[12.5px]"><span class="mono">${n}</span> <span class="text-muted-foreground">${n === 1 ? 'fact' : 'facts'}</span></span>
+        ${ic('down', 'xchev')}</button>
+      <div class="xr ${open ? 'open' : ''}" data-xp="item" data-id="${i.id}" id="xp-item-${i.id}" ${open ? '' : 'inert'}><div class="xp"><div><div class="xbody px-5 pt-1 pb-4">${itemDetail(i)}</div></div></div></div></div>`; }).join('');
+  return `<div class="card overflow-hidden" data-endpoint="GET /projects/{project_id}/items" id="itemsCard">${cardHead('Received items', filters, `${list.length} of ${all.length}`)}
+    ${rows || empty('inbox', all.length ? 'No items match' : 'No items yet', all.length ? 'Try another type or tag.' : 'Uploads, webhook posts and synced documents show up here.', all.length ? '<button class="btn btn-outline btn-sm mt-4" data-action="itemclear">Clear filters</button>' : '')}</div>`;
+}
+
+/* ---------- source rows ---------- */
+const hookUrl = pid => `https://api.canonico.app/hooks/projects/${pid}`;
+function curlFor(url, tags, token){
+  return `curl -X POST ${url} \\\n  -H "X-Canonico-Token: ${token}" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "type": "meeting",\n    "title": "Weekly sync",\n    "date": "${TODAY}",\n    "text": "We agreed the onboarding target stays at 3–4 weeks.",\n    "tags": [${tags.map(t => `"${t}"`).join(', ')}]\n  }'`;
+}
+const copyField = (v, ep) => `<div class="flex gap-2"><input class="input mono !text-[12.5px]" readonly value="${esc(v)}" ${ep ? `data-endpoint="${ep}"` : ''} aria-label="Value to copy"><button class="btn btn-outline shrink-0" data-action="copy" data-copy="${esc(v)}">${ic('copy', 'sm')}Copy</button></div>`;
+const codeBlock = v => `<div class="relative"><pre class="code scroll">${esc(v)}</pre><button class="btn btn-outline btn-xs absolute top-2 right-2" data-action="copy" data-copy="${esc(v)}">${ic('copy', 'sm')}Copy</button></div>`;
+function srcConfig(x){
+  const k = TYPE_KEY[x.type]; const p = proj(x.project_id);
+  const box = inner => `<div class="rounded-[10px] bg-card shadow-[inset_0_0_0_1px_hsl(var(--border))] p-4">${inner}</div>`;
+  const sub = t => `<div class="mt-4 text-[12.5px] font-medium text-muted-foreground">${t}</div>`;
+  if (k === 'github') return box(`<dl class="kv !grid-cols-[88px_1fr]"><dt>Repository</dt><dd class="mono text-[12.5px] truncate">${esc(x.label)}</dd><dt>Access</dt><dd>Public, no keys stored</dd></dl>
+    ${sub('Import')}<div class="mt-2 space-y-2">${[['issues', 'Issues and comments'], ['readme', 'README'], ['prs', 'Pull requests']].map(([o, l]) => `<label class="flex items-center gap-2.5 text-[13.5px] cursor-pointer"><input type="checkbox" class="check" data-action-change="ghinc" data-id="${x.id}" data-k="${o}" data-endpoint="PATCH /sources/{source_id}" ${(x.include || {})[o] ? 'checked' : ''} ${can('manage_sources') ? '' : 'disabled'}>${l}</label>`).join('')}</div>`);
+  if (k === 'mail') { const m = p.mail || S.orgMail; const rules = S.rules.filter(r => r.project_id === p.id);
+    return box(`<dl class="kv !grid-cols-[88px_1fr]"><dt>Mailbox</dt><dd>${p.mail ? '<span class="badge line">Overridden</span>' : '<span class="badge">Inherited</span>'}</dd><dt>Inbound</dt><dd class="mono text-[12.5px] truncate">${esc(m.inbound_address)}</dd>
+      <dt>Rules</dt><dd>${rules.length ? rules.map(r => `<div class="flex items-center gap-1.5 text-[13px]"><span class="mono">${esc(r.value)}</span>${ic('arrow', 'sm text-muted-foreground')}<span class="text-muted-foreground">priority ${r.priority}</span></div>`).join('') : '<span class="text-muted-foreground">None</span>'}</dd></dl>
+      <div class="mt-4 flex gap-2 flex-wrap"><a href="#/sources" class="btn btn-outline btn-xs">Routing rules ${ic('arrow', 'sm')}</a>${!emailIn() && p.id === 'proj-clearpath' ? `<button class="btn btn-outline btn-xs" data-action="demoemail" data-perm="admin_demo" data-endpoint="POST /demo/send-email">${ic('send', 'sm')}Send demo email</button>` : ''}</div>`); }
+  if (k === 'library') { const vs = x.project_id === 'proj-clearpath' ? (v3() ? [['v3', '14 Nov 2026', 'Current']] : []).concat([['v2', '12 Jan 2026', v3() ? 'Superseded' : 'Current'], ['v1', '2 Dec 2025', 'Superseded']]) : [];
+    return box(`<dl class="kv !grid-cols-[88px_1fr]"><dt>Provider</dt><dd>Local library <span class="text-muted-foreground">· SharePoint and Google Drive coming soon</span></dd></dl>
+      ${vs.length ? `${sub('Onboarding standard · versions')}<ul class="mt-2 rounded-[8px] shadow-[inset_0_0_0_1px_hsl(var(--border))] divide-y">${vs.map(v => `<li class="flex items-center gap-3 px-3 py-2 text-[13px]"><span class="mono w-6">${v[0]}</span><span class="flex-1 mono text-[12px] text-muted-foreground">${v[1]}</span><span class="badge ${v[2] === 'Current' ? 'binding' : 'superseded'}">${v[2]}</span></li>`).join('')}</ul>
+      ${v3() ? '' : `<button class="btn btn-outline btn-xs mt-3" data-action="uploadv3" data-perm="manage_sources" data-endpoint="POST /documents/{doc_id}/versions">${ic('upload', 'sm')}Upload new version · v3</button>`}` : ''}`); }
+  if (k === 'webhook') return box(`<div class="text-[12.5px] font-medium text-muted-foreground mb-1">URL</div><div class="flex items-center gap-1"><span class="mono text-[12px] truncate flex-1 min-w-0" title="${hookUrl(x.project_id)}" data-endpoint="POST /hooks/projects/{project_id}">${hookUrl(x.project_id)}</span><button class="btn btn-ghost btn-icon btn-sm shrink-0" data-action="copy" data-copy="${hookUrl(x.project_id)}" aria-label="Copy URL" data-tip="Copy URL">${ic('copy', 'sm')}</button></div>
+    ${sub('Secret')}${x.secretOnce ? `<div class="mt-1.5">${copyField('whsec_…demo')}</div><div class="help flex items-center gap-1.5 !text-warning-text">${ic('alert', 'sm')}Shown once. Copy it now.<button class="link ml-auto" data-action="srchide" data-id="${x.id}">Done</button></div>`
+      : `<div class="mt-1.5 flex items-center gap-2 text-[13px]"><span class="mono">whsec_••••${esc(x.last4)}</span></div><div class="help !mt-1">Sent as the X-Canonico-Token header.</div>`}
+    ${sub('Default tags')}<div class="mt-1.5 flex flex-wrap gap-1.5">${(x.tags || []).map(tagChip).join('') || '<span class="text-[13px] text-muted-foreground">None</span>'}</div>
+    <div class="mt-4 flex items-center gap-2 flex-wrap"><button class="btn btn-outline btn-xs" data-action="hooktest" data-src="${x.id}" data-endpoint="POST /hooks/projects/{project_id}">${ic('send', 'sm')}Send test item</button><button class="btn btn-ghost btn-xs" data-action="copy" data-copy="${esc(curlFor(hookUrl(x.project_id), x.tags || [], '$CANONICO_SECRET'))}">${ic('copy', 'sm')}Copy curl</button></div>
+    ${S.ui.hookTest && S.ui.hookTest.src === x.id ? `<div class="fade-in mt-3 rounded-[8px] bg-muted/60 px-3 py-2 text-[12.5px]"><span class="mono text-muted-foreground">202</span> ${S.ui.hookTest.html}</div>` : ''}`);
+  const cp = x.project_id === 'proj-clearpath';
+  return box(`<dl class="kv !grid-cols-[88px_1fr]"><dt>Corpus</dt><dd>${cp ? 'OIDA ClearPath, CC BY 4.0' : 'Internal notes'}</dd><dt>Folders</dt><dd class="text-muted-foreground text-[13px]">${cp ? '01-scope, 02-subject, 04-external-comms, 05-meetings, 07-documents and 3 more' : 'notes'}</dd><dt>Formats</dt><dd>PDF, DOCX, Markdown, email exports</dd></dl>`);
+}
+function srcDetail(x){
+  const k = TYPE_KEY[x.type]; const it = srcItems(x); const sel = S.ui.srcTag[x.id] || 'all';
+  const all = itemsOf(x.project_id).filter(i => i.source_id === x.id);
+  const tags = [...new Set(all.flatMap(i => i.tags))].sort(tagSort);
+  const recent = all.filter(i => sel === 'all' || i.tags.includes(sel)).slice(0, 5);
+  const stat = (l, v) => `<div class="min-w-0"><div class="text-[12px] text-muted-foreground">${l}</div><div class="mt-1 text-[14px] truncate">${v}</div></div>`;
+  const list = recent.length ? `<ul class="rounded-[10px] bg-card shadow-[inset_0_0_0_1px_hsl(var(--border))] divide-y overflow-hidden">${recent.map(i => { const n = itemFactN(i);
+      return `<li><button class="w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-accent/50 transition" data-action="itemgo" data-id="${i.id}" data-endpoint="GET /items/{item_id}">
+      <span class="text-muted-foreground">${ic(ITEM_ICON[i.type], 'sm')}</span>
+      <span class="min-w-0 flex-1"><span class="block text-[13.5px] truncate">${esc(i.title)}</span><span class="mt-1 flex flex-wrap gap-1">${i.tags.slice(0, 3).map(tagChip).join('')}</span></span>
+      <span class="shrink-0 text-right"><span class="block mono text-[12px] text-muted-foreground">${fmtDate(i.date)}</span><span class="block text-[12px] text-muted-foreground"><span class="mono text-foreground">${n}</span> ${n === 1 ? 'fact' : 'facts'}</span></span></button></li>`; }).join('')}</ul>`
+    : `<div class="rounded-[10px] border border-dashed px-4 py-6 text-center text-[13px] text-muted-foreground">${all.length ? 'No recent items with this tag.' : k === 'webhook' ? 'No items yet. Send a test item or post to the URL.' : 'No items yet.'}</div>`;
+  const rm = S.ui.srcRemove === x.id;
+  const actions = `<button class="btn btn-outline btn-sm" data-action="sync" data-id="${x.id}" ${k === 'webhook' ? 'aria-disabled="true" data-tip="Webhooks push items, nothing to pull"' : 'data-perm="manage_sources"'} data-endpoint="POST /sources/{source_id}/sync">${ic('refresh', 'sm')}Sync now</button>
+    <button class="btn btn-outline btn-sm" data-action="srcsettings" data-id="${x.id}" data-perm="manage_sources" data-endpoint="PATCH /sources/{source_id}">${ic('settings', 'sm')}Settings</button>
+    ${k === 'webhook' ? `<button class="btn btn-outline btn-sm" data-action="srcrotate" data-id="${x.id}" data-perm="manage_sources" data-endpoint="POST /sources/{source_id}/rotate-secret">${ic('key', 'sm')}Rotate secret</button>` : ''}
+    <span class="flex-1"></span>
+    ${rm ? `<span class="fade-in text-[13px] text-muted-foreground">Remove this source? Its facts stay in memory.</span><button class="btn btn-ghost btn-sm" data-action="srcremovecancel">Cancel</button><button class="btn btn-danger btn-sm" data-action="srcremoveconfirm" data-id="${x.id}" data-perm="manage_sources" data-endpoint="DELETE /sources/{source_id}">Remove</button>`
+      : `<button class="btn btn-ghost btn-sm hover:!text-destructive" data-action="srcremove" data-id="${x.id}" data-perm="manage_sources" data-endpoint="DELETE /sources/{source_id}">${ic('x', 'sm')}Remove</button>`}`;
+  return `<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3">${stat('Status', srcStatus(x))}${stat('Last sync', `<span class="mono text-[13px]">${x.status === 'syncing' ? 'in progress' : 'today ' + x.last}</span>`)}${stat('Items', `<span class="mono">${it.n}</span> <span class="text-muted-foreground text-[12.5px]">${it.unit}</span>`)}${stat('Facts', `<span class="mono">${srcFacts(x)}</span>`)}</div>
+    <div class="mt-5 grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <div class="lg:col-span-3 min-w-0"><div class="flex items-center justify-between gap-3 mb-2 h-7"><h3 class="text-[13px] font-medium">Recent items</h3>${tags.length ? `<select class="input input-sm !w-auto !h-7 !text-[12.5px]" data-action-change="srctag" data-id="${x.id}" aria-label="Filter recent items by tag" data-endpoint="GET /documents?tag="><option value="all">Any tag</option>${tags.map(t => `<option value="${esc(t)}" ${sel === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>` : ''}</div>${list}</div>
+      <div class="lg:col-span-2 min-w-0"><div class="flex items-center mb-2 h-7"><h3 class="text-[13px] font-medium">Configuration</h3></div>${srcConfig(x)}</div>
+    </div>
+    <div class="mt-5 pt-4 border-t flex items-center gap-2 flex-wrap">${actions}</div>`;
+}
+function rerenderSrc(id){
+  const el = document.querySelector(`[data-xp="src"][data-id="${id}"] .xbody`); const x = S.sources.find(s => s.id === id);
+  if (el && x) { el.innerHTML = srcDetail(x); applyPerms(el); } else render();
+}
+function createWebhook(d){
+  const p = proj(); const lbl = (d.hookLabel || '').trim();
+  if (!lbl) { d.err = { label:'Give the webhook a name.' }; renderLayer(); return; }
+  if (d.edit) { const x = S.sources.find(s => s.id === d.edit); x.label = lbl; x.tags = d.hookTags.slice(); S.ui.dialog = null; toast('Webhook settings saved.'); render(); return; }
+  const n = S.sources.filter(s => s.project_id === p.id && s.type === 'webhook').length;
+  const id = 'src-' + p.id.replace('proj-', '') + '-hook' + (n ? n + 1 : '');
+  S.sources.push({ id, project_id:p.id, type:'webhook', label:lbl, status:'ok', items:0, last:now(), facts:0, last4:'9f2a', tags:d.hookTags.slice() });
+  const a = addAudit('create', null, `${lbl}: inbound webhook created.`); a.project = p.id;
+  d.step = 3; d.created = id; S.ui.open.src = id; render();
+}
+
+/* ---------- settings: organisation webhook and tag rules ---------- */
+function orgHooks(){
+  const h = S.orgHook; const rules = [...S.tagRules].sort((a, b) => a.priority - b.priority); const t = S.ui.tagTest;
+  let res = '<p class="help">Checks the rules in order without creating anything. <span class="mono">topic:</span> tags force the topic.</p>';
+  if (t) { const unknown = t.tags.filter(x => x.startsWith('topic:') && !TAG_TOPIC[x]); const topic = t.tags.find(x => TAG_TOPIC[x]);
+    res = `<div class="fade-in mt-3 rounded-[10px] px-4 py-3 text-[13.5px] space-y-1 ${t.rule ? 'bg-muted/60' : 'bg-warning-soft text-warning-text'}">
+      <div>${t.rule ? `Matches <span class="tag">${esc(t.rule.tag)}</span> <span class="mono text-[12px] text-muted-foreground">${t.rule.id}</span> and goes to <span class="font-medium">${esc(proj(t.rule.project_id)?.name || t.rule.project_id)}</span>.` : 'No rule matches. The item stays in the organisation inbox and creates no facts.'}</div>
+      ${topic ? `<div><span class="tag topic">${esc(topic)}</span> forces the topic <span class="font-medium">${esc(topicName(TAG_TOPIC[topic]))}</span>.</div>` : ''}
+      ${unknown.length ? `<div class="text-muted-foreground">${unknown.map(x => `<span class="mono">${esc(x)}</span>`).join(', ')} is not a known topic. Extraction picks the topic.</div>` : ''}</div>`; }
+  return `<div class="grid grid-cols-1 xl:grid-cols-5 gap-5 mt-5">
+    <div class="xl:col-span-2 card overflow-hidden" data-endpoint="GET /org/hooks">${cardHead('Organisation webhook', '<span class="badge">routes by tag</span>')}
+      <div class="p-5 space-y-4">
+        <p class="text-[13px] text-muted-foreground leading-relaxed">One URL for the whole organisation. Each item is routed to a project by its tags, using the tag rules.</p>
+        <div><div class="label">URL</div>${copyField(h.url, 'POST /hooks/org')}</div>
+        <div><div class="label">Secret</div>${h.secret ? `${copyField(h.secret)}<div class="help flex items-center gap-1.5 !text-warning-text">${ic('alert', 'sm')}<span>Copy it now. It is shown once, then only <span class="mono">${h.last4}</span>.</span><button class="link ml-auto" data-action="orghide">Done</button></div>`
+          : `<div class="flex gap-2"><input class="input mono !text-[13px]" readonly value="whsec_••••••••${esc(h.last4)}" aria-label="Secret, last 4 characters"><button class="btn btn-outline shrink-0" data-action="orgrotate" data-perm="manage_sources" data-endpoint="POST /org/hooks/rotate-secret">${ic('key', 'sm')}Rotate secret</button></div><div class="help">Sent as the X-Canonico-Token header. Rotating stops the old secret at once.${h.rotated ? ` Rotated today ${h.rotated}.` : ''}</div>`}</div>
+        <div class="flex items-start gap-3 flex-wrap"><button class="btn btn-outline btn-sm" data-action="orghooktest" data-endpoint="POST /hooks/org">${ic('send', 'sm')}Send test item</button>${S.ui.orgHookTest ? `<div class="fade-in text-[13px] pt-1 min-w-0 flex-1"><span class="mono text-muted-foreground">202</span> ${S.ui.orgHookTest}</div>` : ''}</div>
+      </div></div>
+    <div class="xl:col-span-3 card overflow-hidden" data-endpoint="GET /org/tag-rules">${cardHead('Tag rules', `<button class="btn btn-outline btn-sm" data-action="dialog" data-dialog="tagrule" data-perm="manage_sources" data-endpoint="POST /org/tag-rules">${ic('plus', 'sm')}Add rule</button>`, 'first match wins · lowest priority first')}
+      <table class="tbl"><thead><tr><th>Tag</th><th>Project</th><th class="text-right">Priority</th><th></th></tr></thead><tbody>
+      ${rules.length ? rules.map(r => `<tr><td><span class="tag ${tagCls(r.tag)}">${esc(r.tag)}</span></td><td>${esc(proj(r.project_id)?.name || r.project_id)}</td><td class="text-right mono">${r.priority}</td>
+        <td class="text-right whitespace-nowrap"><button class="btn btn-ghost btn-icon btn-sm" data-action="dialog" data-dialog="tagrule" data-id="${r.id}" data-perm="manage_sources" data-endpoint="PATCH /org/tag-rules/{rule_id}" aria-label="Edit rule ${esc(r.tag)}">${ic('edit', 'sm')}</button><button class="btn btn-ghost btn-icon btn-sm" data-action="tagruledel" data-id="${r.id}" data-perm="manage_sources" data-endpoint="DELETE /org/tag-rules/{rule_id}" aria-label="Delete rule ${esc(r.tag)}">${ic('x', 'sm')}</button></td></tr>`).join('')
+        : `<tr><td colspan="4" class="text-center text-muted-foreground !py-8">No tag rules. Items posted to the organisation webhook stay in the inbox.</td></tr>`}
+      </tbody></table>
+      <div class="border-t p-5"><label class="label" for="tagTest">Test tags</label><div class="flex gap-2"><input id="tagTest" class="input mono !text-[13px]" value="${esc(t?.input ?? 'clearpath, topic:onboarding-target')}" placeholder="tag, tag"><button class="btn btn-outline shrink-0" data-action="tagtest" data-endpoint="POST /org/tag-rules/test">Test tags</button></div>${res}</div></div>
+  </div>`;
+}
+function tagRuleDialog(d){
+  const e = d.err || {};
+  return dialogFrame(d.edit ? 'Edit tag rule' : 'Add tag rule', 'Items with this tag are routed to the project. First match wins, lowest priority first.',
+    `<label class="label" for="dTag">Tag</label><input id="dTag" class="input mono !text-[13.5px] ${e.tag ? 'invalid' : ''}" data-bind="tag" value="${esc(d.tag)}" placeholder="client-name">${fieldErr(e.tag)}
+     <div class="grid grid-cols-2 gap-3 mt-4"><div><label class="label" for="dTP">Project</label><select id="dTP" class="input" data-bind="project">${S.projects.map(p => `<option value="${p.id}" ${d.project === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
+     <div><label class="label" for="dTPr">Priority</label><input id="dTPr" class="input mono ${e.priority ? 'invalid' : ''}" data-bind="priority" value="${esc(d.priority)}">${fieldErr(e.priority)}</div></div>`,
+    `<button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="tagruleconfirm" data-endpoint="${d.edit ? 'PATCH /org/tag-rules/{rule_id}' : 'POST /org/tag-rules'}">${d.edit ? 'Save rule' : 'Add rule'}</button>`);
+}
+
+/* ---------- manual upload ---------- */
+function uploadDialog(d){
+  const p = proj(); const e = d.err || {};
+  if (d.phase === 'sending') return dialogFrame('Upload', esc(p.name), `<div class="py-10 flex flex-col items-center gap-3 text-[13.5px] text-muted-foreground" aria-busy="true"><span class="w-5 h-5 rounded-full border-[1.6px] border-muted-foreground border-r-transparent animate-spin"></span>Routing by tags and extracting facts…</div>`, `<button class="btn btn-ghost" aria-disabled="true">Processing…</button>`, true);
+  if (d.phase === 'result') { const r = d.result;
+    return dialogFrame(r.dup ? 'Already received' : 'Upload processed', esc(d.title), uploadResult(r),
+      `<button class="btn btn-ghost mr-auto" data-action="upagain">Upload another</button>${r.confirms ? `<button class="btn btn-outline" data-action="upopen" data-id="${r.confirms}" data-endpoint="GET /facts/{fact_id}">Open ${r.confirms}</button>` : ''}<button class="btn btn-primary" data-action="close">Done</button>`, true); }
+  const types = ITEM_TYPES.filter(t => t[0] !== 'email');
+  const sugg = ['clearpath', 'meeting', 'topic:onboarding-target', 'topic:audit-queue'].filter(t => !d.tags.includes(t));
+  const sampleOn = d.title === SAMPLE_UPLOAD.title;
+  const body = `${sampleOn ? '' : `<div class="mb-4 flex items-center gap-3 rounded-[10px] bg-primary-soft/70 shadow-[inset_0_0_0_1px_hsl(var(--primary)/.18)] px-3.5 py-2.5 text-[13px]"><span class="text-primary-text">${ic('info', 'sm')}</span><span class="flex-1 min-w-0">Sample: <span class="font-medium">${SAMPLE_UPLOAD.title}</span>, it confirms the 3–4 week target.</span><button class="btn btn-outline btn-xs" data-action="upsample">Fill sample</button></div>`}
+    <div class="label">Type</div><div class="seg w-full flex" role="radiogroup" aria-label="Item type">${types.map(([k, l, i]) => `<button role="radio" aria-checked="${d.utype === k}" class="flex-1 justify-center ${d.utype === k ? 'on' : ''}" data-action="uptype" data-k="${k}">${ic(i, 'sm')}<span class="hidden sm:inline">${l}</span><span class="sm:hidden">${l.split(' ')[0]}</span></button>`).join('')}</div>
+    <div class="grid grid-cols-1 sm:grid-cols-[1fr_168px] gap-3 mt-4"><div><label class="label" for="uTitle">Title</label><input id="uTitle" class="input ${e.title ? 'invalid' : ''}" data-bind="title" value="${esc(d.title)}" placeholder="${d.utype === 'meeting' ? 'e.g. Steering committee 12 Nov' : 'Title'}">${fieldErr(e.title)}</div>
+      <div><label class="label" for="uDate">Date</label><input id="uDate" type="date" class="input mono !text-[13px] ${e.date ? 'invalid' : ''}" data-bind="date" value="${esc(d.date)}">${fieldErr(e.date)}</div></div>
+    ${d.utype === 'meeting' ? `<label class="label mt-4" for="uPart">Participants</label><input id="uPart" class="input" data-bind="participants" value="${esc(d.participants)}" placeholder="Names, comma separated">` : ''}
+    ${d.utype === 'document' ? `<label class="label mt-4" for="uVer">New version of… <span class="text-muted-foreground font-normal">optional</span></label><select id="uVer" class="input" data-bind="versionOf" data-endpoint="GET /documents?tag="><option value="">Not a new version</option>${DOCS_PICK.map(([k, l]) => `<option value="${k}" ${d.versionOf === k ? 'selected' : ''}>${l}${k === 'onboarding-standard' ? ` · ${v3() ? 'v3' : 'v2'} current` : ''}</option>`).join('')}</select><div class="help">The previous version stays in history. Facts it restates with a different value are superseded.</div>` : ''}
+    <label class="label mt-4" for="uText">Text</label><textarea id="uText" class="input ${e.text ? 'invalid' : ''}" data-bind="text" placeholder="Paste the transcript, note or ticket text">${esc(d.text)}</textarea>
+    <button class="dropzone w-full mt-2 px-4 py-3 flex items-center justify-center gap-2 text-[13px] text-muted-foreground hover:bg-muted/70 transition" data-action="upfile">${d.file ? `${ic('doc', 'sm')}<span class="text-foreground font-medium">${esc(d.file)}</span><span>· sample file · click to remove</span>` : `${ic('upload', 'sm')}<span>or drop a file here · PDF, DOCX, TXT, VTT</span>`}</button>${fieldErr(e.text)}
+    <label class="label mt-4" for="tagInput-tags">Tags</label>${chipsInput('tags', d.tags)}
+    <div class="help">Enter or comma adds a tag. <span class="mono">topic:onboarding-target</span> forces the topic.</div>
+    ${sugg.length ? `<div class="mt-2 flex items-center gap-1.5 flex-wrap" data-endpoint="GET /tags"><span class="text-[12px] text-muted-foreground mr-0.5">Suggested</span>${sugg.map(t => `<button class="tag ${tagCls(t)}" data-action="tagadd" data-key="tags" data-tag="${esc(t)}">${ic('plus')}${esc(t)}</button>`).join('')}</div>` : ''}`;
+  const foot = `<span class="mr-auto text-[12.5px] text-muted-foreground hidden sm:inline">To ${esc(p.name)}, unless a tag rule routes it</span><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="upsubmit" data-endpoint="POST /projects/{project_id}/items">${ic('upload', 'sm')}Upload</button>`;
+  return dialogFrame('Upload', `${esc(p.name)} · meeting transcripts, documents, notes and tickets`, body, foot, true);
+}
+function processUpload(d){
+  const tags = [...new Set(d.tags)];
+  const rule = tagRoute(tags); const pid = rule ? rule.project_id : S.project;
+  const topicTag = tags.find(t => TAG_TOPIC[t]); const q = topicTag ? TAG_TOPIC[topicTag] : null;
+  const isSample = q === 'q01' && pid === 'proj-clearpath' && /3\s*[–-]\s*4\s*weeks/i.test(d.text);
+  if (isSample && S.uploadedFacts['U-501']) return { dup: S.items.find(i => (i.facts || []).includes('U-501'))?.id || 'itm', pid, rule };
+  const itemId = 'itm-' + String(S.upSeq++).padStart(4, '0');
+  const res = { item:itemId, pid, rule, topic:q, topicTag, created:[], confirms:null };
+  if (q && pid === 'proj-clearpath') {
+    const b = bindingFor(q); let fid;
+    if (isSample) fid = 'U-501';
+    else {
+      fid = 'U-' + (502 + Object.keys(S.uploadedFacts).length);
+      const text = d.text.trim() || d.title.trim();
+      FACTS[fid] = { q, type:'Evidence', date:d.date, doc:'uploads/' + d.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), loc:ITEM_LABEL[d.utype], claim:(text.split(/(?<=\.)\s/)[0] || text).slice(0, 110), quote:text.slice(0, 280), note:'Sample manual upload.', src:'upload', sample:true, label:d.title.trim().toLowerCase() };
+      if (!FACT_ORDER.includes(fid)) FACT_ORDER.splice(FACT_ORDER.indexOf('U-501') + 1, 0, fid);
+    }
+    Object.assign(FACTS[fid], { tags, date:d.date });
+    const same = b && FACTS[b].val && FACTS[fid].val && FACTS[b].val === FACTS[fid].val;
+    S.uploadedFacts[fid] = { item:itemId, confirms: same ? b : null, at:now() };
+    res.created.push(fid); res.confirms = same ? b : null;
+  }
+  const ver = d.utype === 'document' && d.versionOf ? DOCS_PICK.find(x => x[0] === d.versionOf)?.[1] : '';
+  S.items.unshift({ id:itemId, project_id:pid, source_id:null, via:'upload', type:d.utype, title:d.title.trim(), date:d.date, tags, facts:res.created.slice(), participants: d.utype === 'meeting' ? d.participants.trim() : '', text:(d.text.trim() || (d.file ? 'File: ' + d.file : '')).slice(0, 240), version:ver });
+  const a = addAudit('create', res.created[0] || null, `${ITEM_LABEL[d.utype]} “${d.title.trim()}” uploaded${rule ? `, routed by tag ${rule.tag}` : ''}. ${res.created.length} ${res.created.length === 1 ? 'fact' : 'facts'} created${res.confirms ? `, confirms ${res.confirms}` : ''}.`); a.project = pid;
+  S.ui.open.item = itemId; S.ui.itemFilter = { type:'all', tag:'all' };
+  return res;
+}
+function uploadResult(r){
+  if (r.dup) return `<div class="fade-in rounded-[12px] bg-warning-soft text-warning-text px-4 py-3 text-[13.5px] flex gap-3"><span class="mt-0.5">${ic('info', 'sm')}</span><div><div class="font-medium">Duplicate</div><div class="mt-0.5">Same content as item <span class="mono">${esc(r.dup)}</span>. Nothing new was created.</div></div></div>`;
+  const p = proj(r.pid); const b = r.topic ? bindingFor(r.topic) : null;
+  const row = (icon, title, body) => `<div class="flex gap-3 py-3"><span class="mt-0.5 text-muted-foreground">${ic(icon, 'sm')}</span><div class="min-w-0 flex-1"><div class="text-[12.5px] text-muted-foreground">${title}</div><div class="mt-0.5 text-[14px]">${body}</div></div></div>`;
+  const facts = r.created.length ? `<div class="mt-2 space-y-1.5">${r.created.map(id => `<button class="w-full flex items-center gap-3 rounded-[8px] px-3 py-2 text-left bg-muted/60 hover:bg-accent transition" data-action="upopen" data-id="${id}" data-endpoint="GET /facts/{fact_id}"><span class="flex-1 min-w-0 truncate text-[13.5px]">${esc(claimOf(id))}</span>${badge(factStatus(id))}<span class="mono text-[11.5px] text-muted-foreground">${id}</span></button>`).join('')}</div>` : '';
+  return `<div class="fade-in">
+    <div class="flex items-center gap-2.5 text-[14px] font-medium"><span class="text-success">${ic('ok')}</span>Item <span class="mono text-[13px]">${r.item}</span> received</div>
+    <div class="mt-2 divide-y">
+      ${row('folder', 'Routed to project', `<span class="font-medium">${esc(p.name)}</span> <span class="text-muted-foreground text-[13px]">${r.rule ? `by tag rule <span class="tag">${esc(r.rule.tag)}</span>` : 'no tag rule matched, kept in the project you uploaded from'}</span>`)}
+      ${row('tag', 'Topic', r.topic ? `${esc(topicName(r.topic))} <span class="text-muted-foreground text-[13px]">forced by</span> <span class="tag topic">${esc(r.topicTag)}</span>` : '<span class="text-muted-foreground text-[13.5px]">No topic tag. Add one like <span class="mono">topic:onboarding-target</span> to place the facts.</span>')}
+      ${row('memory', 'Facts created', `<span class="mono">${r.created.length}</span>${facts}`)}
+      ${row('changed', 'Superseded facts', `<span class="mono">0</span>${r.confirms ? ` <span class="text-muted-foreground text-[13px]">· Same value as the binding fact <span class="mono">${r.confirms}</span> (${esc(FACTS[r.confirms].val)}). The binding does not change, and ${r.confirms} now shows <span class="text-foreground font-medium">confirmed by</span> this item.</span>` : r.created.length && b ? ` <span class="text-muted-foreground text-[13px]">· Kept as evidence. The binding stays ${esc(FACTS[b].val || claimOf(b))}.</span>` : ''}`)}
+    </div></div>`;
 }
 
 const D = () => S.ui.dialog;
@@ -1666,6 +1969,8 @@ function dialogHtml(){
        <div><label class="label" for="dPr">Priority</label><input id="dPr" class="input mono" data-bind="priority" value="${esc(d.priority || '30')}"></div></div>`,
       `<button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="ruleconfirm" data-endpoint="POST /org/mail/rules">Add rule</button>`);
   if (d.type === 'source') return sourceDialog(d);
+  if (d.type === 'upload') return uploadDialog(d);
+  if (d.type === 'tagrule') return tagRuleDialog(d);
   return '';
 }
 
@@ -1674,12 +1979,14 @@ const SRC_TYPES = [
   ['github','GitHub public repository','Issues, README and pull requests. No keys stored.','POST /sources/github/preview'],
   ['library','Document library','Versioned documents. A new version supersedes what it restates.','POST /documents'],
   ['mail','Mail','Inherit the organisation mailbox or override it, then route by sender.','PUT /projects/{project_id}/mail'],
-  ['docs','Documents','Upload files once. Facts are extracted with their location.','POST /projects/{project_id}/sources']
+  ['docs','Documents','Upload files once. Facts are extracted with their location.','POST /projects/{project_id}/sources'],
+  ['webhook','Inbound webhook','Push meetings, notes or tickets from any tool with one signed request.','POST /projects/{project_id}/sources']
 ];
 function sourceDialog(d){
   const p = proj(); const e = d.err || {};
-  const stepper = `<ol class="flex items-center gap-2 text-[12.5px] mb-5">${['Type','Configure','Sync'].map((l, i) => `<li class="flex items-center gap-2 ${d.step === i + 1 ? 'text-foreground font-medium' : 'text-muted-foreground'}"><span class="step-dot mono ${d.step === i + 1 ? 'on' : d.step > i + 1 ? 'done' : ''}">${d.step > i + 1 ? ic('check','sm') : i + 1}</span>${l}</li>${i < 2 ? '<span class="w-6 h-px bg-border"></span>' : ''}`).join('')}</ol>`;
+  const stepper = `<ol class="flex items-center gap-2 text-[12.5px] mb-5">${['Type','Configure', d.kind === 'webhook' ? 'Connect' : 'Sync'].map((l, i) => `<li class="flex items-center gap-2 ${d.step === i + 1 ? 'text-foreground font-medium' : 'text-muted-foreground'}"><span class="step-dot mono ${d.step === i + 1 ? 'on' : d.step > i + 1 ? 'done' : ''}">${d.step > i + 1 ? ic('check','sm') : i + 1}</span>${l}</li>${i < 2 ? '<span class="w-6 h-px bg-border"></span>' : ''}`).join('')}</ol>`;
   let body = '', foot = '';
+  const back = d.edit ? '' : `<button class="btn btn-ghost mr-auto" data-action="srcback">${ic('arrowl','sm')}Back</button>`;
   if (d.step === 1) {
     body = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${SRC_TYPES.map(([k, t, s, ep]) => `<button class="radio-card ${d.kind === k ? 'on' : ''}" data-action="srctype" data-kind="${k}" data-endpoint="${ep}"><span class="w-8 h-8 rounded-md bg-muted grid place-items-center text-muted-foreground shrink-0">${ic(SRC_ICON[k])}</span><span class="min-w-0"><span class="block text-[14px] font-medium">${t}</span><span class="block text-[12.5px] text-muted-foreground leading-snug mt-0.5">${s}</span></span></button>`).join('')}</div>`;
     foot = `<button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="srcnext" ${d.kind ? '' : 'aria-disabled="true" data-tip="Pick a source type"'}>Continue ${ic('arrow','sm')}</button>`;
@@ -1697,7 +2004,7 @@ function sourceDialog(d){
       <div class="mt-5 text-[13px] font-medium">What to import</div>
       <div class="mt-2 space-y-2">${[['issues','Issues and comments'],['readme','README'],['prs','Pull requests']].map(([k, l]) => `<label class="flex items-center gap-2.5 text-[13.5px] cursor-pointer"><input type="checkbox" class="check" data-bind-check="${k}" ${d.include[k] ? 'checked' : ''}>${l}</label>`).join('')}</div>`;
     body = `<label class="label" for="ghUrl">Repository URL</label><div class="flex gap-2"><input id="ghUrl" class="input mono !text-[13.5px] ${e.url ? 'invalid' : ''}" data-bind="url" value="${esc(d.url)}" placeholder="https://github.com/owner/repo"><button class="btn btn-outline" data-action="ghpreview" data-endpoint="POST /sources/github/preview">Preview</button></div>${fieldErr(e.url) || '<div class="help">Public repositories only. Try a private or unknown URL to see the error states.</div>'}${prev}`;
-    foot = `<button class="btn btn-ghost mr-auto" data-action="srcback">${ic('arrowl','sm')}Back</button><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="srcconnect" data-endpoint="POST /projects/{project_id}/sources" ${pv && !pv.error && pv !== 'loading' ? '' : 'aria-disabled="true" data-tip="Preview the repository first"'}>Connect &amp; sync</button>`;
+    foot = `${back}<button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="srcconnect" data-endpoint="POST /projects/{project_id}/sources" ${pv && !pv.error && pv !== 'loading' ? '' : 'aria-disabled="true" data-tip="Preview the repository first"'}>Connect &amp; sync</button>`;
   }
   if (d.step === 2 && d.kind === 'library') {
     body = `<label class="label">Document</label><select class="input" data-bind="doc"><option value="onboarding-standard" ${d.doc !== 'new' ? 'selected' : ''}>Onboarding standard · ${v3() ? 'v3' : 'v2'} current</option><option value="new" ${d.doc === 'new' ? 'selected' : ''}>New document</option></select>
@@ -1705,21 +2012,39 @@ function sourceDialog(d){
         ${d.file ? `<span class="inline-flex items-center gap-2 text-[13.5px] font-medium">${ic('doc')} ${esc(d.file)}</span><span class="block text-[12.5px] text-muted-foreground mt-1">Sample file · click to change</span>` : `<span class="mx-auto w-9 h-9 rounded-full bg-background shadow-[inset_0_0_0_1px_hsl(var(--border))] grid place-items-center text-muted-foreground">${ic('upload')}</span><span class="block mt-2 text-[13.5px] font-medium">Choose a file</span><span class="block text-[12.5px] text-muted-foreground">PDF, DOCX or Markdown · sample file in this prototype</span>`}</button>
       ${fieldErr(e.file)}
       <label class="label mt-4" for="vLabel">Version label</label><input id="vLabel" class="input mono !w-32 ${e.version ? 'invalid' : ''}" data-bind="version" value="${esc(d.version)}">${fieldErr(e.version) || '<div class="help">A new version supersedes the facts it restates with a different value.</div>'}`;
-    foot = `<button class="btn btn-ghost mr-auto" data-action="srcback">${ic('arrowl','sm')}Back</button><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="srcconnect" data-endpoint="${d.doc === 'new' ? 'POST /documents' : 'POST /documents/{doc_id}/versions'}">Upload &amp; sync</button>`;
+    foot = `${back}<button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="srcconnect" data-endpoint="${d.doc === 'new' ? 'POST /documents' : 'POST /documents/{doc_id}/versions'}">Upload &amp; sync</button>`;
   }
   if (d.step === 2 && d.kind === 'mail') {
     body = `<div class="grid grid-cols-2 gap-2"><button class="radio-card ${d.mode !== 'override' ? 'on' : ''}" data-action="srcmail" data-mode="inherit"><span class="radio-dot"></span><span><span class="block text-[13.5px] font-medium">Inherit from organisation</span><span class="block text-[12px] text-muted-foreground mono mt-0.5">${S.orgMail.inbound_address}</span></span></button>
       <button class="radio-card ${d.mode === 'override' ? 'on' : ''}" data-action="srcmail" data-mode="override"><span class="radio-dot"></span><span><span class="block text-[13.5px] font-medium">Override for this project</span><span class="block text-[12px] text-muted-foreground mt-0.5">Own inbound address</span></span></button></div>
       ${d.mode === 'override' ? `<label class="label mt-4">Inbound address</label><input class="input mono !text-[13px]" data-bind="inbound" value="${esc(d.inbound)}">` : ''}
       <label class="label mt-4" for="mRule">Route emails from</label><input id="mRule" class="input mono !text-[13.5px] ${e.rule ? 'invalid' : ''}" data-bind="rule" value="${esc(d.rule)}" placeholder="@client.com">${fieldErr(e.rule) || `<div class="help">Adds an organisation rule: sender domain → ${esc(p.name)}. Leave empty to skip.</div>`}`;
-    foot = `<button class="btn btn-ghost mr-auto" data-action="srcback">${ic('arrowl','sm')}Back</button><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="srcconnect" data-endpoint="PUT /projects/{project_id}/mail">Save mailbox</button>`;
+    foot = `${back}<button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="srcconnect" data-endpoint="PUT /projects/{project_id}/mail">Save mailbox</button>`;
   }
   if (d.step === 2 && d.kind === 'docs') {
     body = `<button class="dropzone w-full px-5 py-8 text-center hover:bg-muted/70 transition" data-action="pickfile">
       ${d.file ? `<span class="inline-flex items-center gap-2 text-[13.5px] font-medium">${ic('doc')} ${esc(d.file)}</span><span class="block text-[12.5px] text-muted-foreground mt-1">Sample selection · click to change</span>` : `<span class="mx-auto w-9 h-9 rounded-full bg-background shadow-[inset_0_0_0_1px_hsl(var(--border))] grid place-items-center text-muted-foreground">${ic('upload')}</span><span class="block mt-2 text-[13.5px] font-medium">Drop files or choose a folder</span><span class="block text-[12.5px] text-muted-foreground">PDF, DOCX, Markdown, email exports</span>`}</button>${fieldErr(e.file)}`;
-    foot = `<button class="btn btn-ghost mr-auto" data-action="srcback">${ic('arrowl','sm')}Back</button><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="srcconnect" data-endpoint="POST /projects/{project_id}/sources">Upload &amp; sync</button>`;
+    foot = `${back}<button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="srcconnect" data-endpoint="POST /projects/{project_id}/sources">Upload &amp; sync</button>`;
   }
-  if (d.step === 3) {
+  if (d.step === 2 && d.kind === 'webhook') {
+    body = `<label class="label" for="hLabel">Name</label><input id="hLabel" class="input ${e.label ? 'invalid' : ''}" data-bind="hookLabel" value="${esc(d.hookLabel)}" placeholder="e.g. Meeting recorder">${fieldErr(e.label)}
+      <label class="label mt-4" for="tagInput-hookTags">Default tags</label>${chipsInput('hookTags', d.hookTags)}
+      <div class="help">Added to every item posted to this webhook. <span class="mono">topic:onboarding-target</span> forces the topic.</div>
+      ${d.edit ? '' : `<div class="mt-4 rounded-[10px] bg-muted/60 px-4 py-3 text-[13px] text-muted-foreground flex gap-2.5"><span class="mt-0.5">${ic('key','sm')}</span><span>A secret is generated when you create the webhook. It is shown once, then only its last 4 characters.</span></div>`}`;
+    foot = `${back}<button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="srcconnect" data-endpoint="${d.edit ? 'PATCH /sources/{source_id}' : 'POST /projects/{project_id}/sources'}">${d.edit ? 'Save' : 'Create webhook'}</button>`;
+  }
+  if (d.step === 3 && d.kind === 'webhook') {
+    const url = hookUrl(p.id);
+    body = `<div class="fade-in flex items-center gap-2.5 text-[14px] font-medium"><span class="text-success">${ic('ok')}</span>Webhook created for ${esc(p.name)}</div>
+      <label class="label mt-4">Project URL</label>${copyField(url, 'POST /hooks/projects/{project_id}')}
+      <label class="label mt-4">Secret</label>${copyField('whsec_…demo')}
+      <div class="help flex items-center gap-1.5 !text-warning-text">${ic('alert','sm')}<span>Shown once. Afterwards only the last 4 characters are visible: <span class="mono">9f2a</span>.</span></div>
+      <label class="label mt-4">Example request</label>${codeBlock(curlFor(url, d.hookTags, 'whsec_…demo'))}
+      <div class="mt-4 flex items-center gap-2 flex-wrap"><span class="text-[13px] text-muted-foreground mr-1">Default tags</span>${d.hookTags.length ? d.hookTags.map(tagChip).join('') : '<span class="text-[13px] text-muted-foreground">none</span>'}</div>
+      <div class="mt-4 flex items-start gap-3 flex-wrap"><button class="btn btn-outline btn-sm" data-action="hooktest" data-endpoint="POST /hooks/projects/{project_id}">${ic('send','sm')}Send test item</button>${d.test ? `<div class="fade-in text-[13px] pt-1"><span class="mono text-muted-foreground">202</span> ${d.test}</div>` : ''}</div>`;
+    foot = `<button class="btn btn-primary" data-action="close">Done</button>`;
+  }
+  if (d.step === 3 && d.kind !== 'webhook') {
     const done = d.pct >= 100;
     body = `<div class="rounded-[12px] shadow-[inset_0_0_0_1px_hsl(var(--border))] p-4">
       <div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-muted grid place-items-center text-muted-foreground">${ic(SRC_ICON[d.kind])}</span><div class="min-w-0 flex-1"><div class="text-[14px] font-medium truncate">${esc(d.title)}</div><div class="text-[12.5px] text-muted-foreground">${done ? 'Synced' : esc(d.phase || 'Queued')}</div></div>${done ? `<span class="text-success">${ic('ok')}</span>` : '<span class="spin !w-4 !h-4 border-[1.6px] rounded-full border-muted-foreground border-r-transparent animate-spin inline-block"></span>'}</div>
@@ -1728,7 +2053,8 @@ function sourceDialog(d){
       ${done ? `<div class="fade-in mt-4 text-[14px]"><span class="font-medium">${d.result}</span> <span class="badge line !h-[18px] !text-[11px] ml-1">sample</span></div><p class="mt-1 text-[13px] text-muted-foreground">The source is now listed in ${esc(p.name)} and in the sidebar.</p>` : ''}`;
     foot = done ? `<button class="btn btn-primary" data-action="close">Done</button>` : `<button class="btn btn-ghost" aria-disabled="true">Syncing…</button>`;
   }
-  return dialogFrame('Add source', `${esc(p.name)} · step ${d.step} of 3`, stepper + body, foot, true);
+  const ex = d.edit && S.sources.find(s => s.id === d.edit);
+  return dialogFrame(ex ? 'Source settings' : 'Add source', ex ? `${esc(srcTitle(ex))} · ${esc(p.name)}` : `${esc(p.name)} · step ${d.step} of 3`, (ex ? '' : stepper) + body, foot, true);
 }
 
 /* ---------- command palette ---------- */
@@ -1736,17 +2062,19 @@ function paletteItems(q){
   q = (q || '').toLowerCase().trim();
   const views = [['dashboard','Home','ask'], ['app','Ask','ask'], ['memory','Memory','memory'], ['conflicts','Conflicts','conflict'], ['open-questions','Open questions','question'], ['maintenance','Maintenance','archive'], ['sources','Sources','sources'], ['projects/' + S.project, 'Project overview','folder'], ['audit','Audit log','audit'], ['settings','Settings','settings'], ['settings/members','Members','users'], ['settings/roles','Roles','shield'], ['admin','Demo control','admin'], ['setup','Run setup','play']]
     .filter(v => !q || v[1].toLowerCase().includes(q)).map(v => ({ kind:'Go to', label:v[1], icon:v[2], run:() => nav(v[0]) }));
-  const facts = visibleFacts().filter(id => q && (claimOf(id) + ' ' + id + ' ' + FACTS[id].quote).toLowerCase().includes(q)).slice(0, 6)
+  const facts = visibleFacts().filter(id => q && (claimOf(id) + ' ' + id + ' ' + FACTS[id].quote + ' ' + factTags(id).join(' ')).toLowerCase().includes(q)).slice(0, 6)
     .map(id => ({ kind:'Fact', label: claimOf(id), meta:id, icon:'memory', run:() => openFact(id) }));
-  const acts = [['Toggle theme', 'moon', () => setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark')], ['Act as Giulia Ferri (owner)', 'users', () => setActor('mem-giulia-ferri')], ['Act as Sara Conti (editor)', 'users', () => setActor('mem-sara-conti')], ['Act as Luca Bassi (viewer)', 'users', () => setActor('mem-luca-bassi')], ['Reset demo', 'restore', () => { nav('admin'); S.ui.confirmReset = true; render(); }]]
+  const tq = q.replace(/^#/, '');
+  const tagHits = tq ? allTags().filter(t => t.includes(tq)).slice(0, 5).map(t => ({ kind:'Tag', label:t, meta:`${tagCount(t)} facts`, icon:'tag', ep:'GET /search?tag=', run:() => { S.mem = { q:'', type:'all', status:'all', topic:'all', tag:t }; S.ui.drawer = null; nav('memory'); } })) : [];
+  const acts = [['Upload an item', 'upload', () => openDialog('upload')], ['Toggle theme', 'moon', () => setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark')], ['Act as Giulia Ferri (owner)', 'users', () => setActor('mem-giulia-ferri')], ['Act as Sara Conti (editor)', 'users', () => setActor('mem-sara-conti')], ['Act as Luca Bassi (viewer)', 'users', () => setActor('mem-luca-bassi')], ['Reset demo', 'restore', () => { nav('admin'); S.ui.confirmReset = true; render(); }]]
     .filter(a => !q || a[0].toLowerCase().includes(q)).map(a => ({ kind:'Action', label:a[0], icon:a[1], run:a[2] }));
-  return facts.concat(views, acts);
+  return facts.concat(tagHits, views, acts);
 }
 function paletteHtml(){
   const p = S.ui.palette; const items = paletteItems(p.q); p.items = items; p.i = Math.min(p.i || 0, Math.max(0, items.length - 1));
   let last = '';
-  const rows = items.map((it, i) => { const h = it.kind !== last ? `<div class="menu-label !pt-3">${it.kind === 'Go to' ? 'Go to' : it.kind === 'Fact' ? 'Facts' : 'Actions'}</div>` : ''; last = it.kind;
-    return h + `<button class="menu-item ${i === p.i ? 'active' : ''}" data-action="palrun" data-i="${i}" role="option" aria-selected="${i === p.i}">${ic(it.icon, 'text-muted-foreground')}<span class="flex-1 truncate">${esc(it.label)}</span>${it.meta ? `<span class="mono text-[11.5px] text-muted-foreground">${it.meta}</span>` : ''}</button>`; }).join('');
+  const rows = items.map((it, i) => { const h = it.kind !== last ? `<div class="menu-label !pt-3">${it.kind === 'Go to' ? 'Go to' : it.kind === 'Fact' ? 'Facts' : it.kind === 'Tag' ? 'Tags' : 'Actions'}</div>` : ''; last = it.kind;
+    return h + `<button class="menu-item ${i === p.i ? 'active' : ''}" data-action="palrun" data-i="${i}" ${it.ep ? `data-endpoint="${it.ep}"` : ''} role="option" aria-selected="${i === p.i}">${ic(it.icon, 'text-muted-foreground')}<span class="flex-1 truncate">${esc(it.label)}</span>${it.meta ? `<span class="mono text-[11.5px] text-muted-foreground">${it.meta}</span>` : ''}</button>`; }).join('');
   return `<div class="overlay dialog !top-[12vh] !w-[min(600px,calc(100vw-32px))] overflow-hidden" role="dialog" aria-modal="true" aria-label="Command palette">
     <div class="flex items-center gap-3 px-4 h-12 border-b">${ic('search','text-muted-foreground')}<input id="palInput" class="flex-1 bg-transparent outline-none text-[15px] placeholder:text-muted-foreground" placeholder="Jump to a view, search facts, run an action…" value="${esc(p.q || '')}" data-endpoint="GET /search" role="combobox" aria-expanded="true"><span class="kbd">esc</span></div>
     <div id="palList" class="max-h-[52vh] overflow-y-auto scroll p-1.5 pb-2" role="listbox">${rows || `<div class="px-4 py-10 text-center text-[13.5px] text-muted-foreground">No results for “${esc(p.q)}”.</div>`}</div>
@@ -1780,10 +2108,9 @@ function menuHtml(){
 
 function renderLayer(){
   const u = S.ui; let h = '';
-  const scrim = u.dialog || u.palette || u.drawer || u.sheet;
+  const scrim = u.dialog || u.palette || u.drawer;
   if (scrim) h += `<div class="scrim ${u.drawer && !u.dialog && !u.palette ? '!bg-black/20 dark:!bg-black/40' : ''}" data-action="scrim"></div>`;
   if (u.drawer && FACTS[u.drawer]) h += drawerHtml(u.drawer);
-  if (u.sheet) h += sheetHtml(u.sheet);
   if (u.dialog) h += dialogHtml();
   if (u.palette) h += paletteHtml();
   if (u.menu) h += `<div class="fixed inset-0 z-[55]" data-action="closemenu"></div>` + menuHtml();
@@ -1827,7 +2154,7 @@ function retire105(reason){
   return e;
 }
 function setActor(id){ S.actor = id; toast(`Acting as ${esc(member(id).name)} · ${effRole(id)}`, { icon:'users' }); render(); }
-function openFact(id){ if (!FACTS[id]) return; if (!visible(id)) { toast('This fact appears later in the demo.', { icon:'info' }); return; } S.ui.drawer = id; S.ui.act = null; S.ui.sheet = null; S.ui.palette = null; renderLayer(); if (route.r === 'memory') renderMemList(); }
+function openFact(id){ if (!FACTS[id]) return; if (!visible(id)) { toast('This fact appears later in the demo.', { icon:'info' }); return; } S.ui.drawer = id; S.ui.act = null; S.ui.palette = null; renderLayer(); if (route.r === 'memory') renderMemList(); }
 
 /* =====================================================================
    render
@@ -1984,16 +2311,18 @@ function closeTop(){
   const u = S.ui;
   if (u.menu) { u.menu = null; renderLayer(); return true; }
   if (u.palette) { u.palette = null; renderLayer(); return true; }
-  if (u.dialog) { if (u.dialog.type === 'source' && u.dialog.step === 3 && u.dialog.pct < 100) return true; u.dialog = null; renderLayer(); if (route.r !== 'app') render(); return true; }
+  if (u.dialog) { if (u.dialog.type === 'source' && u.dialog.kind !== 'webhook' && u.dialog.step === 3 && u.dialog.pct < 100) return true; u.dialog = null; renderLayer(); if (route.r !== 'app') render(); return true; }
   if (u.act) { u.act = null; renderLayer(); return true; }
   if (u.drawer) { u.drawer = null; renderLayer(); if (route.r === 'memory') { renderMemList(); if (route.sub) history.replaceState(null, '', '#/memory'); } return true; }
-  if (u.sheet) { u.sheet = null; renderLayer(); renderSidebar(); return true; }
+  if ((route.r === 'projects' || route.r === 'sources' || route.r === 'dashboard') && (S.ui.open.src || S.ui.open.item)) { const g = S.ui.open.src ? 'src' : 'item'; A.xrow({ dataset:{ group:g, id:S.ui.open[g] } }); return true; }
   if (u.nav) { u.nav = false; renderSidebar(); return true; }
   return false;
 }
 function openDialog(type, extra = {}){
   const base = { type, err:{} };
-  if (type === 'source') Object.assign(base, { step:1, kind:null, url:'https://github.com/gabry-ts/canonico', preview:null, include:{ issues:true, readme:true, prs:false }, doc:'onboarding-standard', version: v3() ? 'v4' : 'v3', file:null, mode: proj().mail ? 'override' : 'inherit', inbound:'clearpath@inbound.' + S.org.domain, rule:'', pct:0 });
+  if (type === 'source') Object.assign(base, { step:1, kind:null, url:'https://github.com/gabry-ts/canonico', preview:null, include:{ issues:true, readme:true, prs:false }, doc:'onboarding-standard', version: v3() ? 'v4' : 'v3', file:null, mode: proj().mail ? 'override' : 'inherit', inbound:'clearpath@inbound.' + S.org.domain, rule:'', pct:0, hookLabel:'Inbound webhook', hookTags: S.project === 'proj-clearpath' ? ['clearpath'] : [S.project.replace('proj-', '')], hookTagsInput:'' });
+  if (type === 'upload') Object.assign(base, { phase:'form', utype:'meeting', title:'', date:TODAY, text:'', file:null, participants:'', tags: S.project === 'proj-clearpath' ? ['clearpath'] : [], tagsInput:'', versionOf:'' });
+  if (type === 'tagrule') { const r = S.tagRules.find(x => x.id === extra.id); Object.assign(base, r ? { tag:r.tag, project:r.project_id, priority:String(r.priority), edit:r.id } : { tag:'', project:S.project, priority:'30' }); }
   if (type === 'resolve') base.reason = extra.id === 'M-106' ? 'The final report sets 3–4 weeks. The 4-week figure was a verbal preview a week earlier.' : '';
   S.ui.dialog = Object.assign(base, extra); S.ui.menu = null; renderLayer();
   setTimeout(() => { const el = document.querySelector('.dialog textarea, .dialog input:not([type=checkbox])'); if (el) el.focus(); }, 30);
@@ -2058,8 +2387,97 @@ const A = {
   reveal: el => { const id = el.dataset.id; S.app.reveal = S.app.reveal === id ? null : id; renderChat(); },
   ask: () => { const q = ($('composer')?.value || '').trim(); chargeAsk(); toast(q && q !== QS && q !== Q2 ? 'This prototype answers the scripted questions. Use the demo steps above.' : 'Answered from memory. Use the demo steps to move through the story.', { icon:'info' }); },
   scope: el => { S.scope = el.dataset.scope; toast(S.scope === 'org' ? `Asking ${esc(S.org.name)}: every project.` : `Asking ${esc(proj().name)} only.`, { icon:'info' }); render(); },
-  project: el => { S.project = el.dataset.id; S.scope = 'project'; S.ui.menu = null; S.ui.sheet = null; nav('projects/' + S.project); },
-  sheet: el => { const k = el.dataset.src; S.ui.sheet = S.ui.sheet === k ? null : k; S.ui.drawer = null; renderSidebar(); renderLayer(); },
+  project: el => { S.project = el.dataset.id; S.scope = 'project'; S.ui.menu = null; nav('projects/' + S.project); },
+  srcgo: el => {
+    S.ui.drawer = null; S.ui.nav = false; S.ui.palette = null;
+    if (el.dataset.kind === 'upload') { const it = S.items.find(i => (i.facts || []).includes(el.dataset.fact)); if (it) return A.itemgo({ dataset:{ id:it.id } }); }
+    const x = el.dataset.id ? S.sources.find(s => s.id === el.dataset.id) : sourcesOf().find(s => TYPE_KEY[s.type] === el.dataset.kind);
+    if (!x) { nav('projects/' + S.project); toast('This source is not connected to the project.', { icon:'info' }); return; }
+    S.project = x.project_id; S.ui.open.src = x.id; S.ui.srcRemove = null;
+    nav('projects/' + x.project_id);
+    setTimeout(() => { const d = document.querySelector(`#view [data-xp="src"][data-id="${x.id}"]`); const row = d?.previousElementSibling; row?.scrollIntoView({ block:'start', behavior:'smooth' }); row?.querySelector('[data-xt]')?.focus({ preventScroll:true }); }, 60);
+  },
+  xrow: el => {
+    const g = el.dataset.group, id = el.dataset.id; const next = S.ui.open[g] === id ? null : id; S.ui.open[g] = next; if (g === 'src') S.ui.srcRemove = null;
+    document.querySelectorAll(`#view [data-xp="${g}"]`).forEach(p => { const on = p.dataset.id === next; p.classList.toggle('open', on); p.toggleAttribute('inert', !on); });
+    document.querySelectorAll(`#view [data-action="xrow"][data-group="${g}"]`).forEach(b => { const on = b.dataset.id === next; if (b.hasAttribute('data-xt')) b.setAttribute('aria-expanded', String(on)); if (b.tagName === 'TR') b.classList.toggle('xo', on); else if (g === 'item') b.classList.toggle('bg-muted/45', on); });
+    if (g === 'src') renderSidebar();
+    if (next) setTimeout(() => document.querySelector(`#view [data-xp="${g}"][data-id="${next}"]`)?.scrollIntoView({ block:'nearest', behavior:'smooth' }), 280);
+  },
+  itemgo: el => {
+    const it = S.items.find(i => i.id === el.dataset.id); if (!it) return;
+    S.ui.open.item = it.id; S.ui.itemFilter = { type:'all', tag:'all' }; S.project = it.project_id; S.ui.drawer = null; S.ui.dialog = null;
+    nav('projects/' + it.project_id);
+    setTimeout(() => document.querySelector(`#view [data-xp="item"][data-id="${it.id}"]`)?.parentElement?.scrollIntoView({ block:'center', behavior:'smooth' }), 60);
+  },
+  itemclear: () => { S.ui.itemFilter = { type:'all', tag:'all' }; render(); },
+  srcsettings: el => {
+    const x = S.sources.find(s => s.id === el.dataset.id); if (!x) return; const k = TYPE_KEY[x.type];
+    const extra = { step:2, kind:k, edit:x.id, hookLabel:x.label, hookTags:[...(x.tags || [])], include: x.include ? { ...x.include } : { issues:true, readme:true, prs:false } };
+    if (k === 'github') Object.assign(extra, { url:'https://github.com/' + x.label, preview:{ full_name:x.label, description:'Canonical memory for company brains.', open_issues:22, readme:true, connected:true } });
+    openDialog('source', extra);
+  },
+  srcremove: el => { S.ui.srcRemove = el.dataset.id; rerenderSrc(el.dataset.id); },
+  srcremovecancel: () => { const id = S.ui.srcRemove; S.ui.srcRemove = null; rerenderSrc(id); },
+  srcremoveconfirm: el => {
+    const x = S.sources.find(s => s.id === el.dataset.id); if (!x) return;
+    S.sources = S.sources.filter(s => s !== x); S.ui.srcRemove = null; S.ui.open.src = null;
+    const a = addAudit('unlink', null, `${srcTitle(x)} removed from ${proj(x.project_id).name}. Its facts stay in memory.`); a.project = x.project_id;
+    toast(`${esc(srcTitle(x))} removed. Its facts stay in memory.`); render();
+  },
+  srcrotate: el => { const x = S.sources.find(s => s.id === el.dataset.id); if (!x) return; const pool = ['7c41','b03e','e58d','9f2a']; x.last4 = pool[(pool.indexOf(x.last4) + 1) % pool.length]; x.secretOnce = true; toast('Secret rotated. The old one stops working now.', { icon:'key' }); rerenderSrc(x.id); },
+  srchide: el => { const x = S.sources.find(s => s.id === el.dataset.id); if (x) x.secretOnce = false; rerenderSrc(el.dataset.id); },
+  hooktest: el => {
+    let x, d = null;
+    if (el.dataset.src) x = S.sources.find(s => s.id === el.dataset.src); else { d = D(); x = d && S.sources.find(s => s.id === d.created); }
+    if (!x) return;
+    const id = 'itm-' + String(S.upSeq++).padStart(4, '0');
+    S.items.unshift({ id, project_id:x.project_id, source_id:x.id, via:'webhook', type:'note', title:'Test item', date:TODAY, tags:(x.tags || []).concat(['test']), facts:[], text:'Test item sent from Canonico.' }); x.items++; x.last = now();
+    const html = `Item <span class="mono">${id}</span> received in ${esc(proj(x.project_id).name)}. 0 facts: test items are not extracted.`;
+    if (d) { d.test = html; renderLayer(); } else { S.ui.hookTest = { src:x.id, html }; rerenderSrc(x.id); }
+    renderSidebar();
+  },
+  copy: el => { const v = el.dataset.copy; const fail = () => toast('Copy failed. Select the text and copy it.', { icon:'alert' }); try { navigator.clipboard.writeText(v).then(() => toast('Copied to clipboard.', { icon:'copy' }), fail); } catch (e) { fail(); } },
+  tagfilter: el => { S.mem = { q:'', type:'all', status:'all', topic:'all', tag:el.dataset.tag }; S.ui.drawer = null; if (route.r === 'memory') { history.replaceState(null, '', '#/memory'); route = parseHash(); render(); } else nav('memory'); },
+  tagdel: el => { const d = D(); d[el.dataset.key].splice(+el.dataset.i, 1); renderLayer(); $('tagInput-' + el.dataset.key)?.focus(); },
+  tagadd: el => addTag(el.dataset.key, el.dataset.tag),
+  chipsfocus: el => $('tagInput-' + el.dataset.key)?.focus(),
+  uptype: el => { D().utype = el.dataset.k; renderLayer(); },
+  upfile: () => { const d = D(); d.file = d.file ? null : ({ meeting:'steering-committee.vtt', document:'document.pdf', note:'note.txt', ticket:'ticket.json' }[d.utype]); d.err = {}; renderLayer(); },
+  upsample: () => { const d = D(); Object.assign(d, JSON.parse(JSON.stringify(SAMPLE_UPLOAD)), { file:null, err:{}, tagsInput:'' }); renderLayer(); },
+  upsubmit: () => {
+    const d = D(); const leftover = ($('tagInput-tags')?.value || '').trim(); if (leftover) { const t = leftover.toLowerCase().replace(/\s+/g, '-'); if (!d.tags.includes(t)) d.tags.push(t); d.tagsInput = ''; }
+    d.err = {};
+    if (!(d.title || '').trim()) d.err.title = 'Give the item a title.';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.date || '')) d.err.date = 'Pick a date.';
+    if (!(d.text || '').trim() && !d.file) d.err.text = 'Paste the text or add a file.';
+    if (Object.keys(d.err).length) { renderLayer(); document.querySelector('.dialog .invalid')?.focus(); return; }
+    d.phase = 'sending'; renderLayer();
+    setTimeout(() => { if (S.ui.dialog !== d) return; d.result = processUpload(d); d.phase = 'result'; render(); if (!d.result.dup) toast(`Uploaded to ${esc(proj(d.result.pid).name)}. ${d.result.created.length} ${d.result.created.length === 1 ? 'fact' : 'facts'} created, 0 superseded.`, { icon:'upload' }); }, 900);
+  },
+  upagain: () => openDialog('upload'),
+  upopen: el => { S.ui.dialog = null; render(); openFact(el.dataset.id); },
+  orgrotate: () => { const h = S.orgHook; const pool = ['7c41','b03e','e58d','9f2a']; h.last4 = pool[(pool.indexOf(h.last4) + 1) % pool.length]; h.secret = 'whsec_…demo'; h.rotated = now(); toast('Organisation secret rotated. The old one stops working now.', { icon:'key' }); render(); },
+  orghide: () => { S.orgHook.secret = null; render(); },
+  orghooktest: () => {
+    const tags = ['clearpath', 'test']; const r = tagRoute(tags); const id = 'itm-' + String(S.upSeq++).padStart(4, '0');
+    if (r) S.items.unshift({ id, project_id:r.project_id, source_id:null, via:'webhook', type:'note', title:'Test item from the organisation webhook', date:TODAY, tags, facts:[] });
+    S.ui.orgHookTest = r ? `Item <span class="mono">${id}</span> routed to <span class="font-medium">${esc(proj(r.project_id).name)}</span> by tag <span class="mono">${esc(r.tag)}</span>.` : 'No tag rule matched. Kept in the organisation inbox.';
+    render();
+  },
+  tagtest: () => { const v = $('tagTest')?.value || ''; const tags = v.split(/[,\s]+/).map(x => x.trim().toLowerCase()).filter(Boolean); S.ui.tagTest = { input:v, tags, rule: tagRoute(tags) || null }; render(); },
+  tagruledel: el => { const r = S.tagRules.find(x => x.id === el.dataset.id); if (!r) return; S.tagRules = S.tagRules.filter(x => x !== r); if (S.ui.tagTest) S.ui.tagTest.rule = tagRoute(S.ui.tagTest.tags) || null; toast(`Tag rule ${esc(r.tag)} deleted.`); render(); },
+  tagruleconfirm: () => {
+    const d = D(); const tag = ($('dTag')?.value ?? d.tag ?? '').trim().toLowerCase(); d.tag = tag; d.priority = $('dTPr')?.value ?? d.priority; d.project = $('dTP')?.value || d.project; d.err = {};
+    if (!/^[a-z0-9][a-z0-9:._-]*$/.test(tag)) d.err.tag = 'Use letters, numbers and dashes, or a prefix like topic:.';
+    else if (S.tagRules.some(r => r.tag === tag && r.id !== d.edit)) d.err.tag = 'A rule for this tag already exists.';
+    const pr = parseInt(d.priority, 10); if (!(pr >= 0)) d.err.priority = 'Use a number. Lower runs first.';
+    if (Object.keys(d.err).length) { renderLayer(); return; }
+    if (d.edit) Object.assign(S.tagRules.find(r => r.id === d.edit), { tag, project_id:d.project, priority:pr });
+    else S.tagRules.push({ id:'tr-' + String(S.upSeq++).padStart(3, '0'), tag, project_id:d.project || S.project, priority:pr });
+    if (S.ui.tagTest) S.ui.tagTest.rule = tagRoute(S.ui.tagTest.tags) || null;
+    S.ui.dialog = null; toast(d.edit ? 'Tag rule saved.' : 'Tag rule added.'); render();
+  },
   palette: () => { S.ui.palette = { q:'', i:0 }; S.ui.menu = null; renderLayer(); setTimeout(() => $('palInput')?.focus(), 20); },
   palrun: el => { const it = S.ui.palette.items[+el.dataset.i]; S.ui.palette = null; renderLayer(); it && it.run(); },
   menu: el => { const r = el.getBoundingClientRect(); S.ui.menu = S.ui.menu && S.ui.menu.type === el.dataset.menu ? null : { type:el.dataset.menu, rect:r }; renderLayer(); },
@@ -2069,7 +2487,7 @@ const A = {
   navtoggle: () => { S.ui.nav = !S.ui.nav; renderSidebar(); },
   dialog: el => openDialog(el.dataset.dialog, { id:el.dataset.id, conflict:el.dataset.conflict, oq:el.dataset.oq }),
   close: () => closeTop(),
-  scrim: () => { if (S.ui.dialog) { if (!(S.ui.dialog.type === 'source' && S.ui.dialog.step === 3 && S.ui.dialog.pct < 100)) { S.ui.dialog = null; renderLayer(); if (route.r !== 'app') render(); } } else closeTop(); },
+  scrim: () => { if (S.ui.dialog) { if (!(S.ui.dialog.type === 'source' && S.ui.dialog.kind !== 'webhook' && S.ui.dialog.step === 3 && S.ui.dialog.pct < 100)) { S.ui.dialog = null; renderLayer(); if (route.r !== 'app') render(); } } else closeTop(); },
   fact: el => openFact(el.dataset.id),
   act: el => { S.ui.act = { id:el.dataset.id, kind:el.dataset.kind, reason:'', value:undefined }; renderLayer(); setTimeout(() => $(el.dataset.kind === 'correct' ? 'actValue' : 'actReason')?.focus(), 20); },
   actcancel: () => { S.ui.act = null; renderLayer(); },
@@ -2098,7 +2516,7 @@ const A = {
     toast({ retire:'Fact retired. The next answer will not use it.', restore:'Fact restored.', correct:'Fact corrected. The next answer uses the new sentence.', pin:'Pinned as binding.' + (a.replaced ? ' Replaced the pin on ' + esc(a.replaced) + '.' : ''), unpin:'Unpinned.' }[a.kind], { undo: ev.id });
   },
   memtopic: (el, e) => { e.preventDefault(); S.mem.topic = el.dataset.topic; S.ui.drawer = null; if (route.r !== 'memory') nav('memory'); else render(); },
-  memclear: () => { S.mem = { q:'', type:'all', status:'all', topic:'all' }; render(); },
+  memclear: () => { S.mem = { q:'', type:'all', status:'all', topic:'all', tag:'all' }; render(); },
   tab: el => { S.tabs[el.dataset.key] = el.dataset.val; if (el.dataset.key === 'settings') history.replaceState(null, '', '#/settings/' + el.dataset.val); render(); },
   sync: el => syncSource(el.dataset.id),
   mailoverride: () => { proj().mail = { mode:'webhook', inbound_address: proj().id.replace('proj-','') + '@inbound.' + S.org.domain }; toast(`${esc(proj().name)} now overrides the organisation mail.`); render(); },
@@ -2133,14 +2551,14 @@ const A = {
   resetconfirm: () => { const keepActor = S.actor; S = seed(); S.actor = keepActor; S.lastReset = now(); S.ui.results = { reset: stamp('200', 'POST /demo/reset', 'Seeded memory restored. Step 1: last Monday’s answer. 1 open conflict, 4 open questions.') }; render(); toast('Demo reset. The app is back at step 1.'); },
   health: () => { S.ui.results = S.ui.results || {}; S.ui.results.health = stamp('200', 'GET /health', '<span class="mono">{ status: "ok", version: "0.1.0" }</span>'); render(); },
   offline: () => { S.offline = !S.offline; toast(S.offline ? 'Offline demo mode on. Answers replay stored runs.' : 'Offline demo mode off.', { icon: S.offline ? 'wifioff' : 'ok' }); render(); },
-  demoemail: () => { S.ui.results = S.ui.results || {}; const was = emailIn(); if (!was) { S.ui.sheet = null; go(6); } S.ui.results.email = stamp(was ? '409' : '202', 'POST /demo/send-email', was ? 'Already delivered in this run. Reset the demo to send it again.' : `Routed to <span class="font-medium">${esc(proj('proj-clearpath').name)}</span> by <span class="mono">rule-001</span>. Fact <span class="mono">E-301</span> (5 weeks) supersedes <span class="mono">M-106</span>.`); render(); },
+  demoemail: () => { S.ui.results = S.ui.results || {}; const was = emailIn(); if (!was) { go(6); } S.ui.results.email = stamp(was ? '409' : '202', 'POST /demo/send-email', was ? 'Already delivered in this run. Reset the demo to send it again.' : `Routed to <span class="font-medium">${esc(proj('proj-clearpath').name)}</span> by <span class="mono">rule-001</span>. Fact <span class="mono">E-301</span> (5 weeks) supersedes <span class="mono">M-106</span>.`); render(); },
   poll: () => { S.ui.results = S.ui.results || {}; if (!S.imapQueue.length) { S.ui.results.poll = stamp('200', 'POST /mail/poll', 'Mailbox empty. Nothing new.'); render(); return; } const m = S.imapQueue.shift(); const r = route2(m.from); if (r) S.messages.push({ ...m, project:r.project_id, at:now(), rule:r.id }); S.ui.results.poll = stamp('200', 'POST /mail/poll', `1 email read. <span class="mono">${esc(m.from)}</span> → ${r ? `${esc(proj(r.project_id).name)} by <span class="mono">${r.id}</span>` : 'no rule matched, kept in the organisation inbox'}.`); const ev = addAudit('email', null, `${m.from}: “${m.subject}”.`); ev.actor = 'system'; ev.project = r ? r.project_id : null; render(); },
   compose: () => { S.ui.results = S.ui.results || {}; const from = ($('cFrom')?.value || '').trim(); const subj = ($('cSubj')?.value || '').trim(); const text = ($('cText')?.value || '').trim();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(from)) { S.ui.results.compose = stamp('422', 'POST /mail/inbound', '<span class="text-destructive">Sender is not a valid address.</span>'); render(); return; }
     const r = route2(from); if (r) S.messages.push({ from, subject:subj, text, project:r.project_id, at:now(), rule:r.id });
     const ev = addAudit('email', null, `${from}: “${subj}”.`); ev.actor = 'system'; ev.project = r ? r.project_id : null;
     S.ui.results.compose = stamp('202', 'POST /mail/inbound', r ? `Routed to <span class="font-medium">${esc(proj(r.project_id).name)}</span> by <span class="mono">${r.id}</span>. 1 fact created, it agrees with the binding value.` : 'No rule matched. Kept in the organisation inbox, no facts created.'); render(); },
-  uploadv3: () => { if (v3()) return; S.ui.results = S.ui.results || {}; S.ui.sheet = null; go(7); S.ui.results.v3 = stamp('201', 'POST /documents/{doc_id}/versions', 'Version <span class="mono">v3</span> stored. <span class="mono">L-401</span> (3–4 weeks) superseded by <span class="mono">L-402</span> (5 weeks).'); render(); },
+  uploadv3: () => { if (v3()) return; S.ui.results = S.ui.results || {}; go(7); S.ui.results.v3 = stamp('201', 'POST /documents/{doc_id}/versions', 'Version <span class="mono">v3</span> stored. <span class="mono">L-401</span> (3–4 weeks) superseded by <span class="mono">L-402</span> (5 weeks).'); render(); },
   orgsave: () => { const n = ($('orgName')?.value || '').trim(); const dm = ($('orgDomain')?.value || '').trim(); const e = {}; if (!n) e.name = 'Enter the organisation name.'; if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(dm)) e.domain = 'Enter a domain like company.com, without @.'; S.ui.orgErr = e; if (!Object.keys(e).length) { S.org.name = n; S.org.domain = dm; toast('Organisation saved.'); } render(); },
   orgmailmode: el => { S.orgMail.mode = el.dataset.mode; render(); },
   orgmailsave: () => toast('Mail settings saved. Projects that inherit them use the new values.'),
@@ -2169,6 +2587,7 @@ const A = {
     if (d.kind === 'docs' && !d.file) d.err.file = 'Choose at least one file.';
     if (d.kind === 'mail' && d.rule && !/^@?[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(d.rule.trim())) d.err.rule = 'Enter a domain like @client.com.';
     if (Object.keys(d.err).length) { renderLayer(); return; }
+    if (d.kind === 'webhook') { createWebhook(d); return; }
     runSourceSync(); },
   smode: el => { S.setup.mail.mode = el.dataset.mode; S.setup.test = null; renderSetup(); },
   spmail: el => { S.setup.proj.mail = el.dataset.mode; renderSetup(); },
@@ -2195,6 +2614,7 @@ document.addEventListener('input', e => {
   if (t.dataset.bind === 'reason105') { S.app.reason105 = t.value; return; }
   if (t.dataset.bind === 'actReason' && S.ui.act) { S.ui.act.reason = t.value; return; }
   if (t.dataset.bind === 'actValue' && S.ui.act) { S.ui.act.value = t.value; return; }
+  if (t.dataset.chips && S.ui.dialog) { S.ui.dialog[t.dataset.chips + 'Input'] = t.value; return; }
   if (t.dataset.bind && S.ui.dialog) { S.ui.dialog[t.dataset.bind] = t.value; return; }
   if (t.dataset.sbind && S.setup) { const [a, b] = t.dataset.sbind.split('.'); S.setup[a][b] = t.value; if (S.setup.err[t.id]) { delete S.setup.err[t.id]; t.classList.remove('invalid'); const n = t.nextElementSibling; if (n && n.classList.contains('err')) n.remove(); } return; }
 });
@@ -2206,6 +2626,9 @@ document.addEventListener('change', e => {
   if (t.dataset.bind && S.ui.dialog) { S.ui.dialog[t.dataset.bind] = t.value; renderLayer(); return; }
   const ac = t.dataset.actionChange;
   if (ac === 'project') { S.project = t.value; render(); return; }
+  if (ac === 'srctag') { S.ui.srcTag[t.dataset.id] = t.value; rerenderSrc(t.dataset.id); document.querySelector(`[data-action-change="srctag"][data-id="${t.dataset.id}"]`)?.focus(); return; }
+  if (ac === 'itemtype' || ac === 'itemtag') { S.ui.itemFilter[ac === 'itemtype' ? 'type' : 'tag'] = t.value; render(); return; }
+  if (ac === 'ghinc') { const x = S.sources.find(s => s.id === t.dataset.id); if (x) { x.include = x.include || {}; x.include[t.dataset.k] = t.checked; toast('Import options saved. They apply from the next sync.'); } return; }
   if (ac === 'orgrole') { const m = member(t.dataset.id); if (m.org_role === 'owner' && t.value !== 'owner' && S.members.filter(x => x.org_role === 'owner').length === 1) { toast('An organisation needs at least one owner.', { icon:'alert' }); render(); return; } m.org_role = t.value; addAudit('patch', null, `${m.name}: organisation role set to ${t.value}.`); toast(`${esc(m.name)} is now ${t.value}.`); render(); return; }
   if (ac === 'projrole') { const pr = S.projectRoles[t.dataset.id] = S.projectRoles[t.dataset.id] || {}; if (t.value) pr[t.dataset.proj] = t.value; else delete pr[t.dataset.proj]; toast(t.value ? `Project role set to ${t.value}.` : 'Back to the inherited organisation role.'); render(); return; }
 });
@@ -2216,6 +2639,11 @@ document.addEventListener('keydown', e => {
     const p = S.ui.palette;
     if (k === 'ArrowDown' || k === 'ArrowUp') { e.preventDefault(); p.i = Math.max(0, Math.min(p.items.length - 1, p.i + (k === 'ArrowDown' ? 1 : -1))); document.querySelectorAll('#palList [data-i]').forEach((b, i) => { b.classList.toggle('active', i === p.i); if (i === p.i) b.scrollIntoView({ block:'nearest' }); }); return; }
     if (k === 'Enter') { e.preventDefault(); const it = p.items[p.i]; S.ui.palette = null; renderLayer(); it && it.run(); return; }
+  }
+  const ck = e.target.dataset && e.target.dataset.chips;
+  if (ck && S.ui.dialog) {
+    if (k === 'Enter' || k === ',') { e.preventDefault(); addTag(ck, e.target.value); return; }
+    if (k === 'Backspace' && !e.target.value && S.ui.dialog[ck].length) { S.ui.dialog[ck].pop(); renderLayer(); $('tagInput-' + ck)?.focus(); return; }
   }
   if (k === 'Escape') { if (closeTop()) e.preventDefault(); return; }
   if (typing || S.ui.dialog || S.ui.drawer || S.ui.palette) return;
