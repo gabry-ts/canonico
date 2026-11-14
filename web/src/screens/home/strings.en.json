@@ -275,6 +275,7 @@
       "created": "Webhook created for {project}",
       "url": "Project URL",
       "once": "Shown once. Afterwards only the last 4 characters are visible: {last4}.",
+      "noSecret": "The secret could not be shown. Open the webhook in the sources table and use Rotate secret to get a new one.",
       "example": "Example request"
     }
   },

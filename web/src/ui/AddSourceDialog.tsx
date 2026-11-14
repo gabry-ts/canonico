@@ -203,9 +203,14 @@ export default function AddSourceDialog({ projectId, onClose, onCreated }: { pro
         let secret = r.secret ?? ''
         let last4 = cfg.secret_last4 ?? ''
         if (!secret) {
-          const rot = await call(client.POST('/sources/{source_id}/rotate-secret', { params: { path: { source_id: r.id } } }))
-          secret = rot.secret
-          last4 = rot.secret_last4
+          // The webhook exists from here on: a failed rotation must not leave the form up to create it again.
+          try {
+            const rot = await call(client.POST('/sources/{source_id}/rotate-secret', { params: { path: { source_id: r.id } } }))
+            secret = rot.secret
+            last4 = rot.secret_last4
+          } catch (e) {
+            fail(e)
+          }
         }
         setHook({ url: cfg.url ?? '', secret, last4, tags: cfg.default_tags ?? hookTags })
         setStep(3)
@@ -569,10 +574,10 @@ export default function AddSourceDialog({ projectId, onClose, onCreated }: { pro
         <label className="label mt-4">{t('home.add.hook.url')}</label>
         <CopyField value={hook.url} />
         <label className="label mt-4">{t('home.cfg.secret')}</label>
-        <CopyField value={hook.secret} />
+        {hook.secret && <CopyField value={hook.secret} />}
         <div className="help flex items-center gap-1.5 !text-warning-text">
           <Ic n="alert" className="sm" />
-          <span>{t('home.add.hook.once', { last4: hook.last4 })}</span>
+          <span>{hook.secret ? t('home.add.hook.once', { last4: hook.last4 }) : t('home.add.hook.noSecret')}</span>
         </div>
         <label className="label mt-4">{t('home.add.hook.example')}</label>
         <CodeBlock value={curlFor(hook.url, hook.tags, hook.secret, todayIso())} />

@@ -1161,6 +1161,7 @@
         "created": "Webhook creato per {project}",
         "url": "URL del progetto",
         "once": "Mostrato una sola volta. Poi restano visibili solo gli ultimi 4 caratteri: {last4}.",
+        "noSecret": "Non è stato possibile mostrare il segreto. Apri il webhook nella tabella delle fonti e usa Rigenera segreto per averne uno nuovo.",
         "example": "Richiesta di esempio"
       }
     },

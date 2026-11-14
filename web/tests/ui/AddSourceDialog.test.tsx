@@ -1130,6 +1130,30 @@ describe('AddSourceDialog', () => {
       expect(within(screen.getByText('Default tags').parentElement!).getByText('notes')).toBeInTheDocument()
     })
 
+    it('creates the webhook once and says where to get a secret when none could be made', async () => {
+      api.post('/projects/:project_id/sources', hook({ secret: undefined, config: { url: 'http://api.test/hook', secret_last4: '0000', default_tags: [] } }))
+      api.post('/sources/:source_id/rotate-secret', fail(500, 'Internal error'))
+      const { user, app, onClose, onCreated } = open()
+      await configure(user, 'webhook')
+      await user.type(screen.getByLabelText('Name'), 'Recorder')
+      await user.click(button('Create webhook'))
+
+      expect(await toast('That did not work. Internal error')).toBeInTheDocument()
+      expect(await screen.findByText('Webhook created for ClearPath engagement')).toBeInTheDocument()
+      expect(screen.getByText('The secret could not be shown. Open the webhook in the sources table and use Rotate secret to get a new one.')).toBeInTheDocument()
+      // No secret to copy, and no promise that it was shown.
+      expect(copyFields()).toEqual(['http://api.test/hook'])
+      expect(screen.queryByText(/^Shown once/)).not.toBeInTheDocument()
+      // The webhook cannot be created a second time.
+      expect(screen.queryByRole('button', { name: 'Create webhook' })).not.toBeInTheDocument()
+      expect(mutations()).toEqual([`POST /projects/${PID}/sources`, 'POST /sources/src-hook/rotate-secret'])
+      expect(onCreated).toHaveBeenCalledTimes(1)
+      expect(app.refresh).toHaveBeenCalledTimes(1)
+
+      await user.click(button('Done'))
+      expect(onClose).toHaveBeenCalledTimes(1)
+    })
+
     it('shows an empty URL when the created webhook came back without a configuration', async () => {
       api.post('/projects/:project_id/sources', hook({ secret: undefined, config: undefined }))
       api.post('/sources/:source_id/rotate-secret', { secret: 'whsec_test_rotated_7c1d', secret_last4: '7c1d', rotated_at: '2026-11-14T10:00:00Z' })
