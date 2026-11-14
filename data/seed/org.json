@@ -30,6 +30,13 @@
         "inbound_address": "internal@inbound.meridianlabs.org",
         "poll_interval_s": 60
       }
+    },
+    {
+      "id": "proj-canonico",
+      "name": "CANONICO",
+      "description": "Come il team ha costruito Canonico all'hackathon KVA di Torino, 14 nov 2026: decisioni, call, piattaforma e repository.",
+      "created_at": "2026-11-14T17:30:00Z",
+      "mail_config_override": null
     }
   ],
   "sources": [
@@ -100,6 +107,30 @@
       "label": "gabry-ts/canonico",
       "status": "idle",
       "last_synced_at": null,
+      "config": {
+        "repo_url": "https://github.com/gabry-ts/canonico",
+        "include": [
+          "issues",
+          "readme"
+        ]
+      }
+    },
+    {
+      "id": "src-canonico-docs",
+      "project_id": "proj-canonico",
+      "type": "documents",
+      "label": "Documenti del team",
+      "status": "ok",
+      "last_synced_at": "2026-11-14T17:30:00Z",
+      "config": {}
+    },
+    {
+      "id": "src-canonico-gh",
+      "project_id": "proj-canonico",
+      "type": "github",
+      "label": "gabry-ts/canonico",
+      "status": "ok",
+      "last_synced_at": "2026-11-14T17:30:00Z",
       "config": {
         "repo_url": "https://github.com/gabry-ts/canonico",
         "include": [

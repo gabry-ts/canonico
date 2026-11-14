@@ -59,7 +59,7 @@ def test_forced_ingest_replaces_extracted_facts_and_keeps_curated_ones(client, m
     assert job["status"] in ("queued", "running")
     done = wait_for(client, job["id"])
     assert done["status"] == "done" and done["docs"] == 46
-    facts = client.get("/facts", params={"limit": 500}).json()["items"]
+    facts = [f for f in client.get("/facts", params={"limit": 500}).json()["items"] if f["project_id"] != "proj-canonico"]
     curated = 15 + 3 + 3
     assert len(facts) == curated + 1
     assert {"L-401", "L-410", "M-905"} <= {f["id"] for f in facts}

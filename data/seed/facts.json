@@ -9005,5 +9005,1989 @@
         "source_in": "nel manuale degli analisti"
       }
     }
+  },
+  {
+    "id": "M-961",
+    "topic": "canonico-frontend-owner",
+    "value": "Emanuele \"Ema\" Beffa si occupa del frontend web e del video",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Emanuele \"Ema\" Beffa si occupa del frontend web e del video.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "la ripartizione dei ruoli nel diario",
+      "short": "Emanuele \"Ema\" Beffa (frontend web e video)",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "la ripartizione dei ruoli nel diario",
+        "short": "Emanuele \"Ema\" Beffa (frontend web e video)",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      }
+    }
+  },
+  {
+    "id": "M-962",
+    "topic": "canonico-backend-owner",
+    "value": "Gabriele Partiti si occupa del backend, del deploy, del benchmark e delle app iOS e Android",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Gabriele Partiti si occupa del backend, del deploy, del benchmark e delle app iOS e Android.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "la ripartizione dei ruoli nel diario",
+      "short": "Gabriele Partiti (backend, deploy, benchmark, app iOS e Android)",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "la ripartizione dei ruoli nel diario",
+        "short": "Gabriele Partiti (backend, deploy, benchmark, app iOS e Android)",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      }
+    }
+  },
+  {
+    "id": "M-963",
+    "topic": "canonico-business-owner",
+    "value": "Davide Chiattelli si occupa del pitch, del deck, del business, del modello economico e dei documenti per Control8",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Davide Chiattelli si occupa del pitch, del deck, della parte business, del modello economico e dei documenti per la piattaforma Control8.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "la ripartizione dei ruoli nel diario",
+      "short": "Davide Chiattelli (pitch, deck, business, modello economico)",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "la ripartizione dei ruoli nel diario",
+        "short": "Davide Chiattelli (pitch, deck, business, modello economico)",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      }
+    }
+  },
+  {
+    "id": "M-964",
+    "topic": "canonico-deploy",
+    "value": "Il primo piano era il deploy su Vercel (issue #10)",
+    "type": "SUPERSEDED",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Piano iniziale (issue #10): deploy su Vercel.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": "M-965",
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "il piano iniziale di deploy",
+      "short": "Vercel",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "il piano iniziale di deploy",
+        "short": "Vercel",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      },
+      "base_type": "DECISION",
+      "superseded_reason": "Deploy moved to the team server through Portainer."
+    }
+  },
+  {
+    "id": "M-965",
+    "topic": "canonico-deploy",
+    "value": "L'app è deployata sul server del team tramite Portainer, al posto di Vercel; le immagini Docker sono costruite da GitHub Actions e il server fa solo pull",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "L'app è deployata sul server del team tramite Portainer, al posto di Vercel: le immagini Docker sono costruite da GitHub Actions e il server fa solo pull, mai build.",
+    "date": "2026-11-14",
+    "supersedes": "M-964",
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "il deploy deciso nel diario",
+      "short": "sul server del team tramite Portainer, con immagini Docker da GitHub Actions, online su canonico.magikarp.uk",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "il deploy deciso nel diario",
+        "short": "sul server del team tramite Portainer, con immagini Docker da GitHub Actions, online su canonico.magikarp.uk",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      }
+    }
+  },
+  {
+    "id": "M-966",
+    "topic": "canonico-live-url",
+    "value": "L'app è raggiungibile tramite un tunnel Cloudflare su canonico.magikarp.uk",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "L'app è raggiungibile tramite un tunnel Cloudflare su canonico.magikarp.uk.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "l'indirizzo dell'app nel diario",
+      "short": "canonico.magikarp.uk (tunnel Cloudflare)",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "l'indirizzo dell'app nel diario",
+        "short": "canonico.magikarp.uk (tunnel Cloudflare)",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      }
+    }
+  },
+  {
+    "id": "M-967",
+    "topic": "canonico-models",
+    "value": "Claude Haiku 5.5 per estrazione dei fatti e routing delle domande; Claude Sonnet 5.5 per topic e link tra fatti; la risposta è composta dal codice",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Modelli usati: Claude Haiku 5.5 per l'estrazione dei fatti e per il routing delle domande; Claude Sonnet 5.5 per i topic e per i link tra fatti.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "la scelta dei modelli nel diario",
+      "short": "Claude Haiku 5.5 (estrazione e routing) e Claude Sonnet 5.5 (topic e link); la risposta la compone il codice, senza modello",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "la scelta dei modelli nel diario",
+        "short": "Claude Haiku 5.5 (estrazione e routing) e Claude Sonnet 5.5 (topic e link); la risposta la compone il codice, senza modello",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      }
+    }
+  },
+  {
+    "id": "M-968",
+    "topic": "canonico-mentor-feedback",
+    "value": "Il mentor Dario Martinelli ha detto: \"noi siamo per le cose semplici, forse sembra troppo, vedere cosa tagliare\"",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Feedback del mentor Dario Martinelli: \"noi siamo per le cose semplici, forse sembra troppo, vedere cosa tagliare\".",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "il feedback del mentor",
+      "short": "\"noi siamo per le cose semplici, forse sembra troppo, vedere cosa tagliare\"",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "il feedback del mentor",
+        "short": "\"noi siamo per le cose semplici, forse sembra troppo, vedere cosa tagliare\"",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      }
+    }
+  },
+  {
+    "id": "M-969",
+    "topic": "canonico-mentor-feedback",
+    "value": "Dopo il feedback del mentor il pitch è ridotto a un solo problema e un solo flusso",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Il pitch è ridotto a un solo problema e un solo flusso.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "la decisione dopo il feedback del mentor",
+      "short": "ridurre il pitch a un solo problema e un solo flusso",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "la decisione dopo il feedback del mentor",
+        "short": "ridurre il pitch a un solo problema e un solo flusso",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      }
+    }
+  },
+  {
+    "id": "M-970",
+    "topic": "canonico-pricing",
+    "value": "Prima stima: pilota a pagamento da 6.000 euro per 8 settimane, poi licenza annua da 15.000 euro per azienda",
+    "type": "SUPERSEDED",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Pilota a pagamento da 6.000 euro per 8 settimane, poi licenza annua da 15.000 euro per azienda; run-rate dell'anno 2 circa 192.000 euro; payback circa 11 mesi (stime dichiarate).",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": "M-971",
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "la prima stima di prezzo",
+      "short": "15.000 euro all'anno (pilota 6.000 euro)",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "la prima stima di prezzo",
+        "short": "15.000 euro all'anno (pilota 6.000 euro)",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      },
+      "base_type": "DECISION",
+      "superseded_reason": "Replaced by the Team and Business plans in the economic model on Control8."
+    }
+  },
+  {
+    "id": "M-971",
+    "topic": "canonico-pricing",
+    "value": "Prezzo per organizzazione su contratto annuale: piano Team 490 euro al mese, piano Business 990 euro al mese",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Il prezzo diventa per organisation su contratto annuale: piano Team a 490 euro al mese, piano Business a 990 euro al mese; sostituisce la licenza annua da 15.000 euro e il pilota da 6.000 euro.",
+    "date": "2026-11-14",
+    "supersedes": "M-970",
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "label": "il prezzo del modello economico",
+      "short": "490 euro al mese per il piano Team e 990 euro al mese per il piano Business, su contratto annuale",
+      "source_label": "the decision diary",
+      "source_short": "diario",
+      "it": {
+        "label": "il prezzo del modello economico",
+        "short": "490 euro al mese per il piano Team e 990 euro al mese per il piano Business, su contratto annuale",
+        "source_label": "il diario delle decisioni",
+        "source_in": "nel diario delle decisioni",
+        "source_short": "diario"
+      }
+    }
+  },
+  {
+    "id": "M-2026",
+    "topic": "hackathon-challenge",
+    "value": "The hackathon challenge is to build company brains, memory systems for AI agents that manage company knowledge.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-apertura-hackathon",
+    "quote": "sistemi di memoria per agenti AI che gestiscono la conoscenza aziendale tramite ingestion, ontologia, retrieval, manutenzione e distillazione della memoria",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "company brains memory systems",
+      "label": "the fact “company brains memory systems” from “Call: apertura dell'hackathon KVA”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2027",
+    "topic": "kva-ogr-partnership",
+    "value": "KVA was appointed technology and venture partner for OGR in Turin.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-apertura-hackathon",
+    "quote": "la nomina come partner tecnologico e venture per OGR a Torino",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "technology and venture partner for OGR",
+      "label": "the fact “technology and venture partner for OGR” from “Call: apertura dell'hackathon KVA”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2028",
+    "topic": "first-checkpoint-schedule",
+    "value": "The first checkpoint is planned around 12:30-13:00, where teams present videos and abstracts of their projects.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-apertura-hackathon",
+    "quote": "primo checkpoint intorno alle 12:30-13:00, con video e abstract dei progetti",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "12:30-13:00",
+      "label": "the fact “12:30-13:00” from “Call: apertura dell'hackathon KVA”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2029",
+    "topic": "kva-hackathon-count",
+    "value": "KVA plans about 10 hackathons next year.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/call-apertura-hackathon",
+    "quote": "circa 10 hackathon previsti il prossimo anno",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "about 10 next year",
+      "label": "the fact “about 10 next year” from “Call: apertura dell'hackathon KVA”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2030",
+    "topic": "final-project-idea",
+    "value": "The final idea is to fine-tune open models on the data collected by the company brains systems.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/call-apertura-hackathon",
+    "quote": "con l'idea finale di fare fine-tuning di modelli open sui dati raccolti",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.5,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "fine-tune open models",
+      "label": "the fact “fine-tune open models” from “Call: apertura dell'hackathon KVA”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2031",
+    "topic": "opening-call-formal-decisions",
+    "value": "No formal decisions were taken in the call.",
+    "type": "SUPERSEDED",
+    "status": "active",
+    "doc_id": "canonico/call-apertura-hackathon",
+    "quote": "Nessuna decisione formale.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": "M-2032",
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "no formal decisions",
+      "label": "the fact “no formal decisions” from “Call: apertura dell'hackathon KVA”",
+      "base_type": "EVIDENCE",
+      "superseded_reason": "F027 restates the same answer (no formal decisions) on the same date and adds that the group agrees the approach makes sense."
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2032",
+    "topic": "opening-call-formal-decisions",
+    "value": "No formal decision was taken in the call; the group agrees the approach makes sense.",
+    "type": "OPEN",
+    "status": "active",
+    "doc_id": "canonico/call-struttura-progetti",
+    "quote": "Nessuna decisione formale; il gruppo concorda che l'approccio ha senso.",
+    "date": "2026-11-14",
+    "supersedes": "M-2031",
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "no formal decision",
+      "label": "the fact “no formal decision” from “Call: struttura dei progetti e delle sorgenti”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2033",
+    "topic": "presentation-link-sharing",
+    "value": "Carlo shares the presentation link on the dashboard.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-apertura-hackathon",
+    "quote": "Carlo condivide il link della presentazione sulla dashboard.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "link shared on dashboard",
+      "label": "the fact “link shared on dashboard” from “Call: apertura dell'hackathon KVA”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2034",
+    "topic": "opening-call-duration",
+    "value": "The hackathon opening call started at 10:16 and lasted 22 minutes.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/call-apertura-hackathon",
+    "quote": "Data: 14 nov 2026, ore 10:16 (22 minuti)",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "22 minutes",
+      "label": "the fact “22 minutes” from “Call: apertura dell'hackathon KVA”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2035",
+    "topic": "mcp-server-scope",
+    "value": "The MCP server is excluded from the current development scope.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-perimetro-mcp",
+    "quote": "non ha senso includere l'MCP server, che resta fuori da questo sviluppo",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "excluded from scope",
+      "label": "the fact “excluded from scope” from “Call: perimetro dello sviluppo, MCP server”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2036",
+    "topic": "mcp-server-scope",
+    "value": "Leaving the MCP server out of this development was agreed as the decision.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-perimetro-mcp",
+    "quote": "Lasciare fuori l'MCP server da questo sviluppo.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "leave out of development",
+      "label": "the fact “leave out of development” from “Call: perimetro dello sviluppo, MCP server”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2037",
+    "topic": "mcp-server-scope",
+    "value": "The exclusion of the MCP server applies at this moment, as it does not make sense to include it now.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-perimetro-mcp",
+    "quote": "in questo momento non ha senso includere l'MCP server",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "valid for now only",
+      "label": "the fact “valid for now only” from “Call: perimetro dello sviluppo, MCP server”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2038",
+    "topic": "mcp-server-scope",
+    "value": "An alternative solution for the MCP server will be built separately from this development.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-perimetro-mcp",
+    "quote": "un'altra soluzione andrà fatta separatamente",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "separate alternative solution",
+      "label": "the fact “separate alternative solution” from “Call: perimetro dello sviluppo, MCP server”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2039",
+    "topic": "call-summary-source",
+    "value": "The call summary was produced by Kaiku on 14 Nov 2026 at 15:14.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/call-perimetro-mcp",
+    "quote": "Fonte: sintesi Kaiku della call.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.4,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Kaiku summary, 15:14",
+      "label": "the fact “Kaiku summary, 15:14” from “Call: perimetro dello sviluppo, MCP server”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2040",
+    "topic": "ui-style-direction",
+    "value": "The team wants to keep the UX of the first version but with a wider, airier style without serif fonts.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-prodotto-interfaccia",
+    "quote": "Rifinire la UI: mantenere la UX della prima versione, con uno stile più ampio, meno affollato e senza font serif.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "keep first-version UX, wider style",
+      "label": "the fact “keep first-version UX, wider style” from “Call: revisione del prodotto e dell'interfaccia”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2041",
+    "topic": "ui-style-direction",
+    "value": "The current UI is disliked for its serif font and overcrowded layout.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/call-prodotto-interfaccia",
+    "quote": "Si preferisce la UX della prima versione, ma non piace la UI attuale (font serif, layout troppo affollato): si vuole uno stile più ampio e arioso.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.5,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "serif font, crowded layout",
+      "label": "the fact “serif font, crowded layout” from “Call: revisione del prodotto e dell'interfaccia”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2042",
+    "topic": "app-architecture-decision",
+    "value": "No formal decision was taken in the call on the app architecture.",
+    "type": "OPEN",
+    "status": "active",
+    "doc_id": "canonico/call-prodotto-interfaccia",
+    "quote": "Nessuna decisione formale.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "no formal decision",
+      "label": "the fact “no formal decision” from “Call: revisione del prodotto e dell'interfaccia”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2043",
+    "topic": "app-architecture-decision",
+    "value": "A fully local recording setup connected to an MCP server was mentioned as an option, not decided.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/call-prodotto-interfaccia",
+    "quote": "a una registrazione tutta in locale collegata a un server MCP",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.4,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "fully local recording with MCP server",
+      "label": "the fact “fully local recording with MCP server” from “Call: revisione del prodotto e dell'interfaccia”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2044",
+    "topic": "hosting-location",
+    "value": "It is still open whether the app runs locally or on a server, given maintenance and GDPR privacy concerns.",
+    "type": "OPEN",
+    "status": "active",
+    "doc_id": "canonico/call-prodotto-interfaccia",
+    "quote": "e se farla girare in locale o su un server, con i problemi di manutenzione e di privacy (GDPR).",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "local or server, undecided",
+      "label": "the fact “local or server, undecided” from “Call: revisione del prodotto e dell'interfaccia”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2045",
+    "topic": "main-screen-design",
+    "value": "A main screen with a timeline and a memory panel was mentioned, not finalized.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/call-prodotto-interfaccia",
+    "quote": "Si accenna a una schermata principale con timeline e pannello della memoria",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.4,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "timeline and memory panel",
+      "label": "the fact “timeline and memory panel” from “Call: revisione del prodotto e dell'interfaccia”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2047",
+    "topic": "chatbot-interaction",
+    "value": "Users are expected to ask a chatbot which decisions were taken and how.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/call-prodotto-interfaccia",
+    "quote": "l'utente fa domande a un chatbot, che spiega quali decisioni sono state prese e come.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.3,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "chatbot explains decisions",
+      "label": "the fact “chatbot explains decisions” from “Call: revisione del prodotto e dell'interfaccia”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2048",
+    "topic": "cross-project-access",
+    "value": "A single project cannot access another project.",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/call-struttura-progetti",
+    "quote": "ma un singolo progetto non può accedere a un altro progetto.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "no cross-project access",
+      "label": "the fact “no cross-project access” from “Call: struttura dei progetti e delle sorgenti”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2050",
+    "topic": "smtp-configuration-level",
+    "value": "SMTP is set at organization level or per project, and a project inherits the organization setting unless it overrides it.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-struttura-progetti",
+    "quote": "L'SMTP si imposta a livello di organizzazione o di singolo progetto: il progetto eredita dall'organizzazione, a meno che non lo sovrascriva.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "org-level with project override",
+      "label": "the fact “org-level with project override” from “Call: struttura dei progetti e delle sorgenti”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2052",
+    "topic": "github-connection",
+    "value": "GitHub can be connected to each project; the action is to connect GitHub to the project.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-struttura-progetti",
+    "quote": "A ogni progetto si può collegare GitHub.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "connect GitHub per project",
+      "label": "the fact “connect GitHub per project” from “Call: struttura dei progetti e delle sorgenti”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2053",
+    "topic": "demo-smtp-setup",
+    "value": "A demo SMTP with a test mail service will be configured to show live email reception on a project.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-struttura-progetti",
+    "quote": "Configurare un SMTP demo, con un servizio di mail di test, per mostrare dal vivo la ricezione delle email sul progetto.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "demo SMTP with test mail service",
+      "label": "the fact “demo SMTP with test mail service” from “Call: struttura dei progetti e delle sorgenti”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2055",
+    "topic": "domain-email-association",
+    "value": "Emails from a given domain can be associated with a project so that conversations stay together there.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-struttura-progetti",
+    "quote": "Le email di un dato dominio si possono associare a un progetto, così le conversazioni restano tutte lì.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.5,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "domain emails linked to project",
+      "label": "the fact “domain emails linked to project” from “Call: struttura dei progetti e delle sorgenti”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2057",
+    "topic": "project-global-brain-link",
+    "value": "Projects are connected to the organization's global brain.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/call-struttura-progetti",
+    "quote": "I progetti sono collegati al \"cervello globale\" dell'organizzazione",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "projects linked to global brain",
+      "label": "the fact “projects linked to global brain” from “Call: struttura dei progetti e delle sorgenti”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2058",
+    "topic": "autopitch-feature-status",
+    "value": "The autopitch feature was removed because the future is connectors.",
+    "type": "SUPERSEDED",
+    "status": "active",
+    "doc_id": "canonico/call-test-autopitch",
+    "quote": "Il parlante racconta di aver rimosso l'autopitch, perché il futuro sono i connettori",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": "M-2059",
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "removed",
+      "label": "the fact “removed” from “Call: test end-to-end e autopitch”",
+      "base_type": "DECISION",
+      "superseded_reason": "Both facts come from the same call on the same date and give the same answer (autopitch removed because the future is connectors). F029 restates it as the team's direction, so it replaces F028."
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2059",
+    "topic": "autopitch-feature-status",
+    "value": "The team's direction is connectors, which is why autopitch was removed.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-test-autopitch",
+    "quote": "Rimuovere l'autopitch: il futuro sono i connettori.",
+    "date": "2026-11-14",
+    "supersedes": "M-2058",
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "connectors are the future",
+      "label": "the fact “connectors are the future” from “Call: test end-to-end e autopitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2060",
+    "topic": "end-to-end-test-execution",
+    "value": "Claude in Chrome is assigned to run all of the app's tests.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/call-test-autopitch",
+    "quote": "Claude in Chrome esegue tutti i test dell'app.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.75,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Claude in Chrome runs all tests",
+      "label": "the fact “Claude in Chrome runs all tests” from “Call: test end-to-end e autopitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2066",
+    "topic": "router-binding-version-accuracy",
+    "value": "On the five-question ClearPath test, the router with a model found the binding version in 3 of 5 questions.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/control8-8hack-start",
+    "quote": "versione vincolante trovata 3 su 5 (router con modello), retrieval semplice 0 su 5.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "3 of 5 with router",
+      "label": "the fact “3 of 5 with router” from “Control8: pagina 8hack-start”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2067",
+    "topic": "router-binding-version-accuracy",
+    "value": "Canonico found the binding version for 3 of 5 questions about decisions that change over time.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "Versione vincolante trovata da Canonico: 3 su 5 domande su decisioni che cambiano nel tempo.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "3 of 5 correct",
+      "label": "the fact “3 of 5 correct” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2068",
+    "topic": "router-binding-version-accuracy",
+    "value": "The benchmark result is presented with caution as \"3 su 5\", an initial signal.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Il numero del benchmark si presenta con cautela: \"3 su 5\", un segnale iniziale.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "3 out of 5",
+      "label": "the fact “3 out of 5” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2070",
+    "topic": "simple-retrieval-accuracy",
+    "value": "On the same five-question test, simple retrieval found the binding version in 0 of 5 questions.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/control8-8hack-start",
+    "quote": "retrieval semplice 0 su 5",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "0 of 5",
+      "label": "the fact “0 of 5” from “Control8: pagina 8hack-start”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2072",
+    "topic": "evaluation-sample-validity",
+    "value": "The five-question evaluation is too small, and there is no separate validation set.",
+    "type": "OPEN",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "Cinque domande sono un campione piccolo: una domanda sposta il numero di 20 punti, e non c'è un set di validazione separato.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "no validation set",
+      "label": "the fact “no validation set” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2073",
+    "topic": "pilot-and-license-pricing",
+    "value": "The paid pilot costs 6,000 euro, then 15,000 euro per year, as declared by the team.",
+    "type": "SUPERSEDED",
+    "status": "active",
+    "doc_id": "canonico/control8-8hack-start",
+    "quote": "Pilota a pagamento 6.000 euro, poi 15.000 euro all'anno [dichiarato].",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": "M-2075",
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "6,000 euro pilot",
+      "label": "the fact “6,000 euro pilot” from “Control8: pagina 8hack-start”",
+      "base_type": "HYPOTHESIS",
+      "superseded_reason": "The per-organisation Team and Business plans explicitly replace the declared 6,000 euro pilot and 15,000 euro annual licence."
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2074",
+    "topic": "pilot-and-license-pricing",
+    "value": "The plans replace the earlier estimate of a 15,000 euro annual license per company.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "Questi piani sostituiscono la prima stima di licenza annua da 15.000 euro per azienda.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "replaces 15,000 euro annual license",
+      "label": "the fact “replaces 15,000 euro annual license” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2075",
+    "topic": "pilot-and-license-pricing",
+    "value": "Pricing is per organisation on annual contract: Team plan at 490 euro per month and Business plan at 990 euro per month, replacing the 15,000 euro annual licence and the 6,000 euro pilot.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Il prezzo diventa per organisation su contratto annuale: piano Team a 490 euro al mese, piano Business a 990 euro al mese; sostituisce la licenza annua da 15.000 euro e il pilota da 6.000 euro.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.85,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Team 490 / Business 990 euro per month",
+      "label": "the fact “Team 490 / Business 990 euro per month” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2076",
+    "topic": "pilot-and-license-pricing",
+    "value": "The first pricing estimate was a 6,000 euro paid pilot for 8 weeks, then a 15,000 euro annual licence per company, with stated estimates, now superseded.",
+    "type": "SUPERSEDED",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Pilota a pagamento da 6.000 euro per 8 settimane, poi licenza annua da 15.000 euro per azienda; run-rate dell'anno 2 circa 192.000 euro; payback circa 11 mesi (stime dichiarate).",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": "M-2075",
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "6,000 pilot then 15,000 license (superseded)",
+      "label": "the fact “6,000 pilot then 15,000 license (superseded)” from “Diario delle decisioni (14 nov 2026)”",
+      "base_type": "EVIDENCE",
+      "superseded_reason": "The first estimate of a 6,000 euro pilot and 15,000 euro licence is described as superseded by the decision on monthly plans."
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2079",
+    "topic": "team-business-plan-prices",
+    "value": "Piano Team costs 490 euro per month for consulting firms with 10 to 49 people.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "Piano Team: 490 euro al mese, per società di consulenza da 10 a 49 persone (hosting UE condiviso, 1.000 documenti al mese).",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "490 euro/month",
+      "label": "the fact “490 euro/month” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2080",
+    "topic": "team-business-plan-prices",
+    "value": "Piano Business costs 990 euro per month for companies with 50 or more people.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "Piano Business: 990 euro al mese, per aziende con 50 o più persone (istanza UE dedicata, 5.000 documenti al mese).",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "990 euro/month",
+      "label": "the fact “990 euro/month” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2081",
+    "topic": "team-business-plan-prices",
+    "value": "Team plan costs 490 euros per month and Business plan costs 990 euros per month, per organization on annual contract (self-reported).",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "Prezzo per organizzazione su contratto annuale [dichiarato]: Team a 490 euro al mese, Business a 990 euro al mese.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Team 490, Business 990 EUR/month",
+      "label": "the fact “Team 490, Business 990 EUR/month” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2082",
+    "topic": "compliance-plan-price",
+    "value": "Piano Compliance costs 2.500 euro per month, with audit trail, from month 18.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "Piano Compliance: 2.500 euro al mese, con audit trail, dal mese 18.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "2.500 euro/month from month 18",
+      "label": "the fact “2.500 euro/month from month 18” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2083",
+    "topic": "riskiest-assumption",
+    "value": "The riskiest assumption is that an AI program head at a company introducing an internal assistant will pay for a separate layer that decides which fact is binding.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-8hack-start",
+    "quote": "Ipotesi più rischiosa [dichiarata]: il responsabile del programma AI di un'azienda che introduce un assistente interno pagherà per uno strato separato",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "program head pays for separate layer",
+      "label": "the fact “program head pays for separate layer” from “Control8: pagina 8hack-start”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2084",
+    "topic": "stop-criterion",
+    "value": "If three of the first five AI program heads say their vendor memory already lets a process owner withdraw a superseded fact, the team stops selling the layer and looks at the compliance customer.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/control8-8hack-start",
+    "quote": "se tre dei primi cinque responsabili di programma AI con cui parliamo dicono che la memoria del loro fornitore permette già a un process owner di ritirare un fatto superato, smettiamo di vendere lo strato",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "3 of first 5 program heads",
+      "label": "the fact “3 of first 5 program heads” from “Control8: pagina 8hack-start”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2085",
+    "topic": "month-12-customer-count",
+    "value": "Projected at month 12: 10 consulting firms, 8 on the Team plan and 2 on the Business plan.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "Al mese 12: 10 società di consulenza, 8 sul piano Team e 2 sul piano Business.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.6,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "10 firms (8 Team, 2 Business)",
+      "label": "the fact “10 firms (8 Team, 2 Business)” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2086",
+    "topic": "month-12-run-rate",
+    "value": "Projected annual run-rate at month 12 is 70,800 euros with 10 companies (8 Team, 2 Business).",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "Run-rate annuo al mese 12: 70.800 euro (10 aziende: 8 Team, 2 Business).",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.5,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "70,800 EUR/year",
+      "label": "the fact “70,800 EUR/year” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2089",
+    "topic": "first-year-revenue",
+    "value": "Projected first-year invoiced revenue is about 32,000 euro, not verified.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "ricavi fatturati nel primo anno circa 32.000 euro [non verificato].",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.4,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "about 32,000 euro",
+      "label": "the fact “about 32,000 euro” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2090",
+    "topic": "month-36-target",
+    "value": "Projected at month 36: about 50 consulting and law firms plus 6 bank, SIM and insurance complaint offices on the Compliance plan, for 540,000 euro per year.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "al mese 36 circa 50 società di consulenza e studi legali più 6 uffici reclami di banche, SIM e assicurazioni sul piano Compliance (540.000 euro all'anno)",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.5,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "about 56 customers, 540,000 euro/year",
+      "label": "the fact “about 56 customers, 540,000 euro/year” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2091",
+    "topic": "annual-churn",
+    "value": "Annual churn is assumed at 10% from the second year, not verified.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "churn annuo del 10% dal secondo anno [non verificato].",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.4,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "10% from year 2",
+      "label": "the fact “10% from year 2” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2092",
+    "topic": "italian-consulting-market-size",
+    "value": "About 470 consulting firms have 10 to 49 people and 35 have 50 or more, per the Osservatorio Assoconsult 2024-2025.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "circa 470 hanno da 10 a 49 persone e 35 ne hanno 50 o più",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "470 mid-size, 35 large",
+      "label": "the fact “470 mid-size, 35 large” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2093",
+    "topic": "average-cac",
+    "value": "Average customer acquisition cost is 4,800 euro, including founder cost.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "CAC medio: 4.800 euro, costo del fondatore incluso.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.5,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "4,800 euro",
+      "label": "the fact “4,800 euro” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2095",
+    "topic": "cac-payback-period",
+    "value": "CAC payback is 10.6 months, about 11 months on gross margin, 14 with hired sellers, and 22 if conversion halves.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "Payback del CAC: 10,6 mesi; circa 11 mesi sul margine lordo, 14 con venditori assunti, 22 se la conversione si dimezza.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.5,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "10.6 months",
+      "label": "the fact “10.6 months” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2097",
+    "topic": "model-cost-per-document",
+    "value": "Measured on 14 Nov 2026, the model call cost is 0.0087 dollars per document.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "Chiamate al modello tramite il Vercel AI Gateway, misurate il 14 nov 2026: 0,0087 dollari per documento (46 documenti per 0,40 dollari)",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "0.0087 dollars per document",
+      "label": "the fact “0.0087 dollars per document” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2098",
+    "topic": "gross-margin-by-plan",
+    "value": "Estimated gross margin is 81% for Team, 74% for Business and 84% for Compliance, not verified.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "Costo mensile: Team 95 euro, Business 260 euro, Compliance 400 euro; margine lordo 81%, 74%, 84% [non verificato].",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.4,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "81%, 74%, 84%",
+      "label": "the fact “81%, 74%, 84%” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2099",
+    "topic": "break-even-and-funding",
+    "value": "Break-even is around month 32, with peak cash need about 375,000 euro and a round of about 400,000 euro, not verified.",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-modello-economico",
+    "quote": "Tre fondatori a 4.500 euro al mese, venditori aggiunti ai mesi 13 e 25, costi fissi 1.500 euro al mese: break-even intorno al mese 32, fabbisogno di cassa massimo circa 375.000 euro, quindi un round di circa 400.000 euro [non verificato].",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.4,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "break-even month 32, round 400,000 euro",
+      "label": "the fact “break-even month 32, round 400,000 euro” from “Control8: modello economico”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2100",
+    "topic": "binding-fact-selection-rule",
+    "value": "Only one fact is binding per topic: the pinned one, otherwise the most recent active one.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "Un solo fatto è vincolante per topic: quello pinnato, altrimenti il più recente attivo.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "pinned, else most recent active",
+      "label": "the fact “pinned, else most recent active” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2105",
+    "topic": "extraction-model",
+    "value": "Claude Haiku 5.5 extracts each fact as a sentence with source and date.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "Claude Haiku 5.5 estrae ogni fatto come frase con fonte e data",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Claude Haiku 5.5",
+      "label": "the fact “Claude Haiku 5.5” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2108",
+    "topic": "model-free-answer-composition",
+    "value": "Answers are composed by code without any model call.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "Le risposte sono composte dal codice, senza modello.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "code only, no model",
+      "label": "the fact “code only, no model” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2109",
+    "topic": "model-free-answer-composition",
+    "value": "The demo path makes no model calls and works offline.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "Il percorso della demo non fa chiamate al modello e funziona anche offline.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "no model calls, offline",
+      "label": "the fact “no model calls, offline” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2113",
+    "topic": "next-test-go-criteria",
+    "value": "The project continues only if 4 of 5 operations leads find and retract the planted error alone in under 5 minutes and at least 2 accept a paid pilot at 490 euros per month.",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "Si continua se 4 su 5 lo trovano e lo ritirano da soli in meno di 5 minuti e almeno 2 accettano un pilota a pagamento a 490 euro al mese.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "4 of 5 find it, 2 accept pilot",
+      "label": "the fact “4 of 5 find it, 2 accept pilot” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2114",
+    "topic": "early-customer-interest",
+    "value": "Two CEOs said they want to adopt Canonico, but nothing is signed yet (self-reported).",
+    "type": "HYPOTHESIS",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "due CEO, uno di uno studio legale, hanno detto oggi di voler adottare Canonico [dichiarato]",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.5,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "2 CEOs interested, none signed",
+      "label": "the fact “2 CEOs interested, none signed” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2115",
+    "topic": "demo-data-origin",
+    "value": "The data in the product are synthetic, drawn from the ClearPath corpus of the OIDA Benchmark Corpora.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/control8-pitch",
+    "quote": "I dati sono sintetici: corpus ClearPath degli OIDA Benchmark Corpora (CC BY 4.0).",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.7,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "synthetic data",
+      "label": "the fact “synthetic data” from “Control8: testo del pitch”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2118",
+    "topic": "team-track",
+    "value": "The team's track is \"Making memory visible to people\" (track 3b).",
+    "type": "SUPERSEDED",
+    "status": "active",
+    "doc_id": "canonico/control8-track-regole",
+    "quote": "Track del team: \"Making memory visible to people\" (track 3b).",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": "M-2119",
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "track 3b, Making memory visible to people",
+      "label": "the fact “track 3b, Making memory visible to people” from “Control8: track e regole dell'hackathon”",
+      "base_type": "DECISION",
+      "superseded_reason": "Both give the track on the same date; the decision diary restates it and explicitly records that it replaces the first choice, so it is the more authoritative version."
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2119",
+    "topic": "team-track",
+    "value": "The team's track is \"Making memory visible to people\", replacing the first choice \"Decision models\".",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "La track scelta è \"Making memory visible to people\", che sostituisce la prima scelta \"Decision models\".",
+    "date": "2026-11-14",
+    "supersedes": "M-2118",
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Making memory visible to people",
+      "label": "the fact “Making memory visible to people” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2121",
+    "topic": "demo-memory-content-requirement",
+    "value": "A good answer must show a memory with real content, including at least one fact changed over time and two facts in contradiction.",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/control8-track-regole",
+    "quote": "una memoria con contenuto reale, con almeno un fatto cambiato nel tempo e due fatti in contraddizione;",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "at least one changed fact and two contradictions",
+      "label": "the fact “at least one changed fact and two contradictions” from “Control8: track e regole dell'hackathon”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2122",
+    "topic": "correction-effect-requirement",
+    "value": "A correction must change the agent's next answer, shown live in the demo.",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/control8-track-regole",
+    "quote": "la correzione cambia la risposta successiva dell'agente, mostrato dal vivo nella demo;",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "correction must change next agent answer",
+      "label": "the fact “correction must change next agent answer” from “Control8: track e regole dell'hackathon”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2124",
+    "topic": "external-user-test",
+    "value": "A short test with a person outside the team must check whether they can find and correct a wrong fact alone, and how long it takes.",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/control8-track-regole",
+    "quote": "un breve test con una persona esterna al team: riesce a trovare e correggere da sola un fatto sbagliato, e in quanto tempo?",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.85,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "external person finds and fixes a fact alone",
+      "label": "the fact “external person finds and fixes a fact alone” from “Control8: track e regole dell'hackathon”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2126",
+    "topic": "traps-to-avoid",
+    "value": "A graph view without a way to correct or retract a fact is a trap to avoid; so is showing embeddings or similarity scores instead of the fact as a sentence with its source.",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/control8-track-regole",
+    "quote": "Trappole da evitare: una vista a grafo senza modo di correggere o ritirare un fatto;",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "no graph view without correct/retract",
+      "label": "the fact “no graph view without correct/retract” from “Control8: track e regole dell'hackathon”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2127",
+    "topic": "jury-evaluation-criteria",
+    "value": "Jury scoring weights are Fit 25, technical quality 25, problem and impact 25, business case 20, and demo clarity 5.",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/control8-track-regole",
+    "quote": "Criteri di valutazione della giuria: Fit 25, Qualità tecnica 25, Problema e impatto 25, Business case 20, Chiarezza della demo 5.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Fit 25, Tech 25, Problem 25, Business 20, Demo 5",
+      "label": "the fact “Fit 25, Tech 25, Problem 25, Business 20, Demo 5” from “Control8: track e regole dell'hackathon”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2128",
+    "topic": "mentor-call-windows",
+    "value": "Mentor calls are open from 10:30 to 12:30 and from 14:00 to 16:30 (Rome time).",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/control8-track-regole",
+    "quote": "le call con i mentor sono aperte dalle 10:30 alle 12:30 e dalle 14:00 alle 16:30;",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "10:30-12:30 and 14:00-16:30",
+      "label": "the fact “10:30-12:30 and 14:00-16:30” from “Control8: track e regole dell'hackathon”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2132",
+    "topic": "track-change-deadline",
+    "value": "Teams must stop choosing or changing tracks at 12:15 (Rome time).",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/control8-track-regole",
+    "quote": "alle 12:15 i team smettono di scegliere o cambiare track;",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "12:15",
+      "label": "the fact “12:15” from “Control8: track e regole dell'hackathon”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2133",
+    "topic": "video-upload-deadline",
+    "value": "Video upload closes at 12:30 (Rome time).",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/control8-track-regole",
+    "quote": "alle 12:30 chiude il caricamento del video;",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "12:30",
+      "label": "the fact “12:30” from “Control8: track e regole dell'hackathon”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2136",
+    "topic": "pitch-submission-deadline",
+    "value": "Pitch submission deadline is 16:45 (Rome time).",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/control8-track-regole",
+    "quote": "alle 16:45 scade la consegna del pitch.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.95,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "16:45",
+      "label": "the fact “16:45” from “Control8: track e regole dell'hackathon”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2137",
+    "topic": "pitch-submission-deadline",
+    "value": "The pitch must be delivered on Control8 by 16:45 as a pitch-type artifact.",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Il pitch va consegnato su Control8 entro le 16:45, come artifact di genere pitch.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "16:45 on Control8",
+      "label": "the fact “16:45 on Control8” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2141",
+    "topic": "control8-publication-rule",
+    "value": "Nothing may be published on the Control8 platform without Gabriele's explicit approval of the text.",
+    "type": "CONSTRAINT",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Regola di team: niente pubblicazioni sulla piattaforma Control8 senza l'ok esplicito di Gabriele sul testo.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Gabriele must approve text",
+      "label": "the fact “Gabriele must approve text” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2142",
+    "topic": "deploy-platform",
+    "value": "The app is deployed on the team server via Portainer instead of Vercel, with Docker images built by GitHub Actions and the server only pulling.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "L'app è deployata sul server del team tramite Portainer, al posto di Vercel: le immagini Docker sono costruite da GitHub Actions e il server fa solo pull, mai build.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Portainer on team server",
+      "label": "the fact “Portainer on team server” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2149",
+    "topic": "document-storage-s3-backend",
+    "value": "The document library on S3 uses Garage, chosen instead of MinIO.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "La libreria documentale su S3 usa Garage, scelto al posto di MinIO.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Garage",
+      "label": "the fact “Garage” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2151",
+    "topic": "model-api-key",
+    "value": "Model calls go through the team's Vercel AI Gateway instead of Gabriele's personal Anthropic key; the team key stays server-side only.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Le chiamate al modello passano dal Vercel AI Gateway del team, al posto della chiave personale di Gabriele; la chiave del team resta solo lato server.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.9,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "Vercel AI Gateway, team key",
+      "label": "the fact “Vercel AI Gateway, team key” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2155",
+    "topic": "backend-test-coverage",
+    "value": "The backend has about 168 unit tests plus 40 live tests across 14 scenarios, and 14 bugs were found and fixed.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Backend: circa 168 test unitari più 40 test live su 14 scenari (locale, Docker, live); trovati e corretti 14 bug.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.85,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "168 unit + 40 live tests",
+      "label": "the fact “168 unit + 40 live tests” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2156",
+    "topic": "external-code-review-score",
+    "value": "The external code review rates the project about 7/10 as a hackathon project.",
+    "type": "EVIDENCE",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "La code review esterna dà circa 7/10 come progetto hackathon.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.8,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "about 7/10",
+      "label": "the fact “about 7/10” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "M-2157",
+    "topic": "session-persistence",
+    "value": "Sessions are now persistent and no longer lost at each deploy, and role checks were added to writes.",
+    "type": "DECISION",
+    "status": "active",
+    "doc_id": "canonico/diario-decisioni",
+    "quote": "Le sessioni sono rese persistenti e non si perdono più a ogni deploy; aggiunti i controlli di ruolo sulle scritture.",
+    "date": "2026-11-14",
+    "supersedes": null,
+    "superseded_by": null,
+    "confidence": 0.85,
+    "retired_reason": null,
+    "pinned": false,
+    "x": {
+      "short": "persistent, role checks on writes",
+      "label": "the fact “persistent, role checks on writes” from “Diario delle decisioni (14 nov 2026)”"
+    },
+    "project_id": "proj-canonico"
   }
 ]

@@ -1771,5 +1771,1614 @@
         "subject": "Lo standard di onboarding"
       }
     }
+  },
+  {
+    "id": "canonico-frontend-owner",
+    "label": "Responsabile del frontend",
+    "fact_ids": [
+      "M-961"
+    ],
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "subject": "Il responsabile del frontend",
+      "keywords": [
+        "frontend",
+        "front end",
+        "web",
+        "interfaccia",
+        "Ema",
+        "Emanuele",
+        "React",
+        "chi",
+        "video"
+      ],
+      "questions": [
+        "Chi si occupa del frontend?",
+        "Chi fa il frontend?",
+        "Chi segue il frontend?",
+        "Chi ha fatto il frontend?",
+        "Who does the frontend?",
+        "Who owns the frontend?"
+      ],
+      "it": {
+        "subject": "Il responsabile del frontend"
+      }
+    }
+  },
+  {
+    "id": "canonico-backend-owner",
+    "label": "Responsabile del backend",
+    "fact_ids": [
+      "M-962"
+    ],
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "subject": "Il responsabile del backend",
+      "keywords": [
+        "backend",
+        "back end",
+        "deploy",
+        "benchmark",
+        "iOS",
+        "Android",
+        "Gabriele",
+        "app native"
+      ],
+      "questions": [
+        "Chi si occupa del backend?",
+        "Chi fa il backend?",
+        "Chi si occupa del deploy?",
+        "Chi fa le app iOS e Android?",
+        "Who does the backend?"
+      ],
+      "it": {
+        "subject": "Il responsabile del backend"
+      }
+    }
+  },
+  {
+    "id": "canonico-business-owner",
+    "label": "Responsabile di pitch e business",
+    "fact_ids": [
+      "M-963"
+    ],
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "subject": "Il responsabile di pitch e business",
+      "keywords": [
+        "pitch",
+        "deck",
+        "business",
+        "modello economico",
+        "Davide",
+        "Control8",
+        "documenti"
+      ],
+      "questions": [
+        "Chi si occupa del pitch?",
+        "Chi fa il pitch?",
+        "Chi si occupa del business?",
+        "Chi si occupa del modello economico?",
+        "Who does the pitch?"
+      ],
+      "it": {
+        "subject": "Il responsabile di pitch e business"
+      }
+    }
+  },
+  {
+    "id": "canonico-deploy",
+    "label": "Dove è deployata l'app",
+    "fact_ids": [
+      "M-964",
+      "M-965"
+    ],
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "subject": "Il deploy dell'app",
+      "keywords": [
+        "deploy",
+        "deployata",
+        "server",
+        "Portainer",
+        "Vercel",
+        "Docker",
+        "hosting",
+        "dove",
+        "online",
+        "magikarp",
+        "GitHub Actions"
+      ],
+      "questions": [
+        "Dove è deployata l'app?",
+        "Dove è deployata Canonico?",
+        "Dove gira l'app?",
+        "Dove è online l'app?",
+        "Dove è ospitata l'app?",
+        "Where is the app deployed?"
+      ],
+      "it": {
+        "subject": "Il deploy dell'app"
+      }
+    }
+  },
+  {
+    "id": "canonico-live-url",
+    "label": "Indirizzo dell'app",
+    "fact_ids": [
+      "M-966"
+    ],
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "subject": "L'indirizzo dell'app",
+      "keywords": [
+        "indirizzo",
+        "URL",
+        "link",
+        "dominio",
+        "Cloudflare",
+        "tunnel",
+        "magikarp"
+      ],
+      "questions": [
+        "Qual è l'indirizzo dell'app?",
+        "Qual è il link dell'app?",
+        "Qual è l'URL della demo?",
+        "What is the app URL?"
+      ],
+      "it": {
+        "subject": "L'indirizzo dell'app"
+      }
+    }
+  },
+  {
+    "id": "canonico-models",
+    "label": "Modelli usati",
+    "fact_ids": [
+      "M-967"
+    ],
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "subject": "La scelta dei modelli",
+      "keywords": [
+        "modelli",
+        "modello",
+        "LLM",
+        "Claude",
+        "Haiku",
+        "Sonnet",
+        "estrazione",
+        "routing",
+        "AI"
+      ],
+      "questions": [
+        "Quali modelli usiamo?",
+        "Quali modelli usa Canonico?",
+        "Che modelli usiamo?",
+        "Quali LLM usiamo?",
+        "Which models do we use?"
+      ],
+      "it": {
+        "subject": "La scelta dei modelli"
+      }
+    }
+  },
+  {
+    "id": "canonico-mentor-feedback",
+    "label": "Feedback del mentor",
+    "fact_ids": [
+      "M-968",
+      "M-969"
+    ],
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "subject": "Il mentor Dario Martinelli ha detto \"noi siamo per le cose semplici, forse sembra troppo, vedere cosa tagliare\"; la decisione presa",
+      "keywords": [
+        "mentor",
+        "Dario",
+        "Martinelli",
+        "feedback",
+        "giurato",
+        "semplici",
+        "tagliare",
+        "pitch"
+      ],
+      "questions": [
+        "Cosa ha detto il mentor?",
+        "Che feedback ha dato il mentor?",
+        "Cosa ha detto Dario?",
+        "Cosa ha detto Dario Martinelli?",
+        "What did the mentor say?"
+      ],
+      "it": {
+        "subject": "Il mentor Dario Martinelli ha detto \"noi siamo per le cose semplici, forse sembra troppo, vedere cosa tagliare\"; la decisione presa"
+      }
+    }
+  },
+  {
+    "id": "canonico-pricing",
+    "label": "Prezzo della licenza",
+    "fact_ids": [
+      "M-970",
+      "M-971"
+    ],
+    "project_id": "proj-canonico",
+    "x": {
+      "curated": true,
+      "subject": "Il prezzo della licenza annuale",
+      "keywords": [
+        "prezzo",
+        "costo",
+        "costa",
+        "licenza",
+        "annuale",
+        "annua",
+        "pilota",
+        "abbonamento",
+        "piano",
+        "Team",
+        "Business",
+        "euro"
+      ],
+      "questions": [
+        "Quanto costa la licenza annuale?",
+        "Quanto costa la licenza?",
+        "Quanto costa Canonico?",
+        "Qual è il prezzo?",
+        "Qual è il prezzo della licenza?",
+        "How much is the annual licence?"
+      ],
+      "it": {
+        "subject": "Il prezzo della licenza annuale"
+      }
+    }
+  },
+  {
+    "id": "hackathon-challenge",
+    "label": "Hackathon challenge",
+    "fact_ids": [
+      "M-2026"
+    ],
+    "x": {
+      "keywords": [
+        "hackathon",
+        "challenge",
+        "company brains",
+        "memory systems",
+        "AI agents",
+        "company knowledge"
+      ],
+      "questions": [
+        "What is the hackathon challenge?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "kva-ogr-partnership",
+    "label": "KVA partner appointment",
+    "fact_ids": [
+      "M-2027"
+    ],
+    "x": {
+      "keywords": [
+        "KVA",
+        "OGR",
+        "Turin",
+        "technology partner",
+        "venture partner",
+        "appointment"
+      ],
+      "questions": [
+        "What role was KVA appointed to for OGR in Turin?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "first-checkpoint-schedule",
+    "label": "First checkpoint schedule",
+    "fact_ids": [
+      "M-2028"
+    ],
+    "x": {
+      "keywords": [
+        "first checkpoint",
+        "12:30",
+        "13:00",
+        "video",
+        "abstract",
+        "presentation"
+      ],
+      "questions": [
+        "When is the first checkpoint and what do teams present?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "kva-hackathon-count",
+    "label": "KVA hackathons next year",
+    "fact_ids": [
+      "M-2029"
+    ],
+    "x": {
+      "keywords": [
+        "KVA",
+        "hackathons",
+        "next year",
+        "plans",
+        "10 hackathons"
+      ],
+      "questions": [
+        "How many hackathons does KVA plan next year?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "final-project-idea",
+    "label": "Final project idea",
+    "fact_ids": [
+      "M-2030"
+    ],
+    "x": {
+      "keywords": [
+        "final idea",
+        "fine-tune",
+        "open models",
+        "collected data",
+        "company brains"
+      ],
+      "questions": [
+        "What is the final idea for the project built on the collected data?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "opening-call-formal-decisions",
+    "label": "Formal decisions in the call",
+    "fact_ids": [
+      "M-2031",
+      "M-2032"
+    ],
+    "x": {
+      "keywords": [
+        "formal decision",
+        "call",
+        "no decisions",
+        "approach",
+        "agreement"
+      ],
+      "questions": [
+        "Were any formal decisions taken in the opening call?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "presentation-link-sharing",
+    "label": "Presentation link sharing",
+    "fact_ids": [
+      "M-2033"
+    ],
+    "x": {
+      "keywords": [
+        "Carlo",
+        "presentation link",
+        "dashboard",
+        "share"
+      ],
+      "questions": [
+        "Who shares the presentation link and where?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "opening-call-duration",
+    "label": "Opening call duration",
+    "fact_ids": [
+      "M-2034"
+    ],
+    "x": {
+      "keywords": [
+        "call duration",
+        "10:16",
+        "22 minutes",
+        "opening call",
+        "hackathon"
+      ],
+      "questions": [
+        "When did the hackathon opening call start and how long did it last?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "mcp-server-scope",
+    "label": "MCP server scope",
+    "fact_ids": [
+      "M-2035",
+      "M-2036",
+      "M-2037",
+      "M-2038"
+    ],
+    "x": {
+      "keywords": [
+        "MCP server",
+        "scope",
+        "excluded",
+        "alternative solution",
+        "development",
+        "out of scope"
+      ],
+      "questions": [
+        "Is the MCP server included in the current development scope?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "call-summary-source",
+    "label": "Call summary source",
+    "fact_ids": [
+      "M-2039"
+    ],
+    "x": {
+      "keywords": [
+        "call summary",
+        "Kaiku",
+        "14 Nov 2026",
+        "15:14",
+        "source"
+      ],
+      "questions": [
+        "Who produced the call summary and when?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "ui-style-direction",
+    "label": "UI style direction",
+    "fact_ids": [
+      "M-2040",
+      "M-2041"
+    ],
+    "x": {
+      "keywords": [
+        "UI",
+        "UX",
+        "serif font",
+        "airier",
+        "wider",
+        "overcrowded",
+        "style"
+      ],
+      "questions": [
+        "What UI style and UX direction does the team want?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "app-architecture-decision",
+    "label": "App architecture",
+    "fact_ids": [
+      "M-2042",
+      "M-2043"
+    ],
+    "x": {
+      "keywords": [
+        "architecture",
+        "recording",
+        "local recording",
+        "MCP server",
+        "app design",
+        "decision"
+      ],
+      "questions": [
+        "What is the app architecture, including the recording setup?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "hosting-location",
+    "label": "Hosting location",
+    "fact_ids": [
+      "M-2044"
+    ],
+    "x": {
+      "keywords": [
+        "hosting",
+        "local",
+        "server",
+        "GDPR",
+        "privacy",
+        "maintenance"
+      ],
+      "questions": [
+        "Does the app run locally or on a server?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "main-screen-design",
+    "label": "Main screen design",
+    "fact_ids": [
+      "M-2045"
+    ],
+    "x": {
+      "keywords": [
+        "main screen",
+        "timeline",
+        "memory panel",
+        "design",
+        "layout"
+      ],
+      "questions": [
+        "What does the main screen look like?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "chatbot-interaction",
+    "label": "Chatbot interaction",
+    "fact_ids": [
+      "M-2047"
+    ],
+    "x": {
+      "keywords": [
+        "chatbot",
+        "ask",
+        "decisions taken",
+        "users",
+        "interaction"
+      ],
+      "questions": [
+        "How are users expected to query decisions through the chatbot?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "cross-project-access",
+    "label": "Cross-project access",
+    "fact_ids": [
+      "M-2048"
+    ],
+    "x": {
+      "keywords": [
+        "cross-project",
+        "access",
+        "isolation",
+        "project",
+        "permissions"
+      ],
+      "questions": [
+        "Can a project access another project?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "smtp-configuration-level",
+    "label": "SMTP configuration level",
+    "fact_ids": [
+      "M-2050"
+    ],
+    "x": {
+      "keywords": [
+        "SMTP",
+        "organization level",
+        "project",
+        "inherit",
+        "override",
+        "email settings"
+      ],
+      "questions": [
+        "At what level is SMTP configured and how is it inherited?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "github-connection",
+    "label": "GitHub connection",
+    "fact_ids": [
+      "M-2052"
+    ],
+    "x": {
+      "keywords": [
+        "GitHub",
+        "connect",
+        "project",
+        "integration",
+        "connector"
+      ],
+      "questions": [
+        "How is GitHub connected to projects?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "demo-smtp-setup",
+    "label": "Demo SMTP setup",
+    "fact_ids": [
+      "M-2053"
+    ],
+    "x": {
+      "keywords": [
+        "demo SMTP",
+        "test mail",
+        "live email",
+        "email reception",
+        "demo"
+      ],
+      "questions": [
+        "How will live email reception be shown in the demo?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "domain-email-association",
+    "label": "Domain email association",
+    "fact_ids": [
+      "M-2055"
+    ],
+    "x": {
+      "keywords": [
+        "domain",
+        "email",
+        "association",
+        "project",
+        "conversations"
+      ],
+      "questions": [
+        "Can emails from a domain be associated with a project?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "project-global-brain-link",
+    "label": "Project and global brain link",
+    "fact_ids": [
+      "M-2057"
+    ],
+    "x": {
+      "keywords": [
+        "global brain",
+        "organization",
+        "projects",
+        "connected",
+        "link"
+      ],
+      "questions": [
+        "How are projects connected to the organization's global brain?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "autopitch-feature-status",
+    "label": "Autopitch feature status",
+    "fact_ids": [
+      "M-2058",
+      "M-2059"
+    ],
+    "x": {
+      "keywords": [
+        "autopitch",
+        "removed",
+        "connectors",
+        "feature",
+        "direction"
+      ],
+      "questions": [
+        "Was the autopitch feature kept or removed, and why?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "end-to-end-test-execution",
+    "label": "End-to-end test execution",
+    "fact_ids": [
+      "M-2060"
+    ],
+    "x": {
+      "keywords": [
+        "tests",
+        "Claude in Chrome",
+        "end-to-end",
+        "test execution",
+        "QA"
+      ],
+      "questions": [
+        "Who or what runs the app's tests?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "router-binding-version-accuracy",
+    "label": "Router binding-version accuracy",
+    "fact_ids": [
+      "M-2066",
+      "M-2067",
+      "M-2068"
+    ],
+    "x": {
+      "keywords": [
+        "router",
+        "Canonico",
+        "binding version",
+        "3 of 5",
+        "ClearPath test",
+        "benchmark",
+        "3 su 5"
+      ],
+      "questions": [
+        "How many of the five test questions did the router/Canonico find the binding version for?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "simple-retrieval-accuracy",
+    "label": "Simple retrieval accuracy",
+    "fact_ids": [
+      "M-2070"
+    ],
+    "x": {
+      "keywords": [
+        "simple retrieval",
+        "0 of 5",
+        "baseline",
+        "binding version",
+        "ClearPath test"
+      ],
+      "questions": [
+        "How many of the five test questions did simple retrieval find the binding version for?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "evaluation-sample-validity",
+    "label": "Evaluation sample validity",
+    "fact_ids": [
+      "M-2072"
+    ],
+    "x": {
+      "keywords": [
+        "evaluation",
+        "sample size",
+        "validation set",
+        "five questions",
+        "validity"
+      ],
+      "questions": [
+        "Is the five-question evaluation large enough to be valid?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "pilot-and-license-pricing",
+    "label": "Pilot and annual licence pricing",
+    "fact_ids": [
+      "M-2073",
+      "M-2074",
+      "M-2075",
+      "M-2076"
+    ],
+    "x": {
+      "keywords": [
+        "paid pilot",
+        "6,000 euro",
+        "15,000 euro",
+        "annual licence",
+        "superseded",
+        "pricing model"
+      ],
+      "questions": [
+        "What was the pilot and annual licence pricing, and was it superseded?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "team-business-plan-prices",
+    "label": "Team and Business plan prices",
+    "fact_ids": [
+      "M-2079",
+      "M-2080",
+      "M-2081"
+    ],
+    "x": {
+      "keywords": [
+        "Piano Team",
+        "Piano Business",
+        "490 euro",
+        "990 euro",
+        "monthly price",
+        "annual contract"
+      ],
+      "questions": [
+        "What do the Team and Business plans cost?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "compliance-plan-price",
+    "label": "Compliance plan price",
+    "fact_ids": [
+      "M-2082"
+    ],
+    "x": {
+      "keywords": [
+        "Piano Compliance",
+        "2.500 euro",
+        "audit trail",
+        "month 18",
+        "price"
+      ],
+      "questions": [
+        "What does the Compliance plan cost and when does it start?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "riskiest-assumption",
+    "label": "Riskiest assumption",
+    "fact_ids": [
+      "M-2083"
+    ],
+    "x": {
+      "keywords": [
+        "riskiest assumption",
+        "AI program head",
+        "internal assistant",
+        "binding fact layer",
+        "pay"
+      ],
+      "questions": [
+        "What is the team's riskiest assumption?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "stop-criterion",
+    "label": "Stop criterion for selling the layer",
+    "fact_ids": [
+      "M-2084"
+    ],
+    "x": {
+      "keywords": [
+        "stop criterion",
+        "three of five",
+        "vendor memory",
+        "withdraw superseded fact",
+        "compliance customer"
+      ],
+      "questions": [
+        "When does the team stop selling the layer and look at the compliance customer?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "month-12-customer-count",
+    "label": "Month 12 customer count",
+    "fact_ids": [
+      "M-2085"
+    ],
+    "x": {
+      "keywords": [
+        "month 12",
+        "10 consulting firms",
+        "8 Team",
+        "2 Business",
+        "customer projection"
+      ],
+      "questions": [
+        "How many customers are projected at month 12?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "month-12-run-rate",
+    "label": "Month 12 run-rate",
+    "fact_ids": [
+      "M-2086"
+    ],
+    "x": {
+      "keywords": [
+        "run-rate",
+        "70,800",
+        "month 12",
+        "annual",
+        "ARR"
+      ],
+      "questions": [
+        "What is the projected annual run-rate at month 12?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "first-year-revenue",
+    "label": "First-year revenue",
+    "fact_ids": [
+      "M-2089"
+    ],
+    "x": {
+      "keywords": [
+        "first year",
+        "revenue",
+        "32,000 euro",
+        "invoiced",
+        "projection"
+      ],
+      "questions": [
+        "What is the projected first-year invoiced revenue?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "month-36-target",
+    "label": "Month 36 customer target",
+    "fact_ids": [
+      "M-2090"
+    ],
+    "x": {
+      "keywords": [
+        "month 36",
+        "50 firms",
+        "complaint offices",
+        "540,000 euro",
+        "Compliance plan",
+        "target"
+      ],
+      "questions": [
+        "What is projected at month 36?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "annual-churn",
+    "label": "Annual churn",
+    "fact_ids": [
+      "M-2091"
+    ],
+    "x": {
+      "keywords": [
+        "churn",
+        "10%",
+        "second year",
+        "annual churn",
+        "assumption"
+      ],
+      "questions": [
+        "What annual churn is assumed?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "italian-consulting-market-size",
+    "label": "Italian consulting market size",
+    "fact_ids": [
+      "M-2092"
+    ],
+    "x": {
+      "keywords": [
+        "market size",
+        "Assoconsult",
+        "470 firms",
+        "35 firms",
+        "Osservatorio",
+        "consulting firms"
+      ],
+      "questions": [
+        "How many Italian consulting firms are in the target market?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "average-cac",
+    "label": "Average CAC",
+    "fact_ids": [
+      "M-2093"
+    ],
+    "x": {
+      "keywords": [
+        "CAC",
+        "customer acquisition cost",
+        "4,800 euro",
+        "founder cost"
+      ],
+      "questions": [
+        "What is the average customer acquisition cost?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "cac-payback-period",
+    "label": "CAC payback period",
+    "fact_ids": [
+      "M-2095"
+    ],
+    "x": {
+      "keywords": [
+        "CAC payback",
+        "10.6 months",
+        "gross margin",
+        "hired sellers",
+        "conversion"
+      ],
+      "questions": [
+        "What is the CAC payback period?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "model-cost-per-document",
+    "label": "Model cost per document",
+    "fact_ids": [
+      "M-2097"
+    ],
+    "x": {
+      "keywords": [
+        "model cost",
+        "0.0087 dollars",
+        "per document",
+        "measured",
+        "cost"
+      ],
+      "questions": [
+        "What is the measured model cost per document?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "gross-margin-by-plan",
+    "label": "Gross margin by plan",
+    "fact_ids": [
+      "M-2098"
+    ],
+    "x": {
+      "keywords": [
+        "gross margin",
+        "81%",
+        "74%",
+        "84%",
+        "Team",
+        "Business",
+        "Compliance"
+      ],
+      "questions": [
+        "What is the estimated gross margin per plan?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "break-even-and-funding",
+    "label": "Break-even and funding need",
+    "fact_ids": [
+      "M-2099"
+    ],
+    "x": {
+      "keywords": [
+        "break-even",
+        "month 32",
+        "peak cash",
+        "375,000 euro",
+        "400,000 euro",
+        "round",
+        "funding"
+      ],
+      "questions": [
+        "When is break-even and how much funding is needed?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "binding-fact-selection-rule",
+    "label": "Binding fact selection rule",
+    "fact_ids": [
+      "M-2100"
+    ],
+    "x": {
+      "keywords": [
+        "binding fact",
+        "pinned",
+        "most recent active",
+        "one per topic",
+        "selection rule"
+      ],
+      "questions": [
+        "Which fact is binding for a topic?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "extraction-model",
+    "label": "Extraction model",
+    "fact_ids": [
+      "M-2105"
+    ],
+    "x": {
+      "keywords": [
+        "extraction",
+        "Claude Haiku 5.5",
+        "fact sentence",
+        "source",
+        "date"
+      ],
+      "questions": [
+        "Which model extracts facts and in what form?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "model-free-answer-composition",
+    "label": "Model-free answer composition",
+    "fact_ids": [
+      "M-2108",
+      "M-2109"
+    ],
+    "x": {
+      "keywords": [
+        "answer composition",
+        "code",
+        "no model call",
+        "offline",
+        "demo path"
+      ],
+      "questions": [
+        "Are answers and the demo path generated with model calls?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "next-test-go-criteria",
+    "label": "Next test go criteria",
+    "fact_ids": [
+      "M-2113"
+    ],
+    "x": {
+      "keywords": [
+        "go criteria",
+        "operations leads",
+        "4 of 5",
+        "5 minutes",
+        "paid pilot",
+        "490 euros",
+        "retract planted error"
+      ],
+      "questions": [
+        "What must the next test show for the project to continue?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "early-customer-interest",
+    "label": "Early customer interest",
+    "fact_ids": [
+      "M-2114"
+    ],
+    "x": {
+      "keywords": [
+        "CEOs",
+        "adopt Canonico",
+        "interest",
+        "not signed",
+        "customers"
+      ],
+      "questions": [
+        "Is there early customer interest in Canonico?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "demo-data-origin",
+    "label": "Demo data origin",
+    "fact_ids": [
+      "M-2115"
+    ],
+    "x": {
+      "keywords": [
+        "synthetic data",
+        "ClearPath",
+        "OIDA Benchmark Corpora",
+        "demo data",
+        "corpus"
+      ],
+      "questions": [
+        "Where does the product's demo data come from?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "team-track",
+    "label": "Team track",
+    "fact_ids": [
+      "M-2118",
+      "M-2119"
+    ],
+    "x": {
+      "keywords": [
+        "track",
+        "Making memory visible to people",
+        "track 3b",
+        "Decision models",
+        "team track"
+      ],
+      "questions": [
+        "Which track did the team choose?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "demo-memory-content-requirement",
+    "label": "Demo memory content requirement",
+    "fact_ids": [
+      "M-2121"
+    ],
+    "x": {
+      "keywords": [
+        "memory content",
+        "fact changed over time",
+        "contradiction",
+        "demo requirement",
+        "good answer"
+      ],
+      "questions": [
+        "What must the demo memory contain?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "correction-effect-requirement",
+    "label": "Correction effect requirement",
+    "fact_ids": [
+      "M-2122"
+    ],
+    "x": {
+      "keywords": [
+        "correction",
+        "next answer",
+        "live demo",
+        "agent",
+        "retract"
+      ],
+      "questions": [
+        "Must a correction change the agent's next answer in the demo?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "external-user-test",
+    "label": "External user test",
+    "fact_ids": [
+      "M-2124"
+    ],
+    "x": {
+      "keywords": [
+        "external test",
+        "outside the team",
+        "find wrong fact",
+        "correct alone",
+        "timing"
+      ],
+      "questions": [
+        "What external user test is required?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "traps-to-avoid",
+    "label": "Traps to avoid",
+    "fact_ids": [
+      "M-2126"
+    ],
+    "x": {
+      "keywords": [
+        "traps",
+        "graph view",
+        "embeddings",
+        "similarity scores",
+        "retract fact"
+      ],
+      "questions": [
+        "Which design traps must be avoided?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "jury-evaluation-criteria",
+    "label": "Jury evaluation criteria",
+    "fact_ids": [
+      "M-2127"
+    ],
+    "x": {
+      "keywords": [
+        "jury",
+        "scoring",
+        "weights",
+        "fit",
+        "technical quality",
+        "business case",
+        "demo clarity"
+      ],
+      "questions": [
+        "How does the jury weight its scoring criteria?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "mentor-call-windows",
+    "label": "Mentor call windows",
+    "fact_ids": [
+      "M-2128"
+    ],
+    "x": {
+      "keywords": [
+        "mentor calls",
+        "10:30",
+        "12:30",
+        "14:00",
+        "16:30",
+        "Rome time"
+      ],
+      "questions": [
+        "When are mentor calls open?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "track-change-deadline",
+    "label": "Track change deadline",
+    "fact_ids": [
+      "M-2132"
+    ],
+    "x": {
+      "keywords": [
+        "track change",
+        "deadline",
+        "12:15",
+        "Rome time"
+      ],
+      "questions": [
+        "When must teams stop choosing or changing tracks?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "video-upload-deadline",
+    "label": "Video upload deadline",
+    "fact_ids": [
+      "M-2133"
+    ],
+    "x": {
+      "keywords": [
+        "video upload",
+        "deadline",
+        "12:30",
+        "Rome time"
+      ],
+      "questions": [
+        "When does video upload close?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "pitch-submission-deadline",
+    "label": "Pitch submission deadline",
+    "fact_ids": [
+      "M-2136",
+      "M-2137"
+    ],
+    "x": {
+      "keywords": [
+        "pitch",
+        "deadline",
+        "16:45",
+        "Control8",
+        "pitch artifact",
+        "submission"
+      ],
+      "questions": [
+        "When and where must the pitch be submitted?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "control8-publication-rule",
+    "label": "Control8 publication rule",
+    "fact_ids": [
+      "M-2141"
+    ],
+    "x": {
+      "keywords": [
+        "Control8",
+        "publish",
+        "Gabriele",
+        "approval",
+        "text"
+      ],
+      "questions": [
+        "What approval is needed before publishing on Control8?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "deploy-platform",
+    "label": "Deploy platform",
+    "fact_ids": [
+      "M-2142"
+    ],
+    "x": {
+      "keywords": [
+        "deploy",
+        "Portainer",
+        "Vercel",
+        "Docker",
+        "GitHub Actions",
+        "team server"
+      ],
+      "questions": [
+        "Where and how is the app deployed?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "document-storage-s3-backend",
+    "label": "Document storage S3 backend",
+    "fact_ids": [
+      "M-2149"
+    ],
+    "x": {
+      "keywords": [
+        "S3",
+        "Garage",
+        "MinIO",
+        "document library",
+        "storage"
+      ],
+      "questions": [
+        "Which S3 backend is used for the document library?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "model-api-key",
+    "label": "Model API key",
+    "fact_ids": [
+      "M-2151"
+    ],
+    "x": {
+      "keywords": [
+        "API key",
+        "Vercel AI Gateway",
+        "Anthropic key",
+        "Gabriele",
+        "server-side",
+        "model calls"
+      ],
+      "questions": [
+        "Which API key or gateway do model calls use?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "backend-test-coverage",
+    "label": "Backend test coverage",
+    "fact_ids": [
+      "M-2155"
+    ],
+    "x": {
+      "keywords": [
+        "unit tests",
+        "live tests",
+        "168",
+        "40",
+        "14 scenarios",
+        "14 bugs"
+      ],
+      "questions": [
+        "What is the backend test coverage and bug count?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "external-code-review-score",
+    "label": "External code review score",
+    "fact_ids": [
+      "M-2156"
+    ],
+    "x": {
+      "keywords": [
+        "code review",
+        "7/10",
+        "external review",
+        "hackathon project",
+        "rating"
+      ],
+      "questions": [
+        "What score did the external code review give?"
+      ]
+    },
+    "project_id": "proj-canonico"
+  },
+  {
+    "id": "session-persistence",
+    "label": "Session persistence",
+    "fact_ids": [
+      "M-2157"
+    ],
+    "x": {
+      "keywords": [
+        "sessions",
+        "persistent",
+        "deploy",
+        "role checks",
+        "writes"
+      ],
+      "questions": [
+        "Are sessions persistent across deploys and are writes role-checked?"
+      ]
+    },
+    "project_id": "proj-canonico"
   }
 ]

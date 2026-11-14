@@ -87,12 +87,12 @@ def test_export_and_import_round_trip(client):
     client.post("/facts/M-105/retire", json=RETIRE)
     client.post("/ask", json={"question": Q1})
     bundle = assert_contract(client.get("/export"), "GET", "/export")
-    assert len(bundle["documents"]) == 49 and bundle["documents"][0]["text"]
+    assert len(bundle["documents"]) == 85 and bundle["documents"][0]["text"]
     assert any(e["action"] == "retire" for e in bundle["audit"]) and len(bundle["answers"]) == 1
     client.post("/demo/reset")
     assert client.get("/facts/M-105").json()["status"] == "active"
     summary = assert_contract(client.post("/import", json=bundle), "POST", "/import")
-    assert summary["documents"] == 49 and summary["facts"] == len(bundle["facts"]) and summary["topics"] == len(bundle["topics"])
+    assert summary["documents"] == 85 and summary["facts"] == len(bundle["facts"]) and summary["topics"] == len(bundle["topics"])
     assert client.get("/facts/M-105").json()["status"] == "retired"
     answer = client.post("/ask", json={"question": Q1}).json()
     assert answer["binding"]["id"] == "M-106" and answer["conflicts"] == []

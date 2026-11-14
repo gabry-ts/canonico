@@ -29,7 +29,7 @@ def test_organisation_and_projects(client, spec):
     assert_matches(org, spec["paths"]["/org"]["get"]["responses"]["200"]["content"]["application/json"]["example"])
     assert assert_contract(client.patch("/org", json={"name": "Meridian Labs Srl"}), "PATCH", "/org")["name"] == "Meridian Labs Srl"
     page = assert_contract(client.get("/projects"), "GET", "/projects")
-    assert [p["id"] for p in page["items"]] == [CLEARPATH, INTERNAL] and page["total"] == 2
+    assert [p["id"] for p in page["items"]] == [CLEARPATH, INTERNAL, "proj-canonico"] and page["total"] == 3
     clearpath = assert_contract(client.get(f"/projects/{CLEARPATH}"), "GET", "/projects/{project_id}")
     assert clearpath["name"] == "ClearPath engagement" and clearpath["mail_config_override"] is None
     assert clearpath["effective_mail_config"] == ORG_MAIL
@@ -52,7 +52,8 @@ def test_a_project_sees_only_its_own_memory(client):
     clearpath = client.get("/facts", params={"project_id": CLEARPATH, "limit": 500}).json()
     assert not {f["id"] for f in clearpath["items"]} & {"M-903", "M-904", "M-905"}
     everything = client.get("/facts", params={"limit": 500}).json()
-    assert everything["total"] == internal["total"] + clearpath["total"]
+    canonico = client.get("/facts", params={"project_id": "proj-canonico", "limit": 500}).json()
+    assert everything["total"] == internal["total"] + clearpath["total"] + canonico["total"]
 
     assert {t["project_id"] for t in assert_contract(client.get("/topics", params={"project_id": INTERNAL}), "GET", "/topics")} == {INTERNAL}
     assert [d["id"] for d in assert_contract(client.get("/documents", params={"project_id": INTERNAL}), "GET", "/documents")] == ["internal/analyst-handbook"]
@@ -129,7 +130,7 @@ def test_routing_rules_match_by_priority(client):
     assert_contract(client.post("/org/mail/rules", json={"match_type": "sender_domain", "value": "@x.org", "project_id": "nope"}), "POST", "/org/mail/rules", 404)
     assert_contract(client.patch("/org/mail/rules/rule-999", json={"priority": 1}), "PATCH", "/org/mail/rules/{rule_id}", 404)
     assert_contract(client.delete("/org/mail/rules/rule-999"), "DELETE", "/org/mail/rules/{rule_id}", 404)
-    assert client.get("/messages").status_code == 404 and client.get("/facts", params={"limit": 500}).json()["total"] == 432
+    assert client.get("/messages").status_code == 404 and client.get("/facts", params={"limit": 500}).json()["total"] == 525
 
 
 def test_demo_email_changes_the_answer_end_to_end(client):

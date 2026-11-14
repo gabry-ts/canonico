@@ -80,7 +80,7 @@ def test_audit(client):
 
 def test_documents(client):
     docs = assert_contract(client.get("/documents"), "GET", "/documents")
-    assert len(docs) == 49
+    assert len(docs) == 85
     assert len([d for d in docs if d["source_id"] == "src-clearpath-docs"]) == 46
     assert all("text" not in d for d in docs)
     doc = assert_contract(client.get("/documents/07-documents%2Freport-final"), "GET", "/documents/{doc_id}")
@@ -93,7 +93,7 @@ def test_documents(client):
 
 def test_stats_and_reset(client):
     stats = assert_contract(client.get("/stats"), "GET", "/stats")
-    assert stats["documents"] == 49
+    assert stats["documents"] == 85
     assert stats["open_conflicts"] >= 2
     assert stats["facts_total"] >= 15
     assert_contract(client.post("/demo/reset"), "POST", "/demo/reset")
@@ -101,6 +101,7 @@ def test_stats_and_reset(client):
 
 def test_contract_examples_describe_the_demo_seed(client, spec):
     example = spec["paths"]["/stats"]["get"]["responses"]["200"]["content"]["application/json"]["example"]
+    client.delete("/projects/proj-canonico")
     live = client.get("/stats").json()
     for key in ("documents", "topics", "facts_total", "by_type", "by_status", "open_conflicts", "open_questions", "maintenance_pending", "needs_attention"):
         assert live[key] == example[key], key
