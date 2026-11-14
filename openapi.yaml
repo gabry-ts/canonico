@@ -6342,7 +6342,6 @@ components:
           type: string
         email:
           type: string
-          format: email
         org_role:
           $ref: '#/components/schemas/Role'
         created_at:
@@ -6363,7 +6362,6 @@ components:
           minLength: 1
         email:
           type: string
-          format: email
         org_role:
           $ref: '#/components/schemas/Role'
     MemberPatch:
@@ -6374,7 +6372,6 @@ components:
           minLength: 1
         email:
           type: string
-          format: email
         org_role:
           $ref: '#/components/schemas/Role'
     MemberPage:
@@ -6473,7 +6470,6 @@ components:
               minLength: 1
             email:
               type: string
-              format: email
     SetupStepState:
       type: string
       enum:
