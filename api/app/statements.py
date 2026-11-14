@@ -13,6 +13,9 @@ UNITS = r"business days?|working days?|weeks?|days?|months?|hours?|years?|percen
 QUANTITY = re.compile(rf"(\d+(?:[.,]\d+)?)(?:\s*(?:[–—-]|to)\s*(\d+(?:[.,]\d+)?))?\s*({UNITS})(?![a-z])", re.IGNORECASE)
 DECISION_WORDS = re.compile(r"\b(confirm\w*|agree\w*|decid\w*|approv\w*|final\w*|commit\w*|sla|target\w*|standard|must|shall)\b", re.IGNORECASE)
 _SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
+# A sentence that only looks back at a value ("4 weeks was the old plan") states no new value.
+RETROSPECTIVE = re.compile(r"\b(old|previous(?:ly)?|former(?:ly)?|outdated|obsolete|no longer|used to|any ?more|abandoned|dropped|scrapped)\b", re.IGNORECASE)
+CHANGE_WORDS = re.compile(r"\b(now|chang\w*|revis\w*|mov(?:e|ed|es|ing)|updat\w*|instead|going forward|from now on)\b", re.IGNORECASE)
 _UNIT_FAMILY = {"business day": "day", "working day": "day", "eur": "euro", "€": "euro", "%": "percent"}
 
 
@@ -59,7 +62,7 @@ def find(state: dict, text: str, project_id: str | None, prefer_topics: set[str]
     found: dict[str, dict] = {}
     for sentence in sentences(text):
         short = short_of(sentence)
-        if short is None:
+        if short is None or (RETROSPECTIVE.search(sentence) and not CHANGE_WORDS.search(sentence)):
             continue
         if force_topic is not None:
             if force_topic not in found:

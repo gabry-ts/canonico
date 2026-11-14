@@ -1,0 +1,26 @@
+"""Inbound text that only mentions an old value must not change the binding fact."""
+
+Q = "How long does onboarding take?"
+
+
+def email(message_id: str, text: str) -> dict:
+    return {
+        "message_id": f"<{message_id}@meridianlabs.org>",
+        "from": "pm@meridianlabs.org",
+        "to": ["brain@inbound.meridianlabs.org"],
+        "subject": "Recap",
+        "date": "2026-11-14T10:00:00Z",
+        "text": text,
+    }
+
+
+def binding(client, question: str = Q, **extra) -> dict:
+    return client.post("/ask", json={"question": question, **extra}).json()["binding"]
+
+
+def test_a_passing_mention_of_the_old_target_does_not_supersede_the_binding_fact(client):
+    text = "Hi all, as we said, the 4 weeks onboarding target was the old plan and nobody uses it anymore. Talk soon."
+    result = client.post("/mail/inbound", json=email("old-plan", text)).json()
+    assert result["routed_project_id"] == "proj-clearpath"
+    assert result["supersedes_created"] == []
+    assert binding(client)["id"] == "M-106"
