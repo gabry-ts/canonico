@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { call, client, errMsg, type Schemas } from '../../api/client'
 import { useI18n } from '../../i18n'
 import { usePerm } from '../../lib/perm'
@@ -31,12 +31,24 @@ export function SourcesTable({
   const app = useApp()
   const { attrs, guard } = usePerm()
   const [open, setOpen] = useState<string | null>(openId ?? null)
+  // A sidebar link to another source of the same project only changes the route: expand that row too.
+  const [lastOpenId, setLastOpenId] = useState(openId)
+  if (openId !== lastOpenId) {
+    setLastOpenId(openId)
+    if (openId) setOpen(openId)
+  }
   const [syncing, setSyncing] = useState<Record<string, boolean>>({})
   const st = useApi(() => call(client.GET('/projects/{project_id}/sources', { params: { path: { project_id: pid } } })).then((d) => asList<Source>(d)), [pid, app.version])
   const items = useApi(
     () => call(client.GET('/projects/{project_id}/items', { params: { path: { project_id: pid }, query: { limit: 200 } } })).then((d) => asList<Item>(d)),
     [pid, app.version],
   )
+  const loaded = !!st.data
+  useEffect(() => {
+    if (!openId || !loaded) return
+    const tm = setTimeout(() => document.getElementById(`xp-src-${openId}`)?.previousElementSibling?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120)
+    return () => clearTimeout(tm)
+  }, [openId, loaded])
 
   const sync = async (x: Source) => {
     setSyncing((s) => ({ ...s, [x.id]: true }))
