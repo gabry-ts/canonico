@@ -103,7 +103,17 @@ The seeded memory answers `POST /ask {"question": "How long does onboarding take
 
 `GET /topics/{topic_id}/chain` returns the facts of a topic oldest first, each with `doc_title`, plus `changes`: the number of rows whose value differs from the row before it. For the onboarding time the six rows give `changes: 5`.
 
-`GET /me` returns the demo identity (Giulia, owner). The `X-Demo-Actor` header or the `actor` query parameter switch to another member. There is no real authentication.
+`GET /me` returns the demo identity (Giulia, owner). The `X-Demo-Actor` header or the `actor` query parameter switch to another member.
+
+## Sign-in
+
+`POST /auth/login {"email", "password"}` opens a 12 hour session: the token comes back in the body and as the HttpOnly `canonico_session` cookie, and can also be sent as `Authorization: Bearer <token>`. `POST /auth/demo-login` signs in without a password (Giulia by default, or `{"member_id": ...}`), `POST /auth/logout` ends the session. Passwords are stored as salted PBKDF2 hashes in `data/seed/credentials.json`, sessions live in memory.
+
+- `CANONICO_AUTH_REQUIRED` (default `false`): when `true`, every write (POST, PUT, PATCH, DELETE) needs a session, except `/auth/*` and the `/hooks/*` webhooks, which check their own `X-Canonico-Token`. Reads stay public, `GET /me` needs a session.
+- `CANONICO_DEMO_LOGIN` (default `true`): enables `POST /auth/demo-login`.
+- With a session, the signed-in member is the actor: the `X-Demo-Actor` header and the `actor` field of the body are ignored, and role permissions apply to that member.
+
+Demo credentials (demo only): `giulia.ferri@meridianlabs.org` (owner), `sara.conti@meridianlabs.org` (editor), `luca.bassi@meridianlabs.org` (viewer), password `canonico-demo` for all three.
 
 Other flows that work offline: `POST /demo/send-email` (a client email confirms 5 weeks and supersedes the final report figure), `POST /documents/{doc_id}/versions` (a new version of a library document supersedes what the previous version said on the same topic), `POST /mail/poll` on the mocked inbox in `data/seed/mail/`. Values are found by a deterministic rule first (a sentence that states a quantity on a known topic), so these flows need no model. Only when the rule finds nothing, a provider is configured and offline mode is off, the model reads the email or the new version; facts it extracts are filed outside the hand-curated topics. `PATCH /config {"offline_mode": true}` blocks every live model call.
 
