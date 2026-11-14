@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canonico · Decision timeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          serif: ['Newsreader', 'Georgia', 'serif'],
+          sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        },
+        colors: {
+          background: 'hsl(var(--background))',
+          foreground: 'hsl(var(--foreground))',
+          card: 'hsl(var(--card))',
+          muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
+          border: 'hsl(var(--border))',
+          primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))', soft: 'hsl(var(--primary-soft))' },
+          superseded: 'hsl(var(--superseded))',
+          open: { DEFAULT: 'hsl(var(--open))', soft: 'hsl(var(--open-soft))' },
+          destructive: 'hsl(var(--destructive))',
+          ring: 'hsl(var(--ring))',
+        },
+      },
+    },
+  };
+</script>
+<style>
+  :root {
+    --background: 42 33% 97.5%;
+    --foreground: 30 10% 11%;
+    --card: 0 0% 100%;
+    --muted: 40 18% 93%;
+    --muted-foreground: 30 5% 43%;
+    --border: 36 14% 85%;
+    --primary: 229 72% 42%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 229 80% 96.5%;
+    --superseded: 30 4% 60%;
+    --open: 34 72% 38%;
+    --open-soft: 40 80% 94%;
+    --destructive: 6 62% 44%;
+    --ring: 229 72% 42%;
+    --radius: 0.5rem;
+  }
+  html, body { background: hsl(var(--background)); color: hsl(var(--foreground)); }
+  body { font-family: 'Instrument Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .caps { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }
+  .hair { border-color: hsl(var(--border)); }
+  .node { transition: opacity .35s, transform .2s, box-shadow .2s, border-color .2s, background-color .35s; cursor: pointer; }
+  .node:hover { transform: translateY(-2px); box-shadow: 0 6px 18px -10px hsl(30 10% 11% / .35); }
+  .node.selected { box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 3.5px hsl(var(--ring)); }
+  .node.st-superseded, .node.st-overridden { opacity: .5; }
+  .node.st-superseded .val, .node.st-overridden .val, .node.st-retired .val { text-decoration: line-through; text-decoration-thickness: 1.5px; text-decoration-color: hsl(var(--superseded)); color: hsl(var(--superseded)); }
+  .node.st-retired { opacity: .45; border-style: dashed; background: transparent; }
+  .node.st-binding { border-color: hsl(var(--primary)); background: hsl(var(--primary-soft)); }
+  .node.st-binding .val { color: hsl(var(--primary)); }
+  .node.st-open { border-color: hsl(var(--open) / .6); background: hsl(var(--open-soft)); }
+  .chip { display:inline-flex; align-items:center; gap:.35rem; font-size:10px; letter-spacing:.12em; text-transform:uppercase; font-weight:600; padding:.18rem .5rem; border-radius:999px; border:1px solid hsl(var(--border)); color:hsl(var(--muted-foreground)); background:hsl(var(--card)); white-space:nowrap; }
+  .chip.t-decision { color:hsl(var(--primary)); border-color:hsl(var(--primary) / .35); }
+  .chip.t-binding { color:hsl(var(--primary-foreground)); background:hsl(var(--primary)); border-color:hsl(var(--primary)); }
+  .chip.t-constraint { color:hsl(270 35% 40%); border-color:hsl(270 35% 40% / .3); }
+  .chip.t-evidence { color:hsl(160 35% 28%); border-color:hsl(160 35% 28% / .3); }
+  .chip.t-hypothesis { color:hsl(200 40% 35%); border-color:hsl(200 40% 35% / .3); }
+  .chip.t-open { color:hsl(var(--open)); border-color:hsl(var(--open) / .45); background:hsl(var(--open-soft)); }
+  .chip.t-superseded, .chip.t-overridden { color:hsl(var(--superseded)); background:hsl(var(--muted)); }
+  .chip.t-retired { color:hsl(var(--destructive)); border-color:hsl(var(--destructive) / .35); border-style:dashed; }
+  .seg button { transition: background .2s, color .2s; }
+  .seg button[aria-pressed="true"] { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+  .fade-in { animation: fade .45s ease both; }
+  @keyframes fade { from { opacity:0; transform: translateY(4px);} to { opacity:1; transform:none; } }
+  .flash { animation: flash 1.2s ease; }
+  @keyframes flash { 0% { background: hsl(var(--primary-soft)); } 100% { background: hsl(var(--card)); } }
+  blockquote mark { background: hsl(var(--primary) / .12); color: inherit; padding: 0 .1em; border-radius: 2px; }
+  .btn { display:inline-flex; align-items:center; gap:.4rem; font-size:13px; font-weight:500; padding:.45rem .8rem; border-radius:calc(var(--radius) - 2px); border:1px solid hsl(var(--border)); background:hsl(var(--card)); transition: border-color .15s, background .15s; }
+  .btn:hover:not(:disabled) { border-color: hsl(var(--foreground) / .5); }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .btn.primary { background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border-color:hsl(var(--primary)); }
+  .btn.danger { color:hsl(var(--destructive)); }
+  .btn.danger:hover:not(:disabled) { border-color:hsl(var(--destructive)); }
+  input.field, textarea.field { width:100%; font-size:14px; padding:.5rem .7rem; border:1px solid hsl(var(--border)); border-radius:calc(var(--radius) - 2px); background:hsl(var(--background)); outline:none; }
+  input.field:focus, textarea.field:focus { border-color: hsl(var(--ring)); }
+  #edges text { font-family: Newsreader, serif; font-style: italic; font-size: 12px; paint-order: stroke; stroke: hsl(var(--background)); stroke-width: 5px; stroke-linejoin: round; }
+  .scroll-x { overflow-x: auto; scrollbar-width: thin; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Prototype strip -->
+<div class="border-b hair bg-card">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-12 h-10 flex items-center justify-between text-[12px]">
+    <div class="flex items-center gap-3">
+      <span class="font-medium">Prototype A · Decision timeline</span>
+      <span class="text-muted-foreground hidden sm:inline">|</span>
+      <nav class="flex items-center gap-1 text-muted-foreground">
+        <a href="a.html" class="px-2 py-0.5 rounded bg-muted text-foreground">A</a>
+        <a href="b.html" class="px-2 py-0.5 rounded hover:bg-muted">B</a>
+        <a href="c.html" class="px-2 py-0.5 rounded hover:bg-muted">C</a>
+      </nav>
+    </div>
+    <span class="caps text-muted-foreground border hair rounded px-2 py-0.5">Static prototype</span>
+  </div>
+</div>
+
+<main class="max-w-[1440px] mx-auto px-6 lg:px-12">
+
+  <!-- Masthead -->
+  <header class="pt-10 pb-6 flex flex-wrap items-end justify-between gap-6 border-b hair">
+    <div>
+      <div class="flex items-baseline gap-3">
+        <h1 class="font-serif text-[40px] leading-none font-medium tracking-tight">Canonico</h1>
+        <span class="font-serif italic text-muted-foreground text-lg">canonical memory</span>
+      </div>
+      <p class="mt-2 text-sm text-muted-foreground">Workspace · ClearPath Solutions × Meridian Labs process review · 46 documents</p>
+    </div>
+    <div class="flex items-center gap-1 text-sm" role="tablist" id="topicTabs"></div>
+  </header>
+
+  <!-- Question bar -->
+  <section class="pt-8">
+    <div class="flex flex-wrap items-center gap-4">
+      <div class="flex-1 min-w-[280px] flex items-center gap-3 border hair bg-card rounded-xl px-5 h-16 shadow-[0_1px_0_hsl(var(--border))]">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="text-muted-foreground shrink-0"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="questionInput" class="flex-1 bg-transparent outline-none font-serif text-[22px] placeholder:text-muted-foreground" readonly>
+        <span id="queryId" class="font-mono text-[11px] text-muted-foreground border hair rounded px-1.5 py-0.5"></span>
+      </div>
+      <div class="seg flex items-center border hair rounded-full p-1 bg-card text-[13px]" role="group" aria-label="Answer mode">
+        <button id="modeCanon" class="px-4 py-1.5 rounded-full" aria-pressed="true">Canonico</button>
+        <button id="modeCompare" class="px-4 py-1.5 rounded-full" aria-pressed="false">Plain retrieval vs Canonico</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Answer -->
+  <section id="answerWrap" class="pt-6"></section>
+
+  <!-- Timeline -->
+  <section class="pt-14">
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-5">
+      <div>
+        <div class="caps text-muted-foreground">Decision timeline</div>
+        <h2 class="font-serif text-[28px] leading-tight mt-1" id="timelineTitle"></h2>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-muted-foreground">
+        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-primary"></span>Binding</span>
+        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-muted border hair"></span><span class="line-through">Superseded</span></span>
+        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm border border-dashed border-destructive"></span>Retired</span>
+        <span class="flex items-center gap-2"><svg width="30" height="8"><line x1="6" y1="4" x2="30" y2="4" stroke="currentColor" stroke-width="1.3"/><path d="M0 4 L7 0.5 L7 7.5Z" fill="currentColor"/></svg>supersedes</span>
+        <span class="flex items-center gap-2"><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3 3"/></svg>restates · informs · implements</span>
+      </div>
+    </div>
+    <div class="scroll-x border-t border-b hair">
+      <div id="timeline" class="relative min-w-[1080px] py-6"></div>
+    </div>
+    <p class="mt-3 text-[12px] text-muted-foreground">Click any version to open its source passage. Positions are ordered by document date.</p>
+  </section>
+
+  <!-- Inspector + Audit -->
+  <section class="pt-10 pb-16 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-10">
+    <div id="inspector"></div>
+    <aside>
+      <div class="flex items-center justify-between">
+        <div class="caps text-muted-foreground">Audit trail</div>
+        <span class="text-[11px] text-muted-foreground italic font-serif">sample UI state</span>
+      </div>
+      <ol id="audit" class="mt-4 border-l hair ml-1.5"></ol>
+    </aside>
+  </section>
+</main>
+
+<footer class="border-t hair">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-12 py-6 flex flex-wrap justify-between gap-3 text-[12px] text-muted-foreground">
+    <span>Data: OIDA Benchmark Corpora (Bottino, Ferrero, Dosio, Beneventano), CC BY 4.0 · corpus <span class="font-mono">org-consulting-clearpath</span></span>
+    <span>Quotes are verbatim from the corpus (shortened with …). Actors, timestamps and confidence scores in the UI are sample state.</span>
+  </div>
+</footer>
+
+<script>
+/* ------------------------------------------------------------------ data */
+const TOPICS = {
+  q01: {
+    tab: 'Onboarding target',
+    qid: 'q01',
+    question: 'What onboarding target did Meridian Labs ultimately recommend?',
+    subject: 'Time to independence for new consultants',
+    timelineTitle: 'Onboarding target, Aug 2025 → Jan 2026',
+    lanes: [
+      { id: 'target', label: 'Recommended target', sub: 'decision chain' },
+      { id: 'base', label: 'Measured baseline', sub: 'evidence' },
+    ],
+    cols: ['22 Aug 2025', '29 Sep 2025', '15 Oct 2025', '21 Nov 2025', '28 Nov 2025', '6 Jan 2026'],
+    chain: ['T5', 'T4', 'T2', 'T1'],
+    nodes: {
+      T1: { lane: 'target', col: 0, value: '< 3 weeks', label: "Client's original goal", type: 'CONSTRAINT',
+            doc: '01-scope/project-brief', title: 'Project Brief — ClearPath Solutions Process Review', date: '22 Aug 2025', cat: 'scope',
+            quote: 'The onboarding process for new consultants takes approximately six weeks before they can operate independently on client engagements. This is unsustainable at the hiring pace we need. <mark>Our target is to bring this below three weeks.</mark>',
+            note: 'Goal stated by the client before discovery.', conf: ['Low', 'Client goal, pre-discovery', 'Replaced by consultant recommendation'] },
+      T2: { lane: 'target', col: 1, value: '≤ 3 weeks', label: 'Requirement R1.1', type: 'CONSTRAINT',
+            doc: '01-scope/requirements', title: 'Requirements — ClearPath Process Review', date: '29 Sep 2025', cat: 'scope',
+            quote: '<b>R1.1</b> <mark>Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.</mark>',
+            note: 'Collected during discovery, weeks 1–3. Restates the brief.', conf: ['Low', 'Requirement, not a recommendation', 'Superseded on 21 Nov 2025'] },
+      T4: { lane: 'target', col: 3, value: '4 weeks', label: 'Preview recommendation', type: 'DECISION',
+            doc: '05-meetings/meeting-005-final-presentation', title: 'Meeting 005: Final Recommendations Preview', date: '21 Nov 2025', cat: 'meetings',
+            speaker: '[10:08] Nora',
+            quote: 'Current onboarding time is six to six-and-a-half weeks. <mark>Our target recommendation is four weeks total for new consultants to be fully autonomous and billing-ready.</mark> … three weeks assumes significant curriculum standardization and a dedicated onboarding coordinator role.',
+            note: 'Verbal preview; the written report followed a week later.', conf: ['Medium', 'Preview meeting, not the final deliverable', 'Later version is retired'],
+            why: null },
+      T5: { lane: 'target', col: 4, value: '3–4 weeks', label: 'Final recommendation', type: 'DECISION',
+            doc: '07-documents/report-final', title: 'ClearPath Solutions Inc. – Final Engagement Report', date: '28 Nov 2025', cat: 'documents',
+            section: 'P1.1 · Formalize and accelerate onboarding process',
+            quote: '<mark>Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)</mark><br><span class="not-italic text-muted-foreground text-[15px]">and in the summary:</span> Onboarding time: 6–8 weeks → 3–4 weeks (37–40% reduction)',
+            short: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)',
+            note: 'Final written deliverable of the 12-week engagement.', conf: ['High', 'Final deliverable, typed DECISION', 'Latest version in the chain', 'Implemented by roadmap item P1.1d (6 Jan 2026)'],
+            why: 'It is the latest decision: the final report of 28 Nov 2025 supersedes the 4-week figure from the 21 Nov preview, which had already replaced the client’s “below three weeks” goal.' },
+      T6: { lane: 'target', col: 5, value: '3–4 weeks', label: 'Roadmap item P1.1d', type: 'EVIDENCE', dependsOn: 'T5',
+            doc: '07-documents/implementation-roadmap', title: 'implementation roadmap', date: '6 Jan 2026', cat: 'documents (csv)',
+            quote: 'recommendation_id: P1.1d; recommendation_title: Establish onboarding SLA and communication; … owner_suggested: CEO; status: Pending; notes: <mark>Communicate 3-4 week target to team</mark>; establish tracking',
+            note: 'Downstream artefact that operationalises the binding decision.' },
+      B1: { lane: 'base', col: 0, value: '~6 weeks', label: 'Reported current state', type: 'EVIDENCE', supersededBy: 'B3',
+            doc: '01-scope/project-brief', title: 'Project Brief — ClearPath Solutions Process Review', date: '22 Aug 2025', cat: 'scope',
+            quote: 'The onboarding process for new consultants <mark>takes approximately six weeks</mark> before they can operate independently on client engagements.',
+            note: 'Self-reported by the client.' },
+      B3: { lane: 'base', col: 2, value: '6.5–7 weeks', label: 'Observed time to autonomy', type: 'EVIDENCE', supersededBy: 'B5',
+            doc: '05-meetings/meeting-003-interim-review', title: 'Meeting 003: Interim Review & Findings', date: '15 Oct 2025', cat: 'meetings',
+            speaker: '[10:08] Nora · [11:12] Marcus',
+            quote: 'Our observation, based on shadowing and interviews, is that the actual time to meaningful autonomy is longer—<mark>we estimate closer to six and a half to seven weeks</mark>, sometimes longer depending on role complexity. … you’re right to flag that <mark>this isn’t instrumented data.</mark>',
+            note: 'Estimate from observation, explicitly not instrumented.' },
+      B5: { lane: 'base', col: 4, value: '6–8 weeks', label: 'Baseline in final report', type: 'EVIDENCE',
+            doc: '07-documents/report-final', title: 'ClearPath Solutions Inc. – Final Engagement Report', date: '28 Nov 2025', cat: 'documents',
+            quote: '<mark>Onboarding inefficiency (6–8 weeks vs. 3-week target)</mark> – dominated by unstructured knowledge transfer and ad hoc tool provisioning',
+            note: 'Baseline the binding target is measured against.' },
+    },
+    edges: [
+      { from: 'T2', to: 'T1', kind: 'restates' },
+      { from: 'T4', to: 'T2', kind: 'supersedes' },
+      { from: 'T5', to: 'T4', kind: 'supersedes' },
+      { from: 'T6', to: 'T5', kind: 'implements' },
+      { from: 'B3', to: 'B1', kind: 'supersedes' },
+      { from: 'B5', to: 'B3', kind: 'supersedes' },
+      { from: 'B3', to: 'T4', kind: 'informs' },
+    ],
+    plain: {
+      query: 'onboarding target weeks recommend',
+      hits: [
+        ['8.87', '07-documents/report-final', '28 Nov 2025', 'Onboarding time: 6–8 weeks → <b>3–4 weeks</b> (37–40% reduction)'],
+        ['8.61', '05-meetings/meeting-005-final-presentation', '21 Nov 2025', '…Our target recommendation is <b>four weeks</b> total for new consultants to be fully autonomous and billing-ready…'],
+        ['8.60', '07-documents/implementation-roadmap', '6 Jan 2026', 'P1.1d … Communicate <b>3-4 week</b> target to team; establish tracking'],
+        ['8.52', '07-documents/implementation-roadmap', '6 Jan 2026', 'P1.1c; Create onboarding curriculum and knowledge base…'],
+        ['8.51', '07-documents/report-final', '28 Nov 2025', 'Establish onboarding SLA: <b>3–4 weeks</b> (vs. current 6–8 weeks)'],
+      ],
+      verdict: 'Two different targets sit at #1 and #2 with near-identical scores (8.87 vs 8.61). Nothing tells the reader that “four weeks” was a preview the report replaced, or that the client’s “3 weeks or less” (R1.1, rank 110) is no longer the goal.',
+    },
+    audit: [
+      { who: 'Canonico', when: '21 Nov 2025', text: 'Moved R1.1 “≤ 3 weeks” to <b>superseded</b> after the preview recommendation.' },
+      { who: 'Canonico', when: '28 Nov 2025', text: 'Linked <b>report-final</b> <i>supersedes</i> <b>meeting-005</b>: later, written, same subject.' },
+      { who: 'Canonico', when: '6 Jan 2026', text: 'Classified 8 facts from 6 documents linked to <span class="font-mono text-[11px]">q01</span>; roadmap P1.1d linked as <i>implements</i>.' },
+    ],
+  },
+
+  q02: {
+    tab: 'Audit queue time',
+    qid: 'q02',
+    question: 'Was the audit queue disagreement ever resolved with hard data?',
+    subject: 'Time a report spends in the audit queue',
+    timelineTitle: 'Audit queue time, Sep → Nov 2025',
+    lanes: [
+      { id: 'target', label: 'Recommended target', sub: 'decision chain' },
+      { id: 'obs', label: 'Observed queue time', sub: 'evidence' },
+    ],
+    cols: ['29 Sep 2025', '2 Oct 2025', '2 Oct 2025', '21 Nov 2025', '28 Nov 2025'],
+    chain: ['A5', 'A4', 'A1'],
+    open: true,
+    nodes: {
+      A1: { lane: 'target', col: 0, value: '≤ 2 days', label: 'Requirement R3.1', type: 'CONSTRAINT',
+            doc: '01-scope/requirements', title: 'Requirements — ClearPath Process Review', date: '29 Sep 2025', cat: 'scope',
+            quote: '<b>R3.1</b> <mark>Reduce audit queue backlog from 5–8 business days to ≤2 business days.</mark>', note: 'Client requirement collected in discovery.',
+            conf: ['Low', 'Requirement, not a recommendation'] },
+      A4: { lane: 'target', col: 3, value: '2–3 days', label: 'Preview recommendation', type: 'DECISION',
+            doc: '05-meetings/meeting-005-final-presentation', title: 'Meeting 005: Final Recommendations Preview', date: '21 Nov 2025', cat: 'meetings', speaker: '[10:14] Nora',
+            quote: 'The second metric is audit queue. Current state is five to eight days. <mark>Our recommendation is two to three days maximum.</mark>', note: 'Verbal preview.',
+            conf: ['Medium', 'Preview meeting'] },
+      A5: { lane: 'target', col: 4, value: '3–4 days', label: 'Final recommendation', type: 'DECISION',
+            doc: '07-documents/report-final', title: 'ClearPath Solutions Inc. – Final Engagement Report', date: '28 Nov 2025', cat: 'documents',
+            quote: '<mark>Audit cycle time: 5–8 days → 3–4 days</mark> (35–40% reduction)', note: 'Note: differs from the 2–3 days said in the preview.',
+            conf: ['High', 'Final deliverable'] },
+      O1: { lane: 'obs', col: 1, value: '2–3 · 3–4 · 6–8 d', label: 'Three estimates, no measurement', type: 'EVIDENCE', contested: true,
+            doc: '02-subject/observation-003-audit-workflow', title: 'Observation 003: Audit Workflow Review', date: '2 Oct 2025', cat: 'subject',
+            quote: '<mark>it was not possible to measure the actual time spent at each stage of the audit queue</mark>. ClearPath does not track this at a granular level. … Marco Fiore estimated: 3–4 business days · Laura Galli estimated: 6–8 business days · One junior auditor estimated: 2–3 days',
+            note: 'Contradicting estimates from three people.' },
+      O2: { lane: 'obs', col: 2, value: 'Factor of 3', label: 'Bottleneck BN-002', type: 'OPEN QUESTION',
+            doc: '02-subject/bottleneck-analysis', title: 'bottleneck analysis', date: '2 Oct 2025', cat: 'subject (csv)',
+            quote: 'BN-002; description: <mark>Audit cycle time variation (factor of 3 discrepancy among team leads)</mark>; data_quality: <mark>no data available — estimate only</mark>; notes: … no objective measurement',
+            note: 'Open since 2 Oct 2025.' },
+      O5: { lane: 'obs', col: 4, value: '5–8 days', label: 'Current state in final report', type: 'EVIDENCE',
+            doc: '07-documents/report-final', title: 'ClearPath Solutions Inc. – Final Engagement Report', date: '28 Nov 2025', cat: 'documents',
+            quote: '<mark>Current state: 5–8 day average cycle time</mark>; significant variance by auditor expertise; 8–12% rework rate.',
+            note: 'The passage does not cite a measurement.' },
+    },
+    edges: [
+      { from: 'A4', to: 'A1', kind: 'supersedes' },
+      { from: 'A5', to: 'A4', kind: 'supersedes' },
+      { from: 'O2', to: 'O1', kind: 'flags' },
+      { from: 'O5', to: 'O2', kind: 'leaves open' },
+    ],
+    answerOpen: {
+      value: 'Unresolved',
+      quote: 'it was not possible to measure the actual time spent at each stage of the audit queue',
+      node: 'O1',
+      why: 'Three estimates disagree by a factor of 3 (2–3, 3–4, 6–8 days). BN-002 records “no data available — estimate only”, and no later document in this timeline reports a measured value.',
+      conf: ['Open', 'Contradiction recorded, never measured', 'Typed OPEN QUESTION, kept out of answers as fact'],
+    },
+    plain: {
+      query: 'audit queue days report time',
+      hits: [
+        ['13.92', '01-scope/requirements', '29 Sep 2025', 'R3.1 Reduce audit queue backlog from 5–8 business days to <b>≤2 business days</b>.'],
+        ['12.85', '07-documents/report-final', '28 Nov 2025', 'Audit cycle time: 5–8 days → <b>3–4 days</b> (35–40% reduction)'],
+        ['12.40', '07-documents/presentation-interim', '3 Oct 2025', 'Average cycle time: 5–10 days per invoice/report cycle'],
+        ['12.08', '02-subject/process-map-current', '14 Oct 2025', 'No tracking of time spent in audit queue; cycle time varies by factor of 3'],
+        ['11.73', '07-documents/presentation-interim', '3 Oct 2025', 'Client Audit Request ↓ Intake Meeting (1 day) ↓ Scope & Budget Assessment…'],
+      ],
+      verdict: 'The top hit is a target (“≤2 business days”), not a measurement. The first of the three disagreeing estimates (Marco Fiore, 3–4 days) only shows up at rank #53, so an answer built from the top 5 would state a number instead of “never measured”.',
+    },
+    audit: [
+      { who: 'Canonico', when: '2 Oct 2025', text: 'Opened <b>open question</b> from BN-002: three estimates contradict.' },
+      { who: 'Canonico', when: '28 Nov 2025', text: 'Final report adds “5–8 days” without a source; question kept open.' },
+    ],
+  },
+};
+
+/* ----------------------------------------------------------------- state */
+const S = {};
+for (const k in TOPICS) S[k] = { retired: new Set(), override: null, corrected: {}, selected: null, audit: [...TOPICS[k].audit], form: null };
+let topicId = 'q01';
+let mode = 'canon';
+const T = () => TOPICS[topicId];
+const ST = () => S[topicId];
+
+function bindingId(t = T(), s = ST()) {
+  if (s.override && !s.retired.has(s.override)) return s.override;
+  return t.chain.find(id => !s.retired.has(id)) || null;
+}
+function statusOf(id) {
+  const t = T(), s = ST(), n = t.nodes[id];
+  if (s.retired.has(id)) return 'retired';
+  const b = bindingId();
+  if (id === b) return 'binding';
+  const ci = t.chain.indexOf(id);
+  if (ci >= 0 && b) return ci > t.chain.indexOf(b) ? 'superseded' : 'overridden';
+  if (n.supersededBy && !s.retired.has(n.supersededBy)) return 'superseded';
+  if (n.type === 'OPEN QUESTION') return 'open';
+  return 'base';
+}
+function valueOf(id) { return ST().corrected[id]?.value ?? T().nodes[id].value; }
+function chipFor(id) {
+  const st = statusOf(id), n = T().nodes[id];
+  if (st === 'binding') return `<span class="chip t-binding"><span class="w-1.5 h-1.5 rounded-full bg-white"></span>Decision · binding</span>`;
+  if (st === 'retired') return `<span class="chip t-retired">Retired</span>`;
+  if (st === 'superseded') return `<span class="chip t-superseded">Superseded</span>`;
+  if (st === 'overridden') return `<span class="chip t-overridden">Overridden</span>`;
+  const cls = { DECISION: 't-decision', CONSTRAINT: 't-constraint', EVIDENCE: 't-evidence', HYPOTHESIS: 't-hypothesis', 'OPEN QUESTION': 't-open' }[n.type];
+  return `<span class="chip ${cls}">${n.type.toLowerCase()}</span>`;
+}
+const short = d => d.split('/').pop();
+
+/* ---------------------------------------------------------------- render */
+function renderTabs() {
+  document.getElementById('topicTabs').innerHTML = Object.entries(TOPICS).map(([k, t]) =>
+    `<button data-topic="${k}" role="tab" aria-selected="${k === topicId}" class="px-3 py-1.5 border-b-2 ${k === topicId ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}">
+      ${t.tab} <span class="font-mono text-[10px] ml-1 opacity-70">${t.qid}</span></button>`).join('');
+  document.querySelectorAll('[data-topic]').forEach(b => b.onclick = () => { topicId = b.dataset.topic; renderAll(); });
+  document.getElementById('questionInput').value = T().question;
+  document.getElementById('queryId').textContent = 'OIDA ' + T().qid;
+  document.getElementById('timelineTitle').textContent = T().timelineTitle;
+  document.getElementById('modeCanon').setAttribute('aria-pressed', mode === 'canon');
+  document.getElementById('modeCompare').setAttribute('aria-pressed', mode === 'compare');
+}
+
+function whyText() {
+  const t = T(), s = ST(), b = bindingId();
+  if (!b) return 'Every version in the chain has been retired. There is no binding value until someone marks one.';
+  const n = t.nodes[b];
+  if (s.override === b) return `Marked binding by you; it overrides the later ${t.chain.filter(id => t.chain.indexOf(id) < t.chain.indexOf(b) && !s.retired.has(id)).map(id => `“${valueOf(id)}” (${short(t.nodes[id].doc)})`).join(', ') || 'versions'}.`;
+  const retiredAbove = t.chain.slice(0, t.chain.indexOf(b)).filter(id => s.retired.has(id));
+  if (retiredAbove.length) return `“${valueOf(retiredAbove[0])}” (${short(t.nodes[retiredAbove[0]].doc)}) was retired, so Canonico falls back to the latest remaining version in the supersedes chain: ${n.label.toLowerCase()} of ${n.date}.`;
+  return n.why || `Latest non-retired version in the chain (${n.date}).`;
+}
+
+function canonAnswerHTML(compact = false) {
+  const t = T(), s = ST();
+  if (t.open) {
+    const a = t.answerOpen, src = t.nodes[a.node], b = bindingId();
+    return `
+    <div class="bg-card border hair rounded-2xl ${compact ? 'p-6' : 'p-8'} fade-in" id="answerCard">
+      <div class="flex flex-wrap items-center gap-3"><span class="caps text-muted-foreground">Canonico answer</span><span class="chip t-open">Open question</span></div>
+      <div class="mt-4 grid ${compact ? 'grid-cols-1 gap-6' : 'grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_260px] gap-10'}">
+        <div>
+          <div class="font-serif ${compact ? 'text-5xl' : 'text-6xl'} leading-none text-open">${a.value}</div>
+          <div class="mt-3 text-sm text-muted-foreground">${t.subject}</div>
+        </div>
+        <div>
+          <blockquote class="font-serif italic text-[20px] leading-snug border-l-2 pl-4" style="border-color:hsl(var(--open))">“${a.quote}”</blockquote>
+          <button class="mt-3 text-[12px] text-muted-foreground hover:text-foreground underline-offset-4 hover:underline" onclick="selectNode('${a.node}')"><span class="font-mono">${src.doc}</span> · ${src.date}</button>
+        </div>
+        ${compact ? '' : confHTML(a.conf, true)}
+      </div>
+      <div class="mt-6 pt-5 border-t hair text-[15px] leading-relaxed"><span class="font-serif italic text-muted-foreground mr-2">Why this answer</span>${a.why}</div>
+      ${b ? `<div class="mt-3 text-[13px] text-muted-foreground">Related binding decision: target <button class="text-primary font-medium hover:underline" onclick="selectNode('${b}')">${valueOf(b)}</button> · <span class="font-mono text-[11px]">${short(t.nodes[b].doc)}</span>. A target is not a measurement.</div>` : ''}
+    </div>`;
+  }
+  const b = bindingId();
+  if (!b) return `<div class="bg-card border hair rounded-2xl p-8 fade-in" id="answerCard"><div class="caps text-muted-foreground">Canonico answer</div><div class="font-serif text-4xl mt-3 text-muted-foreground">No binding value</div><p class="mt-4 text-[15px]">${whyText()}</p></div>`;
+  const n = t.nodes[b], corr = s.corrected[b];
+  const fallback = t.chain.indexOf(b) > 0 && s.override !== b;
+  return `
+  <div class="bg-card border hair rounded-2xl ${compact ? 'p-6' : 'p-8'} fade-in" id="answerCard">
+    <div class="flex flex-wrap items-center gap-3">
+      <span class="caps text-muted-foreground">Canonico answer</span>${chipFor(b)}
+      ${fallback ? '<span class="chip t-open">Fallback</span>' : ''}${corr ? '<span class="chip">Corrected</span>' : ''}
+      ${compact ? '' : `<button onclick="demoRetire()" class="ml-auto text-[12px] text-muted-foreground hover:text-foreground border hair rounded-full px-3 py-1">Demo · retire the binding version →</button>`}
+    </div>
+    <div class="mt-4 grid ${compact ? 'grid-cols-1 gap-6' : 'grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_260px] gap-10'}">
+      <div>
+        <div class="font-serif ${compact ? 'text-5xl' : 'text-[76px]'} leading-[.95] text-primary tracking-tight">${valueOf(b)}</div>
+        <div class="mt-3 text-sm text-muted-foreground">${t.subject}</div>
+      </div>
+      <div>
+        <blockquote class="font-serif italic text-[20px] leading-snug border-l-2 border-primary pl-4">“${(n.short || n.quote).replace(/<[^>]+>/g, '')}”</blockquote>
+        <button class="mt-3 text-[12px] text-muted-foreground hover:text-foreground hover:underline underline-offset-4 text-left" onclick="selectNode('${b}')">${n.title} · <span class="font-mono">${n.doc}</span> · ${n.date}${n.section ? ' · ' + n.section : ''}</button>
+        ${corr ? `<div class="mt-2 text-[12px] text-muted-foreground">Corrected from <span class="line-through">${n.value}</span>: ${corr.reason}</div>` : ''}
+      </div>
+      ${compact ? '' : confHTML(n.conf || ['Medium'])}
+    </div>
+    <div class="mt-6 pt-5 border-t hair text-[15px] leading-relaxed"><span class="font-serif italic text-muted-foreground mr-2">Why this one</span>${whyText()}</div>
+  </div>`;
+}
+function confHTML(c, open = false) {
+  const lvl = { High: 3, Medium: 2, Low: 1, Open: 0 }[c[0]];
+  const bars = [0, 1, 2].map(i => `<span class="h-1.5 flex-1 rounded-full ${i < lvl ? (open ? 'bg-open' : 'bg-primary') : 'bg-muted'}"></span>`).join('');
+  return `<div class="md:border-l hair md:pl-8">
+    <div class="caps text-muted-foreground">Confidence</div>
+    <div class="font-serif text-2xl mt-1">${c[0]}</div>
+    <div class="flex gap-1 mt-2 w-32">${bars}</div>
+    <ul class="mt-3 space-y-1 text-[12.5px] text-muted-foreground">${c.slice(1).map(r => `<li>· ${r}</li>`).join('')}</ul>
+    <div class="mt-2 text-[10.5px] italic font-serif text-muted-foreground/80">sample scoring</div>
+  </div>`;
+}
+
+function renderAnswer() {
+  const w = document.getElementById('answerWrap'), t = T();
+  if (mode === 'canon') { w.innerHTML = canonAnswerHTML(false); return; }
+  const p = t.plain;
+  w.innerHTML = `
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="border hair rounded-2xl p-6 bg-muted/60 fade-in">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="caps text-muted-foreground">Plain retrieval</span>
+        <span class="text-[11px] text-muted-foreground">BM25 over passages · query <span class="font-mono">“${p.query}”</span></span>
+      </div>
+      <ol class="mt-4 divide-y hair">
+        ${p.hits.map((h, i) => `<li class="py-3 flex gap-4">
+          <span class="font-serif text-xl text-muted-foreground w-5">${i + 1}</span>
+          <div class="min-w-0">
+            <div class="text-[14px] leading-snug">${h[3]}</div>
+            <div class="mt-1 text-[11px] text-muted-foreground"><span class="font-mono">${h[1]}</span> · ${h[2]} · score ${h[0]}</div>
+          </div></li>`).join('')}
+      </ol>
+      <p class="mt-4 pt-4 border-t hair text-[14px] leading-relaxed"><span class="font-serif italic text-destructive mr-1">What goes wrong</span> ${p.verdict}</p>
+      <p class="mt-2 text-[11px] text-muted-foreground">Ranking computed on <span class="font-mono">corpus.jsonl</span> with a simple passage-level BM25 for this prototype.</p>
+    </div>
+    <div>${canonAnswerHTML(true)}</div>
+  </div>`;
+}
+
+function renderTimeline() {
+  const t = T(), el = document.getElementById('timeline');
+  const nc = t.cols.length;
+  const grid = `grid-template-columns: repeat(${nc}, minmax(0,1fr)); column-gap: 64px;`;
+  let html = `<svg id="edges" class="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="hsl(var(--muted-foreground))"/></marker>
+        <marker id="ahp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="hsl(var(--primary))"/></marker>
+      </defs><g id="edgeG"></g></svg>`;
+  html += `<div class="relative grid px-6 mb-2" style="${grid}">${t.cols.map(c => `<div class="caps text-muted-foreground border-b hair pb-2">${c}</div>`).join('')}</div>`;
+  t.lanes.forEach((lane, li) => {
+    html += `<div class="px-6 ${li ? 'mt-10' : 'mt-4'} mb-3 flex items-baseline gap-2"><span class="font-serif text-[17px]">${lane.label}</span><span class="text-[12px] text-muted-foreground italic font-serif">${lane.sub}</span></div>
+      <div class="relative grid px-6 items-center" style="${grid}">`;
+    for (let c = 0; c < nc; c++) {
+      const id = Object.keys(t.nodes).find(k => t.nodes[k].lane === lane.id && t.nodes[k].col === c);
+      html += id ? nodeHTML(id) : `<div class="h-px"></div>`;
+    }
+    html += `</div>`;
+  });
+  el.innerHTML = html;
+  el.querySelectorAll('[data-node]').forEach(n => n.onclick = () => selectNode(n.dataset.node));
+  requestAnimationFrame(drawEdges);
+}
+function nodeHTML(id) {
+  const n = T().nodes[id], s = ST(), st = statusOf(id);
+  const review = n.dependsOn && s.retired.has(n.dependsOn);
+  return `<div data-node="${id}" class="node st-${st} ${s.selected === id ? 'selected' : ''} relative bg-card border hair rounded-lg px-3.5 pt-3 pb-3 min-h-[128px] flex flex-col">
+    ${st === 'binding' ? '<div class="absolute -top-2.5 left-3 caps bg-primary text-primary-foreground rounded px-1.5 py-[1px] text-[9px]">Binding</div>' : ''}
+    <div class="text-[11px] text-muted-foreground">${n.label}</div>
+    <div class="val font-serif text-[23px] leading-tight mt-1 whitespace-nowrap">${valueOf(id)}${s.corrected[id] ? '<sup class="text-[10px] text-muted-foreground no-underline ml-0.5">✎</sup>' : ''}</div>
+    <div class="font-mono text-[10px] text-muted-foreground mt-1 truncate" title="${n.doc}">${short(n.doc)}</div>
+    <div class="mt-auto pt-2 flex flex-wrap gap-1">${chipFor(id)}${n.contested ? '<span class="chip t-open">contradiction</span>' : ''}${review ? '<span class="chip t-retired">needs review</span>' : ''}</div>
+  </div>`;
+}
+function drawEdges() {
+  const t = T(), wrap = document.getElementById('timeline'), g = document.getElementById('edgeG');
+  if (!g) return;
+  const W = wrap.getBoundingClientRect();
+  const rect = id => { const r = wrap.querySelector(`[data-node="${id}"]`).getBoundingClientRect(); return { l: r.left - W.left, r: r.right - W.left, t: r.top - W.top, b: r.bottom - W.top, cy: r.top - W.top + r.height / 2 }; };
+  const b = bindingId();
+  g.innerHTML = t.edges.map(e => {
+    const nf = t.nodes[e.from], nt = t.nodes[e.to];
+    const [A, B] = nf.col <= nt.col ? [e.from, e.to] : [e.to, e.from];
+    const ra = rect(A), rb = rect(B);
+    const x1 = ra.r + 2, y1 = ra.cy, x2 = rb.l - 2, y2 = rb.cy;
+    const dx = Math.max(30, (x2 - x1) / 2);
+    const d = `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
+    const hot = e.kind === 'supersedes' && (e.from === b || e.to === b);
+    const dim = ST().retired.has(e.from) || ST().retired.has(e.to);
+    const dashed = e.kind !== 'supersedes';
+    const stroke = hot ? 'hsl(var(--primary))' : e.kind === 'leaves open' || e.kind === 'flags' ? 'hsl(var(--open))' : 'hsl(var(--muted-foreground))';
+    const mk = hot ? 'url(#ahp)' : 'url(#ah)';
+    const markerAttr = e.to === B ? `marker-end="${mk}"` : `marker-start="${mk}"`;
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - 8;
+    return `<g opacity="${dim ? .3 : 1}"><path d="${d}" fill="none" stroke="${stroke}" stroke-width="${hot ? 1.6 : 1.2}" ${dashed ? 'stroke-dasharray="4 4"' : ''} ${markerAttr}/>
+      <text x="${mx}" y="${my}" text-anchor="middle" fill="${stroke}">${e.kind}</text></g>`;
+  }).join('');
+}
+
+function renderInspector() {
+  const el = document.getElementById('inspector'), t = T(), s = ST();
+  const id = s.selected;
+  if (!id) {
+    el.innerHTML = `<div class="border border-dashed hair rounded-2xl p-10 text-center text-muted-foreground">
+      <div class="font-serif text-2xl text-foreground">Select a version on the timeline</div>
+      <p class="mt-2 text-sm">You will see the source passage and can correct, retire, or mark it as binding.</p></div>`;
+    return;
+  }
+  const n = t.nodes[id], st = statusOf(id), corr = s.corrected[id];
+  const inChain = t.chain.includes(id);
+  const rel = t.edges.filter(e => e.from === id || e.to === id).map(e => {
+    const other = e.from === id ? e.to : e.from;
+    const verb = e.from === id ? e.kind : ({ supersedes: 'superseded by', restates: 'restated by', implements: 'implemented by', informs: 'informed by', flags: 'flagged by', 'leaves open': 'left open by' }[e.kind]);
+    return `<button class="block text-left hover:underline underline-offset-4" onclick="selectNode('${other}')"><span class="font-serif italic text-muted-foreground">${verb}</span> ${t.nodes[other].label} · <span class="font-mono text-[11px]">${short(t.nodes[other].doc)}</span> · ${valueOf(other)}</button>`;
+  }).join('');
+  const f = s.form;
+  el.innerHTML = `
+  <article class="bg-card border hair rounded-2xl p-8 fade-in">
+    <div class="flex flex-wrap items-center gap-2">${chipFor(id)}<span class="chip">${n.type.toLowerCase()}</span>${corr ? '<span class="chip">corrected</span>' : ''}</div>
+    <h3 class="font-serif text-[30px] leading-tight mt-4">${n.title}</h3>
+    <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
+      <span class="font-mono">${n.doc}</span><span>${n.date}</span><span>${n.cat}</span>${n.speaker ? `<span>${n.speaker}</span>` : ''}${n.section ? `<span>${n.section}</span>` : ''}
+    </div>
+    <blockquote class="mt-6 font-serif italic text-[21px] leading-relaxed border-l-2 ${st === 'binding' ? 'border-primary' : 'hair'} pl-5">${n.quote}</blockquote>
+    <div class="mt-6 grid sm:grid-cols-2 gap-6 text-[14px]">
+      <div><div class="caps text-muted-foreground mb-2">Extracted fact</div>
+        <div><span class="font-serif text-2xl ${st === 'binding' ? 'text-primary' : ''}">${valueOf(id)}</span> <span class="text-muted-foreground">· ${n.label}</span></div>
+        ${corr ? `<div class="mt-1 text-[12px] text-muted-foreground">Originally extracted <span class="line-through">${n.value}</span> · ${corr.reason}</div>` : ''}
+        <div class="mt-2 text-muted-foreground">${n.note || ''}</div></div>
+      <div><div class="caps text-muted-foreground mb-2">Links</div><div class="space-y-1.5">${rel || '<span class="text-muted-foreground">None</span>'}</div></div>
+    </div>
+    <div class="mt-8 pt-6 border-t hair">
+      <div class="flex flex-wrap gap-2">
+        <button class="btn" onclick="openForm('correct')" ${st === 'retired' ? 'disabled' : ''}>Correct</button>
+        ${st === 'retired'
+          ? `<button class="btn" onclick="restore('${id}')">Restore</button>`
+          : `<button class="btn danger" onclick="openForm('retire')">Retire</button>`}
+        <button class="btn primary" onclick="markBinding('${id}')" ${!inChain || st === 'binding' || st === 'retired' ? 'disabled' : ''} title="${inChain ? '' : 'Only versions in the decision chain can bind'}">Mark as binding</button>
+        ${s.override ? `<button class="btn" onclick="clearOverride()">Clear manual binding</button>` : ''}
+      </div>
+      ${f ? formHTML(f, id) : ''}
+    </div>
+  </article>`;
+  if (f) setTimeout(() => document.getElementById('formInput')?.focus(), 30);
+}
+function formHTML(kind, id) {
+  const isC = kind === 'correct';
+  return `<div class="mt-5 p-5 rounded-xl bg-muted/70 border hair fade-in">
+    <div class="caps text-muted-foreground">${isC ? 'Correct this fact' : 'Retire this fact'}</div>
+    <p class="text-[13px] text-muted-foreground mt-1">${isC ? 'The source passage stays as is; the extracted value is replaced and the next answer uses it.' : 'The fact stays visible in history but no longer binds. The next answer falls back along the supersedes chain.'}</p>
+    ${isC ? `<input id="formInput" class="field mt-3 font-serif text-lg" value="${valueOf(id)}">` : ''}
+    <input id="formReason" class="field mt-3" placeholder="${isC ? 'Reason, e.g. value mis-read from the passage' : 'Reason, e.g. no longer valid after board review'}">
+    <div class="mt-3 flex gap-2"><button class="btn ${isC ? 'primary' : 'danger'}" onclick="${isC ? `submitCorrect('${id}')` : `submitRetire('${id}')`}">${isC ? 'Save correction' : 'Retire fact'}</button><button class="btn" onclick="closeForm()">Cancel</button></div>
+  </div>`;
+}
+
+function renderAudit() {
+  document.getElementById('audit').innerHTML = [...ST().audit].reverse().map((a, i) => `
+    <li class="relative pl-6 pb-6 ${i === 0 && a.fresh ? 'fade-in' : ''}">
+      <span class="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${a.who === 'You' ? 'bg-primary' : 'bg-card border-2 hair'}"></span>
+      <div class="text-[11px] text-muted-foreground"><span class="font-medium ${a.who === 'You' ? 'text-primary' : 'text-foreground'}">${a.who}</span> · ${a.when}</div>
+      <div class="text-[14px] mt-1 leading-snug">${a.text}</div>
+      ${a.undo ? `<button class="mt-1.5 text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-4" onclick="${a.undo}">Undo</button>` : ''}
+    </li>`).join('');
+}
+
+function renderAll() { renderTabs(); renderAnswer(); renderTimeline(); renderInspector(); renderAudit(); }
+
+/* --------------------------------------------------------------- actions */
+function selectNode(id) {
+  ST().selected = id; ST().form = null;
+  renderTimeline(); renderInspector();
+  document.getElementById('inspector').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function openForm(k) { ST().form = k; renderInspector(); }
+function closeForm() { ST().form = null; renderInspector(); }
+function log(text, undo) {
+  ST().audit.forEach(a => a.fresh = false);
+  ST().audit.push({ who: 'You', when: 'just now', text, undo, fresh: true });
+}
+function afterChange(answerChanged) {
+  renderAnswer(); renderTimeline(); renderInspector(); renderAudit();
+  if (answerChanged) { const c = document.getElementById('answerCard'); c && c.classList.add('flash'); }
+}
+function submitRetire(id) {
+  const n = T().nodes[id], before = bindingId();
+  const reason = document.getElementById('formReason').value.trim() || 'no reason given';
+  ST().retired.add(id); if (ST().override === id) ST().override = null; ST().form = null;
+  const after = bindingId();
+  let txt = `Retired <b>${short(n.doc)}</b> “${valueOf(id)}”. <span class="text-muted-foreground">Reason: ${reason}</span>`;
+  if (before !== after && after) txt += `<br><span class="text-muted-foreground">Answer changed:</span> ${valueOf(before)} → <b class="text-primary">${valueOf(after)}</b>`;
+  const deps = Object.keys(T().nodes).filter(k => T().nodes[k].dependsOn === id);
+  if (deps.length) txt += `<br><span class="text-destructive">${deps.length} dependent fact flagged for review</span> (${deps.map(d => short(T().nodes[d].doc)).join(', ')})`;
+  log(txt, `restore('${id}', true)`);
+  afterChange(before !== after);
+}
+function restore(id, fromUndo) {
+  const before = bindingId();
+  ST().retired.delete(id);
+  log(`Restored <b>${short(T().nodes[id].doc)}</b> “${valueOf(id)}”${fromUndo ? ' (undo)' : ''}.`);
+  afterChange(before !== bindingId());
+}
+function submitCorrect(id) {
+  const v = document.getElementById('formInput').value.trim();
+  const reason = document.getElementById('formReason').value.trim() || 'no reason given';
+  if (!v || v === valueOf(id)) { closeForm(); return; }
+  const old = valueOf(id);
+  ST().corrected[id] = { value: v, reason };
+  ST().form = null;
+  log(`Corrected <b>${short(T().nodes[id].doc)}</b>: <span class="line-through text-muted-foreground">${old}</span> → <b>${v}</b>. <span class="text-muted-foreground">Reason: ${reason}</span>`);
+  afterChange(id === bindingId());
+}
+function markBinding(id) {
+  const before = bindingId();
+  ST().override = id;
+  log(`Marked <b>${short(T().nodes[id].doc)}</b> “${valueOf(id)}” as binding. <span class="text-muted-foreground">Overrides ${valueOf(before)}.</span>`, 'clearOverride()');
+  afterChange(before !== id);
+}
+function clearOverride() {
+  const before = bindingId();
+  ST().override = null;
+  log('Cleared manual binding; chain order applies again.');
+  afterChange(before !== bindingId());
+}
+function demoRetire() {
+  const b = bindingId(); if (!b) return;
+  mode = 'canon'; ST().selected = b; ST().form = 'retire';
+  renderTabs(); renderAnswer(); renderTimeline(); renderInspector();
+  document.getElementById('inspector').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+document.getElementById('modeCanon').onclick = () => { mode = 'canon'; renderTabs(); renderAnswer(); };
+document.getElementById('modeCompare').onclick = () => { mode = 'compare'; renderTabs(); renderAnswer(); };
+window.addEventListener('resize', () => requestAnimationFrame(drawEdges));
+document.fonts && document.fonts.ready.then(() => requestAnimationFrame(drawEdges));
+
+S.q01.selected = 'T5';
+renderAll();
+</script>
+</body>
+</html>

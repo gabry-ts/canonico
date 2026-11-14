@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canonico · Prototype B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'ui-monospace', 'monospace'] },
+        colors: {
+          background: 'hsl(var(--background))', foreground: 'hsl(var(--foreground))',
+          card: 'hsl(var(--card))', popover: 'hsl(var(--popover))',
+          muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
+          border: 'hsl(var(--border))', input: 'hsl(var(--input))', ring: 'hsl(var(--ring))',
+          primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))' },
+          accent: { DEFAULT: 'hsl(var(--accent))', foreground: 'hsl(var(--accent-foreground))' },
+          destructive: 'hsl(var(--destructive))',
+          t: {
+            decision: 'hsl(var(--type-decision))', constraint: 'hsl(var(--type-constraint))',
+            evidence: 'hsl(var(--type-evidence))', hypothesis: 'hsl(var(--type-hypothesis))',
+            superseded: 'hsl(var(--type-superseded))', open: 'hsl(var(--type-open))'
+          }
+        }
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    /* light fallback (dark-first product) */
+    --background: 220 14% 98%; --foreground: 222 20% 10%;
+    --card: 0 0% 100%; --popover: 0 0% 100%;
+    --muted: 220 12% 94%; --muted-foreground: 220 8% 42%;
+    --border: 220 12% 88%; --input: 220 12% 88%; --ring: 78 80% 38%;
+    --primary: 78 80% 36%; --primary-foreground: 0 0% 100%;
+    --accent: 220 12% 93%; --accent-foreground: 222 20% 10%;
+    --destructive: 0 72% 50%;
+    --type-decision: 78 80% 36%; --type-constraint: 32 90% 45%; --type-evidence: 205 80% 45%;
+    --type-hypothesis: 265 60% 55%; --type-superseded: 220 6% 55%; --type-open: 345 75% 52%;
+  }
+  .dark {
+    --background: 228 9% 5%; --foreground: 220 14% 91%;
+    --card: 228 8% 7.5%; --popover: 228 8% 9%;
+    --muted: 228 7% 11%; --muted-foreground: 222 6% 56%;
+    --border: 228 7% 15%; --input: 228 7% 18%; --ring: 78 92% 58%;
+    --primary: 78 92% 58%; --primary-foreground: 228 9% 6%;
+    --accent: 228 7% 13%; --accent-foreground: 220 14% 91%;
+    --destructive: 0 75% 62%;
+    --type-decision: 78 92% 58%; --type-constraint: 36 95% 60%; --type-evidence: 199 85% 64%;
+    --type-hypothesis: 262 80% 74%; --type-superseded: 222 6% 46%; --type-open: 345 88% 68%;
+  }
+  html, body { background: hsl(var(--background)); color: hsl(var(--foreground)); }
+  body { font-feature-settings: "cv11", "ss01"; -webkit-font-smoothing: antialiased; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .hair { border-color: hsl(var(--border)); }
+  .badge { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: .06em; font-weight: 600;
+    padding: 1px 5px; border-radius: 3px; border: 1px solid currentColor; line-height: 14px; white-space: nowrap; }
+  .chip { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; padding: 0 5px; border-radius: 3px;
+    border: 1px solid hsl(var(--border)); background: hsl(var(--muted)); color: hsl(var(--muted-foreground));
+    line-height: 17px; display: inline-flex; align-items: center; gap: 4px; vertical-align: 1px; cursor: pointer; white-space: nowrap; }
+  .chip:hover, .chip.on { border-color: hsl(var(--primary)); color: hsl(var(--primary)); }
+  .chip .dot { width: 5px; height: 5px; border-radius: 99px; background: currentColor; }
+  .fact { transition: background .15s, box-shadow .15s, opacity .2s; }
+  .fact.hl { background: hsl(var(--accent)); box-shadow: inset 2px 0 0 hsl(var(--primary)); }
+  .struck .claim { text-decoration: line-through; text-decoration-color: hsl(var(--muted-foreground) / .7); color: hsl(var(--muted-foreground)); }
+  .struck { opacity: .62; }
+  .act { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: hsl(var(--muted-foreground)); padding: 1px 6px; border-radius: 3px; border: 1px solid transparent; }
+  .act:hover { color: hsl(var(--foreground)); border-color: hsl(var(--border)); background: hsl(var(--muted)); }
+  .act.danger:hover { color: hsl(var(--destructive)); }
+  .act.pin:hover, .act.pin.on { color: hsl(var(--primary)); }
+  .kbd { font-family: 'JetBrains Mono', monospace; font-size: 10px; border: 1px solid hsl(var(--border)); border-bottom-width: 2px; padding: 0 4px; border-radius: 3px; color: hsl(var(--muted-foreground)); }
+  .scroll::-webkit-scrollbar { width: 8px; } .scroll::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 8px; }
+  .fade-in { animation: fi .28s ease-out both; } @keyframes fi { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .ghost { background: repeating-linear-gradient(135deg, transparent 0 6px, hsl(var(--muted) / .55) 6px 7px); }
+  .diff-del { background: hsl(var(--destructive) / .09); color: hsl(var(--destructive)); }
+  .diff-add { background: hsl(var(--primary) / .09); color: hsl(var(--primary)); }
+  .binding-val { color: hsl(var(--primary)); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .grid-bg { background-image: linear-gradient(hsl(var(--border) / .35) 1px, transparent 1px); background-size: 100% 28px; }
+  .step-dot[data-on="1"] { background: hsl(var(--primary)); border-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+  .step-dot[data-done="1"] { border-color: hsl(var(--primary) / .6); color: hsl(var(--primary)); }
+</style>
+</head>
+<body class="font-sans text-[13px] min-h-screen lg:h-screen lg:overflow-hidden flex flex-col">
+
+<!-- prototype strip -->
+<div class="h-7 shrink-0 flex items-center justify-between px-3 border-b hair bg-card text-[11px]">
+  <div class="flex items-center gap-3 min-w-0">
+    <span class="mono text-muted-foreground truncate">Prototype B · Chat with visible memory</span>
+    <nav class="mono flex items-center gap-1">
+      <a href="a.html" class="px-1.5 rounded text-muted-foreground hover:text-foreground">A</a>
+      <span class="px-1.5 rounded bg-muted text-foreground">B</span>
+      <a href="c.html" class="px-1.5 rounded text-muted-foreground hover:text-foreground">C</a>
+    </nav>
+  </div>
+  <span class="mono uppercase tracking-wider text-[10px] px-1.5 border hair rounded text-muted-foreground">Static prototype</span>
+</div>
+
+<!-- app bar -->
+<header class="h-11 shrink-0 flex items-center gap-4 px-4 border-b hair">
+  <div class="flex items-center gap-2">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="2" stroke="hsl(var(--primary))" stroke-width="1.4"/><path d="M5 8h6M8 5v6" stroke="hsl(var(--primary))" stroke-width="1.4"/></svg>
+    <span class="font-semibold tracking-tight">Canonico</span>
+  </div>
+  <div class="mono text-[11px] text-muted-foreground hidden md:flex items-center gap-1.5 min-w-0">
+    <span>clearpath</span><span class="opacity-40">/</span><span>org-consulting-clearpath</span><span class="opacity-40">/</span><span class="text-foreground">ask</span>
+  </div>
+  <div class="ml-auto flex items-center gap-3">
+    <div id="stepper" class="hidden lg:flex items-center gap-1.5 mono text-[10.5px]"></div>
+    <button id="resetBtn" class="act">reset</button>
+    <button id="nextBtn" class="mono text-[11px] font-semibold px-2.5 h-7 rounded bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-2">
+      <span id="nextLabel">Next step</span><span class="opacity-70">→</span>
+    </button>
+  </div>
+</header>
+
+<main class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(420px,560px)]">
+  <!-- chat -->
+  <section class="flex flex-col min-h-[70vh] lg:min-h-0 border-r hair">
+    <div class="h-9 shrink-0 flex items-center justify-between px-4 border-b hair">
+      <span class="mono text-[11px] text-muted-foreground">thread · onboarding & audit review</span>
+      <span class="mono text-[10.5px] text-muted-foreground flex items-center gap-2"><span class="inline-block w-1.5 h-1.5 rounded-full bg-primary"></span>answers from binding memory only</span>
+    </div>
+    <div id="chat" class="flex-1 min-h-0 overflow-y-auto scroll px-4 lg:px-8 py-6 space-y-5"></div>
+    <div class="shrink-0 border-t hair p-3">
+      <div class="flex items-center gap-2 border hair rounded-md bg-card px-3 h-10">
+        <span class="mono text-[11px] text-primary">›</span>
+        <input id="composer" class="flex-1 bg-transparent outline-none text-[13px] placeholder:text-muted-foreground" placeholder="Ask the company brain…" readonly>
+        <span class="kbd">→</span><span class="mono text-[10.5px] text-muted-foreground">next step</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- memory panel -->
+  <aside class="flex flex-col min-h-[70vh] lg:min-h-0 bg-card">
+    <div class="h-9 shrink-0 flex items-center justify-between px-4 border-b hair">
+      <span class="text-[12px] font-medium">Memory in use</span>
+      <span id="panelMeta" class="mono text-[10.5px] text-muted-foreground"></span>
+    </div>
+    <div id="panel" class="flex-1 min-h-0 overflow-y-auto scroll"></div>
+    <div class="shrink-0 border-t hair px-4 py-2 flex flex-wrap gap-x-3 gap-y-1 items-center">
+      <span class="badge text-t-decision">DECISION</span><span class="badge text-t-constraint">CONSTRAINT</span><span class="badge text-t-evidence">EVIDENCE</span><span class="badge text-t-hypothesis">HYPOTHESIS</span><span class="badge text-t-superseded">SUPERSEDED</span><span class="badge text-t-open">OPEN QUESTION</span>
+    </div>
+  </aside>
+</main>
+
+<footer class="h-7 shrink-0 flex items-center justify-between px-4 border-t hair mono text-[10.5px] text-muted-foreground">
+  <span>Data: OIDA Benchmark Corpora (Bottino, Ferrero, Dosio, Beneventano), CC BY 4.0</span>
+  <span class="hidden md:inline">corpus org-consulting-clearpath · queries q01, q02</span>
+</footer>
+
+<div id="toast" class="fixed bottom-10 right-4 mono text-[11px] bg-popover border hair rounded px-3 py-2 shadow-lg opacity-0 pointer-events-none transition-opacity"></div>
+
+<script>
+const Q1 = 'What onboarding time target did Meridian Labs ultimately recommend, and how did that target shift from the client’s original goal over the engagement?';
+const Q2 = 'Why do the team leads disagree about how long a report spends in the audit queue, and was the discrepancy ever resolved with hard data?';
+
+const TYPES = { DECISION:'decision', CONSTRAINT:'constraint', EVIDENCE:'evidence', HYPOTHESIS:'hypothesis', SUPERSEDED:'superseded', 'OPEN QUESTION':'open' };
+
+// Facts: quotes are verbatim from the corpus; ids M-xxx and classifications are sample UI state.
+const FACTS = {
+  'M-106': { q:'q01', type:'DECISION', date:'2025-11-28', doc:'07-documents/report-final', loc:'§ Recommendations', claim:'Onboarding SLA: 3–4 weeks', quote:'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)', group:'used', note:'binding · latest decision document' },
+  'M-107': { q:'q01', type:'EVIDENCE', date:'2026-01-06', doc:'07-documents/implementation-roadmap', loc:'row P1.1d', claim:'Roadmap carries the 3–4 week target', quote:'Communicate 3-4 week target to team; establish tracking', group:'used', note:'corroborates M-106' },
+  'M-105': { q:'q01', type:'SUPERSEDED', date:'2025-11-21', doc:'05-meetings/meeting-005-final-presentation', loc:'[10:08]', claim:'Target recommendation: 4 weeks', quote:'Our target recommendation is four weeks total for new consultants to be fully autonomous and billing-ready.', group:'ignored', by:'M-106', note:'preview, replaced by final report' },
+  'M-104': { q:'q01', type:'HYPOTHESIS', date:'2025-10-15', doc:'05-meetings/meeting-003-interim-review', loc:'[10:08] [11:12]', claim:'Actual onboarding ≈ 6.5–7 weeks', quote:'we estimate closer to six and a half to seven weeks', quote2:'this isn’t instrumented data', group:'ignored', note:'estimate, not a target' },
+  'M-103': { q:'q01', type:'CONSTRAINT', date:'2025-09-29', doc:'01-scope/requirements', loc:'R1.1', claim:'Requirement: 3 weeks or less', quote:'Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.', group:'conflict', note:'active constraint · not linked to any later decision' },
+  'M-102': { q:'q01', type:'SUPERSEDED', date:'2025-08-22', doc:'01-scope/project-brief', loc:'§ Onboarding', claim:'Client goal: below 3 weeks', quote:'Our target is to bring this below three weeks.', group:'ignored', by:'M-103', note:'restated as requirement R1.1' },
+  'M-101': { q:'q01', type:'EVIDENCE', date:'2025-08-22', doc:'01-scope/project-brief', loc:'§ Onboarding', claim:'Baseline ≈ 6 weeks', quote:'takes approximately six weeks before they can operate independently on client engagements.', group:'ignored', note:'older baseline · history only' },
+
+  'M-201': { q:'q02', type:'EVIDENCE', date:'2025-10-02', doc:'02-subject/observation-003-audit-workflow', loc:'§ Data Collection Gaps', claim:'Marco Fiore: 3–4 business days', quote:'Marco Fiore estimated: 3–4 business days', group:'contested' },
+  'M-202': { q:'q02', type:'EVIDENCE', date:'2025-10-02', doc:'02-subject/observation-003-audit-workflow', loc:'§ Data Collection Gaps', claim:'Laura Galli: 6–8 business days', quote:'Laura Galli estimated: 6–8 business days', group:'contested' },
+  'M-203': { q:'q02', type:'EVIDENCE', date:'2025-10-02', doc:'02-subject/observation-003-audit-workflow', loc:'§ Data Collection Gaps', claim:'Junior auditor: 2–3 days', quote:'One junior auditor estimated: 2–3 days', group:'contested' },
+  'M-204': { q:'q02', type:'OPEN QUESTION', date:'2025-10-02', doc:'02-subject/bottleneck-analysis', loc:'BN-002', claim:'Real audit queue time is unmeasured', quote:'no data available — estimate only', group:'used', note:'no owner · no instrumentation recorded' },
+  'M-205': { q:'q02', type:'EVIDENCE', date:'2025-10-02', doc:'02-subject/observation-003-audit-workflow', loc:'§ Data Collection Gaps', claim:'Stage times cannot be measured', quote:'it was not possible to measure the actual time spent at each stage of the audit queue', group:'used' },
+  'M-206': { q:'q02', type:'HYPOTHESIS', date:'2025-11-28', doc:'07-documents/report-final', loc:'§ Executive summary', claim:'“5–8 day average”', quote:'Audit process bottleneck (5–8 day average, 3–5 day variance)', group:'ignored', note:'restates estimates · no measurement cited' },
+  'M-207': { q:'q02', type:'HYPOTHESIS', date:'2025-11-21', doc:'05-meetings/meeting-005-final-presentation', loc:'[10:14]', claim:'“Current state is five to eight days”', quote:'Current state is five to eight days.', group:'ignored', note:'restates estimates · no measurement cited' },
+  'M-208': { q:'q02', type:'EVIDENCE', date:'2025-08-22', doc:'01-scope/project-brief', loc:'§ Audit', claim:'CEO: queue backs up 5–8 days, never measured', quote:'we’ve never systematically measured it.', group:'ignored', note:'self-reported, pre-engagement' }
+};
+
+const state = { step: 0, retired103: false, retireOpen: false, user: {} }; // user: id -> {retired, pinned, corrected}
+
+const STEPS = ['ask q01', 'retire a fact', 'ask again', 'ask q02'];
+
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function badge(type){ return `<span class="badge text-t-${TYPES[type]}">${type}</span>`; }
+function chip(id, label){ return `<span class="chip" data-ref="${id}"><span class="dot"></span>${label}</span>`; }
+function shortDoc(d){ return d.split('/')[1]; }
+
+/* ---------------- chat ---------------- */
+function userMsg(text, time){
+  return `<div class="fade-in flex justify-end"><div class="max-w-[640px]">
+    <div class="mono text-[10.5px] text-muted-foreground text-right mb-1">you · ${time}</div>
+    <div class="bg-muted border hair rounded-md px-3.5 py-2.5 leading-relaxed">${text}</div></div></div>`;
+}
+function ghost(answer, doc, note){
+  return `<div class="fade-in max-w-[720px] ghost border border-dashed hair rounded-md px-3.5 py-2.5">
+    <div class="flex items-center justify-between mb-1.5">
+      <span class="mono text-[10.5px] uppercase tracking-wider text-muted-foreground">What plain retrieval says</span>
+      <span class="mono text-[10.5px] text-muted-foreground">top-1 by similarity · ${doc}</span>
+    </div>
+    <div class="text-muted-foreground leading-relaxed">${answer}</div>
+    <div class="mono text-[10.5px] mt-1.5 text-t-open">${note}</div>
+  </div>`;
+}
+function botWrap(inner, time, status){
+  return `<div class="fade-in max-w-[720px]">
+    <div class="flex items-center gap-2 mb-1.5">
+      <span class="mono text-[10.5px] text-foreground font-semibold">canonico</span>
+      <span class="mono text-[10.5px] text-muted-foreground">${time}</span>
+      ${status}
+    </div>
+    <div class="border hair rounded-md bg-card px-4 py-3 leading-relaxed space-y-2.5">${inner}</div></div>`;
+}
+function pill(text, cls){ return `<span class="mono text-[10px] px-1.5 rounded border ${cls}">${text}</span>`; }
+
+function trajectory(retired){
+  const row = (date, val, id, type, struck) => `<div class="flex items-center gap-3 py-1 ${struck?'text-muted-foreground':''}">
+      <span class="mono text-[10.5px] w-[74px] shrink-0 text-muted-foreground">${date}</span>
+      <span class="mono text-[12px] w-[78px] shrink-0 ${struck?'line-through':''} ${type==='DECISION'?'binding-val':''}">${val}</span>
+      <span class="shrink-0">${badge(type)}</span>
+      ${chip(id, shortDoc(FACTS[id].doc))}</div>`;
+  return `<div class="border-t hair pt-2">
+    <div class="mono text-[10.5px] text-muted-foreground uppercase tracking-wider mb-1">How the target moved</div>
+    ${row('2025-08-22','<3 wk','M-102','SUPERSEDED',true)}
+    ${row('2025-09-29','≤3 wk','M-103', retired?'SUPERSEDED':'CONSTRAINT', retired)}
+    ${row('2025-10-15','6.5–7 wk','M-104','HYPOTHESIS',false).replace('<span class="mono text-[12px]','<span title="observed actual, not a target" class="mono text-[12px]')}
+    ${row('2025-11-21','4 wk','M-105','SUPERSEDED',true)}
+    ${row('2025-11-28','3–4 wk','M-106','DECISION',false)}
+  </div>`;
+}
+
+function answerQ1(after){
+  const head = `<p><span class="binding-val text-[15px]">3–4 weeks</span> to autonomy is the onboarding SLA Meridian Labs ultimately recommended in the Final Engagement Report ${chip('M-106','report-final')}, carried into the roadmap ${chip('M-107','implementation-roadmap · P1.1d')}.</p>
+    <p class="text-muted-foreground">The client started from a goal of under three weeks ${chip('M-102','project-brief')}. The interim review observed the real duration at roughly 6.5–7 weeks, flagged as an estimate ${chip('M-104','meeting-003')}. The preview proposed four weeks ${chip('M-105','meeting-005 · 10:08')}, then the final report set the 3–4 week range.</p>`;
+  const conflict = `<div class="border border-[hsl(var(--type-constraint)/.45)] bg-[hsl(var(--type-constraint)/.07)] rounded px-3 py-2 text-[12.5px]">
+      <div class="mono text-[10.5px] text-t-constraint mb-0.5">⚠ 1 unresolved conflict</div>
+      Active ${badge('CONSTRAINT')} ${chip('M-103','requirements · R1.1')} still says <em>“3 weeks or less”</em>. The binding upper bound (4 weeks) breaks it. Nothing in memory says R1.1 was replaced.
+      <button class="act ml-1" data-goto="2">review in panel →</button></div>`;
+  const resolved = `<p class="text-muted-foreground">Requirement R1.1 (“3 weeks or less”) is no longer binding ${chip('M-103','requirements · R1.1')}. Meridian explained that three weeks <em>“assumes significant curriculum standardization and a dedicated onboarding coordinator role”</em> ${chip('M-105','meeting-005 · 10:08')}.</p>`;
+  return head + (after ? resolved : conflict) + trajectory(after);
+}
+
+function diffBlock(){
+  return `<div class="fade-in max-w-[720px] border hair rounded-md overflow-hidden">
+    <div class="flex items-center justify-between px-3 py-1.5 bg-muted border-b hair">
+      <span class="mono text-[10.5px]"><span class="text-primary">Δ</span> answer changed because you retired <span class="text-foreground">M-103</span></span>
+      <span class="mono text-[10.5px] text-muted-foreground">vs. answer at 14:02</span>
+    </div>
+    <div class="mono text-[11.5px] leading-6">
+      <div class="px-3 text-muted-foreground">  value          3–4 weeks  (unchanged · M-106)</div>
+      <div class="px-3 diff-del">− status         BINDING · 1 unresolved conflict</div>
+      <div class="px-3 diff-add">+ status         BINDING · clean</div>
+      <div class="px-3 diff-del">− M-103 R1.1     CONSTRAINT · active · “3 weeks or less”</div>
+      <div class="px-3 diff-add">+ M-103 R1.1     SUPERSEDED by M-106 · reason quoted from meeting-005 [10:08]</div>
+      <div class="px-3 text-muted-foreground">  sources        5 cited · 0 new · 1 reclassified</div>
+    </div></div>`;
+}
+
+function eventLine(text){
+  return `<div class="fade-in flex items-center gap-3 mono text-[10.5px] text-muted-foreground"><span class="h-px flex-1 bg-[hsl(var(--border))]"></span><span>${text}</span><span class="h-px flex-1 bg-[hsl(var(--border))]"></span></div>`;
+}
+
+function answerQ2(){
+  const col = (id, who, val) => `<div class="border hair rounded px-3 py-2 bg-background">
+      <div class="mono text-[10.5px] text-muted-foreground">${who}</div>
+      <div class="mono text-[16px] font-semibold text-t-evidence my-0.5">${val}</div>
+      ${chip(id,'observation-003')}</div>`;
+  return `<p><span class="mono font-semibold text-t-open">No binding value.</span> This is contested and still an open question, so Canonico does not pick one number.</p>
+    <div class="grid grid-cols-3 gap-2">
+      ${col('M-201','Marco Fiore · audit lead','3–4 d')}
+      ${col('M-202','Laura Galli · audit lead','6–8 d')}
+      ${col('M-203','junior auditor','2–3 d')}
+    </div>
+    <p class="text-muted-foreground"><strong class="text-foreground font-medium">Why they disagree:</strong> ClearPath does not track the queue, so <em>“it was not possible to measure the actual time spent at each stage of the audit queue”</em> ${chip('M-205','observation-003')}. The observer read the spread as <em>“either inconsistent execution or inconsistent understanding of the process”</em>.</p>
+    <p class="text-muted-foreground"><strong class="text-foreground font-medium">Resolved with hard data?</strong> No. The bottleneck log keeps BN-002 as <em>“no data available — estimate only”</em> ${chip('M-204','bottleneck-analysis · BN-002')}. Later documents quote 5–8 days ${chip('M-206','report-final')} ${chip('M-207','meeting-005 · 10:14')} without citing a measurement, so they stay hypotheses.</p>
+    <div class="border border-[hsl(var(--type-open)/.45)] bg-[hsl(var(--type-open)/.07)] rounded px-3 py-2 text-[12.5px] flex items-center gap-3">
+      ${badge('OPEN QUESTION')}<span class="flex-1">Measure real audit queue time per stage. No owner yet.</span>
+      <button class="act" data-toast="Owner request sent (sample)">assign owner</button></div>`;
+}
+
+function renderChat(){
+  const s = state.step; let h = '';
+  if (s === 0) {
+    h = `<div class="h-full flex flex-col items-center justify-center text-center gap-4 py-16">
+      <div class="mono text-[11px] text-muted-foreground uppercase tracking-wider">ClearPath · 46 documents · 214 facts in memory</div>
+      <div class="text-[22px] font-medium tracking-tight max-w-[520px] leading-snug">Ask anything. See which facts the answer stands on, and which ones it refused.</div>
+      <div class="flex flex-col gap-2 w-full max-w-[560px] mt-2">
+        <button data-goto="1" class="text-left border hair rounded px-3 py-2 hover:bg-muted"><span class="mono text-[10.5px] text-muted-foreground mr-2">q01</span>${Q1}</button>
+        <button data-goto="4" class="text-left border hair rounded px-3 py-2 hover:bg-muted"><span class="mono text-[10.5px] text-muted-foreground mr-2">q02</span>${Q2}</button>
+      </div>
+      <div class="mono text-[10.5px] text-muted-foreground mt-2">press <span class="kbd">→</span> to run the scripted demo</div></div>`;
+  }
+  if (s >= 1) {
+    h += userMsg(Q1, '14:02');
+    h += ghost('Meridian Labs recommended a <strong class="text-foreground/80">four-week</strong> onboarding target.', 'meeting-005-final-presentation', '✕ stale: preview of 2025-11-21, replaced by the final report a week later');
+    h += botWrap(answerQ1(false), '14:02', pill('BINDING · 1 conflict','text-t-constraint border-[hsl(var(--type-constraint)/.5)]'));
+  }
+  if (s >= 3) {
+    h += eventLine('you retired M-103 · requirements R1.1 → SUPERSEDED by M-106 · 14:04');
+    h += userMsg(Q1, '14:05');
+    h += botWrap(answerQ1(true), '14:05', pill('BINDING · clean','text-primary border-[hsl(var(--primary)/.5)]'));
+    h += diffBlock();
+  }
+  if (s >= 4) {
+    h += userMsg(Q2, '14:07');
+    h += ghost('A report spends <strong class="text-foreground/80">5–8 days</strong> in the audit queue on average.', 'report-final', '✕ picks one estimate and states it as fact; hides a factor-of-3 disagreement');
+    h += botWrap(answerQ2(), '14:07', pill('CONTESTED · OPEN QUESTION','text-t-open border-[hsl(var(--type-open)/.5)]'));
+  }
+  const chat = document.getElementById('chat');
+  chat.innerHTML = h;
+  chat.classList.toggle('grid-bg', s === 0);
+  chat.scrollTop = chat.scrollHeight;
+  document.getElementById('composer').value = s === 0 ? '' : (s >= 4 ? Q2 : Q1);
+}
+
+/* ---------------- panel ---------------- */
+function factView(id){
+  const f = FACTS[id]; const u = state.user[id] || {};
+  let type = f.type, by = f.by;
+  if (id === 'M-103' && state.retired103) { type = 'SUPERSEDED'; by = 'M-106'; }
+  if (u.retired) type = 'SUPERSEDED';
+  const struck = type === 'SUPERSEDED';
+  const pinned = u.pinned || (f.type === 'DECISION' && !u.retired);
+  const claim = u.corrected || f.claim;
+  const isConflict = id === 'M-103' && !state.retired103;
+  let extra = '';
+  if (id === 'M-103' && state.retired103) extra = `<div class="mono text-[10.5px] text-primary mt-1">retired by you · 14:04 · “final report sets 3–4 wk; meeting-005 [10:08] explains why 3 wk was dropped”</div>`;
+  if (u.retired && id !== 'M-103') extra = `<div class="mono text-[10.5px] text-primary mt-1">retired by you · next answer will not use it</div>`;
+  if (u.corrected) extra += `<div class="mono text-[10.5px] text-primary mt-1">corrected by you · was “${esc(f.claim)}”</div>`;
+  if (u.pinned && f.type !== 'DECISION') extra += `<div class="mono text-[10.5px] text-primary mt-1">pinned as binding by you</div>`;
+
+  const retireForm = (id === 'M-103' && state.retireOpen && !state.retired103) ? `
+    <div class="mt-2 border hair rounded bg-background p-2.5 space-y-2 fade-in">
+      <div class="mono text-[10.5px] text-muted-foreground uppercase tracking-wider">Retire M-103</div>
+      <div class="grid grid-cols-[88px_1fr] gap-x-2 gap-y-1.5 items-center text-[12px]">
+        <span class="mono text-[10.5px] text-muted-foreground">new type</span><span>${badge('SUPERSEDED')}</span>
+        <span class="mono text-[10.5px] text-muted-foreground">superseded by</span><span class="mono text-[11px]"><span class="text-primary">M-106</span> · report-final · SLA 3–4 wk</span>
+        <span class="mono text-[10.5px] text-muted-foreground">reason</span><span class="border hair rounded px-2 py-1 bg-card text-[12px]">Final report sets 3–4 wk; meeting-005 [10:08] explains why 3 wk was dropped.</span>
+      </div>
+      <div class="flex items-center justify-between pt-1">
+        <span class="mono text-[10.5px] text-muted-foreground">affects 3 cached answers</span>
+        <div class="flex gap-1.5"><button class="act" data-cancel>cancel</button>
+        <button class="mono text-[10.5px] font-semibold px-2 py-0.5 rounded bg-primary text-primary-foreground" data-goto="3">confirm retire</button></div>
+      </div></div>` : '';
+
+  return `<div id="fact-${id}" class="fact px-4 py-3 border-b hair ${struck?'struck':''} ${isConflict?'bg-[hsl(var(--type-constraint)/.06)]':''} ${pinned && !struck?'shadow-[inset_2px_0_0_hsl(var(--primary))]':''}">
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="mono text-[10.5px] text-muted-foreground">${id}</span>
+      ${badge(type)}
+      ${pinned && !struck ? '<span class="mono text-[10px] text-primary">● binding</span>' : ''}
+      ${isConflict ? '<span class="mono text-[10px] text-t-constraint">⚠ conflicts with M-106</span>' : ''}
+      <span class="ml-auto mono text-[10.5px] text-muted-foreground">${f.date}</span>
+    </div>
+    <div class="claim mt-1 font-medium ${pinned && !struck ? 'text-primary' : ''}">${esc(claim)}</div>
+    <div class="mt-1 text-[12px] text-muted-foreground leading-snug border-l hair pl-2">“${esc(f.quote)}”${f.quote2?` · “${esc(f.quote2)}”`:''}</div>
+    <div class="mt-1.5 flex items-center gap-2 flex-wrap mono text-[10.5px] text-muted-foreground">
+      <span class="truncate">${f.doc} <span class="opacity-60">${f.loc}</span></span>
+      ${by ? `<a href="#fact-${by}" class="text-foreground hover:text-primary" data-jump="${by}">superseded by ${by} →</a>` : ''}
+      ${f.note && !(id==='M-103'&&state.retired103) ? `<span class="opacity-70">· ${f.note}</span>` : ''}
+    </div>
+    ${extra}
+    <div class="mt-1.5 flex items-center gap-1 -ml-1.5">
+      <button class="act" data-act="correct" data-id="${id}">Correct</button>
+      <button class="act danger" data-act="retire" data-id="${id}">${(u.retired || (id==='M-103'&&state.retired103)) ? 'Restore' : 'Retire'}</button>
+      <button class="act pin ${u.pinned?'on':''}" data-act="pin" data-id="${id}">${u.pinned ? 'Unpin' : 'Pin as binding'}</button>
+    </div>
+    <div class="correct-slot"></div>
+    ${retireForm}
+  </div>`;
+}
+
+function section(title, count, ids, hint){
+  if (!ids.length) return '';
+  return `<div class="sticky top-0 z-10 bg-card/95 backdrop-blur px-4 py-1.5 border-b hair flex items-center justify-between">
+      <span class="mono text-[10.5px] uppercase tracking-wider">${title} <span class="text-muted-foreground">${count}</span></span>
+      <span class="mono text-[10.5px] text-muted-foreground">${hint}</span></div>` + ids.map(factView).join('');
+}
+
+function chainQ1(){
+  const n = (id, val, cls) => `<a href="#fact-${id}" data-jump="${id}" class="mono text-[10.5px] px-1.5 py-0.5 rounded border hair ${cls}">${val}</a>`;
+  const arrow = '<span class="mono text-[10px] text-muted-foreground">→</span>';
+  return `<div class="px-4 py-2.5 border-b hair">
+    <div class="mono text-[10.5px] text-muted-foreground mb-1.5">SUPERSEDES chain · onboarding target</div>
+    <div class="flex items-center gap-1.5 flex-wrap">
+      ${n('M-102','<3wk','line-through text-muted-foreground')}${arrow}
+      ${n('M-103','≤3wk', state.retired103 ? 'line-through text-muted-foreground' : 'text-t-constraint border-[hsl(var(--type-constraint)/.5)]')}${state.retired103?arrow:'<span class="mono text-[10px] text-t-constraint">⇢ ?</span>'}
+      ${n('M-105','4wk','line-through text-muted-foreground')}${arrow}
+      ${n('M-106','3–4wk','text-primary border-[hsl(var(--primary)/.6)] font-semibold')}
+      <span class="mono text-[10px] text-muted-foreground ml-1">· M-104 6.5–7wk observed, not a target</span>
+    </div></div>`;
+}
+
+function renderPanel(){
+  const s = state.step; const panel = document.getElementById('panel'); const meta = document.getElementById('panelMeta');
+  if (s === 0) {
+    meta.textContent = 'idle';
+    panel.innerHTML = `<div class="p-6 text-muted-foreground text-[12.5px] leading-relaxed">
+      <div class="mono text-[10.5px] uppercase tracking-wider mb-2">Nothing in use yet</div>
+      When you ask, every fact the answer relies on shows up here with its type, date and source passage. Facts it refuses to use stay visible, struck through, with the link to what replaced them.</div>`;
+    return;
+  }
+  if (s < 4) {
+    const used = ['M-106','M-107'];
+    const conflict = state.retired103 ? [] : ['M-103'];
+    const ignored = ['M-105','M-104', ...(state.retired103 ? ['M-103'] : []), 'M-102','M-101'];
+    meta.textContent = `q01 · ${used.length} relied on · ${conflict.length} conflict · ${ignored.length} ignored`;
+    panel.innerHTML = chainQ1()
+      + section('Relied on', used.length, used, 'binding + corroborating')
+      + section('Needs review', conflict.length, conflict, 'active constraint vs binding decision')
+      + section('Deliberately ignored', ignored.length, ignored, 'history, not binding');
+  } else {
+    const contested = ['M-201','M-202','M-203'], used = ['M-204','M-205'], ignored = ['M-206','M-207','M-208'];
+    meta.textContent = `q02 · 3 contested · ${used.length} relied on · ${ignored.length} ignored`;
+    panel.innerHTML = `<div class="px-4 py-2.5 border-b hair">
+        <div class="mono text-[10.5px] text-muted-foreground mb-1.5">CONTRADICTS · audit queue time · same source, same day</div>
+        <div class="flex items-center gap-1.5 mono text-[10.5px] flex-wrap">
+          <a data-jump="M-203" href="#fact-M-203" class="px-1.5 py-0.5 rounded border hair text-t-evidence">2–3d</a><span class="text-t-open">⟷</span>
+          <a data-jump="M-201" href="#fact-M-201" class="px-1.5 py-0.5 rounded border hair text-t-evidence">3–4d</a><span class="text-t-open">⟷</span>
+          <a data-jump="M-202" href="#fact-M-202" class="px-1.5 py-0.5 rounded border hair text-t-evidence">6–8d</a>
+          <span class="text-muted-foreground ml-1">factor ×3 · no measurement</span></div></div>`
+      + section('Contested', 3, contested, 'shown side by side, none picked')
+      + section('Relied on', used.length, used, 'why it is open')
+      + section('Deliberately ignored', ignored.length, ignored, 'restated estimates');
+  }
+}
+
+/* ---------------- stepper ---------------- */
+function renderStepper(){
+  document.getElementById('stepper').innerHTML = STEPS.map((l,i) => {
+    const n = i+1; const on = state.step === n ? 1 : 0; const done = state.step > n ? 1 : 0;
+    return `<button data-goto="${n}" class="flex items-center gap-1.5 ${on?'text-foreground':'text-muted-foreground'} hover:text-foreground">
+      <span class="step-dot w-4 h-4 rounded-full border hair grid place-items-center text-[9.5px]" data-on="${on}" data-done="${done}">${n}</span>${l}</button>${n<4?'<span class="w-3 h-px bg-[hsl(var(--border))]"></span>':''}`;
+  }).join('');
+  document.getElementById('nextLabel').textContent = state.step >= 4 ? 'Restart' : (state.step === 2 ? 'Confirm retire' : 'Next step');
+}
+
+function go(n){
+  state.step = n;
+  state.retireOpen = n === 2;
+  state.retired103 = n >= 3;
+  render();
+  document.getElementById('panel').scrollTop = 0;
+  if (n === 2 || n === 3) setTimeout(() => { const el = document.getElementById('fact-M-103'); if (el) { el.scrollIntoView({block:'center', behavior:'smooth'}); flash('M-103'); } }, 50);
+  if (n === 3) toast('M-103 retired · re-asking q01');
+}
+function render(){ renderChat(); renderPanel(); renderStepper(); }
+
+function flash(id){ const el = document.getElementById('fact-'+id); if (!el) return; el.classList.add('hl'); setTimeout(() => el.classList.remove('hl'), 1400); }
+let tt; function toast(t){ const el = document.getElementById('toast'); el.textContent = t; el.style.opacity = 1; clearTimeout(tt); tt = setTimeout(() => el.style.opacity = 0, 2200); }
+
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-goto]'); if (g) { go(+g.dataset.goto); return; }
+  if (e.target.closest('[data-cancel]')) { state.retireOpen = false; renderPanel(); return; }
+  const t = e.target.closest('[data-toast]'); if (t) { toast(t.dataset.toast); return; }
+  const j = e.target.closest('[data-jump]'); if (j) { e.preventDefault(); const el = document.getElementById('fact-'+j.dataset.jump); if (el) { el.scrollIntoView({block:'center', behavior:'smooth'}); flash(j.dataset.jump); } return; }
+  const c = e.target.closest('.chip[data-ref]'); if (c) { const el = document.getElementById('fact-'+c.dataset.ref); if (el) { el.scrollIntoView({block:'center', behavior:'smooth'}); flash(c.dataset.ref); } return; }
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  const id = a.dataset.id; const u = state.user[id] = state.user[id] || {};
+  if (a.dataset.act === 'retire') {
+    if (id === 'M-103' && state.step === 1) { go(2); return; }
+    if (id === 'M-103' && state.retired103) { state.retired103 = false; toast('M-103 restored · next answer will flag the conflict again'); renderPanel(); return; }
+    u.retired = !u.retired; toast(u.retired ? `${id} retired · next answer will not use it` : `${id} restored`); renderPanel();
+  }
+  if (a.dataset.act === 'pin') { u.pinned = !u.pinned; toast(u.pinned ? `${id} pinned as binding` : `${id} unpinned`); renderPanel(); }
+  if (a.dataset.act === 'correct') {
+    const slot = a.closest('.fact').querySelector('.correct-slot');
+    slot.innerHTML = `<div class="mt-2 flex gap-1.5 fade-in"><input class="flex-1 bg-background border hair rounded px-2 py-1 text-[12px] outline-none focus:border-[hsl(var(--primary))]" value="${esc(u.corrected || FACTS[id].claim).replace(/"/g,'&quot;')}">
+      <button class="mono text-[10.5px] font-semibold px-2 rounded bg-primary text-primary-foreground" data-save="${id}">save</button></div>`;
+    slot.querySelector('input').focus();
+  }
+});
+document.addEventListener('click', e => {
+  const s = e.target.closest('[data-save]'); if (!s) return;
+  const id = s.dataset.save; const v = s.parentElement.querySelector('input').value.trim();
+  if (v) { (state.user[id] = state.user[id] || {}).corrected = v; toast(`${id} corrected · next answer will use it`); renderPanel(); }
+});
+document.addEventListener('mouseover', e => {
+  const c = e.target.closest('.chip[data-ref]'); if (!c) return;
+  const el = document.getElementById('fact-'+c.dataset.ref); if (el) el.classList.add('hl');
+  c.addEventListener('mouseleave', () => el && el.classList.remove('hl'), { once: true });
+});
+document.getElementById('nextBtn').addEventListener('click', () => go(state.step >= 4 ? 0 : state.step + 1));
+document.getElementById('resetBtn').addEventListener('click', () => { state.user = {}; go(0); });
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' && !e.target.readOnly) return;
+  if (e.key === 'ArrowRight') go(Math.min(4, state.step + 1));
+  if (e.key === 'ArrowLeft') go(Math.max(0, state.step - 1));
+});
+render();
+</script>
+</body>
+</html>

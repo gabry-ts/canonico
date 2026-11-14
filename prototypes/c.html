@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canonico Benchmark Governance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
+    --muted: 40 8% 94%;
+    --muted-foreground: 0 0% 38%;
+    --border: 0 0% 4%;
+    --border-soft: 0 0% 84%;
+    --primary: 8 92% 50%;          /* signal red: the one accent */
+    --primary-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --placeholder: 0 0% 55%;
+  }
+  html { font-family: 'Archivo', system-ui, sans-serif; }
+  body { background: hsl(var(--background)); color: hsl(var(--foreground)); }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  .wide { font-stretch: 112%; }
+  .narrow { font-stretch: 75%; }
+  .rule { border-color: hsl(var(--border)); }
+  .rule-soft { border-color: hsl(var(--border-soft)); }
+  /* hatched fill = not measured yet */
+  .hatch { background-image: repeating-linear-gradient(-45deg, currentColor 0 2px, transparent 2px 6px); }
+  .ph-badge { display:inline-flex; align-items:center; gap:4px; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.04em; text-transform:uppercase; border:1px dashed hsl(var(--placeholder)); color:hsl(var(--muted-foreground)); padding:1px 5px; white-space:nowrap; }
+  .chip { display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; letter-spacing:.06em; padding:2px 6px; text-transform:uppercase; white-space:nowrap; line-height:1.4; }
+  .chip-decision { background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); }
+  .chip-constraint { background:hsl(var(--foreground)); color:hsl(var(--background)); }
+  .chip-evidence { border:1.5px solid hsl(var(--foreground)); }
+  .chip-hypothesis { border:1.5px dashed hsl(var(--foreground)); }
+  .chip-superseded { background:hsl(var(--muted)); color:hsl(var(--muted-foreground)); text-decoration:line-through; }
+  .chip-open { border:1.5px solid hsl(var(--primary)); color:hsl(var(--primary)); }
+  .row-q { cursor:pointer; }
+  .row-q:hover td { background:hsl(var(--muted)); }
+  .row-q.is-open td { background:hsl(var(--foreground)); color:hsl(var(--background)); }
+  .row-q.is-open .gold-cell, .row-q.is-open .text-muted-foreground { color:hsl(var(--background) / .7); }
+  .row-q.is-open .g3 { background:hsl(var(--background)); color:hsl(var(--foreground)); }
+  .row-q.is-open .g2 { border-color:hsl(var(--background)); }
+  .grade { display:inline-grid; place-items:center; width:20px; height:20px; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; }
+  .g3 { background:hsl(var(--foreground)); color:hsl(var(--background)); }
+  .g2 { border:2px solid hsl(var(--foreground)); }
+  .g1 { border:1px solid hsl(var(--muted-foreground)); color:hsl(var(--muted-foreground)); }
+  .g0, .gn { border:1px dashed hsl(var(--border-soft)); color:hsl(var(--muted-foreground)); }
+  .flash { animation: flash 1.2s ease-out; }
+  @keyframes flash { 0% { background:hsl(var(--primary) / .25);} 100% { background:transparent; } }
+  @media (prefers-reduced-motion: reduce) { .flash { animation:none; } }
+</style>
+<script>
+  tailwind.config = { theme: { extend: { colors: {
+    background:'hsl(var(--background))', foreground:'hsl(var(--foreground))',
+    muted:{ DEFAULT:'hsl(var(--muted))', foreground:'hsl(var(--muted-foreground))' },
+    primary:{ DEFAULT:'hsl(var(--primary))', foreground:'hsl(var(--primary-foreground))' },
+    border:'hsl(var(--border))'
+  } } } };
+</script>
+</head>
+<body class="antialiased">
+
+<!-- Header strip -->
+<div class="bg-foreground text-background">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-10 h-9 flex items-center justify-between mono text-[11px] uppercase tracking-wider">
+    <div class="flex items-center gap-4">
+      <span><span class="text-primary font-semibold">Prototype C</span> · Benchmark &amp; governance</span>
+      <nav class="hidden sm:flex gap-3 text-background/60">
+        <a href="a.html" class="hover:text-background">A</a>
+        <a href="b.html" class="hover:text-background">B</a>
+        <span class="text-background underline underline-offset-4">C</span>
+      </nav>
+    </div>
+    <span class="border border-background/40 px-2 py-[1px]">Static prototype</span>
+  </div>
+</div>
+
+<main class="max-w-[1440px] mx-auto px-4 md:px-10">
+
+  <!-- Masthead -->
+  <header class="grid grid-cols-12 gap-x-6 pt-10 pb-8 border-b-4 rule">
+    <div class="col-span-12 lg:col-span-7">
+      <div class="mono text-xs uppercase tracking-widest text-muted-foreground mb-3">Canonico / Evaluation &amp; memory governance</div>
+      <h1 class="wide font-black text-[44px] md:text-[76px] leading-[0.9] tracking-tight">Which version<br>is binding<span class="text-primary">?</span></h1>
+    </div>
+    <div class="col-span-12 lg:col-span-5 flex flex-col justify-end gap-4 mt-6 lg:mt-0">
+      <p class="text-[17px] leading-snug max-w-[46ch]">Plain retrieval returns whatever document matches. Canonico types every fact, links versions with <b>SUPERSEDES</b> edges and answers with the binding one. This board measures the difference on the ClearPath corpus and queues stale facts for retirement.</p>
+      <dl class="grid grid-cols-4 border-t-2 rule pt-3 mono text-[11px] uppercase">
+        <div><dt class="text-muted-foreground">Corpus</dt><dd class="font-semibold text-sm normal-case">ClearPath</dd></div>
+        <div><dt class="text-muted-foreground">Docs</dt><dd class="font-semibold text-sm">46</dd></div>
+        <div><dt class="text-muted-foreground">Queries</dt><dd class="font-semibold text-sm">26</dd></div>
+        <div><dt class="text-muted-foreground">Qrels</dt><dd class="font-semibold text-sm">107 · 0–3</dd></div>
+      </dl>
+    </div>
+  </header>
+
+  <!-- 01 Headline comparison -->
+  <section class="py-10 border-b-4 rule">
+    <div class="flex flex-wrap items-baseline justify-between gap-3 mb-6">
+      <h2 class="flex items-baseline gap-4"><span class="mono text-primary text-sm font-semibold">01</span><span class="wide font-extrabold text-2xl md:text-3xl tracking-tight">Headline comparison</span></h2>
+      <div class="flex items-center gap-4 mono text-[11px] uppercase">
+        <span class="flex items-center gap-2"><span class="inline-block w-4 h-3 hatch text-foreground/40 border border-foreground/40"></span>Plain retrieval</span>
+        <span class="flex items-center gap-2"><span class="inline-block w-4 h-3 hatch text-primary border border-primary"></span>Canonico</span>
+        <span class="ph-badge" style="border-color:hsl(var(--primary));color:hsl(var(--primary))">No run yet · all values illustrative</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-t-2 border-l-2 rule" id="kpis"></div>
+    <p class="mono text-[11px] text-muted-foreground mt-3">Bars are hatched until a run is recorded. Round numbers are placeholders chosen to show layout, not outcomes.</p>
+  </section>
+
+  <!-- 02 Query table -->
+  <section class="py-10 border-b-4 rule">
+    <div class="flex flex-wrap items-baseline justify-between gap-3 mb-2">
+      <h2 class="flex items-baseline gap-4"><span class="mono text-primary text-sm font-semibold">02</span><span class="wide font-extrabold text-2xl md:text-3xl tracking-tight">26 queries, grouped by what they test</span></h2>
+      <div class="mono text-[11px] text-muted-foreground uppercase">Click a row to drill down · q01 fully scripted</div>
+    </div>
+    <p class="text-sm text-muted-foreground mb-6 max-w-[90ch]">Query ids, <span class="mono">tests</span> tags, difficulty and gold documents (grade 3) are real, from <span class="mono">queries.jsonl</span> and <span class="mono">qrels/test.tsv</span>. Answer sources and pass/fail are illustrative until measured. Grouping is our reading of the <span class="mono">tests</span> tag.</p>
+
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[1100px] text-left border-collapse">
+        <thead>
+          <tr class="border-b-2 rule mono text-[10px] uppercase tracking-wider text-muted-foreground align-bottom">
+            <th class="py-2 pr-3 w-[52px]">ID</th>
+            <th class="py-2 pr-3">Query</th>
+            <th class="py-2 pr-3 w-[70px]">Diff.</th>
+            <th class="py-2 pr-3 w-[250px]">Plain answer source <span class="ph-badge ml-1">Illustrative</span></th>
+            <th class="py-2 pr-3 w-[250px]">Canonico answer source <span class="ph-badge ml-1">Illustrative</span></th>
+            <th class="py-2 pr-3 w-[250px]">Gold · grade 3 <span class="text-foreground">(qrels)</span></th>
+            <th class="py-2 w-[90px] text-right">Plain / Can.</th>
+          </tr>
+        </thead>
+        <tbody id="qbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 03 Maintenance queue -->
+  <section class="py-10 border-b-4 rule">
+    <div class="flex flex-wrap items-baseline justify-between gap-3 mb-6">
+      <h2 class="flex items-baseline gap-4"><span class="mono text-primary text-sm font-semibold">03</span><span class="wide font-extrabold text-2xl md:text-3xl tracking-tight">Memory maintenance queue</span></h2>
+      <div class="flex gap-0 border-2 rule mono text-[11px] uppercase">
+        <div class="px-4 py-2 border-r-2 rule"><div class="text-muted-foreground">Pending</div><div class="wide font-black text-3xl leading-none" id="cntPending">4</div></div>
+        <div class="px-4 py-2 border-r-2 rule bg-primary text-primary-foreground"><div class="opacity-80">Retired</div><div class="wide font-black text-3xl leading-none" id="cntRetired">0</div></div>
+        <div class="px-4 py-2"><div class="text-muted-foreground">Kept</div><div class="wide font-black text-3xl leading-none" id="cntKept">0</div></div>
+      </div>
+    </div>
+    <p class="text-sm text-muted-foreground mb-6 max-w-[90ch]">Facts that a newer binding version has replaced, yet are still being retrieved. Retiring a fact removes it from answers and keeps it in the SUPERSEDES chain for audit. Keeping it records a reason.</p>
+
+    <div class="grid grid-cols-12 gap-6">
+      <div class="col-span-12 lg:col-span-8" id="queue"></div>
+      <aside class="col-span-12 lg:col-span-4">
+        <div class="border-2 rule">
+          <div class="bg-foreground text-background px-4 py-2 mono text-[11px] uppercase tracking-wider flex justify-between"><span>Audit log</span><span>append-only</span></div>
+          <ol id="audit" class="mono text-[12px] divide-y rule-soft">
+            <li class="px-4 py-3 text-muted-foreground">09:12 · system · Ingested 46 docs, typed 46/46, 4 maintenance candidates proposed</li>
+          </ol>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <footer class="py-6 flex flex-wrap justify-between gap-3 mono text-[11px] text-muted-foreground">
+    <span>Data: OIDA Benchmark Corpora (Bottino, Ferrero, Dosio, Beneventano), CC BY 4.0</span>
+    <span>Canonico · Prototype C · static, no backend</span>
+  </footer>
+</main>
+
+<template id="drill-q01">
+  <tr class="drill"><td colspan="7" class="p-0">
+    <div class="border-x-2 border-b-2 rule bg-background p-5 md:p-7">
+      <!-- answers -->
+      <div class="grid grid-cols-12 gap-6 mb-8">
+        <div class="col-span-12 md:col-span-6">
+          <div class="mono text-[11px] uppercase text-muted-foreground mb-2">Plain retrieval answers <span class="ph-badge ml-1">Illustrative</span></div>
+          <p class="wide font-extrabold text-2xl leading-tight text-muted-foreground"><span class="line-through decoration-primary decoration-[3px]">“Below three weeks.”</span></p>
+          <p class="text-sm mt-2">Quotes the client goal in <span class="mono">01-scope/project-brief</span>: <i>“Our target is to bring this below three weeks.”</i> Stale: that target was revised twice.</p>
+        </div>
+        <div class="col-span-12 md:col-span-6 md:border-l-2 rule md:pl-6">
+          <div class="mono text-[11px] uppercase text-muted-foreground mb-2 flex items-center gap-2">Canonico answers <span class="chip chip-decision">Decision · binding</span></div>
+          <p class="wide font-extrabold text-2xl leading-tight">“3–4 weeks to full autonomy.”</p>
+          <p class="text-sm mt-2">Cites <span class="mono">07-documents/report-final</span>: <i>“Onboarding time: 6–8 weeks → 3–4 weeks (37–40% reduction).”</i></p>
+          <p class="text-sm mt-2 q01-warn border-l-4 border-primary pl-3"><b>Caveat:</b> the superseded goal “below three weeks” is still active in memory and retrievable. See maintenance queue item M-01.</p>
+        </div>
+      </div>
+
+      <!-- SUPERSEDES chain -->
+      <div class="mono text-[11px] uppercase text-muted-foreground mb-3">Onboarding target · SUPERSEDES chain (real passages)</div>
+      <div class="grid grid-cols-1 md:grid-cols-5 border-2 rule mb-8">
+        <div class="p-3 border-b-2 md:border-b-0 md:border-r-2 rule q01-node-brief">
+          <div class="flex justify-between items-start"><span class="chip chip-evidence">Evidence</span><span class="mono text-[10px] text-muted-foreground">2025-08-22</span></div>
+          <div class="wide font-black text-4xl mt-2">6 wk</div>
+          <div class="text-xs mt-1">Current time to independence</div>
+          <div class="mono text-[10px] mt-2 text-muted-foreground">01-scope/project-brief</div>
+        </div>
+        <div class="p-3 border-b-2 md:border-b-0 md:border-r-2 rule bg-muted q01-node-goal">
+          <div class="flex justify-between items-start"><span class="chip chip-superseded q01-goal-chip">Superseded</span><span class="mono text-[10px] text-muted-foreground">2025-08-22</span></div>
+          <div class="wide font-black text-4xl mt-2 text-muted-foreground">&lt;3 wk</div>
+          <div class="text-xs mt-1">Client goal</div>
+          <div class="mono text-[10px] mt-2 text-muted-foreground">01-scope/project-brief</div>
+          <div class="mono text-[10px] mt-1 q01-goal-state text-primary font-semibold">Still retrievable</div>
+        </div>
+        <div class="p-3 border-b-2 md:border-b-0 md:border-r-2 rule">
+          <div class="flex justify-between items-start"><span class="chip chip-evidence">Evidence</span><span class="mono text-[10px] text-muted-foreground">2025-10-15</span></div>
+          <div class="wide font-black text-4xl mt-2">6.5–7 wk</div>
+          <div class="text-xs mt-1">Observed time to autonomy</div>
+          <div class="mono text-[10px] mt-2 text-muted-foreground">05-meetings/meeting-003-interim-review</div>
+        </div>
+        <div class="p-3 border-b-2 md:border-b-0 md:border-r-2 rule bg-muted">
+          <div class="flex justify-between items-start"><span class="chip chip-superseded">Superseded</span><span class="mono text-[10px] text-muted-foreground">2025-11-21</span></div>
+          <div class="wide font-black text-4xl mt-2 text-muted-foreground">4 wk</div>
+          <div class="text-xs mt-1">Preview recommendation</div>
+          <div class="mono text-[10px] mt-2 text-muted-foreground">05-meetings/meeting-005-final-presentation</div>
+        </div>
+        <div class="p-3 bg-primary text-primary-foreground">
+          <div class="flex justify-between items-start"><span class="chip bg-background text-primary">Decision · binding</span><span class="mono text-[10px] opacity-80">2025-11-28</span></div>
+          <div class="wide font-black text-4xl mt-2">3–4 wk</div>
+          <div class="text-xs mt-1">Final recommendation, onboarding SLA</div>
+          <div class="mono text-[10px] mt-2 opacity-90">07-documents/report-final</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-x-6 gap-y-1 mono text-[11px] -mt-6 mb-8">
+        <span><b>report-final</b> SUPERSEDES <b>meeting-005</b> (4 wk → 3–4 wk)</span>
+        <span><b>meeting-005</b> SUPERSEDES <b>project-brief</b> goal (&lt;3 wk → 4 wk)</span>
+        <span class="text-muted-foreground">meeting-003 is EVIDENCE that informed the revision</span>
+      </div>
+
+      <!-- ranked docs -->
+      <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-12 lg:col-span-6">
+          <div class="flex justify-between items-baseline border-b-2 rule pb-1 mb-1">
+            <span class="wide font-extrabold">Plain retrieval · top 5</span>
+            <span class="mono text-[11px]">nDCG@10 <b>0.50</b> <span class="ph-badge">Illustrative</span></span>
+          </div>
+          <ol class="text-sm" id="plainRank"></ol>
+        </div>
+        <div class="col-span-12 lg:col-span-6">
+          <div class="flex justify-between items-baseline border-b-2 rule pb-1 mb-1">
+            <span class="wide font-extrabold">Canonico · top 5</span>
+            <span class="mono text-[11px]">nDCG@10 <b>0.90</b> <span class="ph-badge">Illustrative</span></span>
+          </div>
+          <ol class="text-sm" id="canRank"></ol>
+        </div>
+      </div>
+      <p class="mono text-[10px] text-muted-foreground mt-3">Rank order is illustrative. Grade boxes are real qrels for q01 (3 = gold, 2, 1; dashed = not judged). Type chips are Canonico's classification, shown on both lists for comparison.</p>
+    </div>
+  </td></tr>
+</template>
+
+<script>
+// ---------- real data (queries.jsonl + qrels/test.tsv, ClearPath) ----------
+const QRELS = {"q01":[["05-meetings/meeting-005-final-presentation",3],["07-documents/report-final",3],["01-scope/project-brief",2],["05-meetings/meeting-003-interim-review",2],["01-scope/requirements",1],["07-documents/implementation-roadmap",1]],"q02":[["02-subject/observation-003-audit-workflow",3],["02-subject/bottleneck-analysis",2],["07-documents/report-final",1],["05-meetings/meeting-005-final-presentation",1],["01-scope/project-brief",1]],"q03":[["02-subject/observation-002-v2-client-intake",3],["02-subject/observation-002-client-intake",2],["05-meetings/meeting-002-discovery-ops",1],["02-subject/observation-005-knowledge-sharing",0]],"q04":[["05-meetings/meeting-005-final-presentation",3],["07-documents/report-final",3],["05-meetings/meeting-002-discovery-ops",1],["07-documents/implementation-roadmap",1]],"q05":[["04-external-comms/email/email-external-011",3],["04-external-comms/email/email-external-010",3],["04-external-comms/email/email-external-012",2],["04-external-comms/email/email-external-005",2],["04-external-comms/slack/client-channel",1],["01-scope/statement-of-work",1]],"q06":[["03-internal-comms/email/email-internal-003",3],["03-internal-comms/email/email-internal-004",3],["02-subject/observation-002-client-intake",2],["05-meetings/meeting-002-discovery-ops",2],["07-documents/report-final",1]],"q07":[["03-internal-comms/email/email-internal-005",3],["03-internal-comms/email/email-internal-006",3],["03-internal-comms/email/email-internal-004",2],["04-external-comms/email/email-external-009",1]],"q08":[["03-internal-comms/email/email-internal-003",3],["02-subject/observation-002-client-intake",2],["01-scope/project-brief",2],["02-subject/process-map-current",1],["07-documents/report-final",1]],"q09":[["02-subject/observation-003-audit-workflow",3],["02-subject/bottleneck-analysis",2],["05-meetings/meeting-004-workshop-design",1],["07-documents/report-final",1]],"q10":[["03-internal-comms/email/email-internal-007",3],["02-subject/bottleneck-analysis",2],["03-internal-comms/email/email-internal-004",1],["07-documents/report-final",0]],"q11":[["03-internal-comms/email/email-internal-002",3],["03-internal-comms/email/email-internal-004",3],["03-internal-comms/email/email-internal-005",2],["04-external-comms/slack/client-channel",2],["02-subject/observation-003-audit-workflow",1]],"q12":[["03-internal-comms/email/email-internal-004",3],["03-internal-comms/email/email-internal-001",2],["03-internal-comms/slack/project-clearpath",2],["04-external-comms/email/email-external-006",1]],"q13":[["02-subject/observation-001-onboarding",3],["01-scope/requirements",2],["05-meetings/meeting-005-final-presentation",1],["07-documents/report-final",1]],"q14":[["02-subject/observation-004-reporting",3],["02-subject/bottleneck-analysis",2],["02-subject/observation-005-knowledge-sharing",1],["07-documents/report-final",1]],"q15":[["02-subject/observation-005-knowledge-sharing",3],["07-documents/report-final",2],["02-subject/observation-004-reporting",1]],"q16":[["02-subject/observation-005-knowledge-sharing",3],["01-scope/requirements",2],["05-meetings/meeting-002-discovery-ops",1],["03-internal-comms/email/email-internal-001",1]],"q17":[["07-documents/implementation-roadmap",3],["07-documents/report-final",3],["05-meetings/meeting-005-final-presentation",1]],"q18":[["05-meetings/meeting-005-final-presentation",3],["07-documents/report-final",2],["07-documents/implementation-roadmap",1]],"q19":[["05-meetings/meeting-005-final-presentation",3],["07-documents/report-final",3],["02-subject/bottleneck-analysis",1],["07-documents/presentation-interim",1]],"q20":[["03-internal-comms/email/email-internal-008",3],["05-meetings/meeting-005-final-presentation",2],["07-documents/report-final",1],["03-internal-comms/email/email-internal-004",1]],"q21":[["03-internal-comms/email/email-internal-001",3],["03-internal-comms/slack/project-clearpath",3],["01-scope/statement-of-work",1],["04-external-comms/email/email-external-001",1]],"q22":[["05-meetings/meeting-001-kickoff",3],["03-internal-comms/email/email-internal-001",1],["04-external-comms/email/email-external-001",0]],"q23":[["07-documents/report-final",3],["06-market-context/competitor-benchmark",2],["07-documents/presentation-interim",1],["07-documents/proposal-initial",1]],"q24":[["02-subject/observation-002-client-intake",3],["05-meetings/meeting-002-discovery-ops",3],["01-scope/requirements",2],["07-documents/report-final",1]],"q25":[["05-meetings/meeting-003-interim-review",3],["01-scope/project-brief",2],["02-subject/observation-001-onboarding",1],["07-documents/report-final",1]],"q26":[["04-external-comms/email/email-external-011",3],["04-external-comms/email/email-external-012",2],["04-external-comms/email/email-external-010",1]]};
+
+// [id, short text, tests tag, difficulty]
+const Q = {
+  q01:["Onboarding target Meridian finally recommended, and how it shifted","onboarding_target_evolution","medium"],
+  q02:["Why team leads disagree on audit-queue time; resolved with data?","audit_cycle_time_estimates","hard"],
+  q03:["Marco Fiore's active clients during intake; conflicting numbers?","marco_client_load","hard"],
+  q04:["Is the 18% junior turnover verified; what depends on it?","turnover_unverified","hard"],
+  q05:["Was the Milan office in scope, and how was that decided?","milan_scope_change","medium"],
+  q06:["Early hypothesis that intake was worse than expected: confirmed?","intake_worse_than_expected","medium"],
+  q07:["Why the workplan was resequenced, and the new sequence","timeline_resequencing","medium"],
+  q08:["Observed end-to-end intake cycle time vs internal target","intake_cycle_time_finding","medium"],
+  q09:["What in the audit workflow stayed unmeasurable or unresolved","audit_workflow_unresolved","hard"],
+  q10:["Severity ratings the analyst was not fully confident in","severity_rating_confidence","hard"],
+  q11:["How David Park's availability constrained audit-trail analysis","david_park_availability","medium"],
+  q12:["Data-access limit from the Q3 2024 database migration","data_access_migration","medium"],
+  q13:["IT provisioning problems on a new consultant's first day","onboarding_it_provisioning","easy"],
+  q14:["How a client report was assembled; template fragmentation","report_copy_paste","easy"],
+  q15:["State of the internal knowledge base; why it is not trusted","knowledge_wiki_defunct","medium"],
+  q16:["How many team leaders ClearPath has; where sources conflict","team_leader_count","hard"],
+  q17:["Phase-one quick wins and their owners","quick_wins_roadmap","medium"],
+  q18:["New role to own onboarding, and who was suggested","coordinator_role","medium"],
+  q19:["Audit-queue target committed: preview vs final report","audit_queue_target_value","hard"],
+  q20:["How Marcus Webb framed and ordered findings for the board","intake_lead_finding_framing","medium"],
+  q21:["Early concern about the SOW data-access clause and logs","data_access_sow_clause","medium"],
+  q22:["Personal connection between Marcus Webb and Thomas Reed","kickoff_relationship","easy"],
+  q23:["Team utilization vs industry benchmark","utilization_benchmark","medium"],
+  q24:["What breaks in the sales-to-delivery handoff","sales_to_delivery_handoff","medium"],
+  q25:["Actual time to autonomy vs the official six-week figure","onboarding_actual_vs_official","medium"],
+  q26:["Two Milan assessment options, and which was recommended","milan_assessment_depth","medium"]
+};
+const GROUPS = [
+  ["Evolving decisions","The answer changed over time; only one version binds.",["q01","q05","q07","q17","q18","q19","q20","q26"]],
+  ["Contradictions","Sources disagree; the conflict itself is the answer.",["q02","q03","q16","q25"]],
+  ["Open questions","Never resolved; must be flagged, not filled in.",["q09","q10","q11","q12","q21"]],
+  ["Refuted / unverified hypotheses","Early claims later tested, or never verified.",["q04","q06","q08"]],
+  ["Traps & controls","Single-source facts; both systems should pass.",["q13","q14","q15","q22","q23","q24"]]
+];
+
+// ---------- illustrative placeholders (not measured) ----------
+const KPIS = [
+  {k:"nDCG@10", plain:0.50, can:0.80, max:1, fmt:v=>v.toFixed(2)},
+  {k:"Binding-version accuracy", plain:40, can:80, max:100, fmt:v=>v+"%"},
+  {k:"Contradictions surfaced", plain:0, can:3, max:4, fmt:v=>v+" / 4"},
+  {k:"Open questions flagged", plain:0, can:4, max:5, fmt:v=>v+" / 5"}
+];
+
+const short = id => id.split('/').pop();
+const typeOf = { // Canonico classification used in this prototype
+  "07-documents/report-final":"decision","07-documents/implementation-roadmap":"decision",
+  "05-meetings/meeting-005-final-presentation":"superseded","01-scope/project-brief":"superseded",
+  "05-meetings/meeting-003-interim-review":"evidence","01-scope/requirements":"constraint",
+  "07-documents/proposal-initial":"hypothesis","02-subject/observation-001-onboarding":"evidence"
+};
+const chipLabel = {decision:"Decision",constraint:"Constraint",evidence:"Evidence",hypothesis:"Hypothesis",superseded:"Superseded",open:"Open question"};
+const chip = t => `<span class="chip chip-${t}">${chipLabel[t]}</span>`;
+const gradeOf = (q,d) => { const r=(QRELS[q]||[]).find(x=>x[0]===d); return r? r[1] : null; };
+const gradeBox = g => g===null ? `<span class="grade gn" title="not judged">–</span>` : `<span class="grade g${g}">${g}</span>`;
+
+// KPI tiles
+document.getElementById('kpis').innerHTML = KPIS.map((m,i)=>`
+  <div class="border-r-2 border-b-2 rule p-5 flex flex-col gap-4">
+    <div class="flex flex-col items-start gap-2 min-h-[48px]">
+      <div class="wide font-bold text-sm uppercase tracking-wide">${m.k}</div>
+      <span class="ph-badge">Illustrative — to be measured</span>
+    </div>
+    <div class="flex items-end gap-4">
+      <div class="wide font-black text-[56px] leading-none text-primary">${m.fmt(m.can)}</div>
+      <div class="pb-1"><div class="mono text-[10px] uppercase text-muted-foreground">Plain</div><div class="wide font-bold text-2xl leading-none text-muted-foreground">${m.fmt(m.plain)}</div></div>
+    </div>
+    <div class="space-y-1.5">
+      ${[["Plain",m.plain,"text-foreground/40 border-foreground/40"],["Canonico",m.can,"text-primary border-primary"]].map(([l,v,c])=>`
+        <div class="flex items-center gap-2">
+          <span class="mono text-[10px] uppercase w-16 text-muted-foreground">${l}</span>
+          <div class="flex-1 h-4 bg-muted relative">
+            <div class="absolute inset-y-0 left-0 hatch border ${c}" style="width:${Math.max(v/m.max*100,0.8)}%"></div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`).join('');
+
+// Query table
+let q01State = "warn"; // "warn" -> stale fact still retrievable ; "clean" after retirement
+function sourcesFor(qid, gi, idx){
+  const rels = QRELS[qid]; const gold = rels.filter(r=>r[1]===3);
+  const lower = rels.filter(r=>r[1]<3 && r[1]>0).sort((a,b)=>b[1]-a[1]);
+  let plain = (gi<=3 && idx%2===0 && lower.length) ? lower[0] : gold[0];
+  if(qid==="q01") plain = ["01-scope/project-brief",2];
+  const can = qid==="q01" ? ["07-documents/report-final",3] : gold[0];
+  return {plain, can, gold};
+}
+function srcCell(r, ok){
+  return `<div class="flex items-center gap-2">${gradeBox(r[1])}<span class="mono text-[12px] ${ok?'':'text-muted-foreground'}">${short(r[0])}</span></div>`;
+}
+function verdict(ok, flag){
+  if(flag) return `<span class="mono text-[11px] font-semibold px-1 border border-dashed border-current">FLAG</span>`;
+  return ok ? `<span class="mono text-[12px] font-semibold">PASS</span>` : `<span class="mono text-[12px] font-semibold text-primary">FAIL</span>`;
+}
+function renderTable(){
+  const tb = document.getElementById('qbody'); let html='';
+  GROUPS.forEach(([name,desc,ids],gi)=>{
+    html += `<tr><td colspan="7" class="pt-6 pb-2 border-b-2 rule">
+      <div class="flex items-baseline gap-3"><span class="wide font-black text-lg uppercase tracking-tight">${name}</span><span class="mono text-[11px] text-muted-foreground">${ids.length} queries · ${desc}</span></div></td></tr>`;
+    ids.forEach((qid,idx)=>{
+      const [txt,tag,diff] = Q[qid]; const s = sourcesFor(qid,gi,idx);
+      const plainOk = s.plain[1]===3; const canFlag = gi===2;
+      const goldHtml = s.gold.map(g=>`<span class="mono text-[12px] gold-cell">${short(g[0])}</span>`).join('<br>');
+      let note='';
+      if(qid==="q01") note = q01State==="warn"
+        ? `<div class="mt-1 mono text-[10px] uppercase text-primary font-semibold" id="q01note">1 superseded fact still retrievable</div>`
+        : `<div class="mt-1 mono text-[10px] uppercase font-semibold flash" id="q01note">Clean · stale goal retired by reviewer</div>`;
+      html += `<tr class="row-q border-b rule-soft ${qid==='q01'?'is-q01':''}" data-q="${qid}">
+        <td class="py-2.5 pr-3 align-top mono text-[12px] font-semibold">${qid}${qid==='q01'?' <span class="text-primary">▸</span>':''}</td>
+        <td class="py-2.5 pr-3 align-top"><div class="text-[14px] leading-snug">${txt}</div><div class="mono text-[10px] text-muted-foreground mt-0.5">${tag}</div>${note}</td>
+        <td class="py-2.5 pr-3 align-top mono text-[11px] uppercase">${diff}</td>
+        <td class="py-2.5 pr-3 align-top">${srcCell(s.plain, plainOk)}</td>
+        <td class="py-2.5 pr-3 align-top">${srcCell(s.can, true)}${qid==='q01'?`<div class="mt-1">${chip('decision')}</div>`:''}</td>
+        <td class="py-2.5 pr-3 align-top">${goldHtml}</td>
+        <td class="py-2.5 align-top text-right whitespace-nowrap">${verdict(plainOk)} <span class="text-muted-foreground">/</span> ${verdict(true, canFlag)}</td>
+      </tr>`;
+    });
+  });
+  tb.innerHTML = html;
+  tb.querySelectorAll('.row-q').forEach(tr=>tr.addEventListener('click',()=>toggle(tr)));
+  if(openQ) { const tr = tb.querySelector(`[data-q="${openQ}"]`); openQ=null; toggle(tr); }
+}
+let openQ = null;
+function toggle(tr){
+  const qid = tr.dataset.q;
+  document.querySelectorAll('.drill').forEach(d=>d.remove());
+  document.querySelectorAll('.row-q.is-open').forEach(r=>r.classList.remove('is-open'));
+  if(openQ===qid){ openQ=null; return; }
+  openQ = qid; tr.classList.add('is-open');
+  if(qid==='q01'){
+    tr.after(document.getElementById('drill-q01').content.cloneNode(true));
+    fillQ01();
+  } else {
+    const rels = QRELS[qid];
+    const row = document.createElement('tr'); row.className='drill';
+    row.innerHTML = `<td colspan="7" class="p-0"><div class="border-x-2 border-b-2 rule p-5 grid grid-cols-12 gap-6">
+      <div class="col-span-12 md:col-span-5"><div class="mono text-[11px] uppercase text-muted-foreground mb-2">Judged documents (real qrels)</div>
+        <ol class="text-sm">${rels.slice().sort((a,b)=>b[1]-a[1]).map(r=>`<li class="flex items-center gap-2 py-1 border-b rule-soft">${gradeBox(r[1])}<span class="mono text-[12px]">${r[0]}</span></li>`).join('')}</ol></div>
+      <div class="col-span-12 md:col-span-7 md:border-l-2 rule md:pl-6"><div class="mono text-[11px] uppercase text-muted-foreground mb-2">Drill-down</div>
+        <p class="wide font-extrabold text-xl leading-tight">Ranked lists, type chips and SUPERSEDES chain appear here after the first run.</p>
+        <p class="text-sm text-muted-foreground mt-2">Scripted in this prototype for <span class="mono">q01</span> only.</p></div>
+    </div></td>`;
+    tr.after(row);
+  }
+}
+function fillQ01(){
+  const plain = ["01-scope/project-brief","07-documents/proposal-initial","05-meetings/meeting-003-interim-review","02-subject/observation-001-onboarding","01-scope/requirements"];
+  const can = ["07-documents/report-final","05-meetings/meeting-005-final-presentation","05-meetings/meeting-003-interim-review","07-documents/implementation-roadmap","01-scope/project-brief"];
+  const li = (d,i,isCan)=>{
+    const retired = d==="01-scope/project-brief" && q01State==="clean";
+    const binding = isCan && d==="07-documents/report-final";
+    return `<li class="grid grid-cols-[24px_24px_1fr_auto] items-center gap-2 py-1.5 border-b rule-soft ${retired&&isCan?'opacity-50':''}">
+      <span class="mono text-[11px] text-muted-foreground">${i+1}</span>${gradeBox(gradeOf('q01',d))}
+      <span class="mono text-[12px] truncate ${retired&&isCan?'line-through':''} ${binding?'font-semibold':''}">${d}</span>
+      <span class="flex gap-1">${chip(typeOf[d])}${retired&&isCan?'<span class="chip chip-constraint">Retired</span>':''}${binding?'<span class="chip chip-open">Answer</span>':''}</span></li>`;
+  };
+  document.getElementById('plainRank').innerHTML = plain.map((d,i)=>li(d,i,false)).join('');
+  document.getElementById('canRank').innerHTML = can.map((d,i)=>li(d,i,true)).join('');
+  if(q01State==="clean"){
+    document.querySelectorAll('.q01-warn').forEach(e=>{ e.innerHTML='<b>Clean:</b> the superseded goal “below three weeks” was retired (M-01). It stays in the chain for audit and no longer competes as an answer.'; e.classList.remove('border-primary'); e.classList.add('border-foreground'); });
+    document.querySelectorAll('.q01-goal-state').forEach(e=>{ e.textContent='Retired · kept for audit'; e.classList.remove('text-primary'); });
+  }
+}
+renderTable();
+
+// ---------- maintenance queue (scripted) ----------
+const QUEUE = [
+  {id:"M-01", fact:"Onboarding target: below three weeks", src:"01-scope/project-brief", by:"07-documents/report-final", byTxt:"3–4 weeks", qs:"q01, q25", hits:"retrieved in top-3 for q01", type:"superseded", rec:"Retire"},
+  {id:"M-02", fact:"Onboarding recommendation: four weeks", src:"05-meetings/meeting-005-final-presentation", by:"07-documents/report-final", byTxt:"3–4 weeks", qs:"q01, q18", hits:"preview, replaced one week later", type:"superseded", rec:"Retire"},
+  {id:"M-03", fact:"Audit queue target: ≤2 business days", src:"01-scope/requirements · R3.1", by:"07-documents/report-final", byTxt:"5–8 → 3–4 days", qs:"q19, q02", hits:"also differs from preview (2–3 days)", type:"constraint", rec:"Retire"},
+  {id:"M-04", fact:"Marco Fiore manages 3 active clients", src:"02-subject/observation-002-client-intake", by:"02-subject/observation-002-v2-client-intake", byTxt:"5 clients; liaison records say 3", qs:"q03", hits:"conflict unresolved, not a supersession", type:"open", rec:"Keep"}
+];
+const state = {}; let retired=0, kept=0;
+function renderQueue(){
+  document.getElementById('queue').innerHTML = QUEUE.map(it=>{
+    const s = state[it.id];
+    return `<article class="border-2 rule mb-4 ${s?'bg-muted':''}" id="${it.id}">
+      <div class="grid grid-cols-12">
+        <div class="col-span-12 md:col-span-2 p-4 md:border-r-2 rule flex md:flex-col justify-between gap-2">
+          <span class="wide font-black text-2xl">${it.id}</span>${chip(it.type)}
+        </div>
+        <div class="col-span-12 md:col-span-7 p-4 md:border-r-2 rule">
+          <div class="wide font-extrabold text-lg leading-tight ${s==='retired'?'line-through decoration-primary decoration-2':''}">${it.fact}</div>
+          <div class="mono text-[11px] mt-2 grid grid-cols-[104px_1fr] gap-y-0.5">
+            <span class="text-muted-foreground">Source</span><span>${it.src}</span>
+            <span class="text-muted-foreground">${it.type==='open'?'Conflicts':'Superseded by'}</span><span>${it.by} <span class="text-muted-foreground">→ ${it.byTxt}</span></span>
+            <span class="text-muted-foreground">Queries</span><span>${it.qs} <span class="text-muted-foreground">· ${it.hits}</span></span>
+          </div>
+        </div>
+        <div class="col-span-12 md:col-span-3 p-4 flex flex-col justify-between gap-3">
+          <div class="mono text-[10px] uppercase text-muted-foreground">Proposed: <b class="text-foreground">${it.rec}</b></div>
+          ${s ? `<div class="mono text-[12px] font-semibold uppercase ${s==='retired'?'text-primary':''}">${s==='retired'?'Retired':'Kept · open question'}</div>
+                 <button data-undo="${it.id}" class="mono text-[11px] underline text-left">Undo</button>`
+              : `<div class="flex gap-2">
+                  <button data-act="retire" data-id="${it.id}" class="flex-1 bg-primary text-primary-foreground mono text-[11px] font-semibold uppercase py-2 px-2 hover:bg-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Approve retire</button>
+                  <button data-act="keep" data-id="${it.id}" class="flex-1 border-2 rule mono text-[11px] font-semibold uppercase py-2 px-2 hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Keep</button></div>`}
+        </div>
+      </div></article>`;
+  }).join('');
+  document.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()=>act(b.dataset.id,b.dataset.act)));
+  document.querySelectorAll('[data-undo]').forEach(b=>b.addEventListener('click',()=>undo(b.dataset.undo)));
+  document.getElementById('cntPending').textContent = QUEUE.length - Object.keys(state).length;
+  document.getElementById('cntRetired').textContent = retired;
+  document.getElementById('cntKept').textContent = kept;
+}
+const t = ()=>{ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+function log(msg){ const li=document.createElement('li'); li.className='px-4 py-3 flash'; li.innerHTML=msg; document.getElementById('audit').prepend(li); }
+function act(id, a){
+  const it = QUEUE.find(x=>x.id===id);
+  state[id] = a==='retire' ? 'retired' : 'kept';
+  if(a==='retire'){ retired++; log(`${t()} · head.of.knowledge · <b>RETIRE</b> ${id} “${it.fact}” · SUPERSEDES ← ${short(it.by)}`); }
+  else { kept++; log(`${t()} · head.of.knowledge · <b>KEEP</b> ${id} “${it.fact}” · reason: ${it.type==='open'?'open contradiction, flag in answers':'still referenced'}`); }
+  if(id==='M-01' && a==='retire'){ q01State='clean'; renderTable(); log(`${t()} · system · q01 re-evaluated, binding answer 3–4 wk, stale goal “below three weeks” no longer retrievable`); }
+  renderQueue();
+}
+function undo(id){
+  const it = QUEUE.find(x=>x.id===id);
+  if(state[id]==='retired') retired--; else kept--;
+  delete state[id];
+  log(`${t()} · head.of.knowledge · <b>UNDO</b> ${id} · restored to queue`);
+  if(id==='M-01'){ q01State='warn'; renderTable(); }
+  renderQueue();
+}
+renderQueue();
+</script>
+</body>
+</html>
