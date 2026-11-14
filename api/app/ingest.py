@@ -205,6 +205,75 @@ def run_classify_job(job_id: str, doc_id: str | None, fact_ids: list[str] | None
     _finish(job_id, meter, "done")
 
 
+def run_document_job(job_id: str, doc_id: str) -> None:
+    """Extract facts from one new document, file them under existing topics and link them."""
+    from app import engine
+
+    with STORE.write() as state:
+        job = next(j for j in state["jobs"] if j["id"] == job_id)
+        job["status"] = "running"
+        document = copy.deepcopy(state["documents"].get(doc_id))
+        models = dict(state["config"]["models"])
+        meter = llm.Meter(cap_usd=remaining_budget(state))
+    if document is None:
+        _finish(job_id, meter, "error")
+        return
+    try:
+        found = extract.extract_document(document, models["extraction"], meter)
+    except Exception:
+        _finish(job_id, meter, "error")
+        return
+    touched: dict[str, list[str]] = {}
+    with STORE.write() as state:
+        if doc_id not in state["documents"]:
+            _finish(job_id, meter, "error")
+            return
+        for raw in found:
+            ranked = engine.rank_topics(state, raw["topic_hint"] + " " + raw["value"])
+            if ranked and ranked[0][2] >= 0.5:
+                topic_id = ranked[0][0]
+            else:
+                topic_id = store.slugify(raw["topic_hint"])
+                state["topics"].setdefault(topic_id, {"id": topic_id, "label": raw["topic_hint"].capitalize(), "fact_ids": [], "x": {"keywords": [raw["topic_hint"]]}})
+            fact = ops.create_fact(
+                state,
+                topic=topic_id,
+                value=raw["value"],
+                type=raw["type"],
+                doc_id=doc_id,
+                quote=raw["quote"],
+                date=raw["date"],
+                confidence=raw["confidence"],
+                actor="system",
+                action="ingest",
+                x={"manual": False, "short": raw.get("short") or "", "label": f"the fact “{raw.get('short') or raw['value'][:60]}” from “{document['title']}”"},
+            )
+            touched.setdefault(topic_id, []).append(fact["id"])
+        job = next(j for j in state["jobs"] if j["id"] == job_id)
+        job["docs"], job["facts"] = 1, len(found)
+        snapshot = {t: [dict(f, tid=f["id"]) for f in copy.deepcopy(store.topic_facts(state, t))] for t in touched}
+        labels = {t: state["topics"][t]["label"] for t in touched}
+    links = []
+    try:
+        for topic_id, members in snapshot.items():
+            if len(members) >= 2:
+                result = extract.link_topic({"label": labels[topic_id], "question": ""}, members, models["classification"], meter)
+                links.extend(link for link in result["links"] if link["newer"] in touched[topic_id])
+    except Exception:
+        links = []
+    with STORE.write() as state:
+        for link in links:
+            older, newer = state["facts"].get(link["older"]), state["facts"].get(link["newer"])
+            if older is None or newer is None or older.get("superseded_by"):
+                continue
+            try:
+                ops.supersede(state, older, newer, link.get("reason") or "Replaced by a newer document.", "system")
+            except ops.ApiError:
+                continue
+        state.setdefault("meta", {})["ingested_at"] = store.now()
+    _finish(job_id, meter, "done")
+
+
 def start(target, *args) -> None:
     threading.Thread(target=target, args=args, daemon=True).start()
 
