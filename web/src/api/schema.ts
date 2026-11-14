@@ -941,6 +941,353 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/org": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the organisation
+         * @description The single organisation of the MVP, global brain over all projects. Real connectors (Gmail/Outlook OAuth, real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP. No authentication (demo).
+         */
+        get: operations["getOrg"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the organisation */
+        patch: operations["patchOrg"];
+        trace?: never;
+    };
+    "/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List projects
+         * @description Projects are isolated from each other. The organisation sees all of them.
+         */
+        get: operations["listProjects"];
+        put?: never;
+        /** Create a project */
+        post: operations["createProject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a project */
+        get: operations["getProject"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a project
+         * @description Deletes the project, its sources and its facts. Organisation mail rules that point to it are removed.
+         */
+        delete: operations["deleteProject"];
+        options?: never;
+        head?: never;
+        /** Update a project */
+        patch: operations["patchProject"];
+        trace?: never;
+    };
+    "/projects/{project_id}/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List sources of a project */
+        get: operations["listSources"];
+        put?: never;
+        /**
+         * Add a source to a project
+         * @description `github` accepts public repositories only. `document_library` only supports provider `local_mock`. Real connectors (Gmail/Outlook OAuth, real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP. No authentication (demo).
+         */
+        post: operations["createSource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sources/{source_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a source */
+        get: operations["getSource"];
+        put?: never;
+        post?: never;
+        /** Delete a source */
+        delete: operations["deleteSource"];
+        options?: never;
+        head?: never;
+        /** Update a source */
+        patch: operations["patchSource"];
+        trace?: never;
+    };
+    "/sources/{source_id}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a sync of a source
+         * @description Starts an asynchronous sync job. Poll `GET /sync-jobs/{job_id}`.
+         */
+        post: operations["syncSource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync-jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a sync job */
+        get: operations["getSyncJob"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/mail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the organisation mail config
+         * @description Inherited by every project that has no override. Secrets are never returned. Real connectors (Gmail/Outlook OAuth, real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP. No authentication (demo).
+         */
+        get: operations["getOrgMail"];
+        /**
+         * Set the organisation mail config
+         * @description `password` is accepted on write only.
+         */
+        put: operations["putOrgMail"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/mail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the effective mail config of a project
+         * @description Returns the effective config and whether the project overrides the organisation one.
+         */
+        get: operations["getProjectMail"];
+        /** Override the mail config of a project */
+        put: operations["putProjectMail"];
+        post?: never;
+        /** Remove the override, back to inherited */
+        delete: operations["deleteProjectMail"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/mail/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List mail routing rules
+         * @description Rules are evaluated by ascending `priority`, first match wins.
+         */
+        get: operations["listMailRules"];
+        put?: never;
+        /** Create a mail routing rule */
+        post: operations["createMailRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/mail/rules/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test which project and rule would match an email
+         * @description Dry run, nothing is stored.
+         */
+        post: operations["testMailRules"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/mail/rules/{rule_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a mail routing rule */
+        delete: operations["deleteMailRule"];
+        options?: never;
+        head?: never;
+        /** Update a mail routing rule */
+        patch: operations["patchMailRule"];
+        trace?: never;
+    };
+    "/mail/inbound": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inbound email webhook
+         * @description Routes the email with the organisation rules, stores it as a document of the matched project, extracts facts and links SUPERSEDES edges. Returns 200 with the result (processing is synchronous in the MVP). Real connectors (Gmail/Outlook OAuth, real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP. No authentication (demo).
+         */
+        post: operations["receiveInboundEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/poll": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger the mocked IMAP poll
+         * @description Polls the mocked inbox of a project, or of the organisation when `project_id` is absent. Real IMAP is out of scope for the MVP.
+         */
+        post: operations["pollMail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List emails received by a project
+         * @description Paginated, newest first.
+         */
+        get: operations["listProjectMessages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/demo/send-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send the canned demo email (demo only)
+         * @description Demo-only convenience for the live demo. Sends a canned InboundEmail from client@meridianlabs.org, subject "Onboarding target confirmed", text "Following our call, we confirm the onboarding target at 5 weeks." It is routed to proj-clearpath and supersedes M-106 (3–4 weeks) with a new fact M-301 (5 weeks). Not for production use.
+         */
+        post: operations["demoSendEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{doc_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List versions of a document */
+        get: operations["listDocumentVersions"];
+        put?: never;
+        /**
+         * Upload a new version of a document
+         * @description Facts extracted from the previous version are marked superseded where the new version restates the same topic with a different value.
+         */
+        post: operations["uploadDocumentVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -953,6 +1300,8 @@ export interface components {
         /** @enum {string} */
         FactStatus: "active" | "retired";
         Fact: {
+            /** @description Owning project. Null or absent means organisation scope. */
+            project_id?: string | null;
             /** @example M-106 */
             id: string;
             /**
@@ -993,6 +1342,13 @@ export interface components {
             offset: number;
         };
         Document: {
+            /** @description Owning project. Null or absent means organisation scope. */
+            project_id?: string | null;
+            source_id?: string | null;
+            /** @default 1 */
+            version: number;
+            /** @description Id of the document this one is a new version of. */
+            version_of?: string | null;
             /** @example 07-documents/report-final */
             id: string;
             title: string;
@@ -1007,6 +1363,8 @@ export interface components {
             quote: string;
         };
         Topic: {
+            /** @description Owning project. Null or absent means organisation scope. */
+            project_id?: string | null;
             /** @example onboarding-target */
             id: string;
             /** @example Onboarding target */
@@ -1019,6 +1377,8 @@ export interface components {
             facts: components["schemas"]["Fact"][];
         };
         AskRequest: {
+            /** @description Restrict the answer to one project. Absence of project_id means organisation scope (all projects). */
+            project_id?: string | null;
             question: string;
             /** @description Optional topic id to scope the answer. */
             topic?: string;
@@ -1056,6 +1416,8 @@ export interface components {
             reason?: string;
         };
         AuditEvent: {
+            /** @description Owning project. Null or absent means organisation scope. */
+            project_id?: string | null;
             id: string;
             /** Format: date-time */
             at: string;
@@ -1166,6 +1528,8 @@ export interface components {
             answers: components["schemas"]["AnswerSummary"][];
         };
         Conflict: {
+            /** @description Owning project. Null or absent means organisation scope. */
+            project_id?: string | null;
             /** @example C-001 */
             id: string;
             topic: string;
@@ -1429,6 +1793,341 @@ export interface components {
         };
         /** @enum {string} */
         AuditAction: "retire" | "restore" | "ingest" | "classify" | "create" | "patch" | "pin" | "unpin" | "supersede" | "unlink" | "resolve" | "close" | "approve" | "dismiss" | "merge" | "delete_document" | "undo" | "import" | "reset";
+        /**
+         * @description `imap_mock` polls a mocked inbox, `webhook` receives `POST /mail/inbound`. Real IMAP/SMTP and Gmail/Outlook OAuth are out of scope for the MVP.
+         * @enum {string}
+         */
+        MailMode: "imap_mock" | "webhook";
+        /**
+         * @description Mail settings. Never contains secrets.
+         * @example {
+         *       "mode": "imap_mock",
+         *       "imap_host": "mock.meridianlabs.org",
+         *       "imap_user": "brain@meridianlabs.org",
+         *       "inbound_address": "brain@inbound.meridianlabs.org",
+         *       "poll_interval_s": 60
+         *     }
+         */
+        MailConfig: {
+            mode: components["schemas"]["MailMode"];
+            imap_host?: string | null;
+            imap_user?: string | null;
+            /** @description Address the webhook provider forwards to. */
+            inbound_address?: string | null;
+            /** @default 60 */
+            poll_interval_s: number;
+        };
+        /**
+         * @description Write schema for mail settings. `password` is accepted on write only and never returned.
+         * @example {
+         *       "mode": "imap_mock",
+         *       "imap_host": "mock.meridianlabs.org",
+         *       "imap_user": "brain@meridianlabs.org",
+         *       "password": "demo-only",
+         *       "inbound_address": "brain@inbound.meridianlabs.org",
+         *       "poll_interval_s": 60
+         *     }
+         */
+        MailConfigWrite: {
+            mode: components["schemas"]["MailMode"];
+            imap_host?: string | null;
+            imap_user?: string | null;
+            password?: string | null;
+            inbound_address?: string | null;
+            /** @default 60 */
+            poll_interval_s: number;
+        };
+        Organisation: {
+            id: string;
+            name: string;
+            mail_config?: components["schemas"]["MailConfig"] | null;
+        };
+        /**
+         * @example {
+         *       "name": "Meridian Labs"
+         *     }
+         */
+        OrganisationPatch: {
+            name?: string;
+        };
+        Project: {
+            id: string;
+            name: string;
+            description?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            mail_config_override?: components["schemas"]["MailConfig"] | null;
+            /** @description The override when set, otherwise the organisation config. */
+            readonly effective_mail_config?: components["schemas"]["MailConfig"];
+            source_ids?: string[];
+        };
+        /**
+         * @example {
+         *       "id": "proj-clearpath",
+         *       "name": "ClearPath engagement",
+         *       "description": "Consulting engagement for ClearPath, 46 documents."
+         *     }
+         */
+        ProjectCreate: {
+            /** @description Optional slug. Generated when absent. 409 if it already exists. */
+            id?: string;
+            name: string;
+            description?: string | null;
+            mail_config_override?: components["schemas"]["MailConfigWrite"] | null;
+        };
+        /**
+         * @example {
+         *       "description": "ClearPath engagement, final report delivered."
+         *     }
+         */
+        ProjectPatch: {
+            name?: string;
+            description?: string | null;
+        };
+        ProjectPage: {
+            items: components["schemas"]["Project"][];
+            total: number;
+            limit: number;
+            offset: number;
+        };
+        ProjectMail: {
+            project_id: string;
+            /** @description True when the project has its own config, false when it inherits the organisation one. */
+            overridden: boolean;
+            effective_mail_config: components["schemas"]["MailConfig"];
+            mail_config_override?: components["schemas"]["MailConfig"] | null;
+        };
+        /** @enum {string} */
+        SourceType: "documents" | "document_library" | "github" | "mail";
+        /** @enum {string} */
+        SourceStatus: "idle" | "syncing" | "ok" | "error";
+        GithubSourceConfig: {
+            /**
+             * Format: uri
+             * @description Public repository only, no keys.
+             */
+            repo_url: string;
+            include?: ("issues" | "readme" | "discussions" | "pulls")[];
+        };
+        MailSourceConfig: {
+            mode: components["schemas"]["MailMode"];
+            mailbox: string;
+            /** @description MailRule ids that route into this source. */
+            match_rules?: string[];
+        };
+        DocumentLibraryConfig: {
+            /**
+             * @description Only `local_mock` is implemented. `sharepoint` and `google_drive` are out of scope for the MVP.
+             * @enum {string}
+             */
+            provider: "local_mock" | "sharepoint" | "google_drive";
+            root_path: string;
+        };
+        /** @description No settings, documents are uploaded or ingested directly. */
+        DocumentsSourceConfig: Record<string, never>;
+        /** @description Shape depends on the source `type`. */
+        SourceConfig: components["schemas"]["GithubSourceConfig"] | components["schemas"]["MailSourceConfig"] | components["schemas"]["DocumentLibraryConfig"] | components["schemas"]["DocumentsSourceConfig"];
+        Source: {
+            id: string;
+            project_id: string;
+            type: components["schemas"]["SourceType"];
+            label: string;
+            status: components["schemas"]["SourceStatus"];
+            /** Format: date-time */
+            last_synced_at?: string | null;
+            /** @description Number of items (documents, issues, messages) ingested from this source. */
+            items?: number;
+            config?: components["schemas"]["SourceConfig"];
+        };
+        /**
+         * @example {
+         *       "type": "github",
+         *       "label": "ClearPath tooling repo",
+         *       "config": {
+         *         "repo_url": "https://github.com/meridianlabs/clearpath-tooling",
+         *         "include": [
+         *           "issues",
+         *           "readme"
+         *         ]
+         *       }
+         *     }
+         */
+        SourceCreate: {
+            type: components["schemas"]["SourceType"];
+            label: string;
+            config?: components["schemas"]["SourceConfig"];
+        };
+        /**
+         * @example {
+         *       "label": "ClearPath mailbox"
+         *     }
+         */
+        SourcePatch: {
+            label?: string;
+            config?: components["schemas"]["SourceConfig"];
+        };
+        SyncJob: {
+            id: string;
+            source_id: string;
+            /** @enum {string} */
+            status: "queued" | "running" | "done" | "error";
+            items_added?: number;
+            facts_created?: number;
+            cost_usd?: number;
+            /** Format: date-time */
+            started_at?: string | null;
+            /** Format: date-time */
+            finished_at?: string | null;
+        };
+        /** @enum {string} */
+        MailMatchType: "sender_domain" | "sender_address" | "recipient" | "subject_contains";
+        MailRule: {
+            id: string;
+            match_type: components["schemas"]["MailMatchType"];
+            value: string;
+            project_id: string;
+            /** @description Lower number wins when several rules match. */
+            priority: number;
+        };
+        /**
+         * @example {
+         *       "match_type": "sender_domain",
+         *       "value": "@meridianlabs.org",
+         *       "project_id": "proj-clearpath",
+         *       "priority": 10
+         *     }
+         */
+        MailRuleCreate: {
+            match_type: components["schemas"]["MailMatchType"];
+            value: string;
+            project_id: string;
+            /** @default 100 */
+            priority: number;
+        };
+        /**
+         * @example {
+         *       "priority": 5
+         *     }
+         */
+        MailRulePatch: {
+            match_type?: components["schemas"]["MailMatchType"];
+            value?: string;
+            project_id?: string;
+            priority?: number;
+        };
+        EmailAttachment: {
+            filename: string;
+            content_type?: string;
+            /** @description Extracted text of the attachment. */
+            text: string;
+        };
+        /**
+         * @example {
+         *       "message_id": "<demo-0001@meridianlabs.org>",
+         *       "from": "client@meridianlabs.org",
+         *       "to": [
+         *         "brain@inbound.meridianlabs.org"
+         *       ],
+         *       "cc": [],
+         *       "subject": "Onboarding target confirmed",
+         *       "date": "2026-11-14T14:30:00Z",
+         *       "text": "Following our call, we confirm the onboarding target at 5 weeks.",
+         *       "attachments": []
+         *     }
+         */
+        InboundEmail: {
+            message_id: string;
+            from: string;
+            to: string[];
+            cc?: string[];
+            subject: string;
+            /** Format: date-time */
+            date: string;
+            text: string;
+            html?: string | null;
+            thread_id?: string | null;
+            attachments?: components["schemas"]["EmailAttachment"][];
+        };
+        SupersedeLink: {
+            /** @description The new fact. */
+            fact_id: string;
+            /** @description The older fact it replaces. */
+            supersedes: string;
+        };
+        InboundEmailResult: {
+            message_id: string;
+            /** @description Null when no rule matched, the email is then stored at organisation scope. */
+            routed_project_id?: string | null;
+            rule_id?: string | null;
+            document_id: string;
+            facts_created: string[];
+            supersedes_created: components["schemas"]["SupersedeLink"][];
+            audit_event_id?: string | null;
+        };
+        RuleTestResult: {
+            matched: boolean;
+            routed_project_id?: string | null;
+            rule_id?: string | null;
+            reason?: string | null;
+        };
+        /**
+         * @example {
+         *       "project_id": "proj-clearpath"
+         *     }
+         */
+        MailPollRequest: {
+            /** @description Poll this project mailbox. Absent or null polls the organisation mailbox. */
+            project_id?: string | null;
+        };
+        MailPollResult: {
+            /** @description Number of messages fetched from the mocked inbox. */
+            polled: number;
+            results: components["schemas"]["InboundEmailResult"][];
+        };
+        ReceivedMessage: {
+            message_id: string;
+            project_id?: string | null;
+            from: string;
+            subject: string;
+            /** Format: date-time */
+            date: string;
+            rule_id?: string | null;
+            document_id?: string | null;
+        };
+        MessagePage: {
+            items: components["schemas"]["ReceivedMessage"][];
+            total: number;
+            limit: number;
+            offset: number;
+        };
+        DocumentVersion: {
+            document_id: string;
+            version: number;
+            version_label?: string | null;
+            /** Format: date-time */
+            uploaded_at?: string;
+            supersedes_document_id?: string | null;
+            /** @description Ids of facts of the previous version that this version superseded. */
+            facts_superseded?: string[];
+        };
+        /**
+         * @example {
+         *       "version_label": "v2",
+         *       "text": "Onboarding SLA: 5 weeks."
+         *     }
+         */
+        DocumentVersionCreate: {
+            version_label?: string;
+            title?: string;
+            /** Format: date */
+            date?: string;
+            text: string;
+        };
+        DocumentVersionResult: {
+            version: components["schemas"]["DocumentVersion"];
+            facts_created: string[];
+            supersedes_created: components["schemas"]["SupersedeLink"][];
+        };
     };
     responses: {
         /** @description Malformed request. */
@@ -1503,6 +2202,19 @@ export interface components {
         TopicId: string;
         /** @example ans-0007 */
         AnswerId: string;
+        /**
+         * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+         * @example proj-clearpath
+         */
+        ProjectIdQuery: string;
+        /** @example proj-clearpath */
+        ProjectId: string;
+        /** @example src-clearpath-mail */
+        SourceId: string;
+        /** @example rule-001 */
+        RuleId: string;
+        /** @example sync-0001 */
+        JobId: string;
     };
     requestBodies: never;
     headers: never;
@@ -1569,6 +2281,11 @@ export interface operations {
     listFacts: {
         parameters: {
             query?: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
                 /**
                  * @description Topic id.
                  * @example onboarding-target
@@ -1861,7 +2578,13 @@ export interface operations {
     };
     listTopics: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2032,7 +2755,13 @@ export interface operations {
     };
     listDocuments: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2201,6 +2930,11 @@ export interface operations {
     listAudit: {
         parameters: {
             query?: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
                 limit?: components["parameters"]["Limit"];
                 /** @example gabriele */
                 actor?: string;
@@ -2683,6 +3417,11 @@ export interface operations {
     listConflicts: {
         parameters: {
             query?: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
                 status?: "open" | "resolved";
                 /** @example audit-queue-time */
                 topic?: string;
@@ -2890,6 +3629,11 @@ export interface operations {
     listOpenQuestions: {
         parameters: {
             query?: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
                 status?: "open" | "closed";
                 topic?: string;
             };
@@ -2979,6 +3723,11 @@ export interface operations {
     getMaintenanceQueue: {
         parameters: {
             query?: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
                 status?: "pending" | "approved" | "dismissed";
                 reason?: components["schemas"]["MaintenanceReason"];
                 limit?: components["parameters"]["Limit"];
@@ -3324,6 +4073,11 @@ export interface operations {
     search: {
         parameters: {
             query: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
                 /** @example onboarding */
                 q: string;
                 kind?: "fact" | "document" | "all";
@@ -3979,7 +4733,13 @@ export interface operations {
     };
     getStats: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -4253,6 +5013,1407 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getOrg: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Organisation. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "org-meridian",
+                     *       "name": "Meridian Labs",
+                     *       "mail_config": {
+                     *         "mode": "imap_mock",
+                     *         "imap_host": "mock.meridianlabs.org",
+                     *         "imap_user": "brain@meridianlabs.org",
+                     *         "inbound_address": "brain@inbound.meridianlabs.org",
+                     *         "poll_interval_s": 60
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Organisation"];
+                };
+            };
+        };
+    };
+    patchOrg: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "name": "Meridian Labs"
+                 *     }
+                 */
+                "application/json": components["schemas"]["OrganisationPatch"];
+            };
+        };
+        responses: {
+            /** @description Updated organisation. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "org-meridian",
+                     *       "name": "Meridian Labs",
+                     *       "mail_config": {
+                     *         "mode": "imap_mock",
+                     *         "imap_host": "mock.meridianlabs.org",
+                     *         "imap_user": "brain@meridianlabs.org",
+                     *         "inbound_address": "brain@inbound.meridianlabs.org",
+                     *         "poll_interval_s": 60
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Organisation"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    listProjects: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page of projects. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "id": "proj-clearpath",
+                     *           "name": "ClearPath engagement",
+                     *           "description": "Consulting engagement for ClearPath, 46 documents.",
+                     *           "created_at": "2026-11-14T09:00:00Z",
+                     *           "mail_config_override": null,
+                     *           "effective_mail_config": {
+                     *             "mode": "imap_mock",
+                     *             "imap_host": "mock.meridianlabs.org",
+                     *             "imap_user": "brain@meridianlabs.org",
+                     *             "inbound_address": "brain@inbound.meridianlabs.org",
+                     *             "poll_interval_s": 60
+                     *           },
+                     *           "source_ids": [
+                     *             "src-clearpath-docs",
+                     *             "src-clearpath-library",
+                     *             "src-clearpath-mail"
+                     *           ]
+                     *         },
+                     *         {
+                     *           "id": "proj-internal",
+                     *           "name": "Internal",
+                     *           "description": "Internal documents and tooling repository.",
+                     *           "created_at": "2026-11-14T09:05:00Z",
+                     *           "mail_config_override": {
+                     *             "mode": "webhook",
+                     *             "imap_host": null,
+                     *             "imap_user": null,
+                     *             "inbound_address": "internal@inbound.meridianlabs.org",
+                     *             "poll_interval_s": 60
+                     *           },
+                     *           "effective_mail_config": {
+                     *             "mode": "webhook",
+                     *             "imap_host": null,
+                     *             "imap_user": null,
+                     *             "inbound_address": "internal@inbound.meridianlabs.org",
+                     *             "poll_interval_s": 60
+                     *           },
+                     *           "source_ids": [
+                     *             "src-internal-docs",
+                     *             "src-internal-gh"
+                     *           ]
+                     *         }
+                     *       ],
+                     *       "total": 2,
+                     *       "limit": 50,
+                     *       "offset": 0
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ProjectPage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    createProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "id": "proj-clearpath",
+                 *       "name": "ClearPath engagement",
+                 *       "description": "Consulting engagement for ClearPath, 46 documents."
+                 *     }
+                 */
+                "application/json": components["schemas"]["ProjectCreate"];
+            };
+        };
+        responses: {
+            /** @description Created project. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "proj-clearpath",
+                     *       "name": "ClearPath engagement",
+                     *       "description": "Consulting engagement for ClearPath, 46 documents.",
+                     *       "created_at": "2026-11-14T09:00:00Z",
+                     *       "mail_config_override": null,
+                     *       "effective_mail_config": {
+                     *         "mode": "imap_mock",
+                     *         "imap_host": "mock.meridianlabs.org",
+                     *         "imap_user": "brain@meridianlabs.org",
+                     *         "inbound_address": "brain@inbound.meridianlabs.org",
+                     *         "poll_interval_s": 60
+                     *       },
+                     *       "source_ids": [
+                     *         "src-clearpath-docs",
+                     *         "src-clearpath-library",
+                     *         "src-clearpath-mail"
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Project. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "proj-clearpath",
+                     *       "name": "ClearPath engagement",
+                     *       "description": "Consulting engagement for ClearPath, 46 documents.",
+                     *       "created_at": "2026-11-14T09:00:00Z",
+                     *       "mail_config_override": null,
+                     *       "effective_mail_config": {
+                     *         "mode": "imap_mock",
+                     *         "imap_host": "mock.meridianlabs.org",
+                     *         "imap_user": "brain@meridianlabs.org",
+                     *         "inbound_address": "brain@inbound.meridianlabs.org",
+                     *         "poll_interval_s": 60
+                     *       },
+                     *       "source_ids": [
+                     *         "src-clearpath-docs",
+                     *         "src-clearpath-library",
+                     *         "src-clearpath-mail"
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "proj-internal",
+                     *       "deleted": true
+                     *     }
+                     */
+                    "application/json": {
+                        id: string;
+                        deleted: boolean;
+                    };
+                };
+            };
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    patchProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "description": "ClearPath engagement, final report delivered."
+                 *     }
+                 */
+                "application/json": components["schemas"]["ProjectPatch"];
+            };
+        };
+        responses: {
+            /** @description Updated project. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "proj-clearpath",
+                     *       "name": "ClearPath engagement",
+                     *       "description": "Consulting engagement for ClearPath, 46 documents.",
+                     *       "created_at": "2026-11-14T09:00:00Z",
+                     *       "mail_config_override": null,
+                     *       "effective_mail_config": {
+                     *         "mode": "imap_mock",
+                     *         "imap_host": "mock.meridianlabs.org",
+                     *         "imap_user": "brain@meridianlabs.org",
+                     *         "inbound_address": "brain@inbound.meridianlabs.org",
+                     *         "poll_interval_s": 60
+                     *       },
+                     *       "source_ids": [
+                     *         "src-clearpath-docs",
+                     *         "src-clearpath-library",
+                     *         "src-clearpath-mail"
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    listSources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sources. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "id": "src-clearpath-docs",
+                     *           "project_id": "proj-clearpath",
+                     *           "type": "documents",
+                     *           "label": "ClearPath documents",
+                     *           "status": "ok",
+                     *           "last_synced_at": "2026-11-14T13:00:00Z",
+                     *           "items": 46,
+                     *           "config": {}
+                     *         },
+                     *         {
+                     *           "id": "src-clearpath-library",
+                     *           "project_id": "proj-clearpath",
+                     *           "type": "document_library",
+                     *           "label": "ClearPath library",
+                     *           "status": "ok",
+                     *           "last_synced_at": "2026-11-14T13:00:00Z",
+                     *           "items": 46,
+                     *           "config": {
+                     *             "provider": "local_mock",
+                     *             "root_path": "/corpus/org-consulting-clearpath"
+                     *           }
+                     *         },
+                     *         {
+                     *           "id": "src-clearpath-mail",
+                     *           "project_id": "proj-clearpath",
+                     *           "type": "mail",
+                     *           "label": "ClearPath mailbox",
+                     *           "status": "ok",
+                     *           "last_synced_at": "2026-11-14T14:30:05Z",
+                     *           "items": 1,
+                     *           "config": {
+                     *             "mode": "imap_mock",
+                     *             "mailbox": "brain@meridianlabs.org",
+                     *             "match_rules": [
+                     *               "rule-001"
+                     *             ]
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": {
+                        items: components["schemas"]["Source"][];
+                    };
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    createSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "type": "github",
+                 *       "label": "ClearPath tooling repo",
+                 *       "config": {
+                 *         "repo_url": "https://github.com/meridianlabs/clearpath-tooling",
+                 *         "include": [
+                 *           "issues",
+                 *           "readme"
+                 *         ]
+                 *       }
+                 *     }
+                 */
+                "application/json": components["schemas"]["SourceCreate"];
+            };
+        };
+        responses: {
+            /** @description Created source. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "src-clearpath-gh",
+                     *       "project_id": "proj-clearpath",
+                     *       "type": "github",
+                     *       "label": "ClearPath tooling repo",
+                     *       "status": "idle",
+                     *       "last_synced_at": null,
+                     *       "items": 0,
+                     *       "config": {
+                     *         "repo_url": "https://github.com/meridianlabs/clearpath-tooling",
+                     *         "include": [
+                     *           "issues",
+                     *           "readme"
+                     *         ]
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Source"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example src-clearpath-mail */
+                source_id: components["parameters"]["SourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Source. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "src-clearpath-mail",
+                     *       "project_id": "proj-clearpath",
+                     *       "type": "mail",
+                     *       "label": "ClearPath mailbox",
+                     *       "status": "ok",
+                     *       "last_synced_at": "2026-11-14T14:30:05Z",
+                     *       "items": 1,
+                     *       "config": {
+                     *         "mode": "imap_mock",
+                     *         "mailbox": "brain@meridianlabs.org",
+                     *         "match_rules": [
+                     *           "rule-001"
+                     *         ]
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Source"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example src-clearpath-mail */
+                source_id: components["parameters"]["SourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "src-internal-gh",
+                     *       "deleted": true
+                     *     }
+                     */
+                    "application/json": {
+                        id: string;
+                        deleted: boolean;
+                    };
+                };
+            };
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    patchSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example src-clearpath-mail */
+                source_id: components["parameters"]["SourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "label": "ClearPath mailbox"
+                 *     }
+                 */
+                "application/json": components["schemas"]["SourcePatch"];
+            };
+        };
+        responses: {
+            /** @description Updated source. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "src-clearpath-mail",
+                     *       "project_id": "proj-clearpath",
+                     *       "type": "mail",
+                     *       "label": "ClearPath mailbox",
+                     *       "status": "ok",
+                     *       "last_synced_at": "2026-11-14T14:30:05Z",
+                     *       "items": 1,
+                     *       "config": {
+                     *         "mode": "imap_mock",
+                     *         "mailbox": "brain@meridianlabs.org",
+                     *         "match_rules": [
+                     *           "rule-001"
+                     *         ]
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Source"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    syncSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example src-clearpath-mail */
+                source_id: components["parameters"]["SourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sync job accepted. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "sync-0001",
+                     *       "source_id": "src-clearpath-mail",
+                     *       "status": "queued",
+                     *       "items_added": 0,
+                     *       "facts_created": 0,
+                     *       "cost_usd": 0,
+                     *       "started_at": null,
+                     *       "finished_at": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["SyncJob"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getSyncJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example sync-0001 */
+                job_id: components["parameters"]["JobId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sync job. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "sync-0001",
+                     *       "source_id": "src-clearpath-mail",
+                     *       "status": "done",
+                     *       "items_added": 1,
+                     *       "facts_created": 1,
+                     *       "cost_usd": 0.004,
+                     *       "started_at": "2026-11-14T14:30:00Z",
+                     *       "finished_at": "2026-11-14T14:30:05Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["SyncJob"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getOrgMail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Mail config. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "mode": "imap_mock",
+                     *       "imap_host": "mock.meridianlabs.org",
+                     *       "imap_user": "brain@meridianlabs.org",
+                     *       "inbound_address": "brain@inbound.meridianlabs.org",
+                     *       "poll_interval_s": 60
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MailConfig"];
+                };
+            };
+        };
+    };
+    putOrgMail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "mode": "imap_mock",
+                 *       "imap_host": "mock.meridianlabs.org",
+                 *       "imap_user": "brain@meridianlabs.org",
+                 *       "password": "demo-only",
+                 *       "inbound_address": "brain@inbound.meridianlabs.org",
+                 *       "poll_interval_s": 60
+                 *     }
+                 */
+                "application/json": components["schemas"]["MailConfigWrite"];
+            };
+        };
+        responses: {
+            /** @description Saved mail config. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "mode": "imap_mock",
+                     *       "imap_host": "mock.meridianlabs.org",
+                     *       "imap_user": "brain@meridianlabs.org",
+                     *       "inbound_address": "brain@inbound.meridianlabs.org",
+                     *       "poll_interval_s": 60
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MailConfig"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getProjectMail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Effective mail config. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "project_id": "proj-clearpath",
+                     *       "overridden": false,
+                     *       "effective_mail_config": {
+                     *         "mode": "imap_mock",
+                     *         "imap_host": "mock.meridianlabs.org",
+                     *         "imap_user": "brain@meridianlabs.org",
+                     *         "inbound_address": "brain@inbound.meridianlabs.org",
+                     *         "poll_interval_s": 60
+                     *       },
+                     *       "mail_config_override": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ProjectMail"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    putProjectMail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "mode": "webhook",
+                 *       "inbound_address": "internal@inbound.meridianlabs.org",
+                 *       "poll_interval_s": 60
+                 *     }
+                 */
+                "application/json": components["schemas"]["MailConfigWrite"];
+            };
+        };
+        responses: {
+            /** @description Project mail config. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "project_id": "proj-internal",
+                     *       "overridden": true,
+                     *       "effective_mail_config": {
+                     *         "mode": "webhook",
+                     *         "imap_host": null,
+                     *         "imap_user": null,
+                     *         "inbound_address": "internal@inbound.meridianlabs.org",
+                     *         "poll_interval_s": 60
+                     *       },
+                     *       "mail_config_override": {
+                     *         "mode": "webhook",
+                     *         "imap_host": null,
+                     *         "imap_user": null,
+                     *         "inbound_address": "internal@inbound.meridianlabs.org",
+                     *         "poll_interval_s": 60
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ProjectMail"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    deleteProjectMail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Inherited mail config. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "project_id": "proj-internal",
+                     *       "overridden": false,
+                     *       "effective_mail_config": {
+                     *         "mode": "imap_mock",
+                     *         "imap_host": "mock.meridianlabs.org",
+                     *         "imap_user": "brain@meridianlabs.org",
+                     *         "inbound_address": "brain@inbound.meridianlabs.org",
+                     *         "poll_interval_s": 60
+                     *       },
+                     *       "mail_config_override": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ProjectMail"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listMailRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rules. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "id": "rule-001",
+                     *           "match_type": "sender_domain",
+                     *           "value": "@meridianlabs.org",
+                     *           "project_id": "proj-clearpath",
+                     *           "priority": 10
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": {
+                        items: components["schemas"]["MailRule"][];
+                    };
+                };
+            };
+        };
+    };
+    createMailRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "match_type": "sender_domain",
+                 *       "value": "@meridianlabs.org",
+                 *       "project_id": "proj-clearpath",
+                 *       "priority": 10
+                 *     }
+                 */
+                "application/json": components["schemas"]["MailRuleCreate"];
+            };
+        };
+        responses: {
+            /** @description Created rule. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rule-001",
+                     *       "match_type": "sender_domain",
+                     *       "value": "@meridianlabs.org",
+                     *       "project_id": "proj-clearpath",
+                     *       "priority": 10
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MailRule"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    testMailRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "message_id": "<demo-0001@meridianlabs.org>",
+                 *       "from": "client@meridianlabs.org",
+                 *       "to": [
+                 *         "brain@inbound.meridianlabs.org"
+                 *       ],
+                 *       "cc": [],
+                 *       "subject": "Onboarding target confirmed",
+                 *       "date": "2026-11-14T14:30:00Z",
+                 *       "text": "Following our call, we confirm the onboarding target at 5 weeks.",
+                 *       "attachments": []
+                 *     }
+                 */
+                "application/json": components["schemas"]["InboundEmail"];
+            };
+        };
+        responses: {
+            /** @description Match result. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "matched": true,
+                     *       "routed_project_id": "proj-clearpath",
+                     *       "rule_id": "rule-001",
+                     *       "reason": "sender_domain @meridianlabs.org"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RuleTestResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    deleteMailRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example rule-001 */
+                rule_id: components["parameters"]["RuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rule-001",
+                     *       "deleted": true
+                     *     }
+                     */
+                    "application/json": {
+                        id: string;
+                        deleted: boolean;
+                    };
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    patchMailRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example rule-001 */
+                rule_id: components["parameters"]["RuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "priority": 5
+                 *     }
+                 */
+                "application/json": components["schemas"]["MailRulePatch"];
+            };
+        };
+        responses: {
+            /** @description Updated rule. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rule-001",
+                     *       "match_type": "sender_domain",
+                     *       "value": "@meridianlabs.org",
+                     *       "project_id": "proj-clearpath",
+                     *       "priority": 5
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MailRule"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    receiveInboundEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "message_id": "<demo-0001@meridianlabs.org>",
+                 *       "from": "client@meridianlabs.org",
+                 *       "to": [
+                 *         "brain@inbound.meridianlabs.org"
+                 *       ],
+                 *       "cc": [],
+                 *       "subject": "Onboarding target confirmed",
+                 *       "date": "2026-11-14T14:30:00Z",
+                 *       "text": "Following our call, we confirm the onboarding target at 5 weeks.",
+                 *       "attachments": []
+                 *     }
+                 */
+                "application/json": components["schemas"]["InboundEmail"];
+            };
+        };
+        responses: {
+            /** @description Processed email. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message_id": "<demo-0001@meridianlabs.org>",
+                     *       "routed_project_id": "proj-clearpath",
+                     *       "rule_id": "rule-001",
+                     *       "document_id": "mail/demo-0001",
+                     *       "facts_created": [
+                     *         "M-301"
+                     *       ],
+                     *       "supersedes_created": [
+                     *         {
+                     *           "fact_id": "M-301",
+                     *           "supersedes": "M-106"
+                     *         }
+                     *       ],
+                     *       "audit_event_id": "a-0043"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["InboundEmailResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    pollMail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                /**
+                 * @example {
+                 *       "project_id": "proj-clearpath"
+                 *     }
+                 */
+                "application/json": components["schemas"]["MailPollRequest"];
+            };
+        };
+        responses: {
+            /** @description Poll result. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "polled": 1,
+                     *       "results": [
+                     *         {
+                     *           "message_id": "<demo-0001@meridianlabs.org>",
+                     *           "routed_project_id": "proj-clearpath",
+                     *           "rule_id": "rule-001",
+                     *           "document_id": "mail/demo-0001",
+                     *           "facts_created": [
+                     *             "M-301"
+                     *           ],
+                     *           "supersedes_created": [
+                     *             {
+                     *               "fact_id": "M-301",
+                     *               "supersedes": "M-106"
+                     *             }
+                     *           ],
+                     *           "audit_event_id": "a-0043"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MailPollResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    listProjectMessages: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page of messages. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "message_id": "<demo-0001@meridianlabs.org>",
+                     *           "project_id": "proj-clearpath",
+                     *           "from": "client@meridianlabs.org",
+                     *           "subject": "Onboarding target confirmed",
+                     *           "date": "2026-11-14T14:30:00Z",
+                     *           "rule_id": "rule-001",
+                     *           "document_id": "mail/demo-0001"
+                     *         }
+                     *       ],
+                     *       "total": 1,
+                     *       "limit": 50,
+                     *       "offset": 0
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MessagePage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    demoSendEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Processed demo email. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message_id": "<demo-0001@meridianlabs.org>",
+                     *       "routed_project_id": "proj-clearpath",
+                     *       "rule_id": "rule-001",
+                     *       "document_id": "mail/demo-0001",
+                     *       "facts_created": [
+                     *         "M-301"
+                     *       ],
+                     *       "supersedes_created": [
+                     *         {
+                     *           "fact_id": "M-301",
+                     *           "supersedes": "M-106"
+                     *         }
+                     *       ],
+                     *       "audit_event_id": "a-0043"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["InboundEmailResult"];
+                };
+            };
+            409: components["responses"]["Conflict"];
+        };
+    };
+    listDocumentVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description URL-encoded document id.
+                 * @example 07-documents%2Freport-final
+                 */
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Versions, oldest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "document_id": "07-documents/report-final",
+                     *         "version": 1,
+                     *         "version_label": "v1",
+                     *         "uploaded_at": "2025-10-02T10:00:00Z",
+                     *         "supersedes_document_id": null,
+                     *         "facts_superseded": []
+                     *       },
+                     *       {
+                     *         "document_id": "07-documents/report-final",
+                     *         "version": 2,
+                     *         "version_label": "v2",
+                     *         "uploaded_at": "2026-11-14T14:40:00Z",
+                     *         "supersedes_document_id": "07-documents/report-final",
+                     *         "facts_superseded": [
+                     *           "M-106"
+                     *         ]
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["DocumentVersion"][];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    uploadDocumentVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description URL-encoded document id.
+                 * @example 07-documents%2Freport-final
+                 */
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "version_label": "v2",
+                 *       "text": "Onboarding SLA: 5 weeks."
+                 *     }
+                 */
+                "application/json": components["schemas"]["DocumentVersionCreate"];
+            };
+        };
+        responses: {
+            /** @description New version and superseded facts. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "version": {
+                     *         "document_id": "07-documents/report-final",
+                     *         "version": 2,
+                     *         "version_label": "v2",
+                     *         "uploaded_at": "2026-11-14T14:40:00Z",
+                     *         "supersedes_document_id": "07-documents/report-final",
+                     *         "facts_superseded": [
+                     *           "M-106"
+                     *         ]
+                     *       },
+                     *       "facts_created": [
+                     *         "M-301"
+                     *       ],
+                     *       "supersedes_created": [
+                     *         {
+                     *           "fact_id": "M-301",
+                     *           "supersedes": "M-106"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["DocumentVersionResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             422: components["responses"]["Unprocessable"];
         };
     };

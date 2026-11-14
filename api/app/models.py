@@ -6,7 +6,7 @@ from datetime import date as date_aliased
 from enum import StrEnum
 from typing import Any
 
-from pydantic import AwareDatetime, BaseModel, Field, RootModel
+from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, RootModel
 
 
 class FactType(StrEnum):
@@ -24,6 +24,9 @@ class FactStatus(StrEnum):
 
 
 class Fact(BaseModel):
+    project_id: str | None = Field(
+        None, description='Owning project. Null or absent means organisation scope.'
+    )
     id: str = Field(..., examples=['M-106'])
     topic: str = Field(..., description='Topic id.', examples=['onboarding-target'])
     value: str = Field(..., examples=['Onboarding SLA: 3–4 weeks'])
@@ -53,6 +56,14 @@ class FactPage(BaseModel):
 
 
 class Document(BaseModel):
+    project_id: str | None = Field(
+        None, description='Owning project. Null or absent means organisation scope.'
+    )
+    source_id: str | None = None
+    version: int | None = Field(1, ge=1)
+    version_of: str | None = Field(
+        None, description='Id of the document this one is a new version of.'
+    )
     id: str = Field(..., examples=['07-documents/report-final'])
     title: str
     date: date_aliased
@@ -68,6 +79,9 @@ class Citation(BaseModel):
 
 
 class Topic(BaseModel):
+    project_id: str | None = Field(
+        None, description='Owning project. Null or absent means organisation scope.'
+    )
     id: str = Field(..., examples=['onboarding-target'])
     label: str = Field(..., examples=['Onboarding target'])
     fact_ids: list[str]
@@ -79,6 +93,10 @@ class TopicChain(BaseModel):
 
 
 class AskRequest(BaseModel):
+    project_id: str | None = Field(
+        None,
+        description='Restrict the answer to one project. Absence of project_id means organisation scope (all projects).',
+    )
     question: str = Field(..., min_length=1)
     topic: str | None = Field(
         None, description='Optional topic id to scope the answer.'
@@ -562,7 +580,332 @@ class AuditAction(StrEnum):
     reset = 'reset'
 
 
+class MailMode(StrEnum):
+    imap_mock = 'imap_mock'
+    webhook = 'webhook'
+
+
+class MailConfig(BaseModel):
+    mode: MailMode
+    imap_host: str | None = None
+    imap_user: str | None = None
+    inbound_address: str | None = Field(
+        None, description='Address the webhook provider forwards to.'
+    )
+    poll_interval_s: int | None = Field(60, ge=5)
+
+
+class MailConfigWrite(BaseModel):
+    mode: MailMode
+    imap_host: str | None = None
+    imap_user: str | None = None
+    password: str | None = None
+    inbound_address: str | None = None
+    poll_interval_s: int | None = Field(60, ge=5)
+
+
+class Organisation(BaseModel):
+    id: str
+    name: str
+    mail_config: MailConfig | None = None
+
+
+class OrganisationPatch(BaseModel):
+    name: str | None = Field(None, min_length=1)
+
+
+class Project(BaseModel):
+    id: str
+    name: str
+    description: str | None = None
+    created_at: AwareDatetime
+    mail_config_override: MailConfig | None = None
+    effective_mail_config: MailConfig | None = Field(
+        None, description='The override when set, otherwise the organisation config.'
+    )
+    source_ids: list[str] | None = None
+
+
+class ProjectCreate(BaseModel):
+    id: str | None = Field(
+        None,
+        description='Optional slug. Generated when absent. 409 if it already exists.',
+    )
+    name: str = Field(..., min_length=1)
+    description: str | None = None
+    mail_config_override: MailConfigWrite | None = None
+
+
+class ProjectPatch(BaseModel):
+    name: str | None = Field(None, min_length=1)
+    description: str | None = None
+
+
+class ProjectPage(BaseModel):
+    items: list[Project]
+    total: int
+    limit: int
+    offset: int
+
+
+class ProjectMail(BaseModel):
+    project_id: str
+    overridden: bool = Field(
+        ...,
+        description='True when the project has its own config, false when it inherits the organisation one.',
+    )
+    effective_mail_config: MailConfig
+    mail_config_override: MailConfig | None = None
+
+
+class SourceType(StrEnum):
+    documents = 'documents'
+    document_library = 'document_library'
+    github = 'github'
+    mail = 'mail'
+
+
+class SourceStatus(StrEnum):
+    idle = 'idle'
+    syncing = 'syncing'
+    ok = 'ok'
+    error = 'error'
+
+
+class IncludeEnum(StrEnum):
+    issues = 'issues'
+    readme = 'readme'
+    discussions = 'discussions'
+    pulls = 'pulls'
+
+
+class GithubSourceConfig(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    repo_url: AnyUrl = Field(..., description='Public repository only, no keys.')
+    include: list[IncludeEnum] | None = None
+
+
+class MailSourceConfig(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    mode: MailMode
+    mailbox: str
+    match_rules: list[str] | None = Field(
+        None, description='MailRule ids that route into this source.'
+    )
+
+
+class Provider(StrEnum):
+    local_mock = 'local_mock'
+    sharepoint = 'sharepoint'
+    google_drive = 'google_drive'
+
+
+class DocumentLibraryConfig(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    provider: Provider = Field(
+        ...,
+        description='Only `local_mock` is implemented. `sharepoint` and `google_drive` are out of scope for the MVP.',
+    )
+    root_path: str
+
+
+class DocumentsSourceConfig(RootModel[dict[str, Any]]):
+    root: dict[str, Any] = Field(..., max_length=0)
+
+
+class SourceConfig(
+    RootModel[
+        GithubSourceConfig
+        | MailSourceConfig
+        | DocumentLibraryConfig
+        | DocumentsSourceConfig
+    ]
+):
+    root: (
+        GithubSourceConfig
+        | MailSourceConfig
+        | DocumentLibraryConfig
+        | DocumentsSourceConfig
+    ) = Field(..., description='Shape depends on the source `type`.')
+
+
+class Source(BaseModel):
+    id: str
+    project_id: str
+    type: SourceType
+    label: str
+    status: SourceStatus
+    last_synced_at: AwareDatetime | None = None
+    items: int | None = Field(
+        None,
+        description='Number of items (documents, issues, messages) ingested from this source.',
+    )
+    config: SourceConfig | None = None
+
+
+class SourceCreate(BaseModel):
+    type: SourceType
+    label: str
+    config: SourceConfig | None = None
+
+
+class SourcePatch(BaseModel):
+    label: str | None = None
+    config: SourceConfig | None = None
+
+
+class SyncJob(BaseModel):
+    id: str
+    source_id: str
+    status: Status6
+    items_added: int | None = None
+    facts_created: int | None = None
+    cost_usd: float | None = None
+    started_at: AwareDatetime | None = None
+    finished_at: AwareDatetime | None = None
+
+
+class MailMatchType(StrEnum):
+    sender_domain = 'sender_domain'
+    sender_address = 'sender_address'
+    recipient = 'recipient'
+    subject_contains = 'subject_contains'
+
+
+class MailRule(BaseModel):
+    id: str
+    match_type: MailMatchType
+    value: str
+    project_id: str
+    priority: int = Field(
+        ..., description='Lower number wins when several rules match.'
+    )
+
+
+class MailRuleCreate(BaseModel):
+    match_type: MailMatchType
+    value: str
+    project_id: str
+    priority: int | None = 100
+
+
+class MailRulePatch(BaseModel):
+    match_type: MailMatchType | None = None
+    value: str | None = None
+    project_id: str | None = None
+    priority: int | None = None
+
+
+class EmailAttachment(BaseModel):
+    filename: str
+    content_type: str | None = None
+    text: str = Field(..., description='Extracted text of the attachment.')
+
+
+class InboundEmail(BaseModel):
+    message_id: str
+    from_: str = Field(..., alias='from')
+    to: list[str]
+    cc: list[str] | None = None
+    subject: str
+    date: AwareDatetime
+    text: str
+    html: str | None = None
+    thread_id: str | None = None
+    attachments: list[EmailAttachment] | None = None
+
+
+class SupersedeLink(BaseModel):
+    fact_id: str = Field(..., description='The new fact.')
+    supersedes: str = Field(..., description='The older fact it replaces.')
+
+
+class InboundEmailResult(BaseModel):
+    message_id: str
+    routed_project_id: str | None = Field(
+        None,
+        description='Null when no rule matched, the email is then stored at organisation scope.',
+    )
+    rule_id: str | None = None
+    document_id: str
+    facts_created: list[str]
+    supersedes_created: list[SupersedeLink]
+    audit_event_id: str | None = None
+
+
+class RuleTestResult(BaseModel):
+    matched: bool
+    routed_project_id: str | None = None
+    rule_id: str | None = None
+    reason: str | None = None
+
+
+class MailPollRequest(BaseModel):
+    project_id: str | None = Field(
+        None,
+        description='Poll this project mailbox. Absent or null polls the organisation mailbox.',
+    )
+
+
+class MailPollResult(BaseModel):
+    polled: int = Field(
+        ..., description='Number of messages fetched from the mocked inbox.'
+    )
+    results: list[InboundEmailResult]
+
+
+class ReceivedMessage(BaseModel):
+    message_id: str
+    project_id: str | None = None
+    from_: str = Field(..., alias='from')
+    subject: str
+    date: AwareDatetime
+    rule_id: str | None = None
+    document_id: str | None = None
+
+
+class MessagePage(BaseModel):
+    items: list[ReceivedMessage]
+    total: int
+    limit: int
+    offset: int
+
+
+class DocumentVersion(BaseModel):
+    document_id: str
+    version: int = Field(..., ge=1)
+    version_label: str | None = None
+    uploaded_at: AwareDatetime | None = None
+    supersedes_document_id: str | None = None
+    facts_superseded: list[str] | None = Field(
+        None,
+        description='Ids of facts of the previous version that this version superseded.',
+    )
+
+
+class DocumentVersionCreate(BaseModel):
+    version_label: str | None = None
+    title: str | None = None
+    date: date_aliased | None = None
+    text: str
+
+
+class DocumentVersionResult(BaseModel):
+    version: DocumentVersion
+    facts_created: list[str]
+    supersedes_created: list[SupersedeLink]
+
+
 class AuditEvent(BaseModel):
+    project_id: str | None = Field(
+        None, description='Owning project. Null or absent means organisation scope.'
+    )
     id: str
     at: AwareDatetime
     actor: str = Field(
@@ -592,6 +935,9 @@ class Dependents(BaseModel):
 
 
 class Conflict(BaseModel):
+    project_id: str | None = Field(
+        None, description='Owning project. Null or absent means organisation scope.'
+    )
     id: str = Field(..., examples=['C-001'])
     topic: str
     status: Status2
