@@ -59,7 +59,18 @@ Backend notes:
 
 Images are built only by GitHub Actions (`.github/workflows/docker.yml`), never on the server. Every push to `main` that touches `api/`, `web/`, `data/`, `docker-compose.yml` or the workflow builds `linux/amd64` images and pushes them to `ghcr.io/gabry-ts/canonico-api` and `ghcr.io/gabry-ts/canonico-web`, tagged `latest` and `sha-<short>`. The packages are public.
 
-The live copy runs as the Portainer stack `canonico` (image-only compose, no `build:`) behind Traefik at https://canonico.magikarp.uk. The `web` container joins the external `proxy` network and carries the Traefik labels; `api` stays on the stack network and keeps its state in the `canonico-runtime` volume.
+The live copy runs as the Portainer stack `canonico` (image-only compose, no `build:`, no repo files mounted) behind Traefik at https://canonico.magikarp.uk. The `web` container joins the external `proxy` network and carries the Traefik labels; every other service stays on the stack network only.
+
+Services of the stack:
+
+- `api` and `web`: the application. `api` keeps its state in the `canonico-runtime` volume and waits for `mail` to be healthy.
+- `mail`: GreenMail (`greenmail/standalone`), the real mailbox of the demo organisation (SMTP 3025, IMAP 3143, mail kept in memory). With it `GET /org/mail` reports mode `imap` and `POST /demo/send-email` goes through SMTP and is read back over IMAP.
+- `garage`: single-node Garage S3 store for the document library, with the volumes `garage-meta` and `garage-data`. The image `ghcr.io/gabry-ts/canonico-garage` is `dxflrs/garage` with `deploy/garage/garage.toml` baked in.
+- `garage-init`: one-shot setup (layout, bucket `canonico-library`, access key). The image `ghcr.io/gabry-ts/canonico-garage-init` is `curlimages/curl` with `deploy/garage/init.sh` baked in. It exits 0 when done.
+
+The two Garage images are built by the same workflow (paths `deploy/garage/**`), which is what lets a Portainer string stack run them without mounting files from the repository.
+
+Stack environment variables (names only, set the values in Portainer): `ANTHROPIC_API_KEY`, `CANONICO_AUTH_REQUIRED`, `CANONICO_DEMO_LOGIN`, `PUBLIC_URL` (feeds `CANONICO_PUBLIC_URL` and the secure session cookie), `CANONICO_IMAP_PASSWORD` (also the GreenMail mailbox password), `GARAGE_RPC_SECRET`, `GARAGE_ADMIN_TOKEN`, `CANONICO_S3_ACCESS_KEY`, `CANONICO_S3_SECRET_KEY`. Generate them once: 64 hex chars for the RPC secret and the S3 secret key, `GK` plus 24 hex chars for the access key.
 
 - Update: wait for the workflow to go green, then in Portainer open the stack `canonico` and use Update the stack with "Re-pull image" on, or call `PUT /api/stacks/<id>?endpointId=2` with `pullImage: true` and the current compose content.
 - Switch the LLM provider: edit the stack environment variables (`LLM_PROVIDER=gateway` plus `AI_GATEWAY_API_KEY`, or `anthropic` plus `ANTHROPIC_API_KEY`; add the variable to the `api` service `environment` if it is not listed) and redeploy. See "Switching the LLM provider".
