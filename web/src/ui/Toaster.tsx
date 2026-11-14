@@ -18,7 +18,7 @@ function ToastView({ item }: { item: ToastItem }) {
       </span>
       <div className="flex-1 min-w-0 leading-snug">{item.msg}</div>
       {item.opts.action && (
-        <button className="btn btn-ghost btn-xs -my-0.5" onClick={item.opts.action.run}>
+        <button className="btn btn-ghost btn-xs -my-0.5 pointer-events-auto" onClick={item.opts.action.run}>
           {item.opts.action.label}
         </button>
       )}
@@ -29,7 +29,7 @@ function ToastView({ item }: { item: ToastItem }) {
 export function Toaster() {
   const list = useSyncExternalStore(subscribeToasts, getToasts)
   return (
-    <div className="fixed z-[70] bottom-12 right-4 flex flex-col gap-2 items-end" aria-live="polite">
+    <div className="fixed z-[70] bottom-12 right-4 flex flex-col gap-2 items-end pointer-events-none" aria-live="polite">
       {list.map((i) => (
         <ToastView key={i.id} item={i} />
       ))}
