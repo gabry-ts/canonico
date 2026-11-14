@@ -2,7 +2,7 @@ from typing import Literal
 
 from fastapi import APIRouter
 
-from app import ops, store
+from app import access, ops, store
 from app.http import ApiError, not_found, out
 from app.models import Conflict, ConflictResolution
 from app.store import STORE
@@ -21,11 +21,12 @@ def list_conflicts(status: Literal["open", "resolved"] = "open", topic: str | No
 
 
 @router.post("/conflicts/{conflict_id}/resolve", operation_id="resolveConflict", status_code=200, response_model=Conflict)
-def resolve_conflict(conflict_id: str, body: ConflictResolution):
+def resolve_conflict(conflict_id: str, body: ConflictResolution, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         record = state["conflicts"].get(conflict_id)
         if record is None:
             raise not_found(f"Conflict {conflict_id}")
+        access.allow(state, demo_actor, "resolve_conflict", store.project_of_topic(state, record["topic"]))
         if store.conflict_status(state, record) == "resolved":
             raise ApiError(409, f"Conflict {conflict_id} is already resolved.")
         if body.winning_fact_id not in record["fact_ids"] or body.winning_fact_id not in state["facts"]:

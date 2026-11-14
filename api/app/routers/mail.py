@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app import inbox, ops, store
+from app import access, inbox, ops, store
 from app.http import ApiError, dump, not_found, out
 from app.models import (
     InboundEmail,
@@ -45,8 +45,9 @@ def get_org_mail():
 
 
 @router.put("/org/mail", operation_id="putOrgMail", status_code=200, response_model=MailConfig)
-def put_org_mail(body: MailConfigWrite):
+def put_org_mail(body: MailConfigWrite, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
+        access.allow(state, demo_actor, "manage_mail", None)
         state["org"]["mail_config"] = clean_mail(body)
         return out(MailConfig, mail_view(state["org"]["mail_config"]))
 
@@ -58,16 +59,18 @@ def get_project_mail(project_id: str):
 
 
 @router.put("/projects/{project_id}/mail", operation_id="putProjectMail", status_code=200, response_model=ProjectMail)
-def put_project_mail(project_id: str, body: MailConfigWrite):
+def put_project_mail(project_id: str, body: MailConfigWrite, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
+        access.allow(state, demo_actor, "manage_mail", project_id)
         project = ops.require_project(state, project_id)
         project["mail_config_override"] = clean_mail(body)
         return out(ProjectMail, project_mail(state, project))
 
 
 @router.delete("/projects/{project_id}/mail", operation_id="deleteProjectMail", status_code=200, response_model=ProjectMail)
-def delete_project_mail(project_id: str):
+def delete_project_mail(project_id: str, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
+        access.allow(state, demo_actor, "manage_mail", project_id)
         project = ops.require_project(state, project_id)
         project["mail_config_override"] = None
         return out(ProjectMail, project_mail(state, project))
@@ -81,8 +84,9 @@ def list_mail_rules():
 
 
 @router.post("/org/mail/rules", operation_id="createMailRule", status_code=201, response_model=MailRule)
-def create_mail_rule(body: MailRuleCreate):
+def create_mail_rule(body: MailRuleCreate, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
+        access.allow(state, demo_actor, "manage_mail", None)
         ops.require_project(state, body.project_id)
         value = body.value.strip()
         if not value:
@@ -104,8 +108,9 @@ def test_mail_rules(body: InboundEmail):
 
 
 @router.patch("/org/mail/rules/{rule_id}", operation_id="patchMailRule", status_code=200, response_model=MailRule)
-def patch_mail_rule(rule_id: str, body: MailRulePatch):
+def patch_mail_rule(rule_id: str, body: MailRulePatch, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
+        access.allow(state, demo_actor, "manage_mail", None)
         rule = state["mail_rules"].get(rule_id)
         if rule is None:
             raise not_found(f"Mail rule {rule_id}")
@@ -117,8 +122,9 @@ def patch_mail_rule(rule_id: str, body: MailRulePatch):
 
 
 @router.delete("/org/mail/rules/{rule_id}", operation_id="deleteMailRule", status_code=200, response_model=None)
-def delete_mail_rule(rule_id: str):
+def delete_mail_rule(rule_id: str, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
+        access.allow(state, demo_actor, "manage_mail", None)
         if rule_id not in state["mail_rules"]:
             raise not_found(f"Mail rule {rule_id}")
         del state["mail_rules"][rule_id]

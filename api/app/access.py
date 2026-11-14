@@ -1,9 +1,8 @@
 """Demo identity and roles. There is no real authentication: the actor is picked with a header."""
 
-from fastapi import Header, Query
+from fastapi import Header
 
 from app.http import ApiError, not_found
-from app.store import STORE
 
 PERMISSIONS = {
     "viewer": ["ask", "read_facts"],
@@ -63,16 +62,20 @@ def actor_of(state: dict, header: str | None, query: str | None) -> dict | None:
     return member
 
 
-def require(permission: str):
-    """Dependency: 403 when the demo actor lacks a permission. Without an actor the owner acts, so the demo never breaks."""
+def allow(state: dict, actor: str | None, permission: str, project_id: str | None = None) -> None:
+    """Raise 403 when the demo actor lacks a permission.
 
-    def check(x_demo_actor: str | None = Header(None), actor: str | None = Query(None, alias="demo_actor"), project_id: str | None = Query(None)) -> None:
-        with STORE.read() as state:
-            member = find_member(state, x_demo_actor or actor) if (x_demo_actor or actor) else default_member(state)
-            if member is None:
-                return
-            role, _ = project_role(state, member, project_id if project_id in state["projects"] else None)
-            if permission not in PERMISSIONS[role]:
-                raise ApiError(403, f"{member['name']} ({role}) is not allowed to {permission.replace('_', ' ')}.", "forbidden")
+    Without an actor, or with an unknown one, the default owner acts, so the demo never breaks.
+    A project role overrides the organisation role for writes inside that project.
+    """
+    member = find_member(state, actor) if actor else None
+    if member is None:
+        member = default_member(state)
+    if member is None:
+        return
+    role, _ = project_role(state, member, project_id if project_id in state["projects"] else None)
+    if permission not in PERMISSIONS[role]:
+        raise ApiError(403, f"Role {role} lacks permission {permission}.", "forbidden")
 
-    return check
+
+Actor = Header(None, alias="X-Demo-Actor")

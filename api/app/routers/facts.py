@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 
-from app import ops, store
+from app import access, ops, store
 from app.http import ApiError, not_found, out
 from app.models import (
     Dependents,
@@ -73,9 +73,10 @@ def get_fact(fact_id: str):
 
 
 @router.patch("/facts/{fact_id}", operation_id="patchFact", status_code=200, response_model=Fact)
-def patch_fact(fact_id: str, body: FactPatch):
+def patch_fact(fact_id: str, body: FactPatch, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         fact = ops.get_fact(state, fact_id)
+        access.allow(state, demo_actor, "correct_fact", fact.get("project_id"))
         updates = {}
         if body.value is not None and body.value != fact["value"]:
             updates["value"] = body.value
@@ -95,26 +96,29 @@ def patch_fact(fact_id: str, body: FactPatch):
 
 
 @router.post("/facts/{fact_id}/retire", operation_id="retireFact", status_code=200, response_model=Fact)
-def retire_fact(fact_id: str, body: RetireRequest):
+def retire_fact(fact_id: str, body: RetireRequest, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         fact = ops.get_fact(state, fact_id)
+        access.allow(state, demo_actor, "retire_fact", fact.get("project_id"))
         ops.retire(state, fact, body.reason, body.actor)
         return out(Fact, store.view(state, fact))
 
 
 @router.post("/facts/{fact_id}/restore", operation_id="restoreFact", status_code=200, response_model=Fact)
-def restore_fact(fact_id: str, body: RestoreRequest | None = None):
+def restore_fact(fact_id: str, body: RestoreRequest | None = None, demo_actor: str | None = access.Actor):
     body = body or RestoreRequest()
     with STORE.write() as state:
         fact = ops.get_fact(state, fact_id)
+        access.allow(state, demo_actor, "restore_fact", fact.get("project_id"))
         ops.restore(state, fact, body.reason, body.actor or "anonymous")
         return out(Fact, store.view(state, fact))
 
 
 @router.post("/facts/{fact_id}/pin", operation_id="pinFact", status_code=200, response_model=Fact)
-def pin_fact(fact_id: str, body: PinRequest):
+def pin_fact(fact_id: str, body: PinRequest, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         fact = ops.get_fact(state, fact_id)
+        access.allow(state, demo_actor, "correct_fact", fact.get("project_id"))
         if fact["status"] == "retired":
             raise ApiError(409, f"Fact {fact_id} is retired and cannot be pinned.")
         ops.pin(state, fact, body.reason, body.actor)
@@ -122,9 +126,10 @@ def pin_fact(fact_id: str, body: PinRequest):
 
 
 @router.post("/facts/{fact_id}/unpin", operation_id="unpinFact", status_code=200, response_model=Fact)
-def unpin_fact(fact_id: str, body: PinRequest):
+def unpin_fact(fact_id: str, body: PinRequest, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         fact = ops.get_fact(state, fact_id)
+        access.allow(state, demo_actor, "correct_fact", fact.get("project_id"))
         if fact.get("pinned"):
             store.change_fact(state, fact_id, "unpin", body.actor, body.reason, {"pinned": False})
         return out(Fact, store.view(state, fact))
