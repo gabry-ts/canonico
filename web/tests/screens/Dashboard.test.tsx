@@ -145,6 +145,26 @@ describe('Dashboard', () => {
       expect(screen.getByText('By status')).toBeInTheDocument()
     })
 
+    it('shows the error with a retry in place of the figures when the stats cannot be loaded, and the figures on retry', async () => {
+      api.get('/stats', fail(500, 'stats offline'))
+      const { user } = renderWithApp(<Dashboard />)
+      await screen.findByText('ClearPath documents')
+      await waitFor(() => expect(screen.getAllByText('Could not load this. stats offline')).toHaveLength(3))
+      expect(screen.queryByText('not measured')).not.toBeInTheDocument()
+      expect(screen.queryByText('Not measured yet')).not.toBeInTheDocument()
+      for (const title of ['Time to fix a wrong fact', 'Answers', 'Memory health']) {
+        const card = screen.getByRole('heading', { name: title }).closest('.card')!
+        expect(card.querySelector('.skel')).not.toBeInTheDocument()
+      }
+
+      api.get('/stats', STATS)
+      await user.click(screen.getAllByRole('button', { name: 'Try again' })[0])
+      expect(await screen.findByText('1 min 35 s')).toBeInTheDocument()
+      expect(screen.getByText('By status')).toBeInTheDocument()
+      expect(screen.getByText('Binding', { selector: 'li span' })).toBeInTheDocument()
+      expect(screen.queryByText('Could not load this. stats offline')).not.toBeInTheDocument()
+    })
+
     it('opens the fact drawer from a change', async () => {
       const { user, app } = renderWithApp(<Dashboard />)
       await loaded()

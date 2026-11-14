@@ -108,7 +108,7 @@ export default function Project() {
         <div className="space-y-5 min-w-0">
           <MembersCard pid={pid} />
           <MailCard pid={pid} />
-          <AnswersCard stats={stats.data} />
+          <AnswersCard stats={stats.data} error={stats.error} onRetry={stats.reload} />
         </div>
       </div>
       {dialog === 'source' && <AddSourceDialog projectId={pid} onClose={() => setDialog(null)} onCreated={() => void sources.reload()} />}

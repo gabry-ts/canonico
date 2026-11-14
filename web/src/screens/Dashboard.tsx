@@ -41,7 +41,7 @@ export default function Dashboard() {
           <CardHead title={t('home.attention.title')} />
           <Attention pid={pid} />
         </div>
-        <FixMetric stats={stats.data} />
+        <FixMetric stats={stats.data} error={stats.error} onRetry={stats.reload} />
         <div className="xl:col-span-2 card overflow-hidden">
           <CardHead
             title={t('home.feed.title')}
@@ -53,9 +53,9 @@ export default function Dashboard() {
           />
           <Feed pid={pid} />
         </div>
-        <AnswersCard stats={stats.data} />
+        <AnswersCard stats={stats.data} error={stats.error} onRetry={stats.reload} />
         <div className="xl:col-span-3">
-          <HealthCard stats={stats.data}>
+          <HealthCard stats={stats.data} error={stats.error} onRetry={stats.reload}>
             <div className="flex items-center justify-between gap-3 px-5 h-11 border-b">
               <h3 className="text-[13px] font-medium">
                 {t('home.src.title')} <span className="text-muted-foreground font-normal">· {app.project?.name}</span>
