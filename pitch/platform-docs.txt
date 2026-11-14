@@ -46,12 +46,12 @@ First test on 5 evolving-decision questions from KVA's ClearPath corpus: binding
 Demo: https://canonico.magikarp.uk
 Code: https://github.com/gabry-ts/canonico
 
-Riskiest assumption: AI programme leads will pay for a binding-fact layer next to their assistant [declared]. What we learned today: [team: fill in, or write "not tested with a buyer yet"].
+Riskiest assumption: AI programme leads will pay for a binding-fact layer next to their assistant [declared]. What we learned today: not tested with a buyer yet.
 
-Slipped: the timed test with a person outside the team (can they find and fix a wrong fact alone, in how many minutes) [team: replace with the result if done].
+Slipped: the timed test with a person outside the team (can they find and fix a wrong fact alone, in how many minutes): not done.
 
 One cut: real erasure for GDPR requests. Retire keeps the history, which is right for a superseded procedure and wrong for personal data that must leave the memory. It is the next thing we build.
 
 Question for the mentor: who signs the purchase order in a company rolling out an internal assistant, the AI programme lead or the process owner whose procedure is wrong?
 
-Built with Claude Code. In the product, Anthropic Claude Haiku and Sonnet through the API. The idea video's voice-over was generated with ElevenLabs text-to-speech. The demo path also runs offline.
+Built with Claude Code, Anthropic's coding agent. In the product, through the Anthropic API: Claude Haiku 5.5 (claude-haiku-5-5) extracts facts from documents and routes each question to a topic, and Claude Sonnet 5.5 (claude-sonnet-5-5) groups facts into topics and links the versions of a decision. Model calls during the build and the tests ran on our own Anthropic API key, roughly $5 to $5.5 in total (the ingest of the 46 documents was $0.40 of it). The live demo also runs on that key for now and switches to the team's Vercel AI Gateway key by configuration (LLM_PROVIDER=gateway, models anthropic/claude-haiku-5.5 and anthropic/claude-sonnet-5.5); the demo path itself needs no model call. The idea video's voice-over was generated with ElevenLabs text-to-speech. The demo path also runs offline.

@@ -18,7 +18,7 @@ Before the event a team member built an exploratory prototype in a different dom
 
 ## AI tools used
 
-Claude Code as coding assistant. Inside the product, Anthropic Claude Haiku and Sonnet (see `api/app/llm.py`). For the idea video, ElevenLabs text-to-speech (`eleven_v4`) generated the voice-over (see `video/src/tts.py`). Outside the product, Whisper on Groq to transcribe videos for our notes.
+Built with Claude Code, Anthropic's coding agent. Inside the product, through the Anthropic API (see `api/app/llm.py`): Claude Haiku 5.5 (`claude-haiku-5-5`) extracts facts from documents and routes each question to a topic, and Claude Sonnet 5.5 (`claude-sonnet-5-5`) groups facts into topics and links the versions of a decision. Model calls during the build and the tests ran on our own Anthropic API key, roughly $5 to $5.5 in total (the ingest of the 46 documents was $0.40 of it). The live demo also runs on that key for now and switches to the team's Vercel AI Gateway key by configuration (`LLM_PROVIDER=gateway`, models `anthropic/claude-haiku-5.5` and `anthropic/claude-sonnet-5.5`); the demo path itself needs no model call. For the idea video, ElevenLabs text-to-speech (`eleven_v4`) generated the voice-over (see `video/src/tts.py`). Outside the product, Whisper on Groq to transcribe videos for our notes.
 
 ## Setup
 
