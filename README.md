@@ -53,7 +53,27 @@ Backend notes:
 - `POST /ask` finds the topic of a question in three steps: a known phrasing of a topic (the demo questions), then the model router (one small cached call that picks a topic from the list of topics, 8 second timeout), then keyword matching. The model router is skipped without a provider, in offline mode and with `CANONICO_ROUTER=lexical`; any failure falls back to keywords. The answer itself is always composed from the facts without a model.
 - CORS origins come from `CORS_ORIGINS` (comma-separated) and `CORS_ORIGIN_REGEX` (default allows `*.vercel.app` previews).
 - State survives a restart. Call `POST /demo/reset` before a demo to start from the seed.
-- `render.yaml` describes a single-instance web service for Render (build `pip install ./api`, start `uvicorn` from `api/`). It has not been deployed from this repository yet.
+- `render.yaml` describes a single-instance web service for Render (build `pip install ./api`, start `uvicorn` from `api/`). It has not been deployed from this repository yet. The supported deployment is Docker on your own server, see below.
+
+## Deploy with Docker
+
+Two containers on one server. `web` is a Caddy server with the built site; it forwards everything under `/api/` to `api`, so site and API share one origin and the browser needs no CORS. `api` is the FastAPI process, not published to the host.
+
+```
+cp .env.example api/.env   # then put the key in api/.env, see below
+make docker-up             # docker compose up -d --build
+make docker-logs           # follow the logs
+make docker-down           # stop, the volume keeps the state
+```
+
+Open `http://localhost:8080`. The API answers under the same address, for example `http://localhost:8080/api/health`. Set `WEB_PORT` to publish another port (`WEB_PORT=80 make docker-up`) and `PUBLIC_URL` to the address people use, it is shown in webhook URLs (`PUBLIC_URL=https://brain.example.org make docker-up`).
+
+- Key: `api/.env` is read by compose at start and never copied into an image. For the live demo set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY`, or `LLM_PROVIDER=gateway` and `AI_GATEWAY_API_KEY`. Without `api/.env` the stack still starts: the seeded memory and every demo flow work without a model.
+- State: the named volume `canonico-runtime` holds the memory, the audit log, stored answers and the caches of model and GitHub responses. `docker compose down -v` deletes it.
+- Reset the demo: `curl -X POST http://localhost:8080/api/demo/reset`.
+- Offline mode: `curl -X PATCH http://localhost:8080/api/config -H 'content-type: application/json' -d '{"offline_mode": true}'`, or `CANONICO_OFFLINE=1` in `api/.env` to start that way. A reset goes back to the value of `CANONICO_OFFLINE`.
+- One replica only: memory lives in the `api` process. Do not scale the service.
+- To reach the server from outside without opening ports, point a Cloudflare Tunnel or a Tailscale Funnel at `http://localhost:8080`; both give an HTTPS address, which then goes into `PUBLIC_URL`. There is no authentication in this demo, so share that address only with the people who need it.
 
 ## Demo path
 
