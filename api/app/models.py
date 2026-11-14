@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date as date_aliased
-from enum import StrEnum
+from enum import Enum, StrEnum
 from typing import Any
 
 from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, RootModel
@@ -55,6 +55,14 @@ class FactPage(BaseModel):
     offset: int
 
 
+class SourceType(Enum):
+    documents = 'documents'
+    document_library = 'document_library'
+    github = 'github'
+    mail = 'mail'
+    NoneType_None = None
+
+
 class Document(BaseModel):
     project_id: str | None = Field(
         None, description='Owning project. Null or absent means organisation scope.'
@@ -71,6 +79,10 @@ class Document(BaseModel):
     text: str | None = Field(
         None, description='Full text, only on GET /documents/{doc_id}.'
     )
+    current_version: int | None = Field(
+        None, description="Latest version number of the document's version chain."
+    )
+    source_type: SourceType | None = None
 
 
 class Citation(BaseModel):
@@ -528,6 +540,9 @@ class Stats(BaseModel):
     maintenance_pending: int
     cost: Cost
     last_ingest_at: AwareDatetime | None
+    last_reset_at: AwareDatetime | None = Field(
+        None, description='When the demo was last reset. Null if never.'
+    )
 
 
 class Models(BaseModel):
@@ -536,12 +551,22 @@ class Models(BaseModel):
     answer: str
 
 
+class Provider(StrEnum):
+    anthropic = 'anthropic'
+    gateway = 'gateway'
+
+
 class Config(BaseModel):
     models: Models
     cost_cap_usd: float = Field(..., ge=0.0)
     active_corpus: str
     stale_after_days: int = Field(..., ge=1)
     low_confidence_threshold: float = Field(..., ge=0.0, le=1.0)
+    offline_mode: bool | None = Field(
+        False,
+        description='When true, answers and demo actions use cached or deterministic results and make no live LLM calls.',
+    )
+    provider: Provider | None = None
 
 
 class Models1(BaseModel):
@@ -556,6 +581,11 @@ class ConfigPatch(BaseModel):
     active_corpus: str | None = None
     stale_after_days: int | None = Field(None, ge=1)
     low_confidence_threshold: float | None = Field(None, ge=0.0, le=1.0)
+    offline_mode: bool | None = Field(
+        False,
+        description='When true, answers and demo actions use cached or deterministic results and make no live LLM calls.',
+    )
+    provider: Provider | None = None
 
 
 class AuditAction(StrEnum):
@@ -658,7 +688,7 @@ class ProjectMail(BaseModel):
     mail_config_override: MailConfig | None = None
 
 
-class SourceType(StrEnum):
+class SourceType1(StrEnum):
     documents = 'documents'
     document_library = 'document_library'
     github = 'github'
@@ -698,7 +728,7 @@ class MailSourceConfig(BaseModel):
     )
 
 
-class Provider(StrEnum):
+class Provider2(StrEnum):
     local_mock = 'local_mock'
     sharepoint = 'sharepoint'
     google_drive = 'google_drive'
@@ -708,7 +738,7 @@ class DocumentLibraryConfig(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    provider: Provider = Field(
+    provider: Provider2 = Field(
         ...,
         description='Only `local_mock` is implemented. `sharepoint` and `google_drive` are out of scope for the MVP.',
     )
@@ -738,7 +768,7 @@ class SourceConfig(
 class Source(BaseModel):
     id: str
     project_id: str
-    type: SourceType
+    type: SourceType1
     label: str
     status: SourceStatus
     last_synced_at: AwareDatetime | None = None
@@ -750,7 +780,7 @@ class Source(BaseModel):
 
 
 class SourceCreate(BaseModel):
-    type: SourceType
+    type: SourceType1
     label: str
     config: SourceConfig | None = None
 

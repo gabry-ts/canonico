@@ -1045,6 +1045,23 @@ export interface paths {
         patch: operations["patchSource"];
         trace?: never;
     };
+    "/sources/{source_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List documents of a source */
+        get: operations["listSourceDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sources/{source_id}/sync": {
         parameters: {
             query?: never;
@@ -1524,6 +1541,10 @@ export interface components {
             path: string;
             /** @description Full text, only on GET /documents/{doc_id}. */
             text?: string;
+            /** @description Latest version number of the document's version chain. */
+            current_version?: number | null;
+            /** @enum {string|null} */
+            source_type?: "documents" | "document_library" | "github" | "mail" | null;
         };
         Citation: {
             doc_id: string;
@@ -1924,6 +1945,11 @@ export interface components {
             };
             /** Format: date-time */
             last_ingest_at: string | null;
+            /**
+             * Format: date-time
+             * @description When the demo was last reset. Null if never.
+             */
+            last_reset_at?: string | null;
         };
         Config: {
             models: {
@@ -1935,6 +1961,13 @@ export interface components {
             active_corpus: string;
             stale_after_days: number;
             low_confidence_threshold: number;
+            /**
+             * @description When true, answers and demo actions use cached or deterministic results and make no live LLM calls.
+             * @default false
+             */
+            offline_mode: boolean;
+            /** @enum {string} */
+            provider?: "anthropic" | "gateway";
         };
         ConfigPatch: {
             models?: {
@@ -1946,6 +1979,13 @@ export interface components {
             active_corpus?: string;
             stale_after_days?: number;
             low_confidence_threshold?: number;
+            /**
+             * @description When true, answers and demo actions use cached or deterministic results and make no live LLM calls.
+             * @default false
+             */
+            offline_mode: boolean;
+            /** @enum {string} */
+            provider?: "anthropic" | "gateway";
         };
         ExportBundle: {
             /** @example 0.1.0 */
@@ -3028,6 +3068,10 @@ export interface operations {
                  * @example proj-clearpath
                  */
                 project_id?: components["parameters"]["ProjectIdQuery"];
+                /** @description Only documents from this source. */
+                source_id?: string;
+                /** @description Only documents from sources of this type. */
+                source_type?: "documents" | "document_library" | "github" | "mail";
             };
             header?: never;
             path?: never;
@@ -5046,7 +5090,8 @@ export interface operations {
                      *         "spent_usd": 2.31,
                      *         "cap_usd": 10
                      *       },
-                     *       "last_ingest_at": "2026-11-14T09:12:00Z"
+                     *       "last_ingest_at": "2026-11-14T09:12:00Z",
+                     *       "last_reset_at": null
                      *     }
                      */
                     "application/json": components["schemas"]["Stats"];
@@ -5079,7 +5124,9 @@ export interface operations {
                      *       "cost_cap_usd": 10,
                      *       "active_corpus": "org-consulting-clearpath",
                      *       "stale_after_days": 90,
-                     *       "low_confidence_threshold": 0.5
+                     *       "low_confidence_threshold": 0.5,
+                     *       "offline_mode": false,
+                     *       "provider": "anthropic"
                      *     }
                      */
                     "application/json": components["schemas"]["Config"];
@@ -5098,7 +5145,9 @@ export interface operations {
             content: {
                 /**
                  * @example {
-                 *       "cost_cap_usd": 15
+                 *       "cost_cap_usd": 15,
+                 *       "offline_mode": true,
+                 *       "provider": "gateway"
                  *     }
                  */
                 "application/json": components["schemas"]["ConfigPatch"];
@@ -5121,7 +5170,9 @@ export interface operations {
                      *       "cost_cap_usd": 15,
                      *       "active_corpus": "org-consulting-clearpath",
                      *       "stale_after_days": 90,
-                     *       "low_confidence_threshold": 0.5
+                     *       "low_confidence_threshold": 0.5,
+                     *       "offline_mode": true,
+                     *       "provider": "gateway"
                      *     }
                      */
                     "application/json": components["schemas"]["Config"];
@@ -5893,6 +5944,81 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
+        };
+    };
+    listSourceDocuments: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path: {
+                /** @example src-clearpath-mail */
+                source_id: components["parameters"]["SourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Documents ingested from this source, without text. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "id": "library/onboarding-standard-v3",
+                     *         "title": "Onboarding standard",
+                     *         "date": "2026-11-14",
+                     *         "path": "library/onboarding-standard-v3.md",
+                     *         "source_id": "src-library",
+                     *         "source_type": "document_library",
+                     *         "version": 3,
+                     *         "version_of": "library/onboarding-standard-v2",
+                     *         "current_version": 3
+                     *       },
+                     *       {
+                     *         "id": "library/onboarding-standard-v2",
+                     *         "title": "Onboarding standard",
+                     *         "date": "2026-11-10",
+                     *         "path": "library/onboarding-standard-v2.md",
+                     *         "source_id": "src-library",
+                     *         "source_type": "document_library",
+                     *         "version": 2,
+                     *         "version_of": "library/onboarding-standard-v1",
+                     *         "current_version": 3
+                     *       },
+                     *       {
+                     *         "id": "library/onboarding-standard-v1",
+                     *         "title": "Onboarding standard",
+                     *         "date": "2026-11-03",
+                     *         "path": "library/onboarding-standard-v1.md",
+                     *         "source_id": "src-library",
+                     *         "source_type": "document_library",
+                     *         "version": 1,
+                     *         "version_of": null,
+                     *         "current_version": 3
+                     *       },
+                     *       {
+                     *         "id": "library/sample",
+                     *         "title": "Sample",
+                     *         "date": "2026-11-14",
+                     *         "path": "library/sample.md",
+                     *         "source_id": "src-library",
+                     *         "source_type": "document_library",
+                     *         "version": 1,
+                     *         "version_of": null,
+                     *         "current_version": 1
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["Document"][];
+                };
+            };
+            404: components["responses"]["NotFound"];
         };
     };
     syncSource: {
