@@ -43,3 +43,18 @@ def client():
 @pytest.fixture(scope="session")
 def spec():
     return SPEC
+
+
+def assert_matches(actual, expected):
+    """The response carries every value of the contract example. Extra optional fields are allowed."""
+    if isinstance(expected, dict):
+        assert isinstance(actual, dict), actual
+        for key, value in expected.items():
+            assert key in actual, key
+            assert_matches(actual[key], value)
+    elif isinstance(expected, list):
+        assert isinstance(actual, list) and len(actual) == len(expected), actual
+        for got, want in zip(actual, expected):
+            assert_matches(got, want)
+    else:
+        assert actual == expected

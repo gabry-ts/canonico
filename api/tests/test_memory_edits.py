@@ -16,12 +16,12 @@ def test_resolving_a_conflict_retires_the_losers_and_changes_the_answer(client):
     assert resolved["status"] == "resolved"
     assert resolved["resolution"]["winning_fact_id"] == "M-106"
     facts = {f["id"]: f for f in resolved["facts"]}
-    assert facts["M-103"]["status"] == "retired" and facts["M-103"]["superseded_by"] == "M-106"
+    assert facts["M-105"]["status"] == "retired" and facts["M-105"]["superseded_by"] == "M-106"
     assert facts["M-106"]["status"] == "active" and facts["M-106"]["pinned"] is False
     after = ask(client, Q1)
     assert after["conflicts"] == [] and after["answer"] != before["answer"]
-    assert after["changed_because"] == "you resolved the conflict on requirement R1.1"
-    assert [e["action"] for e in client.get("/audit", params={"fact_id": "M-103"}).json()] == ["resolve"]
+    assert after["changed_because"] == "gabriele resolved the conflict on 4 weeks (final presentation)"
+    assert [e["action"] for e in client.get("/audit", params={"fact_id": "M-105"}).json()] == ["resolve"]
     assert_contract(client.post("/conflicts/C-001/resolve", json=body), "POST", "/conflicts/{conflict_id}/resolve", 409)
     assert_contract(client.post("/conflicts/C-999/resolve", json=body), "POST", "/conflicts/{conflict_id}/resolve", 404)
     assert_contract(client.post("/conflicts/C-002/resolve", json=body), "POST", "/conflicts/{conflict_id}/resolve", 422)
@@ -45,19 +45,19 @@ def test_correcting_a_fact_changes_the_next_answer(client):
     after = ask(client, Q1)
     assert "target, not guarantee" in after["answer"]
     assert after["binding"]["value"] == patch["value"]
-    assert after["changed_because"] == "you corrected the final report SLA"
+    assert after["changed_because"] == "gabriele corrected the final report SLA"
     assert_contract(client.patch("/facts/M-106", json={"reason": "x", **WHO}), "PATCH", "/facts/{fact_id}", 422)
     assert_contract(client.patch("/facts/M-999", json=patch), "PATCH", "/facts/{fact_id}", 404)
     assert_contract(client.patch("/facts/M-106", json={"topic": "nope", "reason": "x", **WHO}), "PATCH", "/facts/{fact_id}", 404)
 
 
 def test_history_lists_every_version_newest_first(client):
-    client.post("/facts/M-103/retire", json={"reason": "Replaced by the final report, which sets 3–4 weeks.", **WHO})
-    versions = assert_contract(client.get("/facts/M-103/history"), "GET", "/facts/{fact_id}/history")
+    client.post("/facts/M-105/retire", json={"reason": "Replaced by the final report, which sets 3–4 weeks.", **WHO})
+    versions = assert_contract(client.get("/facts/M-105/history"), "GET", "/facts/{fact_id}/history")
     assert [v["version"] for v in versions] == [2, 1]
     assert versions[0]["action"] == "retire"
     assert versions[0]["changes"]["status"] == {"from": "active", "to": "retired"}
-    assert versions[0]["changes"]["superseded_by"] == {"from": None, "to": "M-106"}
+    assert versions[0]["changes"]["retired_by"] == {"from": None, "to": "gabriele"}
     assert versions[1]["action"] == "classify" and versions[1]["snapshot"]["status"] == "active"
     untouched = assert_contract(client.get("/facts/M-101/history"), "GET", "/facts/{fact_id}/history")
     assert len(untouched) == 1
@@ -78,22 +78,25 @@ def test_pin_moves_between_facts_of_a_topic(client):
 
 
 def test_supersede_and_unlink(client):
-    body = {"by_fact_id": "M-106", "reason": "The final report restates the target as 3–4 weeks.", **WHO}
-    older = assert_contract(client.post("/facts/M-103/supersede", json=body), "POST", "/facts/{fact_id}/supersede")
-    assert older["superseded_by"] == "M-106" and older["type"] == "CONSTRAINT" and older["status"] == "active"
-    assert client.get("/facts/M-106").json()["supersedes"] == "M-103"
-    answer = ask(client, Q1)
-    assert answer["conflicts"] == [] and "M-103" in [f["id"] for f in answer["superseded"]]
-    assert_contract(client.post("/facts/M-106/supersede", json={**body, "by_fact_id": "M-103"}), "POST", "/facts/{fact_id}/supersede", 422)
-    assert_contract(client.post("/facts/M-106/supersede", json={**body, "by_fact_id": "M-107"}), "POST", "/facts/{fact_id}/supersede")
-    assert_contract(client.post("/facts/M-107/supersede", json={**body, "by_fact_id": "M-107"}), "POST", "/facts/{fact_id}/supersede", 422)
-    assert_contract(client.post("/facts/M-103/supersede", json={**body, "by_fact_id": "M-201"}), "POST", "/facts/{fact_id}/supersede", 422)
     params = {"reason": "Wrongly linked.", **WHO}
     newer = assert_contract(client.delete("/facts/M-106/supersedes", params=params), "DELETE", "/facts/{fact_id}/supersedes")
     assert newer["supersedes"] is None
-    assert client.get("/facts/M-103").json()["superseded_by"] is None
+    assert client.get("/facts/M-105").json()["superseded_by"] is None
+    answer = ask(client, Q1)
+    assert [f["id"] for f in answer["conflicts"]] == ["M-105"] and "One conflict remains" in answer["answer"]
     assert_contract(client.delete("/facts/M-106/supersedes", params=params), "DELETE", "/facts/{fact_id}/supersedes", 404)
-    assert_contract(client.delete("/facts/M-107/supersedes", params={"actor": "x"}), "DELETE", "/facts/{fact_id}/supersedes", 422)
+    assert_contract(client.delete("/facts/M-105/supersedes", params={"actor": "x"}), "DELETE", "/facts/{fact_id}/supersedes", 422)
+
+    body = {"by_fact_id": "M-106", "reason": "The final report restates the target as 3–4 weeks.", **WHO}
+    older = assert_contract(client.post("/facts/M-105/supersede", json=body), "POST", "/facts/{fact_id}/supersede")
+    assert older["superseded_by"] == "M-106" and older["type"] == "DECISION" and older["status"] == "active"
+    assert client.get("/facts/M-106").json()["supersedes"] == "M-105"
+    answer = ask(client, Q1)
+    assert answer["conflicts"] == [] and "M-105" in [f["id"] for f in answer["superseded"]]
+    assert_contract(client.post("/facts/M-106/supersede", json={**body, "by_fact_id": "M-105"}), "POST", "/facts/{fact_id}/supersede", 422)
+    assert_contract(client.post("/facts/M-106/supersede", json={**body, "by_fact_id": "M-106"}), "POST", "/facts/{fact_id}/supersede", 422)
+    assert_contract(client.post("/facts/M-105/supersede", json={**body, "by_fact_id": "M-201"}), "POST", "/facts/{fact_id}/supersede", 422)
+    assert_contract(client.post("/facts/M-999/supersede", json=body), "POST", "/facts/{fact_id}/supersede", 404)
 
 
 def test_same_day_cycle_is_a_conflict(client):
@@ -112,7 +115,7 @@ def test_created_fact_enters_the_topic_and_conflicts_with_the_binding_one(client
     answer = ask(client, Q1)
     assert answer["binding"]["id"] == fact["id"]
     assert "M-106" in [f["id"] for f in answer["conflicts"]]
-    assert answer["changed_because"].startswith("you added")
+    assert answer["changed_because"].startswith("gabriele added")
     assert client.get("/audit", params={"action": "create"}).json()[0]["fact_id"] == fact["id"]
     assert_contract(client.post("/facts", json={**body, "topic": "nope"}), "POST", "/facts", 404)
     assert_contract(client.post("/facts", json={**body, "doc_id": "nope"}), "POST", "/facts", 404)
@@ -121,7 +124,7 @@ def test_created_fact_enters_the_topic_and_conflicts_with_the_binding_one(client
 
 def test_dependents(client):
     ask(client, Q1)
-    deps = assert_contract(client.get("/facts/M-103/dependents"), "GET", "/facts/{fact_id}/dependents")
+    deps = assert_contract(client.get("/facts/M-105/dependents"), "GET", "/facts/{fact_id}/dependents")
     assert "M-106" in [f["id"] for f in deps["facts"]]
     assert deps["conflicts"] == ["C-001"]
     assert deps["answers"][0]["question"] == Q1
@@ -148,30 +151,32 @@ def test_maintenance_queue_approve_and_dismiss(client):
     by_fact = {m["fact"]["id"]: m for m in queue}
     assert by_fact["M-105"]["reason"] == "superseded_still_retrievable"
     assert by_fact["M-105"]["detail"] == "Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval."
-    assert by_fact["M-103"]["reason"] == "stale"
-    stale = assert_contract(client.get("/maintenance/queue", params={"reason": "stale"}), "GET", "/maintenance/queue")
-    assert all(m["reason"] == "stale" for m in stale)
-    item = by_fact["M-103"]["id"]
+    assert "M-101" not in by_fact and "M-103" not in by_fact
+    reasons = {m["reason"] for m in queue}
+    for reason in reasons:
+        only = assert_contract(client.get("/maintenance/queue", params={"reason": reason}), "GET", "/maintenance/queue")
+        assert only and all(m["reason"] == reason for m in only)
+    item = by_fact["M-105"]["id"]
     approved = assert_contract(client.post(f"/maintenance/{item}/approve", json={**WHO, "note": "Replaced by the final report."}), "POST", "/maintenance/{item_id}/approve")
     assert approved["status"] == "approved" and approved["fact"]["status"] == "retired" and approved["fact"]["superseded_by"] == "M-106"
-    assert [e["action"] for e in client.get("/audit", params={"fact_id": "M-103"}).json()] == ["retire", "approve"]
+    assert [e["action"] for e in client.get("/audit", params={"fact_id": "M-105"}).json()] == ["retire", "approve"]
     assert ask(client, Q1)["conflicts"] == []
     assert_contract(client.post(f"/maintenance/{item}/approve", json=WHO), "POST", "/maintenance/{item_id}/approve", 409)
-    other = by_fact["M-105"]["id"]
-    dismissed = assert_contract(client.post(f"/maintenance/{other}/dismiss", json={**WHO, "note": "Still valid for the pilot team."}), "POST", "/maintenance/{item_id}/dismiss")
+    other = next(m for m in queue if m["id"] != item)
+    dismissed = assert_contract(client.post(f"/maintenance/{other['id']}/dismiss", json={**WHO, "note": "Still valid for the pilot team."}), "POST", "/maintenance/{item_id}/dismiss")
     assert dismissed["status"] == "dismissed" and dismissed["fact"]["status"] == "active"
     pending = [m["id"] for m in client.get("/maintenance/queue", params={"limit": 500}).json()]
-    assert item not in pending and other not in pending
+    assert item not in pending and other["id"] not in pending
     assert_contract(client.post("/maintenance/MQ-999/dismiss", json=WHO), "POST", "/maintenance/{item_id}/dismiss", 404)
 
 
 def test_undo_reverts_a_retire_and_refuses_what_cannot_be_undone(client):
-    client.post("/facts/M-103/retire", json={"reason": "Replaced.", **WHO})
-    event = client.get("/audit", params={"fact_id": "M-103"}).json()[0]
+    client.post("/facts/M-105/retire", json={"reason": "Replaced.", **WHO})
+    event = client.get("/audit", params={"fact_id": "M-105"}).json()[0]
     undo = assert_contract(client.post(f"/audit/{event['id']}/undo", json={**WHO, "reason": "Retired by mistake."}), "POST", "/audit/{event_id}/undo")
-    assert undo["action"] == "undo" and undo["fact_id"] == "M-103"
-    fact = client.get("/facts/M-103").json()
-    assert fact["status"] == "active" and fact["superseded_by"] is None and fact["retired_reason"] is None
+    assert undo["action"] == "undo" and undo["fact_id"] == "M-105"
+    fact = client.get("/facts/M-105").json()
+    assert fact["status"] == "active" and fact["superseded_by"] == "M-106" and fact["retired_reason"] is None and fact["retired_by"] is None
     assert [c["id"] for c in client.get("/conflicts").json()][0] == "C-001"
     body = {**WHO, "reason": "Again."}
     assert_contract(client.post(f"/audit/{event['id']}/undo", json=body), "POST", "/audit/{event_id}/undo", 409)

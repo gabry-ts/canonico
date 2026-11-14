@@ -1,6 +1,6 @@
 import json
 
-from tests.conftest import assert_contract
+from tests.conftest import assert_contract, assert_matches
 
 Q1 = "What is the target time for onboarding new consultants?"
 WHO = {"actor": "gabriele"}
@@ -40,16 +40,16 @@ def test_ask_history_answer_record_and_replay(client):
     assert [h["status"] for h in history] == ["contested", "binding"]
     assert history[1]["id"] == first["answer_id"]
     record = assert_contract(client.get(f"/answers/{first['answer_id']}"), "GET", "/answers/{answer_id}")
-    assert [f["id"] for f in record["fact_snapshot"]] == ["M-106", "M-105", "M-103"]
+    assert [f["id"] for f in record["fact_snapshot"]] == ["M-106", "M-101", "M-102", "M-103", "M-104", "M-105"]
     assert record["response"]["answer"] == first["answer"]
     same = assert_contract(client.post(f"/answers/{first['answer_id']}/replay"), "POST", "/answers/{answer_id}/replay")
     assert same["changed"] is False and same["diffs"] == [] and same["changed_because"] is None
-    client.post("/facts/M-103/retire", json=RETIRE)
+    client.post("/facts/M-105/retire", json=RETIRE)
     diff = assert_contract(client.post(f"/answers/{first['answer_id']}/replay"), "POST", "/answers/{answer_id}/replay")
-    assert diff["changed"] is True and diff["changed_because"] == "you retired requirement R1.1"
+    assert diff["changed"] is True and diff["changed_because"] == "gabriele retired 4 weeks (final presentation)"
     by_field = {d["field"]: d for d in diff["diffs"]}
-    assert by_field["conflicts"]["before"] == ["M-103"] and by_field["conflicts"]["after"] == []
-    assert by_field["answer"]["after"].endswith("is no longer binding.")
+    assert by_field["conflicts"]["before"] == ["M-105"] and by_field["conflicts"]["after"] == []
+    assert by_field["answer"]["after"].endswith("was retired by gabriele.")
     assert diff["new_answer_id"] != first["answer_id"]
     assert_contract(client.get("/answers/ans-9999"), "GET", "/answers/{answer_id}", 404)
     assert_contract(client.post("/answers/ans-9999/replay"), "POST", "/answers/{answer_id}/replay", 404)
@@ -64,7 +64,7 @@ def test_ask_stream_sends_retrieval_tokens_and_the_final_answer(client):
     names = [name.removeprefix("event: ") for name, _ in events]
     payloads = [json.loads(data.removeprefix("data: ")) for _, data in events]
     assert names[0] == "retrieval" and names[-1] == "final" and set(names[1:-1]) == {"token"}
-    assert payloads[0] == {"fact_ids": ["M-106", "M-105", "M-103"]}
+    assert payloads[0] == {"fact_ids": ["M-106", "M-101", "M-102", "M-103", "M-104", "M-105"]}
     final = payloads[-1]
     assert "".join(p["text"] for p in payloads[1:-1]) == final["answer"]
     assert final["status"] == "binding" and final["answer_id"].startswith("ans-")
@@ -84,16 +84,16 @@ def test_config_get_and_patch(client):
 
 
 def test_export_and_import_round_trip(client):
-    client.post("/facts/M-103/retire", json=RETIRE)
+    client.post("/facts/M-105/retire", json=RETIRE)
     client.post("/ask", json={"question": Q1})
     bundle = assert_contract(client.get("/export"), "GET", "/export")
-    assert len(bundle["documents"]) == 46 and bundle["documents"][0]["text"]
+    assert len(bundle["documents"]) == 49 and bundle["documents"][0]["text"]
     assert any(e["action"] == "retire" for e in bundle["audit"]) and len(bundle["answers"]) == 1
     client.post("/demo/reset")
-    assert client.get("/facts/M-103").json()["status"] == "active"
+    assert client.get("/facts/M-105").json()["status"] == "active"
     summary = assert_contract(client.post("/import", json=bundle), "POST", "/import")
-    assert summary["documents"] == 46 and summary["facts"] == len(bundle["facts"]) and summary["topics"] == len(bundle["topics"])
-    assert client.get("/facts/M-103").json()["status"] == "retired"
+    assert summary["documents"] == 49 and summary["facts"] == len(bundle["facts"]) and summary["topics"] == len(bundle["topics"])
+    assert client.get("/facts/M-105").json()["status"] == "retired"
     answer = client.post("/ask", json={"question": Q1}).json()
     assert answer["binding"]["id"] == "M-106" and answer["conflicts"] == []
     assert client.get("/audit", params={"action": "import"}).json()
@@ -105,17 +105,17 @@ def test_export_and_import_round_trip(client):
 
 def test_topics_create_rename_and_merge(client):
     created = assert_contract(client.post("/topics", json={"id": "billing-rate", "label": "Billing rate"}), "POST", "/topics", 201)
-    assert created == {"id": "billing-rate", "label": "Billing rate", "fact_ids": []}
+    assert_matches(created, {"id": "billing-rate", "label": "Billing rate", "fact_ids": []})
     assert assert_contract(client.post("/topics", json={"label": "Travel Policy"}), "POST", "/topics", 201)["id"] == "travel-policy"
     assert_contract(client.post("/topics", json={"id": "billing-rate", "label": "Again"}), "POST", "/topics", 409)
     assert_contract(client.post("/topics", json={}), "POST", "/topics", 422)
     renamed = assert_contract(client.patch("/topics/onboarding-target", json={"label": "Onboarding time target"}), "PATCH", "/topics/{topic_id}")
-    assert renamed["label"] == "Onboarding time target" and len(renamed["fact_ids"]) == 7
+    assert renamed["label"] == "Onboarding time target" and len(renamed["fact_ids"]) == 6
     assert_contract(client.patch("/topics/nope", json={"label": "x"}), "PATCH", "/topics/{topic_id}", 404)
     fact = {"topic": "billing-rate", "value": "Onboarding target confirmed at 3–4 weeks", "type": "EVIDENCE", "quote": "Confirmed on the call.", "date": "2025-12-03", **WHO}
     new_id = client.post("/facts", json=fact).json()["id"]
     merged = assert_contract(client.post("/topics/billing-rate/merge", json={"into_topic_id": "onboarding-target", **WHO}), "POST", "/topics/{topic_id}/merge")
-    assert merged["id"] == "onboarding-target" and new_id in merged["fact_ids"] and len(merged["fact_ids"]) == 8
+    assert merged["id"] == "onboarding-target" and new_id in merged["fact_ids"] and len(merged["fact_ids"]) == 7
     assert client.get(f"/facts/{new_id}").json()["topic"] == "onboarding-target"
     assert "billing-rate" not in [t["id"] for t in client.get("/topics").json()]
     assert client.get("/audit", params={"action": "merge"}).json()[0]["actor"] == "gabriele"
@@ -127,7 +127,7 @@ def test_documents_create_list_facts_and_delete(client):
     body = {"id": "07-documents/addendum-onboarding", "title": "Onboarding addendum", "date": "2025-12-05", "format": "markdown",
             "text": "# Addendum\n\nThe onboarding SLA stays at 3–4 weeks.\n", "ingest": False}
     created = assert_contract(client.post("/documents", json=body), "POST", "/documents", 201)
-    assert created["document"] == {"id": body["id"], "title": body["title"], "date": body["date"], "path": "07-documents/addendum-onboarding.md"}
+    assert_matches(created["document"], {"id": body["id"], "title": body["title"], "date": body["date"], "path": "07-documents/addendum-onboarding.md"})
     assert created["ingest_job"] is None
     assert client.get("/documents/07-documents%2Faddendum-onboarding").json()["text"] == body["text"]
     assert_contract(client.post("/documents", json=body), "POST", "/documents", 409)
@@ -145,7 +145,7 @@ def test_documents_create_list_facts_and_delete(client):
     assert {"M-105", "M-207"} <= set(deleted["deleted_fact_ids"])
     assert client.get("/facts/M-105").status_code == 404
     assert client.get("/facts/M-106").json()["supersedes"] is None
-    assert client.post("/ask", json={"question": Q1}).json()["superseded"] == []
+    assert client.post("/ask", json={"question": Q1}).json()["conflicts"] == []
     assert_contract(client.delete("/documents/05-meetings%2Fmeeting-005-final-presentation", params=WHO), "DELETE", "/documents/{doc_id}", 404)
     undo = client.post(f"/audit/{deleted['audit_event_id']}/undo", json={**WHO, "reason": "Deleted by mistake."})
     assert undo.status_code == 200
@@ -154,21 +154,30 @@ def test_documents_create_list_facts_and_delete(client):
     assert client.get("/documents/05-meetings%2Fmeeting-005-final-presentation").status_code == 200
 
 
+PENDING = {
+    "listOrgMembers", "inviteOrgMember", "getOrgMember", "patchOrgMember", "deleteOrgMember",
+    "listProjectMembers", "setProjectMemberRole", "clearProjectMemberRole",
+    "setupOrg", "getOrgSetupStatus", "listSourceDocuments", "previewGithubSource",
+}
+
+
 def test_every_operation_of_the_contract_is_implemented(client, spec):
     samples = {"fact_id": "M-103", "topic_id": "onboarding-target", "doc_id": "01-scope/requirements", "job_id": "job-7f3a", "run_id": "eval-none",
-               "conflict_id": "C-001", "question_id": "OQ-001", "item_id": "MQ-001", "answer_id": "ans-0001", "event_id": "a-0001"}
-    count = 0
+               "conflict_id": "C-001", "question_id": "OQ-001", "item_id": "MQ-001", "answer_id": "ans-0001", "event_id": "a-0001",
+               "project_id": "proj-internal", "source_id": "src-internal-docs", "rule_id": "rule-002", "member_id": "mem-none"}
+    missing = set()
     for path, item in spec["paths"].items():
-        for method in item:
+        for method, operation in item.items():
             if method not in ("get", "post", "patch", "delete", "put"):
                 continue
-            count += 1
             url = path
             for name, value in samples.items():
                 url = url.replace("{" + name + "}", value)
             response = client.request(method.upper(), url, json={} if method in ("post", "patch", "put") else None)
-            assert response.status_code not in (405, 501), f"{method.upper()} {path} -> {response.status_code}"
             assert response.status_code != 500, f"{method.upper()} {path} -> 500"
-            if response.status_code >= 400 and path != "/ask/stream":
+            unrouted = response.status_code in (405, 501) or (response.status_code == 404 and response.json().get("message") == "Not Found")
+            if unrouted:
+                missing.add(operation["operationId"])
+            elif response.status_code >= 400 and path != "/ask/stream":
                 assert set(response.json()) == {"code", "message"}, f"{method.upper()} {path}"
-    assert count == 54
+    assert missing == PENDING

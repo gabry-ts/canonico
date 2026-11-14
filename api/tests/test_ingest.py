@@ -60,7 +60,9 @@ def test_forced_ingest_replaces_extracted_facts_and_keeps_curated_ones(client, m
     done = wait_for(client, job["id"])
     assert done["status"] == "done" and done["docs"] == 46
     facts = client.get("/facts", params={"limit": 500}).json()["items"]
-    assert len(facts) == 16
+    curated = 15 + 3 + 3
+    assert len(facts) == curated + 1
+    assert {"L-401", "L-410", "M-905"} <= {f["id"] for f in facts}
     extracted = [f for f in facts if f["topic"] == "audit-turnaround"]
     assert len(extracted) == 1 and extracted[0]["type"] == "CONSTRAINT"
     assert client.get("/facts/M-106").json()["supersedes"] == "M-105"
@@ -73,12 +75,12 @@ def test_classify_retypes_facts_but_keeps_pinned_ones(client, monkeypatch):
     monkeypatch.setattr(llm, "available", lambda: True)
     monkeypatch.setattr(llm, "complete_json", fake_complete)
     client.post("/facts/M-106/pin", json={"reason": "Approved deliverable.", "actor": "gabriele"})
-    job = assert_contract(client.post("/classify", json={"fact_ids": ["M-103", "M-106"], "force": False}), "POST", "/classify", 202)
+    job = assert_contract(client.post("/classify", json={"fact_ids": ["M-105", "M-106"], "force": False}), "POST", "/classify", 202)
     assert job["kind"] == "classify"
     assert wait_for(client, job["id"])["status"] == "done"
-    assert client.get("/facts/M-103").json()["type"] == "HYPOTHESIS"
+    assert client.get("/facts/M-105").json()["type"] == "HYPOTHESIS"
     assert client.get("/facts/M-106").json()["type"] == "DECISION"
-    assert client.get("/audit", params={"fact_id": "M-103"}).json()[0]["action"] == "classify"
+    assert client.get("/audit", params={"fact_id": "M-105"}).json()[0]["action"] == "classify"
     assert_contract(client.post("/classify", json={"doc_id": "nope", "force": False}), "POST", "/classify", 404)
     assert_contract(client.post("/classify", json={"force": False}), "POST", "/classify", 422)
 
