@@ -26,7 +26,11 @@ PUBLIC_FACT_FIELDS = (
     "confidence",
     "retired_reason",
     "pinned",
+    "project_id",
+    "retired_by",
+    "retired_at",
 )
+DEFAULT_PROJECT = "proj-clearpath"
 BINDING_TYPES = ("DECISION", "CONSTRAINT")
 DEFAULT_CONFIG = {
     "models": {
@@ -38,6 +42,8 @@ DEFAULT_CONFIG = {
     "active_corpus": settings.CORPUS,
     "stale_after_days": 90,
     "low_confidence_threshold": 0.5,
+    "offline_mode": False,
+    "provider": "gateway",
 }
 
 
@@ -65,7 +71,7 @@ def _read_json(path: Path, default):
 
 def seed_hash() -> str:
     digest = hashlib.sha256()
-    files = sorted(seed_dir().glob("*.json")) + [corpus_dir() / "corpus.jsonl"]
+    files = sorted(p for p in seed_dir().rglob("*") if p.is_file() and p.suffix in (".json", ".txt")) + [corpus_dir() / "corpus.jsonl"]
     for path in files:
         if path.exists():
             digest.update(path.name.encode())
@@ -90,6 +96,47 @@ def load_corpus_documents() -> dict:
             "date": meta.get("created") or "2025-01-01",
             "path": source.removeprefix("raw/"),
             "text": raw.get("text", ""),
+            "project_id": DEFAULT_PROJECT,
+            "source_id": "src-clearpath-docs",
+            "version": 1,
+            "version_of": None,
+        }
+    return docs
+
+
+def load_seed_documents() -> dict:
+    """Documents that are not part of the corpus: internal documents and the versioned library."""
+    docs = {}
+    for raw in _read_json(seed_dir() / "internal_documents.json", []):
+        docs[raw["id"]] = {"version": 1, "version_of": None, **copy.deepcopy(raw)}
+    library = seed_dir() / "library"
+    for entry in _read_json(library / "manifest.json", {}).get("documents", []):
+        versions = []
+        for item in sorted(entry["versions"], key=lambda v: v["version"]):
+            text = (library / item["file"]).read_text(encoding="utf-8")
+            versions.append(
+                {
+                    "version": item["version"],
+                    "version_label": item.get("version_label"),
+                    "uploaded_at": item["uploaded_at"],
+                    "title": entry["title"],
+                    "date": item["date"],
+                    "text": text,
+                    "facts_superseded": [],
+                }
+            )
+        latest = versions[-1]
+        docs[entry["doc_id"]] = {
+            "id": entry["doc_id"],
+            "title": entry["title"],
+            "date": latest["date"],
+            "path": f"{entry['doc_id']}.txt",
+            "text": latest["text"],
+            "project_id": entry.get("project_id"),
+            "source_id": entry.get("source_id"),
+            "version": latest["version"],
+            "version_of": entry["doc_id"] if latest["version"] > 1 else None,
+            "versions": versions,
         }
     return docs
 
@@ -100,17 +147,27 @@ def build_seed() -> dict:
         fact = copy.deepcopy(fact)
         fact.setdefault("x", {})
         fact.setdefault("pinned", False)
+        fact.setdefault("project_id", DEFAULT_PROJECT)
         facts[fact["id"]] = fact
     topics = {}
     for topic in _read_json(seed_dir() / "topics.json", []):
         topic = copy.deepcopy(topic)
         topic.setdefault("x", {})
+        topic.setdefault("project_id", DEFAULT_PROJECT)
         topic["fact_ids"] = [i for i in topic.get("fact_ids", []) if i in facts]
         topics[topic["id"]] = topic
+    documents = {**load_corpus_documents(), **load_seed_documents()}
+    for fact in facts.values():
+        document = documents.get(fact.get("doc_id") or "")
+        newer = facts.get(fact.get("superseded_by") or "")
+        if document and document.get("versions") and newer and newer.get("doc_id") == document["id"]:
+            for entry in document["versions"]:
+                if entry["version"] == newer.get("x", {}).get("doc_version") and fact["id"] not in entry["facts_superseded"]:
+                    entry["facts_superseded"].append(fact["id"])
     for fact in facts.values():
         topic = topics.setdefault(
             fact["topic"],
-            {"id": fact["topic"], "label": fact["topic"].replace("-", " ").capitalize(), "fact_ids": [], "x": {}},
+            {"id": fact["topic"], "label": fact["topic"].replace("-", " ").capitalize(), "fact_ids": [], "project_id": fact["project_id"], "x": {}},
         )
         if fact["id"] not in topic["fact_ids"]:
             topic["fact_ids"].append(fact["id"])
@@ -121,11 +178,24 @@ def build_seed() -> dict:
         conflict.setdefault("resolution", None)
         conflict["fact_ids"] = [i for i in conflict["fact_ids"] if i in facts]
         conflicts[conflict["id"]] = conflict
+    org = _read_json(seed_dir() / "org.json", {})
+    mailbox = []
+    for path in sorted((seed_dir() / "mail").glob("*.json")) if (seed_dir() / "mail").exists() else []:
+        mailbox.extend({**copy.deepcopy(item), "fetched": False} for item in _read_json(path, []))
     state = {
         "seed_hash": seed_hash(),
         "version": 0,
-        "seq": {"audit": 0, "answer": 0, "oq": 0, "mq": 0},
-        "documents": load_corpus_documents(),
+        "seq": {"audit": 0, "answer": 0, "oq": 0, "mq": 0, "fact": 300, "sync": 0, "rule": 0},
+        "org": copy.deepcopy(org.get("organisation") or {"id": "org-default", "name": "Organisation", "mail_config": None}),
+        "projects": {p["id"]: copy.deepcopy(p) for p in org.get("projects", [{"id": DEFAULT_PROJECT, "name": "ClearPath engagement", "description": None, "created_at": settings.SEED_AT, "mail_config_override": None}])},
+        "sources": {x["id"]: {"x": {}, **copy.deepcopy(x)} for x in org.get("sources", [])},
+        "mail_rules": {r["id"]: copy.deepcopy(r) for r in org.get("mail_rules", [])},
+        "mailbox": mailbox,
+        "messages": [],
+        "sync_jobs": [],
+        "members": {m["id"]: copy.deepcopy(m) for m in org.get("members", [])},
+        "project_members": copy.deepcopy(org.get("project_members", [])),
+        "documents": documents,
         "topics": topics,
         "facts": facts,
         "conflicts": conflicts,
@@ -141,6 +211,12 @@ def build_seed() -> dict:
         "cost_spent": 0.0,
         "meta": _read_json(seed_dir() / "meta.json", {}),
     }
+    for rule_id in state["mail_rules"]:
+        if rule_id.split("-")[-1].isdigit():
+            state["seq"]["rule"] = max(state["seq"]["rule"], int(rule_id.split("-")[-1]))
+    state["config"]["offline_mode"] = os.environ.get("CANONICO_OFFLINE") == "1"
+    provider = (os.environ.get("LLM_PROVIDER") or "gateway").strip().lower()
+    state["config"]["provider"] = provider if provider in ("anthropic", "gateway") else "gateway"
     cap = os.environ.get("CANONICO_COST_CAP_USD")
     if cap:
         state["config"]["cost_cap_usd"] = float(cap)
@@ -178,6 +254,30 @@ def successor(state: dict, fact: dict) -> dict | None:
     return None
 
 
+def final_successor(state: dict, fact: dict) -> dict | None:
+    """Last fact of the supersedes chain, when every fact on the way is active."""
+    seen = {fact["id"]}
+    current = fact
+    while current.get("superseded_by") and current["superseded_by"] not in seen:
+        nxt = state["facts"].get(current["superseded_by"])
+        if nxt is None or nxt["status"] != "active":
+            return None
+        seen.add(nxt["id"])
+        current = nxt
+    return current if current is not fact else None
+
+
+def stale_active(state: dict, fact: dict) -> bool:
+    """Superseded but still active: a newer fact replaced it, yet it was never reclassified or retired.
+
+    The link came from dates and wording. Until a person retires the fact or confirms the link,
+    an agent could still pick it up, so answers flag it and the maintenance queue proposes it.
+    """
+    if fact["status"] != "active" or fact["type"] == "SUPERSEDED" or fact.get("x", {}).get("acknowledged"):
+        return False
+    return successor(state, fact) is not None
+
+
 def is_superseded(state: dict, fact: dict) -> bool:
     if successor(state, fact) is not None:
         return True
@@ -196,6 +296,9 @@ def view(state: dict, fact: dict) -> dict:
     out["type"] = effective_type(state, fact)
     out["pinned"] = bool(fact.get("pinned"))
     out["doc_id"] = fact.get("doc_id") or "manual"
+    out["project_id"] = fact.get("project_id")
+    out["retired_by"] = fact.get("retired_by") if fact["status"] == "retired" else None
+    out["retired_at"] = fact.get("retired_at") if fact["status"] == "retired" else None
     return out
 
 
@@ -225,13 +328,13 @@ def binding_of(state: dict, topic_id: str, focus: set[str] | None = None) -> dic
 
 def conflict_live(state: dict, conflict: dict) -> list[dict]:
     facts = [state["facts"][i] for i in conflict["fact_ids"] if i in state["facts"]]
-    return [f for f in facts if f["status"] == "active" and not is_superseded(state, f)]
+    return [f for f in facts if f["status"] == "active" and (not is_superseded(state, f) or stale_active(state, f))]
 
 
 def conflict_status(state: dict, conflict: dict) -> str:
     if conflict.get("resolution"):
         return "resolved"
-    return "open" if len(conflict_live(state, conflict)) >= 2 else "resolved"
+    return "open" if len({value_key(f) for f in conflict_live(state, conflict)}) >= 2 else "resolved"
 
 
 def conflict_view(state: dict, conflict: dict) -> dict:
@@ -242,6 +345,7 @@ def conflict_view(state: dict, conflict: dict) -> dict:
     return {
         "id": conflict["id"],
         "topic": conflict["topic"],
+        "project_id": project_of_topic(state, conflict["topic"]),
         "status": status,
         "summary": conflict["summary"],
         "facts": [view(state, state["facts"][i]) for i in conflict["fact_ids"] if i in state["facts"]],
@@ -271,9 +375,40 @@ def sync_open_questions(state: dict) -> None:
         }
 
 
-def next_fact_id(state: dict) -> str:
-    numbers = [int(m.group(1)) for m in (re.match(r"M-(\d+)$", i) for i in state["facts"]) if m]
-    return f"M-{max(numbers + [300]) + 1}"
+def next_fact_id(state: dict, prefix: str = "M", start: int = 301) -> str:
+    """New facts are numbered from 301 per prefix: M for people and uploads, E for email. Seeded corpus facts start at M-1001."""
+    counters = state["seq"].setdefault("facts", {})
+    number = max(counters.get(prefix, start - 1) + 1, start)
+    while f"{prefix}-{number}" in state["facts"]:
+        number += 1
+    counters[prefix] = number
+    return f"{prefix}-{number}"
+
+
+def next_library_fact_id(state: dict, doc_id: str) -> str:
+    """Facts of a library document are numbered L-4xx, one block of ten per document."""
+    numbers = [int(i.split("-")[1]) for i in state["facts"] if i.startswith("L-") and i.split("-")[1].isdigit()]
+    own = [int(f["id"].split("-")[1]) for f in state["facts"].values() if f.get("doc_id") == doc_id and f["id"].startswith("L-") and f["id"].split("-")[1].isdigit()]
+    number = max(own) + 1 if own else (max(numbers + [390]) // 10 + 1) * 10
+    while f"L-{number}" in state["facts"]:
+        number += 1
+    return f"L-{number}"
+
+
+def value_key(fact: dict) -> str:
+    """Comparable form of what a fact states, used to tell agreement from disagreement."""
+    text = fact.get("x", {}).get("short") or fact["value"]
+    return re.sub(r"\s+", " ", re.sub(r"[–—]", "-", text.lower())).strip(" .")
+
+
+def project_of_topic(state: dict, topic_id: str) -> str | None:
+    topic = state["topics"].get(topic_id)
+    return topic.get("project_id") if topic else None
+
+
+def in_scope(record_project: str | None, project_id: str | None) -> bool:
+    """Organisation scope (no project) sees everything, a project sees only itself."""
+    return project_id is None or record_project == project_id
 
 
 # ---------------------------------------------------------------- audit
@@ -283,6 +418,7 @@ def audit(state: dict, action: str, actor: str, fact_id: str | None, reason: str
     state["seq"]["audit"] += 1
     if bump:
         state["version"] += 1
+    fact = state["facts"].get(fact_id or "")
     event = {
         "id": f"a-{state['seq']['audit']:04d}",
         "at": now(),
@@ -290,6 +426,7 @@ def audit(state: dict, action: str, actor: str, fact_id: str | None, reason: str
         "action": action,
         "fact_id": fact_id,
         "reason": reason,
+        "project_id": (x or {}).get("project") or (fact.get("project_id") if fact else None),
         "x": {"version": state["version"], **(x or {})},
     }
     state["audit"].append(event)
@@ -324,17 +461,19 @@ def change_fact(state: dict, fact_id: str, action: str, actor: str, reason: str 
 
 
 def move_fact(state: dict, fact: dict, old_topic: str) -> None:
-    if old_topic in state["topics"] and fact["id"] in state["topics"][old_topic]["fact_ids"]:
+    if old_topic != fact["topic"] and old_topic in state["topics"] and fact["id"] in state["topics"][old_topic]["fact_ids"]:
         state["topics"][old_topic]["fact_ids"].remove(fact["id"])
     target = state["topics"].setdefault(
-        fact["topic"], {"id": fact["topic"], "label": fact["topic"].replace("-", " ").capitalize(), "fact_ids": [], "x": {}}
+        fact["topic"],
+        {"id": fact["topic"], "label": fact["topic"].replace("-", " ").capitalize(), "fact_ids": [], "project_id": fact.get("project_id"), "x": {}},
     )
+    fact["project_id"] = target.get("project_id")
     if fact["id"] not in target["fact_ids"]:
         target["fact_ids"].append(fact["id"])
 
 
 def public_event(event: dict) -> dict:
-    return {k: event[k] for k in ("id", "at", "actor", "action", "fact_id", "reason")}
+    return {k: event.get(k) for k in ("id", "at", "actor", "action", "fact_id", "reason", "project_id")}
 
 
 # ---------------------------------------------------------------- store

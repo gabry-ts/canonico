@@ -1,7 +1,8 @@
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 from app import ops, store
-from app.http import ApiError, out
+from app.http import ApiError, dump, out
 from app.models import Topic, TopicChain, TopicCreate, TopicMergeRequest, TopicPatch
 from app.store import STORE
 
@@ -9,9 +10,10 @@ router = APIRouter()
 
 
 @router.get("/topics", operation_id="listTopics", status_code=200, response_model=list[Topic])
-def list_topics():
+def list_topics(project_id: str | None = None):
     with STORE.read() as state:
-        return out(list[Topic], [ops.topic_view(t) for t in state["topics"].values()])
+        ops.scope(state, project_id)
+        return out(list[Topic], [ops.topic_view(t) for t in state["topics"].values() if store.in_scope(t.get("project_id"), project_id)])
 
 
 @router.post("/topics", operation_id="createTopic", status_code=201, response_model=Topic)
@@ -20,7 +22,10 @@ def create_topic(body: TopicCreate):
         topic_id = store.slugify(body.id or body.label)
         if topic_id in state["topics"]:
             raise ApiError(409, f"Topic {topic_id} already exists.")
-        state["topics"][topic_id] = {"id": topic_id, "label": body.label, "fact_ids": [], "x": {}}
+        project_id = getattr(body, "project_id", None)
+        if project_id is not None:
+            ops.require_project(state, project_id)
+        state["topics"][topic_id] = {"id": topic_id, "label": body.label, "fact_ids": [], "project_id": project_id or store.DEFAULT_PROJECT, "x": {}}
         return out(Topic, ops.topic_view(state["topics"][topic_id]), 201)
 
 
@@ -29,7 +34,13 @@ def get_topic_chain(topic_id: str):
     with STORE.read() as state:
         topic = ops.require_topic(state, topic_id)
         facts = sorted(store.topic_facts(state, topic_id), key=lambda f: (f["date"], f["id"]))
-        return out(TopicChain, {"topic": ops.topic_view(topic), "facts": [store.view(state, f) for f in facts]})
+        body = dump(TopicChain, {"topic": ops.topic_view(topic), "facts": [store.view(state, f) for f in facts]})
+        for row, fact in zip(body["facts"], facts):
+            document = state["documents"].get(fact.get("doc_id") or "")
+            row["doc_title"] = document["title"] if document else None
+        values = [store.value_key(f) for f in facts]
+        body["changes"] = sum(1 for before, after in zip(values, values[1:]) if before != after)
+        return JSONResponse(body)
 
 
 @router.patch("/topics/{topic_id}", operation_id="patchTopic", status_code=200, response_model=Topic)
@@ -47,6 +58,8 @@ def merge_topic(topic_id: str, body: TopicMergeRequest):
         target = ops.require_topic(state, body.into_topic_id)
         if source is target:
             raise ApiError(409, "A topic cannot be merged into itself.")
+        if source.get("project_id") != target.get("project_id"):
+            raise ApiError(409, "Topics of different projects cannot be merged.")
         moved = list(source["fact_ids"])
         for fact_id in moved:
             fact = state["facts"].get(fact_id)

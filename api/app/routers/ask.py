@@ -5,7 +5,7 @@ import re
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from app import engine
+from app import engine, store
 from app.http import ApiError, dump
 from app.models import AskRequest, AskResponse
 from app.store import STORE
@@ -15,9 +15,12 @@ router = APIRouter()
 
 def run_ask(state: dict, body: AskRequest) -> dict:
     """Answer and store the answer. The stored answer id travels as `answer_id`."""
-    if body.topic and body.topic not in state["topics"]:
+    project_id = getattr(body, "project_id", None)
+    if project_id is not None and project_id not in state["projects"]:
+        raise ApiError(422, f"project_id: unknown project {project_id}")
+    if body.topic and (body.topic not in state["topics"] or not store.in_scope(state["topics"][body.topic].get("project_id"), project_id)):
         raise ApiError(422, f"topic: unknown topic {body.topic}")
-    response, record = engine.ask(state, body.question, body.topic, bool(body.include_plain_retrieval))
+    response, record = engine.ask(state, body.question, body.topic, bool(body.include_plain_retrieval), project_id)
     return {**dump(AskResponse, response), "answer_id": record["id"]}
 
 

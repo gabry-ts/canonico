@@ -21,9 +21,11 @@ def list_audit(
     action: AuditAction | None = None,
     fact_id: str | None = None,
     since: datetime | None = None,
+    project_id: str | None = None,
 ):
     with STORE.read() as state:
-        events = [store.public_event(e) for e in reversed(state["audit"])]
+        ops.scope(state, project_id)
+        events = [store.public_event(e) for e in reversed(state["audit"]) if store.in_scope(e.get("project_id"), project_id)]
     if actor:
         events = [e for e in events if e["actor"] == actor]
     if action:

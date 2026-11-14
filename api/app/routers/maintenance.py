@@ -35,11 +35,14 @@ def pending_item(state: dict, item_id: str) -> dict:
 def get_maintenance_queue(
     status: Literal["pending", "approved", "dismissed"] = "pending",
     reason: MaintenanceReason | None = None,
+    project_id: str | None = None,
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
     with STORE.read() as state:
+        ops.scope(state, project_id)
         items = [m for m in state["maintenance"].values() if m["status"] == status and m["fact_id"] in state["facts"]]
+        items = [m for m in items if store.in_scope(state["facts"][m["fact_id"]].get("project_id"), project_id)]
         if reason:
             items = [m for m in items if m["reason"] == reason.value]
         items.sort(key=lambda m: int(m["id"].split("-")[1]))

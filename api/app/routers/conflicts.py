@@ -11,9 +11,10 @@ router = APIRouter()
 
 
 @router.get("/conflicts", operation_id="listConflicts", status_code=200, response_model=list[Conflict])
-def list_conflicts(status: Literal["open", "resolved"] = "open", topic: str | None = None):
+def list_conflicts(status: Literal["open", "resolved"] = "open", topic: str | None = None, project_id: str | None = None):
     with STORE.read() as state:
-        items = [store.conflict_view(state, c) for c in state["conflicts"].values()]
+        ops.scope(state, project_id)
+        items = [store.conflict_view(state, c) for c in state["conflicts"].values() if store.in_scope(store.project_of_topic(state, c["topic"]), project_id)]
     items = [c for c in items if c["status"] == status and (not topic or c["topic"] == topic)]
     items.sort(key=lambda c: c["id"])
     return out(list[Conflict], items)

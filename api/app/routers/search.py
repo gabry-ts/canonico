@@ -2,7 +2,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Query
 
-from app import engine, store
+from app import engine, ops, store
 from app.http import ApiError, out
 from app.models import FactStatus, FactType, PlainRetrievalRequest, PlainRetrievalResult, SearchResponse
 from app.store import STORE
@@ -18,14 +18,16 @@ def search(
     type: list[FactType] | None = Query(None),
     status: FactStatus | None = None,
     topic: str | None = None,
+    project_id: str | None = None,
     limit: int = Query(50, ge=1, le=500),
 ):
     tokens = tokenize(q)
     results = []
     with STORE.read() as state:
+        ops.scope(state, project_id)
         if kind in ("fact", "all"):
             wanted = {t.value for t in type} if type else None
-            ranked = engine.facts_index(state).rank(tokens)
+            ranked = engine.facts_index(state, project_id).rank(tokens)
             top = ranked[0][1] if ranked else 1.0
             for fact_id, score in ranked:
                 fact = store.view(state, state["facts"][fact_id])
@@ -39,7 +41,7 @@ def search(
                     {"kind": "fact", "id": fact_id, "score": round(score / top, 3), "snippet": fact["quote"], "doc_id": fact["doc_id"], "topic": fact["topic"], "type": fact["type"]}
                 )
         if kind in ("document", "all") and not type and not status and not topic:
-            ranked = engine.docs_index(state).rank(tokens)
+            ranked = engine.docs_index(state, project_id).rank(tokens)
             top = ranked[0][1] if ranked else 1.0
             for doc_id, score in ranked:
                 snippet = best_passage(state["documents"][doc_id]["text"], tokens)

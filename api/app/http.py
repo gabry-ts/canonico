@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from pydantic import TypeAdapter
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-CODES = {400: "bad_request", 404: "not_found", 409: "conflict", 422: "validation_error", 500: "internal_error"}
+CODES = {400: "bad_request", 403: "forbidden", 404: "not_found", 409: "conflict", 422: "validation_error", 500: "internal_error"}
 
 
 class ApiError(Exception):

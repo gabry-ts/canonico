@@ -15,8 +15,11 @@ from app.routers import (
     eval,
     facts,
     ingest,
+    mail,
     maintenance,
+    members,
     open_questions,
+    org,
     search,
     topics,
 )
@@ -60,5 +63,8 @@ for module in (
     search,
     answers,
     admin,
+    org,
+    mail,
+    members,
 ):
     app.include_router(module.router)

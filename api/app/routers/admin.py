@@ -13,9 +13,9 @@ router = APIRouter()
 
 
 @router.get("/stats", operation_id="getStats", status_code=200, response_model=Stats)
-def get_stats():
+def get_stats(project_id: str | None = None):
     with STORE.read() as state:
-        return out(Stats, ops.stats(state))
+        return out(Stats, ops.stats(state, ops.scope(state, project_id)))
 
 
 @router.get("/config", operation_id="getConfig", status_code=200, response_model=Config)

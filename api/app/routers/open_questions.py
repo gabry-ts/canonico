@@ -3,7 +3,7 @@ from typing import Literal
 
 from fastapi import APIRouter
 
-from app import store
+from app import ops, store
 from app.http import ApiError, not_found, out
 from app.models import OpenQuestion, OpenQuestionClose
 from app.store import STORE
@@ -12,9 +12,10 @@ router = APIRouter()
 
 
 @router.get("/open-questions", operation_id="listOpenQuestions", status_code=200, response_model=list[OpenQuestion])
-def list_open_questions(status: Literal["open", "closed"] = "open", topic: str | None = None):
+def list_open_questions(status: Literal["open", "closed"] = "open", topic: str | None = None, project_id: str | None = None):
     with STORE.read() as state:
-        items = [dict(q) for q in state["open_questions"].values()]
+        ops.scope(state, project_id)
+        items = [dict(q) for q in state["open_questions"].values() if store.in_scope(store.project_of_topic(state, q["topic"]), project_id)]
     items = [q for q in items if q["status"] == status and (not topic or q["topic"] == topic)]
     return out(list[OpenQuestion], items)
 

@@ -27,11 +27,13 @@ def list_facts(
     type: FactType | None = None,
     status: FactStatus | None = None,
     doc_id: str | None = None,
+    project_id: str | None = None,
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
     with STORE.read() as state:
-        items = [store.view(state, f) for f in state["facts"].values()]
+        ops.scope(state, project_id)
+        items = [store.view(state, f) for f in state["facts"].values() if store.in_scope(f.get("project_id"), project_id)]
     if topic:
         items = [f for f in items if f["topic"] == topic]
     if type:

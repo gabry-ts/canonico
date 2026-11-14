@@ -49,7 +49,7 @@ def replay_answer(answer_id: str):
     with STORE.write() as state:
         original = require_answer(state, answer_id)
         request = original["request"]
-        response, record = engine.ask(state, request["question"], request.get("topic"), bool(request.get("include_plain_retrieval")))
+        response, record = engine.ask(state, request["question"], request.get("topic"), bool(request.get("include_plain_retrieval")), request.get("project_id"))
         diffs = []
         for field in ("status", "answer", "binding", "superseded", "conflicts", "citations"):
             before, after = _comparable(field, original["response"][field]), _comparable(field, response[field])

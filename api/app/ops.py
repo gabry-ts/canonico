@@ -30,7 +30,7 @@ def sync_conflicts(state: dict) -> None:
             for f in store.topic_facts(state, topic["id"])
             if f["status"] == "active" and not store.is_superseded(state, f) and store.effective_type(state, f) in store.BINDING_TYPES
         ]
-        if len(live) < 2:
+        if len({store.value_key(f) for f in live}) < 2:
             continue
         if not topic.get("x", {}).get("curated") and not any(f["x"].get("manual") or f["x"].get("edited") for f in live):
             continue
@@ -65,7 +65,7 @@ def retire(state: dict, fact: dict, reason: str, actor: str, action: str = "reti
     if fact["status"] == "retired":
         return None
     touched = [c for c in state["conflicts"].values() if fact["id"] in c["fact_ids"] and store.conflict_status(state, c) == "open"]
-    updates = {"status": "retired", "retired_reason": reason, "pinned": False}
+    updates = {"status": "retired", "retired_reason": reason, "pinned": False, "retired_by": actor, "retired_at": store.now()}
     x_updates = {}
     if not fact.get("superseded_by"):
         fact["status"] = "retired"
@@ -88,7 +88,7 @@ def retire(state: dict, fact: dict, reason: str, actor: str, action: str = "reti
 def restore(state: dict, fact: dict, reason: str | None, actor: str) -> dict | None:
     if fact["status"] == "active":
         return None
-    updates = {"status": "active", "retired_reason": None}
+    updates = {"status": "active", "retired_reason": None, "retired_by": None, "retired_at": None}
     x_updates = {}
     if fact["x"].get("retire_linked"):
         updates["superseded_by"] = None
@@ -114,6 +114,7 @@ def create_fact(state: dict, *, topic: str, value: str, type: str, doc_id: str |
         "confidence": confidence,
         "retired_reason": None,
         "pinned": False,
+        "project_id": store.project_of_topic(state, topic),
         "x": {"manual": True, **(x or {})},
     }
     state["facts"][fact_id] = fact
@@ -148,8 +149,8 @@ def _reaches(state: dict, start: dict, target_id: str) -> bool:
     return False
 
 
-def supersede(state: dict, older: dict, newer: dict, reason: str, actor: str) -> None:
-    """Declare that `newer` replaces `older`."""
+def supersede(state: dict, older: dict, newer: dict, reason: str, actor: str, extra: dict | None = None, retype: bool = False) -> dict | None:
+    """Declare that `newer` replaces `older`. With `retype` the older fact is classified SUPERSEDED."""
     if older["id"] == newer["id"]:
         raise ApiError(422, "A fact cannot supersede itself.")
     if older["topic"] != newer["topic"]:
@@ -159,7 +160,7 @@ def supersede(state: dict, older: dict, newer: dict, reason: str, actor: str) ->
     if _reaches(state, newer, older["id"]):
         raise ApiError(409, "This link would create a cycle.")
     if older.get("superseded_by") == newer["id"] and not older["x"].get("retire_linked"):
-        return
+        return None
     others = []
     previous = state["facts"].get(older.get("superseded_by") or "")
     if previous is not None and previous is not newer and previous.get("supersedes") == older["id"]:
@@ -168,7 +169,11 @@ def supersede(state: dict, older: dict, newer: dict, reason: str, actor: str) ->
     others.append({"fact": newer["id"], "fields": {"supersedes": newer.get("supersedes")}})
     store.ensure_history(state, newer)
     newer["supersedes"] = older["id"]
-    store.change_fact(state, older["id"], "supersede", actor, reason, {"superseded_by": newer["id"]}, {"retire_linked": False}, extra={"others": others})
+    updates, x_updates = {"superseded_by": newer["id"]}, {"retire_linked": False, "acknowledged": actor != "system"}
+    if retype and older["type"] != "SUPERSEDED":
+        x_updates["base_type"] = older["type"]
+        updates["type"] = "SUPERSEDED"
+    return store.change_fact(state, older["id"], "supersede", actor, reason, updates, x_updates, extra={"others": others, **(extra or {})})
 
 
 def unlink(state: dict, newer: dict, reason: str, actor: str) -> None:
@@ -193,24 +198,41 @@ def require_topic(state: dict, topic_id: str) -> dict:
 
 
 def topic_view(topic: dict) -> dict:
-    return {"id": topic["id"], "label": topic["label"], "fact_ids": list(topic["fact_ids"])}
+    return {"id": topic["id"], "label": topic["label"], "fact_ids": list(topic["fact_ids"]), "project_id": topic.get("project_id")}
 
 
-def stats(state: dict) -> dict:
+def require_project(state: dict, project_id: str) -> dict:
+    project = state["projects"].get(project_id)
+    if project is None:
+        raise not_found(f"Project {project_id}")
+    return project
+
+
+def scope(state: dict, project_id: str | None) -> str | None:
+    """Validate the optional project filter of a list request."""
+    if project_id is not None and project_id not in state["projects"]:
+        raise ApiError(422, f"project_id: unknown project {project_id}")
+    return project_id
+
+
+def stats(state: dict, project_id: str | None = None) -> dict:
     by_type = {t: 0 for t in ("DECISION", "CONSTRAINT", "EVIDENCE", "HYPOTHESIS", "SUPERSEDED", "OPEN")}
     by_status = {"active": 0, "retired": 0}
-    for fact in state["facts"].values():
+    facts = [f for f in state["facts"].values() if store.in_scope(f.get("project_id"), project_id)]
+    for fact in facts:
         by_type[store.effective_type(state, fact)] += 1
         by_status[fact["status"]] += 1
+    ids = {f["id"] for f in facts}
+    topics = {t["id"] for t in state["topics"].values() if store.in_scope(t.get("project_id"), project_id)}
     return {
-        "documents": len(state["documents"]),
-        "topics": len(state["topics"]),
-        "facts_total": len(state["facts"]),
+        "documents": sum(1 for d in state["documents"].values() if store.in_scope(d.get("project_id"), project_id)),
+        "topics": len(topics),
+        "facts_total": len(facts),
         "by_type": by_type,
         "by_status": by_status,
-        "open_conflicts": sum(1 for c in state["conflicts"].values() if store.conflict_status(state, c) == "open"),
-        "open_questions": sum(1 for q in state["open_questions"].values() if q["status"] == "open"),
-        "maintenance_pending": sum(1 for m in state["maintenance"].values() if m["status"] == "pending"),
+        "open_conflicts": sum(1 for c in state["conflicts"].values() if c["topic"] in topics and store.conflict_status(state, c) == "open"),
+        "open_questions": sum(1 for q in state["open_questions"].values() if q["status"] == "open" and q["fact_id"] in ids),
+        "maintenance_pending": sum(1 for m in state["maintenance"].values() if m["status"] == "pending" and m["fact_id"] in ids),
         "cost": {"spent_usd": round(state.get("cost_spent", 0.0), 4), "cap_usd": state["config"]["cost_cap_usd"]},
         "last_ingest_at": state.get("meta", {}).get("ingested_at"),
     }
@@ -219,6 +241,7 @@ def stats(state: dict) -> dict:
 def undo_targets(undo: dict) -> set[str]:
     targets = {undo.get("fact"), undo.get("created")}
     targets |= {fact["id"] for fact in undo.get("facts", [])}
+    targets |= {item["fact"] for item in undo.get("restore", [])}
     return targets - {None}
 
 
@@ -236,6 +259,19 @@ def apply_undo(state: dict, event: dict) -> None:
                     if other.get(key) == fact["id"]:
                         other[key] = None
             state["open_questions"] = {k: q for k, q in state["open_questions"].items() if q["fact_id"] != fact["id"]}
+    for item in undo.get("restore", []):
+        fact = state["facts"].get(item["fact"])
+        if fact is None:
+            continue
+        before = store.view(state, fact)
+        fact.update(item.get("fields", {}))
+        fact["x"].update(item.get("x", {}))
+        after = store.view(state, fact)
+        changes = {k: {"from": before[k], "to": after[k]} for k in store.PUBLIC_FACT_FIELDS if before[k] != after[k]}
+        store.ensure_history(state, fact).append({"at": store.now(), "actor": "system", "action": "undo", "changes": changes, "snapshot": after})
+    for doc_id, snapshot in (undo.get("document_version") or {}).items():
+        if doc_id in state["documents"]:
+            state["documents"][doc_id] = snapshot
     if "fact" in undo and undo["fact"] in state["facts"]:
         fact = state["facts"][undo["fact"]]
         before = store.view(state, fact)
@@ -303,6 +339,12 @@ def delete_document(state: dict, doc_id: str, actor: str) -> dict:
     return {"doc_id": doc_id, "deleted_fact_ids": sorted(ids), "audit_event_id": event["id"]}
 
 
+def _days_between(older: str, newer: str) -> int:
+    from datetime import date
+
+    return (date.fromisoformat(newer) - date.fromisoformat(older)).days
+
+
 def sync_maintenance(state: dict) -> None:
     """Propose facts for retirement: superseded but still retrievable, stale, or low confidence."""
     threshold = state["config"]["low_confidence_threshold"]
@@ -317,9 +359,10 @@ def sync_maintenance(state: dict) -> None:
         binding = bindings[topic_id]
         newer = store.successor(state, fact)
         if newer is not None:
-            wanted[(fact["id"], "superseded_still_retrievable")] = f"Superseded by {newer['id']} on {newer['date']} but still ranked in plain retrieval."
-        elif binding is not None and binding is not fact and store.effective_type(state, fact) in store.BINDING_TYPES and fact["date"] < binding["date"]:
-            wanted[(fact["id"], "stale")] = "Older than the latest decision on the same topic and not linked to it."
+            if store.stale_active(state, fact):
+                wanted[(fact["id"], "superseded_still_retrievable")] = f"Superseded by {newer['id']} on {newer['date']} but still ranked in plain retrieval."
+        elif binding is not None and binding is not fact and store.effective_type(state, fact) in store.BINDING_TYPES and _days_between(fact["date"], binding["date"]) > state["config"]["stale_after_days"]:
+            wanted[(fact["id"], "stale")] = f"More than {state['config']['stale_after_days']} days older than the latest decision on the same topic and not linked to it."
         elif fact["confidence"] < threshold:
             wanted[(fact["id"], "low_confidence")] = f"Confidence {fact['confidence']:.2f} is below the threshold {threshold:.2f}."
     known = {(m["fact_id"], m["reason"]): m for m in state["maintenance"].values()}
@@ -327,7 +370,7 @@ def sync_maintenance(state: dict) -> None:
         if item["status"] == "pending" and key not in wanted:
             del state["maintenance"][item["id"]]
     fresh = [k for k in wanted if k not in known]
-    fresh.sort(key=lambda k: (state["facts"][k[0]]["date"], k[0]), reverse=True)
+    fresh.sort(key=lambda k: (bool(state["facts"][k[0]]["x"].get("curated")), state["facts"][k[0]]["date"], k[0]), reverse=True)
     for fact_id, reason in fresh:
         state["seq"]["mq"] += 1
         item_id = f"MQ-{state['seq']['mq']:03d}"
