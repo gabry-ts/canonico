@@ -539,20 +539,50 @@ class Cost(BaseModel):
     cap_usd: float
 
 
-class Stats(BaseModel):
-    documents: int
-    topics: int
-    facts_total: int
-    by_type: dict[str, int] = Field(..., description='Count per FactType.')
-    by_status: dict[str, int] = Field(..., description='Count per FactStatus.')
-    open_conflicts: int
-    open_questions: int
-    maintenance_pending: int
-    cost: Cost
-    last_ingest_at: AwareDatetime | None
-    last_reset_at: AwareDatetime | None = Field(
-        None, description='When the demo was last reset. Null if never.'
+class NeedsAttention(BaseModel):
+    stale_active: int | None = Field(
+        None, description='Superseded facts that are still active.'
     )
+    conflicts_open: int | None = None
+    open_questions: int | None = None
+
+
+class Answers(BaseModel):
+    binding: int | None = None
+    contested: int | None = None
+    no_answer: int | None = None
+    since: AwareDatetime | None = None
+
+
+class Action(StrEnum):
+    retire = 'retire'
+    restore = 'restore'
+    new_version = 'new_version'
+    inbound_email = 'inbound_email'
+    resolve = 'resolve'
+    ingest = 'ingest'
+
+
+class RecentChange(BaseModel):
+    at: AwareDatetime | None = None
+    actor: str | None = None
+    action: Action | None = None
+    fact_id: str | None = None
+    summary: str | None = None
+
+
+class TimeToFixSeconds(BaseModel):
+    median: float | None = None
+    samples: int | None = None
+    measured_at: AwareDatetime | None = None
+
+
+class StatsSource(BaseModel):
+    source_id: str | None = None
+    type: str | None = None
+    label: str | None = None
+    status: str | None = None
+    last_synced_at: AwareDatetime | None = None
 
 
 class Models(BaseModel):
@@ -1094,6 +1124,35 @@ class Conflict(BaseModel):
     facts: list[Fact]
     detected_at: AwareDatetime
     resolution: ConflictResolution | None
+
+
+class Stats(BaseModel):
+    documents: int
+    topics: int
+    facts_total: int
+    by_type: dict[str, int] = Field(..., description='Count per FactType.')
+    by_status: dict[str, int] = Field(..., description='Count per FactStatus.')
+    open_conflicts: int
+    open_questions: int
+    maintenance_pending: int
+    cost: Cost
+    last_ingest_at: AwareDatetime | None
+    last_reset_at: AwareDatetime | None = Field(
+        None, description='When the demo was last reset. Null if never.'
+    )
+    needs_attention: NeedsAttention | None = Field(
+        None, description='Counts of items needing attention, for a dashboard.'
+    )
+    facts_by_type: dict[str, int] | None = Field(
+        None, description='Count per FactType.'
+    )
+    facts_by_status: dict[str, int] | None = Field(
+        None, description='Count per FactStatus.'
+    )
+    answers: Answers | None = None
+    sources: list[StatsSource] | None = None
+    recent_changes: list[RecentChange] | None = Field(None, max_length=10)
+    time_to_fix_seconds: TimeToFixSeconds | None = None
 
 
 class ExportBundle(BaseModel):

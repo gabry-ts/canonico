@@ -1961,6 +1961,52 @@ export interface components {
              * @description When the demo was last reset. Null if never.
              */
             last_reset_at?: string | null;
+            /** @description Counts of items needing attention, for a dashboard. */
+            needs_attention?: {
+                /** @description Superseded facts that are still active. */
+                stale_active?: number;
+                conflicts_open?: number;
+                open_questions?: number;
+            };
+            /** @description Count per FactType. */
+            facts_by_type?: {
+                [key: string]: number;
+            };
+            /** @description Count per FactStatus. */
+            facts_by_status?: {
+                [key: string]: number;
+            };
+            answers?: {
+                binding?: number;
+                contested?: number;
+                no_answer?: number;
+                /** Format: date-time */
+                since?: string;
+            };
+            sources?: components["schemas"]["StatsSource"][];
+            recent_changes?: {
+                /** Format: date-time */
+                at?: string;
+                actor?: string;
+                /** @enum {string} */
+                action?: "retire" | "restore" | "new_version" | "inbound_email" | "resolve" | "ingest";
+                fact_id?: string | null;
+                summary?: string;
+            }[];
+            time_to_fix_seconds?: {
+                median?: number | null;
+                samples?: number;
+                /** Format: date-time */
+                measured_at?: string | null;
+            };
+        };
+        StatsSource: {
+            source_id?: string;
+            type?: string;
+            label?: string;
+            status?: string;
+            /** Format: date-time */
+            last_synced_at?: string | null;
         };
         Config: {
             models: {
@@ -5106,7 +5152,53 @@ export interface operations {
                      *         "cap_usd": 10
                      *       },
                      *       "last_ingest_at": "2026-11-14T09:12:00Z",
-                     *       "last_reset_at": null
+                     *       "last_reset_at": null,
+                     *       "needs_attention": {
+                     *         "stale_active": 1,
+                     *         "conflicts_open": 2,
+                     *         "open_questions": 22
+                     *       },
+                     *       "facts_by_type": {
+                     *         "DECISION": 38,
+                     *         "CONSTRAINT": 31,
+                     *         "EVIDENCE": 140,
+                     *         "HYPOTHESIS": 52,
+                     *         "SUPERSEDED": 29,
+                     *         "OPEN": 22
+                     *       },
+                     *       "facts_by_status": {
+                     *         "active": 310,
+                     *         "retired": 2
+                     *       },
+                     *       "answers": {
+                     *         "binding": 18,
+                     *         "contested": 3,
+                     *         "no_answer": 2,
+                     *         "since": "2026-11-14T08:00:00Z"
+                     *       },
+                     *       "sources": [
+                     *         {
+                     *           "source_id": "src-drive-01",
+                     *           "type": "drive",
+                     *           "label": "Clearpath shared drive",
+                     *           "status": "synced",
+                     *           "last_synced_at": "2026-11-14T09:12:00Z"
+                     *         }
+                     *       ],
+                     *       "recent_changes": [
+                     *         {
+                     *           "at": "2026-11-14T09:30:00Z",
+                     *           "actor": "Giulia",
+                     *           "action": "retire",
+                     *           "fact_id": "M-105",
+                     *           "summary": "Giulia retired 4 weeks (final presentation)"
+                     *         }
+                     *       ],
+                     *       "time_to_fix_seconds": {
+                     *         "median": 95,
+                     *         "samples": 4,
+                     *         "measured_at": "2026-11-14T09:30:00Z"
+                     *       }
                      *     }
                      */
                     "application/json": components["schemas"]["Stats"];
