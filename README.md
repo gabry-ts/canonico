@@ -16,6 +16,10 @@ Evaluation uses the [OIDA Benchmark Corpora](https://github.com/kakashi-ventures
 
 Before the event a team member built an exploratory prototype in a different domain (decision tables for regulated cases). It was declared to the organisers. No code from it is reused here: this repository starts on the event day.
 
+## AI tools used
+
+Claude Code as coding assistant. Inside the product, Anthropic Claude Haiku and Sonnet (see `api/app/llm.py`). For the idea video, ElevenLabs text-to-speech (`eleven_v4`) generated the voice-over (see `video/src/tts.py`). Outside the product, Whisper on Groq to transcribe videos for our notes.
+
 ## Setup
 
 Copy `.env.example` to `api/.env` and fill in the values. Keys stay server-side. The demo path (seeded memory, ask, retire, restore, reset) makes no model calls and works offline.

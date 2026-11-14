@@ -54,4 +54,4 @@ One cut: real erasure for GDPR requests. Retire keeps the history, which is righ
 
 Question for the mentor: who signs the purchase order in a company rolling out an internal assistant, the AI programme lead or the process owner whose procedure is wrong?
 
-Built with Claude Code. In the product, Anthropic Claude Haiku and Sonnet through the API. The demo path also runs offline.
+Built with Claude Code. In the product, Anthropic Claude Haiku and Sonnet through the API. The idea video's voice-over was generated with ElevenLabs text-to-speech. The demo path also runs offline.
