@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Debug only: the local test API runs over plain http on the emulator host. -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

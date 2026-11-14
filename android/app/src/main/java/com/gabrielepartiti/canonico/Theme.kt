@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -232,7 +233,8 @@ fun ErrorBanner(message: String, retry: (() -> Unit)? = null) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(p.red.copy(alpha = 0.08f))
-            .padding(12.dp),
+            .padding(12.dp)
+            .testTag("error_banner"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(Icons.Filled.Warning, contentDescription = null, tint = p.red, modifier = Modifier.size(18.dp))
