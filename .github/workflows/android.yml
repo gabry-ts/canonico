@@ -1,0 +1,60 @@
+name: android
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Build release APK
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Collect APK
+        run: cp app/build/outputs/apk/release/app-release.apk canonico.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: canonico-android-apk
+          path: android/canonico.apk
+
+      - name: Publish android-latest pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if ! gh release view android-latest >/dev/null 2>&1; then
+            gh release create android-latest --prerelease --target "$GITHUB_SHA" \
+              --title "Canonico Android (latest)" \
+              --notes "Latest Android build from main. Sideload canonico.apk."
+          fi
+          gh release upload android-latest canonico.apk --clobber
+          gh release edit android-latest --notes "Latest Android build from main ($GITHUB_SHA, run $GITHUB_RUN_NUMBER). Sideload canonico.apk."
