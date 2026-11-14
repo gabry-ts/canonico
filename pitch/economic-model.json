@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "currency": "EUR",
+  "note": "DRAFT. All figures are assumptions to validate, none is measured. [declared] team estimates, horizon = year 2 run-rate. Buyer: companies rolling out an internal AI assistant (AI programme lead), with process owners and compliance as co-buyers. Sale = paid 8-week pilot on one process, then an annual licence per company. Assumed 2 of 3 pilots convert (12 pilots -> 8 licences). Cost to serve one licence [unverified]: about EUR 100/month hosting and model calls (LLM cost on the 46-document ClearPath corpus so far about USD 0.41), so gross margin about 90%. No paid ads. Founder-led sales. Arithmetic in pitch/economic-model-notes.txt in the repo.",
+  "revenueLines": [
+    {
+      "key": "company_licence",
+      "label": "Annual licence per company (canonical memory for its AI assistant, unlimited projects)",
+      "unit": "licence_year",
+      "priceCents": 1500000,
+      "volume": 8,
+      "period": "year",
+      "recurring": true,
+      "models": ["b2b_licence"],
+      "metricKey": "active_clients"
+    },
+    {
+      "key": "paid_pilot",
+      "label": "Paid 8-week pilot on one process (setup, source connection, review with process owner)",
+      "unit": "project_fee",
+      "priceCents": 600000,
+      "volume": 12,
+      "period": "year",
+      "recurring": false,
+      "models": ["b2b_licence"],
+      "metricKey": null
+    }
+  ],
+  "acquisition": {
+    "channels": [
+      {
+        "key": "outbound_ai_leads",
+        "label": "Outbound to AI programme leads in mid-size and large companies",
+        "channel": "outbound",
+        "costPerLeadCents": 15000,
+        "leadToConversionPct": 5,
+        "leads": 12,
+        "period": "month"
+      },
+      {
+        "key": "integrator_partners",
+        "label": "Partnerships with AI integrators and consultancies already deploying assistants",
+        "channel": "partnership",
+        "costPerLeadCents": 30000,
+        "leadToConversionPct": 10,
+        "leads": 3,
+        "period": "month"
+      },
+      {
+        "key": "industry_events",
+        "label": "Industry events (banking, compliance, operations)",
+        "channel": "events",
+        "costPerLeadCents": 40000,
+        "leadToConversionPct": 2.5,
+        "leads": 4,
+        "period": "month"
+      }
+    ],
+    "salesMachine": [
+      {
+        "key": "founder_seller",
+        "label": "One founder selling (banking and finance background)",
+        "headcount": 1,
+        "monthlyCostCents": 500000
+      }
+    ],
+    "adBudgetCents": 0,
+    "adBudgetPeriod": "month"
+  }
+}

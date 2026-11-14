@@ -1,0 +1,60 @@
+CANONICO ECONOMIC MODEL, DRAFT ARITHMETIC
+All figures are assumptions to validate. None is measured. Horizon: year 2 run-rate.
+Payload: pitch/economic-model.json (schemaVersion 1, EUR, integer cents).
+
+WHAT WE SELL
+- Paid pilot, 8 weeks, one process: EUR 6,000 one-off (project_fee).            [declared]
+- Annual licence per company: EUR 15,000 / year (licence_year).                 [declared]
+- Buyer: AI programme lead of a company rolling out an internal AI assistant.
+  Co-buyers: process owners (operations, procurement), compliance.
+- Assumption: 2 of 3 pilots convert to a licence.                                 [declared]
+
+REVENUE (year 2)
+  Pilots:    12 x 6,000   =  72,000  (one-off)
+  Licences:   8 x 15,000  = 120,000  (recurring, ARR)
+  Total                   = 192,000 EUR / year
+  Check: 12 pilots x 2/3 = 8 licences.
+
+ACQUISITION (per month)
+  Channel        leads  CPL    lead cost  conversion  new pilots
+  outbound        12    150      1,800       5%          0.6
+  partnership      3    300        900      10%          0.3
+  events           4    400      1,600     2.5%          0.1
+  Total           19             4,300                   1.0 pilot / month = 12 / year
+  Founder seller (1 x 5,000 / month)   5,000
+  Ad budget                                0
+  Acquisition spend                    9,300 EUR / month = 111,600 / year
+
+CAC
+  Per pilot customer:     9,300 / 1.0          =  9,300 EUR
+  Per licensed customer:  9,300 x 1.5 (2/3 conv.) = 13,950 EUR
+
+COST TO SERVE                                                                     [unverified]
+  Hosting + model calls about 100 EUR / month per licence.
+  Reference point: LLM cost on the 46-document ClearPath corpus so far about USD 0.41.
+  Licence per month: 15,000 / 12 = 1,250. Gross margin per month: 1,150 (about 92%).
+
+PAYBACK
+  Gross, ignoring pilot fees:  13,950 / 1,150      = about 12 months
+  Net of pilot fees: 13,950 - (1.5 pilots x 6,000) = 4,950 -> 4,950 / 1,150 = about 4.3 months
+  Note: Control8 derives its own CAC and payback from the JSON; it may differ
+  from these figures depending on how it treats one-off pilot revenue.
+
+YEAR 2 CONTRIBUTION (rough)
+  Revenue 192,000 - acquisition 111,600 - serving (8 x 100 x 12 = 9,600) = 70,800 EUR
+  Before salaries of the build team.
+
+SIZE CHECK
+  12 pilots a year is a small share of companies rolling out internal AI assistants
+  in Italy alone. We did not count that segment today: [unverified].
+
+THE NUMBER TO CHECK FIRST
+  The EUR 15,000 licence price. Best check before the jury: one AI programme lead
+  saying what they pay today for their assistant's retrieval layer, or a public
+  price list of an enterprise search or knowledge tool for a comparable scope.
+
+HOW TO PUBLISH (team only)
+  get_economic_model (project hack-hackathon-gltlcuzjyh3gt3nuw3w1uo6j), then
+  update_economic_model with the whole content of pitch/economic-model.json as
+  `definition`. If it returns invalid_input, fix the named paths and resend all.
+  Make sure the price and volumes in the pitch match the saved model.
