@@ -24,7 +24,8 @@ export default function Setup() {
   
   const timer = useRef<number | undefined>(undefined)
   const done = job?.status === 'done'
-  const running = !!job && !done
+  const failed = job?.status === 'error'
+  const running = !!job && !done && !failed
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
@@ -89,10 +90,12 @@ export default function Setup() {
       try {
         const j = await call(client.GET('/ingest/{job_id}', { params: { path: { job_id: id } } }))
         setJob(j)
-        if (j.status === 'error') toastError(t('org.setup.failed', { message: '' }))
+        if (j.status === 'error') toastError(t('org.setup.jobFailed'))
         else if (j.status !== 'done') poll(id)
         else void app.refresh()
       } catch (e) {
+        // Polling stops here: show the ingest as failed so the person can try again or go back.
+        setJob((cur) => cur && { ...cur, status: 'error' })
         toastError(errMsg(e))
       }
     }, 900)
@@ -102,7 +105,8 @@ export default function Setup() {
     try {
       const j = await call(client.POST('/ingest', { body: { corpus: 'org-consulting-clearpath', force: false } }))
       setJob(j)
-      if (j.status !== 'done') poll(j.id)
+      if (j.status === 'error') toastError(t('org.setup.jobFailed'))
+      else if (j.status !== 'done') poll(j.id)
       else void app.refresh()
     } catch (e) {
       toastError(t('org.setup.failed', { message: errMsg(e) }))
@@ -232,9 +236,13 @@ export default function Setup() {
                         <span className="block text-[14px] font-medium">{t('org.setup.corpus')}</span>
                         <span className="block text-[12.5px] text-muted-foreground">{t('org.setup.corpusSub')}</span>
                       </span>
-                      {job && <span className={'text-[12.5px] ' + (done ? 'text-success' : 'text-muted-foreground')}>{done ? t('org.setup.done') : t('org.setup.reading')}</span>}
+                      {job && (
+                        <span className={'text-[12.5px] ' + (done ? 'text-success' : failed ? 'text-destructive' : 'text-muted-foreground')}>
+                          {done ? t('org.setup.done') : failed ? t('org.setup.error') : t('org.setup.reading')}
+                        </span>
+                      )}
                     </div>
-                    {job && (
+                    {job && !failed && (
                       <div className="bar mt-3">
                         <i style={{ width: done ? '100%' : '60%' }} />
                       </div>
@@ -272,7 +280,7 @@ export default function Setup() {
                 </button>
               ) : (
                 <button className="btn btn-primary" disabled={busy} onClick={() => void ingest()}>
-                  {t('org.setup.ingest')}
+                  {failed ? t('common.retry') : t('org.setup.ingest')}
                 </button>
               )}
             </div>

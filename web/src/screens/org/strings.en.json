@@ -259,6 +259,8 @@
     "errProject": "Give the project a name.",
     "alreadyDone": "This organisation is already set up.",
     "failed": "The ingest failed. {message}",
+    "jobFailed": "The ingest failed. Try again in a moment.",
+    "error": "Failed",
     "ready": "{org} is set up. Ask your first question.",
     "checking": "Checking setup…"
   }

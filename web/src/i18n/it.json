@@ -466,6 +466,8 @@
       "errProject": "Dai un nome al progetto.",
       "alreadyDone": "Questa organizzazione è già configurata.",
       "failed": "L'import non è riuscito. {message}",
+      "jobFailed": "L'import non è riuscito. Riprova tra poco.",
+      "error": "Non riuscito",
       "ready": "{org} è pronta. Fai la tua prima domanda.",
       "checking": "Controllo della configurazione…"
     }

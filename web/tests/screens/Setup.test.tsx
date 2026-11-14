@@ -618,7 +618,7 @@ describe('Setup', () => {
       const { user, app } = renderWithApp(<Setup />)
       await startSlowIngest(user)
 
-      await advanceUntil(() => screen.queryByText('The ingest failed.') !== null)
+      await advanceUntil(() => screen.queryByText('The ingest failed. Try again in a moment.') !== null)
       expect(polls()).toHaveLength(1)
       expect(screen.queryByText('Your memory is ready')).not.toBeInTheDocument()
       expect(app.refresh).not.toHaveBeenCalled()
@@ -636,6 +636,51 @@ describe('Setup', () => {
       expect(polls()[0].params.job_id).toBe('job-1')
       expect(screen.queryByText('Your memory is ready')).not.toBeInTheDocument()
       expect(app.refresh).not.toHaveBeenCalled()
+    })
+
+    it('shows the failed ingest with a way to try again and a way back when the job ends in error', async () => {
+      api.get('/ingest/:job_id', job({ status: 'error', docs: 3, facts: 0 }))
+      const { user, container } = renderWithApp(<Setup />)
+      await startSlowIngest(user)
+
+      await advanceUntil(() => screen.queryByRole('button', { name: 'Try again' }) !== null)
+      expect(screen.getByText('The ingest failed. Try again in a moment.')).toBeInTheDocument()
+      expect(screen.getByText('Failed')).toBeInTheDocument()
+      expect(screen.queryByText('Reading…')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Ingesting' })).not.toBeInTheDocument()
+      expect(container.querySelector('.bar')).not.toBeInTheDocument()
+      expect(back()).toBeInTheDocument()
+
+      api.post('/ingest', job())
+      fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+      expect(await title('Your memory is ready')).toBeInTheDocument()
+      expect(api.callsTo('POST', '/ingest')).toHaveLength(2)
+    })
+
+    it('shows the failed ingest when the job cannot be read', async () => {
+      api.get('/ingest/:job_id', fail(500, 'The ingest worker is gone'))
+      const { user } = renderWithApp(<Setup />)
+      await startSlowIngest(user)
+
+      await advanceUntil(() => screen.queryByRole('button', { name: 'Try again' }) !== null)
+      expect(screen.getByText('Failed')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Ingesting' })).not.toBeInTheDocument()
+      expect(back()).toBeInTheDocument()
+      await tick(3000)
+      expect(polls()).toHaveLength(1)
+    })
+
+    it('shows the failed ingest at once when the backend answers the start with an error', async () => {
+      api.post('/ingest', job({ status: 'error', docs: 0, facts: 0 }))
+      const { user } = renderWithApp(<Setup />)
+      await toSources(user)
+      await user.click(screen.getByRole('button', { name: 'Start first ingest' }))
+
+      expect(await screen.findByText('The ingest failed. Try again in a moment.')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Try again' })).toBeEnabled()
+      expect(screen.getByText('Failed')).toBeInTheDocument()
+      expect(back()).toBeInTheDocument()
+      expect(polls()).toHaveLength(0)
     })
 
     it('stops asking when the screen is closed', async () => {
