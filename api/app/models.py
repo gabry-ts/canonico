@@ -109,9 +109,18 @@ class Topic(BaseModel):
     fact_ids: list[str]
 
 
+class Fact1(Fact):
+    doc_title: str | None = Field(
+        None, description='Title of the document the fact comes from.'
+    )
+
+
 class TopicChain(BaseModel):
     topic: Topic
-    facts: list[Fact] = Field(..., description='Oldest to newest.')
+    facts: list[Fact1] = Field(..., description='Oldest to newest.')
+    changes: int | None = Field(
+        None, description='Number of times the value changes along the chain.', ge=0
+    )
 
 
 class AskRequest(BaseModel):
@@ -153,6 +162,11 @@ class AskResponse(BaseModel):
         None, description='Present only when include_plain_retrieval is true.'
     )
     changed_because: str | None = Field(..., examples=['you retired requirement R1.1'])
+    answer_id: str | None = Field(
+        None,
+        description='Id of the stored answer record, readable with GET /answers/{answer_id}.',
+        examples=['ans-0001'],
+    )
 
 
 class RetireRequest(BaseModel):
@@ -209,11 +223,20 @@ class PerQueryItem(BaseModel):
     pass_canonico: bool
 
 
+class Router(StrEnum):
+    model = 'model'
+    keywords = 'keywords'
+
+
 class EvalResult(BaseModel):
     corpus: str
     metrics: Metrics
     per_query: list[PerQueryItem]
     measured_at: AwareDatetime
+    router: Router | None = Field(
+        None,
+        description='Which query router produced the run, the language model or the keyword fallback.',
+    )
 
 
 class Error(BaseModel):
@@ -1062,6 +1085,12 @@ class Me(BaseModel):
     member: Member
     role: Role
     permissions: list[Permission]
+    name: str | None = Field(
+        None, description='Short display name of the actor.', examples=['Giulia']
+    )
+    title: str | None = Field(
+        None, description='Job title of the actor.', examples=['Operations lead']
+    )
 
 
 class FirstAdmin(BaseModel):

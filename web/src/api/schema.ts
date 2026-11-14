@@ -315,7 +315,7 @@ export interface paths {
         put?: never;
         /**
          * Mark a fact as binding
-         * @description Pins the fact so it wins over any automatic choice for its topic until unpinned. Only one fact per topic can be pinned: pinning another one moves the pin and the previous one is reported in the audit reason. Writes an audit event (action pin).
+         * @description Pins the fact so it wins over any automatic choice for its topic until unpinned. Only one fact per topic can be pinned: pinning another one moves the pin and the previous one is reported in the audit reason. Writes an audit event (action pin). One pinned fact per topic: pinning replaces the current pin; retired facts cannot be pinned (409).
          */
         post: operations["pinFact"];
         delete?: never;
@@ -1069,7 +1069,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List documents of a source */
+        /**
+         * List documents of a source
+         * @description One row per document, at its current version.
+         */
         get: operations["listSourceDocuments"];
         put?: never;
         post?: never;
@@ -1292,7 +1295,7 @@ export interface paths {
         put?: never;
         /**
          * Send the canned demo email (demo only)
-         * @description Demo-only convenience for the live demo. Sends a canned InboundEmail from client@meridianlabs.org, subject "Onboarding target confirmed", text "Following our call, we confirm the onboarding target at 5 weeks." It is routed to proj-clearpath and supersedes M-106 (3–4 weeks) with a new fact M-301 (5 weeks). Not for production use.
+         * @description Demo-only convenience for the live demo. Sends a canned InboundEmail from client@meridianlabs.org, subject "Onboarding target confirmed", text "Following our call, we confirm the onboarding target at 5 weeks." It is routed to proj-clearpath and supersedes M-106 (3–4 weeks) with a new fact E-301 (5 weeks). Not for production use.
          */
         post: operations["demoSendEmail"];
         delete?: never;
@@ -1313,7 +1316,7 @@ export interface paths {
         put?: never;
         /**
          * Upload a new version of a document
-         * @description Facts extracted from the previous version are marked superseded where the new version restates the same topic with a different value.
+         * @description Facts extracted from the previous version are marked superseded where the new version restates the same topic with a different value. Facts created from library versions get ids in the L-4xx range.
          */
         post: operations["uploadDocumentVersion"];
         delete?: never;
@@ -1590,7 +1593,12 @@ export interface components {
         TopicChain: {
             topic: components["schemas"]["Topic"];
             /** @description Oldest to newest. */
-            facts: components["schemas"]["Fact"][];
+            facts: (components["schemas"]["Fact"] & {
+                /** @description Title of the document the fact comes from. */
+                doc_title?: string | null;
+            })[];
+            /** @description Number of times the value changes along the chain. */
+            changes?: number;
         };
         AskRequest: {
             /** @description Restrict the answer to one project. Absence of project_id means organisation scope (all projects). */
@@ -1621,6 +1629,11 @@ export interface components {
             plain_retrieval?: components["schemas"]["PlainRetrieval"];
             /** @example you retired requirement R1.1 */
             changed_because: string | null;
+            /**
+             * @description Id of the stored answer record, readable with GET /answers/{answer_id}.
+             * @example ans-0001
+             */
+            answer_id?: string;
         };
         RetireRequest: {
             reason: string;
@@ -1687,6 +1700,11 @@ export interface components {
             }[];
             /** Format: date-time */
             measured_at: string;
+            /**
+             * @description Which query router produced the run, the language model or the keyword fallback.
+             * @enum {string}
+             */
+            router?: "model" | "keywords";
         };
         Error: {
             /** @description Machine code: bad_request, not_found, validation_error, internal_error. */
@@ -2477,6 +2495,16 @@ export interface components {
             member: components["schemas"]["Member"];
             role: components["schemas"]["Role"];
             permissions: components["schemas"]["Permission"][];
+            /**
+             * @description Short display name of the actor.
+             * @example Giulia
+             */
+            name?: string;
+            /**
+             * @description Job title of the actor.
+             * @example Operations lead
+             */
+            title?: string | null;
         };
         OrgSetupRequest: {
             organisation_name: string;
@@ -2808,18 +2836,22 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "id": "M-103",
+                     *       "project_id": "proj-clearpath",
+                     *       "id": "M-105",
                      *       "topic": "onboarding-target",
-                     *       "value": "Requirement R1.1: 3 weeks or less",
-                     *       "type": "CONSTRAINT",
+                     *       "value": "4 weeks",
+                     *       "type": "DECISION",
                      *       "status": "active",
-                     *       "doc_id": "01-scope/requirements",
-                     *       "quote": "Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.",
-                     *       "date": "2025-09-29",
+                     *       "doc_id": "05-meetings/meeting-005-final-presentation",
+                     *       "quote": "Our target recommendation is four weeks total for new consultants to be fully autonomous and billing-ready.",
+                     *       "date": "2025-11-21",
                      *       "supersedes": null,
-                     *       "superseded_by": null,
-                     *       "confidence": 0.88,
-                     *       "retired_reason": null
+                     *       "superseded_by": "M-106",
+                     *       "confidence": 0.9,
+                     *       "retired_by": null,
+                     *       "retired_at": null,
+                     *       "retired_reason": null,
+                     *       "pinned": false
                      *     }
                      */
                     "application/json": components["schemas"]["Fact"];
@@ -2896,20 +2928,22 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "id": "M-103",
+                     *       "project_id": "proj-clearpath",
+                     *       "id": "M-105",
                      *       "topic": "onboarding-target",
-                     *       "value": "Requirement R1.1: 3 weeks or less",
-                     *       "type": "CONSTRAINT",
+                     *       "value": "4 weeks",
+                     *       "type": "DECISION",
                      *       "status": "retired",
-                     *       "doc_id": "01-scope/requirements",
-                     *       "quote": "Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.",
-                     *       "date": "2025-09-29",
+                     *       "doc_id": "05-meetings/meeting-005-final-presentation",
+                     *       "quote": "Our target recommendation is four weeks total for new consultants to be fully autonomous and billing-ready.",
+                     *       "date": "2025-11-21",
                      *       "supersedes": null,
                      *       "superseded_by": "M-106",
-                     *       "confidence": 0.88,
-                     *       "retired_reason": "Replaced by the final report, which sets 3–4 weeks.",
+                     *       "confidence": 0.9,
                      *       "retired_by": "Giulia",
-                     *       "retired_at": "2026-11-14T15:20:00Z"
+                     *       "retired_at": "2026-11-14T12:43:57Z",
+                     *       "retired_reason": "The final report replaced the verbal preview.",
+                     *       "pinned": false
                      *     }
                      */
                     "application/json": components["schemas"]["Fact"];
@@ -3092,58 +3126,97 @@ export interface operations {
                     /**
                      * @example {
                      *       "topic": {
+                     *         "project_id": "proj-clearpath",
                      *         "id": "onboarding-target",
-                     *         "label": "Onboarding target",
+                     *         "label": "Onboarding time",
                      *         "fact_ids": [
+                     *           "M-101",
+                     *           "M-102",
                      *           "M-103",
+                     *           "M-104",
                      *           "M-105",
                      *           "M-106"
                      *         ]
                      *       },
                      *       "facts": [
                      *         {
+                     *           "project_id": "proj-clearpath",
+                     *           "id": "M-101",
+                     *           "topic": "onboarding-target",
+                     *           "value": "≈6 weeks",
+                     *           "type": "SUPERSEDED",
+                     *           "status": "active",
+                     *           "doc_id": "01-scope/project-brief",
+                     *           "quote": "takes approximately six weeks before they can operate independently on client engagements.",
+                     *           "date": "2025-08-22",
+                     *           "supersedes": null,
+                     *           "superseded_by": "M-106",
+                     *           "confidence": 0.85,
+                     *           "retired_by": null,
+                     *           "retired_at": null,
+                     *           "retired_reason": null,
+                     *           "pinned": false,
+                     *           "doc_title": "Project Brief — ClearPath Solutions Process Review"
+                     *         },
+                     *         {
+                     *           "project_id": "proj-clearpath",
+                     *           "id": "M-102",
+                     *           "topic": "onboarding-target",
+                     *           "value": "below 3 weeks",
+                     *           "type": "SUPERSEDED",
+                     *           "status": "active",
+                     *           "doc_id": "01-scope/project-brief",
+                     *           "quote": "Our target is to bring this below three weeks.",
+                     *           "date": "2025-08-22",
+                     *           "supersedes": null,
+                     *           "superseded_by": "M-106",
+                     *           "confidence": 0.86,
+                     *           "retired_by": null,
+                     *           "retired_at": null,
+                     *           "retired_reason": null,
+                     *           "pinned": false,
+                     *           "doc_title": "Project Brief — ClearPath Solutions Process Review"
+                     *         },
+                     *         {
+                     *           "project_id": "proj-clearpath",
                      *           "id": "M-103",
                      *           "topic": "onboarding-target",
-                     *           "value": "Requirement R1.1: 3 weeks or less",
-                     *           "type": "CONSTRAINT",
+                     *           "value": "3 weeks or less",
+                     *           "type": "SUPERSEDED",
                      *           "status": "active",
                      *           "doc_id": "01-scope/requirements",
                      *           "quote": "Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.",
                      *           "date": "2025-09-29",
                      *           "supersedes": null,
-                     *           "superseded_by": null,
+                     *           "superseded_by": "M-106",
                      *           "confidence": 0.88,
-                     *           "retired_reason": null
+                     *           "retired_by": null,
+                     *           "retired_at": null,
+                     *           "retired_reason": null,
+                     *           "pinned": false,
+                     *           "doc_title": "Requirements — ClearPath Process Review"
                      *         },
                      *         {
-                     *           "id": "M-105",
+                     *           "project_id": "proj-clearpath",
+                     *           "id": "M-104",
                      *           "topic": "onboarding-target",
-                     *           "value": "Target recommendation: 4 weeks",
+                     *           "value": "≈6.5–7 weeks",
                      *           "type": "SUPERSEDED",
                      *           "status": "active",
-                     *           "doc_id": "05-meetings/meeting-005-final-presentation",
-                     *           "quote": "Our target recommendation is four weeks total for new consultants to be fully autonomous and billing-ready.",
-                     *           "date": "2025-11-21",
+                     *           "doc_id": "05-meetings/meeting-003-interim-review",
+                     *           "quote": "we estimate closer to six and a half to seven weeks",
+                     *           "date": "2025-10-15",
                      *           "supersedes": null,
                      *           "superseded_by": "M-106",
-                     *           "confidence": 0.9,
-                     *           "retired_reason": null
-                     *         },
-                     *         {
-                     *           "id": "M-106",
-                     *           "topic": "onboarding-target",
-                     *           "value": "Onboarding SLA: 3–4 weeks",
-                     *           "type": "DECISION",
-                     *           "status": "active",
-                     *           "doc_id": "07-documents/report-final",
-                     *           "quote": "Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)",
-                     *           "date": "2025-11-28",
-                     *           "supersedes": "M-105",
-                     *           "superseded_by": null,
-                     *           "confidence": 0.94,
-                     *           "retired_reason": null
+                     *           "confidence": 0.7,
+                     *           "retired_by": null,
+                     *           "retired_at": null,
+                     *           "retired_reason": null,
+                     *           "pinned": false,
+                     *           "doc_title": "Meeting 003: Interim Review & Findings"
                      *         }
-                     *       ]
+                     *       ],
+                     *       "changes": 5
                      *     }
                      */
                     "application/json": components["schemas"]["TopicChain"];
@@ -3365,12 +3438,40 @@ export interface operations {
                     /**
                      * @example [
                      *       {
-                     *         "id": "a-0042",
-                     *         "at": "2026-11-14T14:04:12Z",
-                     *         "actor": "gabriele",
-                     *         "action": "retire",
-                     *         "fact_id": "M-103",
-                     *         "reason": "Replaced by the final report, which sets 3–4 weeks."
+                     *         "project_id": "proj-clearpath",
+                     *         "id": "a-0007",
+                     *         "at": "2026-11-14T12:43:57Z",
+                     *         "actor": "system",
+                     *         "action": "supersede",
+                     *         "fact_id": "L-402",
+                     *         "reason": "Onboarding standard v3 supersedes L-401 (3–4 weeks)."
+                     *       },
+                     *       {
+                     *         "project_id": "proj-clearpath",
+                     *         "id": "a-0006",
+                     *         "at": "2026-11-14T12:43:57Z",
+                     *         "actor": "system",
+                     *         "action": "ingest",
+                     *         "fact_id": null,
+                     *         "reason": "v3 of “Onboarding standard” uploaded to the document library."
+                     *       },
+                     *       {
+                     *         "project_id": "proj-clearpath",
+                     *         "id": "a-0005",
+                     *         "at": "2026-11-14T12:43:57Z",
+                     *         "actor": "system",
+                     *         "action": "supersede",
+                     *         "fact_id": "E-301",
+                     *         "reason": "Email from client@meridianlabs.org: 5 weeks supersedes M-106 (3–4 weeks)."
+                     *       },
+                     *       {
+                     *         "project_id": "proj-clearpath",
+                     *         "id": "a-0004",
+                     *         "at": "2026-11-14T12:43:57Z",
+                     *         "actor": "mail",
+                     *         "action": "ingest",
+                     *         "fact_id": null,
+                     *         "reason": "Email “Onboarding target confirmed” from client@meridianlabs.org routed to proj-clearpath by rule-001 (sender_domain @meridianlabs.org)."
                      *       }
                      *     ]
                      */
@@ -3474,17 +3575,17 @@ export interface operations {
                      * @example {
                      *       "corpus": "org-consulting-clearpath",
                      *       "metrics": {
-                     *         "ndcg_at_10_plain": 0.61,
-                     *         "ndcg_at_10_canonico": 0.78,
-                     *         "binding_accuracy_plain": 0.42,
-                     *         "binding_accuracy_canonico": 0.81
+                     *         "ndcg_at_10_plain": 0.7082,
+                     *         "ndcg_at_10_canonico": 0.7444,
+                     *         "binding_accuracy_plain": 0,
+                     *         "binding_accuracy_canonico": 0.6
                      *       },
                      *       "per_query": [
                      *         {
                      *           "query_id": "q01",
-                     *           "text": "What is the target time for onboarding new consultants?",
-                     *           "tests": "binding version",
-                     *           "plain_top_doc": "01-scope/requirements",
+                     *           "text": "What onboarding time target did Meridian Labs ultimately recommend, and how did that target shift from the client's original goal over the engagement?",
+                     *           "tests": "onboarding_target_evolution",
+                     *           "plain_top_doc": "01-scope/project-brief",
                      *           "canonico_top_doc": "07-documents/report-final",
                      *           "gold_doc": "07-documents/report-final",
                      *           "pass_plain": false,
@@ -3492,16 +3593,37 @@ export interface operations {
                      *         },
                      *         {
                      *           "query_id": "q02",
-                     *           "text": "Why do the team leads disagree about how long a report spends in the audit queue?",
-                     *           "tests": "conflict detection",
-                     *           "plain_top_doc": "07-documents/report-final",
+                     *           "text": "Why do the team leads disagree about how long a report spends in the audit queue, and was the discrepancy ever resolved with hard data?",
+                     *           "tests": "audit_cycle_time_estimates",
+                     *           "plain_top_doc": "02-subject/observation-003-audit-workflow",
                      *           "canonico_top_doc": "02-subject/observation-003-audit-workflow",
                      *           "gold_doc": "02-subject/observation-003-audit-workflow",
+                     *           "pass_plain": true,
+                     *           "pass_canonico": true
+                     *         },
+                     *         {
+                     *           "query_id": "q03",
+                     *           "text": "How many active clients was Marco Fiore managing during the intake observation, and is there conflicting information about that number?",
+                     *           "tests": "marco_client_load",
+                     *           "plain_top_doc": "02-subject/observation-002-v2-client-intake",
+                     *           "canonico_top_doc": "02-subject/observation-002-v2-client-intake",
+                     *           "gold_doc": "02-subject/observation-002-v2-client-intake",
+                     *           "pass_plain": true,
+                     *           "pass_canonico": true
+                     *         },
+                     *         {
+                     *           "query_id": "q04",
+                     *           "text": "Is the 18% junior-consultant turnover rate a verified figure, and what recommendations depend on it?",
+                     *           "tests": "turnover_unverified",
+                     *           "plain_top_doc": "05-meetings/meeting-005-final-presentation",
+                     *           "canonico_top_doc": "07-documents/report-final",
+                     *           "gold_doc": "07-documents/report-final",
                      *           "pass_plain": false,
                      *           "pass_canonico": true
                      *         }
                      *       ],
-                     *       "measured_at": "2026-11-14T13:30:00Z"
+                     *       "measured_at": "2026-11-14T12:02:40Z",
+                     *       "router": "model"
                      *     }
                      */
                     "application/json": components["schemas"]["EvalResult"];
@@ -3569,6 +3691,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "project_id": "proj-clearpath",
+                     *       "id": "M-106",
+                     *       "topic": "onboarding-target",
+                     *       "value": "3–4 weeks",
+                     *       "type": "SUPERSEDED",
+                     *       "status": "active",
+                     *       "doc_id": "07-documents/report-final",
+                     *       "quote": "Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)",
+                     *       "date": "2025-11-28",
+                     *       "supersedes": "M-105",
+                     *       "superseded_by": "E-301",
+                     *       "confidence": 0.94,
+                     *       "retired_by": null,
+                     *       "retired_at": null,
+                     *       "retired_reason": null,
+                     *       "pinned": true
+                     *     }
+                     */
                     "application/json": components["schemas"]["Fact"];
                 };
             };
@@ -3846,30 +3988,35 @@ export interface operations {
                     /**
                      * @example [
                      *       {
+                     *         "project_id": "proj-clearpath",
                      *         "id": "C-001",
                      *         "topic": "onboarding-target",
                      *         "status": "open",
-                     *         "summary": "Requirement R1.1 says 3 weeks or less, the final report sets 3–4 weeks, and nothing links them.",
+                     *         "summary": "The final presentation still says 4 weeks, the final report sets 3–4 weeks. The presentation was superseded but is still active.",
                      *         "facts": [
                      *           {
-                     *             "id": "M-103",
+                     *             "project_id": "proj-clearpath",
+                     *             "id": "M-105",
                      *             "topic": "onboarding-target",
-                     *             "value": "Requirement R1.1: 3 weeks or less",
-                     *             "type": "CONSTRAINT",
+                     *             "value": "4 weeks",
+                     *             "type": "DECISION",
                      *             "status": "active",
-                     *             "doc_id": "01-scope/requirements",
-                     *             "quote": "Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.",
-                     *             "date": "2025-09-29",
+                     *             "doc_id": "05-meetings/meeting-005-final-presentation",
+                     *             "quote": "Our target recommendation is four weeks total for new consultants to be fully autonomous and billing-ready.",
+                     *             "date": "2025-11-21",
                      *             "supersedes": null,
-                     *             "superseded_by": null,
-                     *             "confidence": 0.88,
+                     *             "superseded_by": "M-106",
+                     *             "confidence": 0.9,
+                     *             "retired_by": null,
+                     *             "retired_at": null,
                      *             "retired_reason": null,
                      *             "pinned": false
                      *           },
                      *           {
+                     *             "project_id": "proj-clearpath",
                      *             "id": "M-106",
                      *             "topic": "onboarding-target",
-                     *             "value": "Onboarding SLA: 3–4 weeks",
+                     *             "value": "3–4 weeks",
                      *             "type": "DECISION",
                      *             "status": "active",
                      *             "doc_id": "07-documents/report-final",
@@ -3878,6 +4025,8 @@ export interface operations {
                      *             "supersedes": "M-105",
                      *             "superseded_by": null,
                      *             "confidence": 0.94,
+                     *             "retired_by": null,
+                     *             "retired_at": null,
                      *             "retired_reason": null,
                      *             "pinned": false
                      *           }
@@ -3886,12 +4035,14 @@ export interface operations {
                      *         "resolution": null
                      *       },
                      *       {
+                     *         "project_id": "proj-clearpath",
                      *         "id": "C-002",
                      *         "topic": "audit-queue-time",
                      *         "status": "open",
                      *         "summary": "Three estimates of audit queue time (2–3, 3–4 and 6–8 days), nobody measured it.",
                      *         "facts": [
                      *           {
+                     *             "project_id": "proj-clearpath",
                      *             "id": "M-201",
                      *             "topic": "audit-queue-time",
                      *             "value": "3–4 business days (Marco Fiore, audit team lead)",
@@ -3903,10 +4054,13 @@ export interface operations {
                      *             "supersedes": null,
                      *             "superseded_by": null,
                      *             "confidence": 0.6,
+                     *             "retired_by": null,
+                     *             "retired_at": null,
                      *             "retired_reason": null,
                      *             "pinned": false
                      *           },
                      *           {
+                     *             "project_id": "proj-clearpath",
                      *             "id": "M-202",
                      *             "topic": "audit-queue-time",
                      *             "value": "6–8 business days (Laura Galli, audit team lead)",
@@ -3918,10 +4072,13 @@ export interface operations {
                      *             "supersedes": null,
                      *             "superseded_by": null,
                      *             "confidence": 0.6,
+                     *             "retired_by": null,
+                     *             "retired_at": null,
                      *             "retired_reason": null,
                      *             "pinned": false
                      *           },
                      *           {
+                     *             "project_id": "proj-clearpath",
                      *             "id": "M-203",
                      *             "topic": "audit-queue-time",
                      *             "value": "2–3 days (junior auditor)",
@@ -3933,6 +4090,120 @@ export interface operations {
                      *             "supersedes": null,
                      *             "superseded_by": null,
                      *             "confidence": 0.6,
+                     *             "retired_by": null,
+                     *             "retired_at": null,
+                     *             "retired_reason": null,
+                     *             "pinned": false
+                     *           }
+                     *         ],
+                     *         "detected_at": "2026-11-14T09:15:00Z",
+                     *         "resolution": null
+                     *       },
+                     *       {
+                     *         "project_id": "proj-clearpath",
+                     *         "id": "C-003",
+                     *         "topic": "onboarding-current-duration",
+                     *         "status": "open",
+                     *         "summary": "Earlier sources give about six weeks while the interim estimate gave 6.5-7 weeks; the final 6-6.5 weeks sits alongside the exact-six-week statements without resolving them.",
+                     *         "facts": [
+                     *           {
+                     *             "project_id": "proj-clearpath",
+                     *             "id": "M-1010",
+                     *             "topic": "onboarding-current-duration",
+                     *             "value": "Current onboarding time is six to six-and-a-half weeks.",
+                     *             "type": "EVIDENCE",
+                     *             "status": "active",
+                     *             "doc_id": "05-meetings/meeting-005-final-presentation",
+                     *             "quote": "Current onboarding time is six to six-and-a-half weeks.",
+                     *             "date": "2025-11-21",
+                     *             "supersedes": "M-1005",
+                     *             "superseded_by": null,
+                     *             "confidence": 0.8,
+                     *             "retired_by": null,
+                     *             "retired_at": null,
+                     *             "retired_reason": null,
+                     *             "pinned": false
+                     *           },
+                     *           {
+                     *             "project_id": "proj-clearpath",
+                     *             "id": "M-1003",
+                     *             "topic": "onboarding-current-duration",
+                     *             "value": "New consultants currently take about six weeks to reach meaningful productivity.",
+                     *             "type": "EVIDENCE",
+                     *             "status": "active",
+                     *             "doc_id": "05-meetings/meeting-002-discovery-ops",
+                     *             "quote": "We're currently at six weeks, so cutting it in half is the goal.",
+                     *             "date": "2025-09-22",
+                     *             "supersedes": null,
+                     *             "superseded_by": null,
+                     *             "confidence": 0.6,
+                     *             "retired_by": null,
+                     *             "retired_at": null,
+                     *             "retired_reason": null,
+                     *             "pinned": false
+                     *           },
+                     *           {
+                     *             "project_id": "proj-clearpath",
+                     *             "id": "M-1002",
+                     *             "topic": "onboarding-current-duration",
+                     *             "value": "Onboarding of new consultants currently takes approximately six weeks before they can operate independently.",
+                     *             "type": "EVIDENCE",
+                     *             "status": "active",
+                     *             "doc_id": "01-scope/project-brief",
+                     *             "quote": "The onboarding process for new consultants takes approximately six weeks before they can operate independently on client engagements.",
+                     *             "date": "2025-08-22",
+                     *             "supersedes": "M-1001",
+                     *             "superseded_by": null,
+                     *             "confidence": 0.7,
+                     *             "retired_by": null,
+                     *             "retired_at": null,
+                     *             "retired_reason": null,
+                     *             "pinned": false
+                     *           }
+                     *         ],
+                     *         "detected_at": "2026-11-14T09:15:00Z",
+                     *         "resolution": null
+                     *       },
+                     *       {
+                     *         "project_id": "proj-clearpath",
+                     *         "id": "C-004",
+                     *         "topic": "company-headcount",
+                     *         "status": "open",
+                     *         "summary": "The project brief says ClearPath has 78 employees, while the kickoff meeting says about 120 people, and nothing indicates which figure prevails.",
+                     *         "facts": [
+                     *           {
+                     *             "project_id": "proj-clearpath",
+                     *             "id": "M-1077",
+                     *             "topic": "company-headcount",
+                     *             "value": "ClearPath Solutions currently has 78 employees, up from 31 in 2021.",
+                     *             "type": "EVIDENCE",
+                     *             "status": "active",
+                     *             "doc_id": "01-scope/project-brief",
+                     *             "quote": "Our team currently numbers 78 employees, up from 31 in 2021.",
+                     *             "date": "2025-08-22",
+                     *             "supersedes": null,
+                     *             "superseded_by": null,
+                     *             "confidence": 0.9,
+                     *             "retired_by": null,
+                     *             "retired_at": null,
+                     *             "retired_reason": null,
+                     *             "pinned": false
+                     *           },
+                     *           {
+                     *             "project_id": "proj-clearpath",
+                     *             "id": "M-1078",
+                     *             "topic": "company-headcount",
+                     *             "value": "ClearPath is about 120 people, mostly in Florence with a small Milan satellite.",
+                     *             "type": "HYPOTHESIS",
+                     *             "status": "active",
+                     *             "doc_id": "05-meetings/meeting-001-kickoff",
+                     *             "quote": "We're about 120 people, mostly here in Florence with a small Milan satellite.",
+                     *             "date": "2025-09-08",
+                     *             "supersedes": null,
+                     *             "superseded_by": null,
+                     *             "confidence": 0.75,
+                     *             "retired_by": null,
+                     *             "retired_at": null,
                      *             "retired_reason": null,
                      *             "pinned": false
                      *           }
@@ -5160,75 +5431,103 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "documents": 46,
-                     *       "topics": 24,
-                     *       "facts_total": 312,
+                     *       "documents": 49,
+                     *       "topics": 65,
+                     *       "facts_total": 432,
                      *       "by_type": {
-                     *         "DECISION": 38,
-                     *         "CONSTRAINT": 31,
-                     *         "EVIDENCE": 140,
-                     *         "HYPOTHESIS": 52,
-                     *         "SUPERSEDED": 29,
-                     *         "OPEN": 22
+                     *         "DECISION": 84,
+                     *         "CONSTRAINT": 55,
+                     *         "EVIDENCE": 87,
+                     *         "HYPOTHESIS": 74,
+                     *         "SUPERSEDED": 89,
+                     *         "OPEN": 43
                      *       },
                      *       "by_status": {
-                     *         "active": 310,
-                     *         "retired": 2
+                     *         "active": 432,
+                     *         "retired": 0
                      *       },
-                     *       "open_conflicts": 2,
-                     *       "open_questions": 22,
-                     *       "maintenance_pending": 5,
+                     *       "open_conflicts": 21,
+                     *       "open_questions": 43,
+                     *       "maintenance_pending": 11,
                      *       "cost": {
-                     *         "spent_usd": 2.31,
-                     *         "cap_usd": 10
+                     *         "spent_usd": 0,
+                     *         "cap_usd": 2
                      *       },
                      *       "last_ingest_at": "2026-11-14T09:12:00Z",
-                     *       "last_reset_at": null,
+                     *       "last_reset_at": "2026-11-14T12:43:57Z",
                      *       "needs_attention": {
                      *         "stale_active": 1,
-                     *         "conflicts_open": 2,
-                     *         "open_questions": 22
+                     *         "conflicts_open": 21,
+                     *         "open_questions": 43
                      *       },
                      *       "facts_by_type": {
-                     *         "DECISION": 38,
-                     *         "CONSTRAINT": 31,
-                     *         "EVIDENCE": 140,
-                     *         "HYPOTHESIS": 52,
-                     *         "SUPERSEDED": 29,
-                     *         "OPEN": 22
+                     *         "DECISION": 84,
+                     *         "CONSTRAINT": 55,
+                     *         "EVIDENCE": 87,
+                     *         "HYPOTHESIS": 74,
+                     *         "SUPERSEDED": 89,
+                     *         "OPEN": 43
                      *       },
                      *       "facts_by_status": {
-                     *         "active": 310,
-                     *         "retired": 2
+                     *         "active": 432,
+                     *         "retired": 0
                      *       },
                      *       "answers": {
-                     *         "binding": 18,
-                     *         "contested": 3,
-                     *         "no_answer": 2,
-                     *         "since": "2026-11-14T08:00:00Z"
+                     *         "binding": 1,
+                     *         "contested": 0,
+                     *         "no_answer": 0,
+                     *         "since": "2026-11-14T12:43:57Z"
                      *       },
                      *       "sources": [
                      *         {
-                     *           "source_id": "src-drive-01",
-                     *           "type": "drive",
-                     *           "label": "Clearpath shared drive",
-                     *           "status": "synced",
+                     *           "source_id": "src-clearpath-docs",
+                     *           "type": "documents",
+                     *           "label": "ClearPath documents",
+                     *           "status": "ok",
                      *           "last_synced_at": "2026-11-14T09:12:00Z"
+                     *         },
+                     *         {
+                     *           "source_id": "src-clearpath-library",
+                     *           "type": "document_library",
+                     *           "label": "ClearPath library",
+                     *           "status": "ok",
+                     *           "last_synced_at": "2026-11-14T09:12:00Z"
+                     *         },
+                     *         {
+                     *           "source_id": "src-clearpath-mail",
+                     *           "type": "mail",
+                     *           "label": "ClearPath mailbox",
+                     *           "status": "ok",
+                     *           "last_synced_at": "2026-11-14T09:12:00Z"
+                     *         },
+                     *         {
+                     *           "source_id": "src-internal-docs",
+                     *           "type": "documents",
+                     *           "label": "Internal documents",
+                     *           "status": "ok",
+                     *           "last_synced_at": "2026-11-14T09:12:00Z"
+                     *         },
+                     *         {
+                     *           "source_id": "src-internal-gh",
+                     *           "type": "github",
+                     *           "label": "gabry-ts/canonico",
+                     *           "status": "idle",
+                     *           "last_synced_at": null
                      *         }
                      *       ],
                      *       "recent_changes": [
                      *         {
-                     *           "at": "2026-11-14T09:30:00Z",
-                     *           "actor": "Giulia",
-                     *           "action": "retire",
-                     *           "fact_id": "M-105",
-                     *           "summary": "Giulia retired 4 weeks (final presentation)"
+                     *           "at": "2026-11-14T09:12:00Z",
+                     *           "actor": "system",
+                     *           "action": "ingest",
+                     *           "fact_id": null,
+                     *           "summary": "Seeded demo memory from the ClearPath corpus."
                      *         }
                      *       ],
                      *       "time_to_fix_seconds": {
-                     *         "median": 95,
-                     *         "samples": 4,
-                     *         "measured_at": "2026-11-14T09:30:00Z"
+                     *         "median": null,
+                     *         "samples": 0,
+                     *         "measured_at": null
                      *       }
                      *     }
                      */
@@ -5982,11 +6281,11 @@ export interface operations {
                      *       "repo_url": "https://github.com/gabry-ts/canonico",
                      *       "full_name": "gabry-ts/canonico",
                      *       "public": true,
-                     *       "description": "Canonical memory for company knowledge.",
+                     *       "description": "Canonical memory for company brains: knows which decision is binding and which is superseded",
                      *       "default_branch": "main",
-                     *       "open_issues": 3,
+                     *       "open_issues": 20,
                      *       "has_readme": true,
-                     *       "last_pushed_at": "2026-11-14T09:00:00Z"
+                     *       "last_pushed_at": "2026-11-14T12:27:37Z"
                      *     }
                      */
                     "application/json": components["schemas"]["GithubPreview"];
@@ -6876,15 +7175,15 @@ export interface operations {
                      *       "rule_id": "rule-001",
                      *       "document_id": "mail/demo-0001",
                      *       "facts_created": [
-                     *         "M-301"
+                     *         "E-301"
                      *       ],
                      *       "supersedes_created": [
                      *         {
-                     *           "fact_id": "M-301",
+                     *           "fact_id": "E-301",
                      *           "supersedes": "M-106"
                      *         }
                      *       ],
-                     *       "audit_event_id": "a-0043"
+                     *       "audit_event_id": "a-0005"
                      *     }
                      */
                     "application/json": components["schemas"]["InboundEmailResult"];
@@ -6917,21 +7216,21 @@ export interface operations {
                     /**
                      * @example [
                      *       {
-                     *         "document_id": "07-documents/report-final",
+                     *         "document_id": "library/onboarding-standard",
                      *         "version": 1,
                      *         "version_label": "v1",
-                     *         "uploaded_at": "2025-10-02T10:00:00Z",
+                     *         "uploaded_at": "2025-12-04T09:00:00Z",
                      *         "supersedes_document_id": null,
                      *         "facts_superseded": []
                      *       },
                      *       {
-                     *         "document_id": "07-documents/report-final",
+                     *         "document_id": "library/onboarding-standard",
                      *         "version": 2,
                      *         "version_label": "v2",
-                     *         "uploaded_at": "2026-11-14T14:40:00Z",
-                     *         "supersedes_document_id": "07-documents/report-final",
+                     *         "uploaded_at": "2026-01-12T09:00:00Z",
+                     *         "supersedes_document_id": "library/onboarding-standard",
                      *         "facts_superseded": [
-                     *           "M-106"
+                     *           "L-400"
                      *         ]
                      *       }
                      *     ]
@@ -6976,22 +7275,22 @@ export interface operations {
                     /**
                      * @example {
                      *       "version": {
-                     *         "document_id": "07-documents/report-final",
-                     *         "version": 2,
-                     *         "version_label": "v2",
-                     *         "uploaded_at": "2026-11-14T14:40:00Z",
-                     *         "supersedes_document_id": "07-documents/report-final",
+                     *         "document_id": "library/onboarding-standard",
+                     *         "version": 3,
+                     *         "version_label": "v3",
+                     *         "uploaded_at": "2026-11-14T12:43:57Z",
+                     *         "supersedes_document_id": "library/onboarding-standard",
                      *         "facts_superseded": [
-                     *           "M-106"
+                     *           "L-401"
                      *         ]
                      *       },
                      *       "facts_created": [
-                     *         "M-301"
+                     *         "L-402"
                      *       ],
                      *       "supersedes_created": [
                      *         {
-                     *           "fact_id": "M-301",
-                     *           "supersedes": "M-106"
+                     *           "fact_id": "L-402",
+                     *           "supersedes": "L-401"
                      *         }
                      *       ]
                      *     }
@@ -7437,22 +7736,28 @@ export interface operations {
                     /**
                      * @example {
                      *       "member": {
-                     *         "id": "mem-sara-conti",
-                     *         "name": "Sara Conti",
-                     *         "email": "sara.conti@meridianlabs.example",
-                     *         "org_role": "editor",
-                     *         "created_at": "2026-11-14T09:10:00Z",
+                     *         "id": "mem-giulia-ferri",
+                     *         "name": "Giulia Ferri",
+                     *         "email": "giulia.ferri@meridianlabs.example",
+                     *         "org_role": "owner",
+                     *         "created_at": "2026-11-14T09:00:00Z",
                      *         "status": "active"
                      *       },
-                     *       "role": "editor",
+                     *       "role": "owner",
                      *       "permissions": [
                      *         "ask",
                      *         "read_facts",
                      *         "retire_fact",
                      *         "restore_fact",
                      *         "correct_fact",
-                     *         "resolve_conflict"
-                     *       ]
+                     *         "resolve_conflict",
+                     *         "manage_sources",
+                     *         "manage_mail",
+                     *         "manage_members",
+                     *         "admin_demo"
+                     *       ],
+                     *       "name": "Giulia",
+                     *       "title": "Operations lead"
                      *     }
                      */
                     "application/json": components["schemas"]["Me"];
