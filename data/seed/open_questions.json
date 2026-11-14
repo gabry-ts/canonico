@@ -1,0 +1,14 @@
+[
+  {
+    "id": "OQ-001",
+    "topic": "audit-queue-time",
+    "question": "What is the real audit queue time?",
+    "fact_id": "M-204",
+    "doc_id": "02-subject/bottleneck-analysis",
+    "status": "open",
+    "opened_at": "2025-10-02",
+    "closed_at": null,
+    "answer_fact_id": null,
+    "note": null
+  }
+]

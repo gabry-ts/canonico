@@ -123,7 +123,7 @@ def create_fact(state: dict, *, topic: str, value: str, type: str, doc_id: str |
     return fact
 
 
-def pin(state: dict, fact: dict, reason: str, actor: str) -> None:
+def pin(state: dict, fact: dict, reason: str, actor: str, action: str = "pin", extra: dict | None = None) -> None:
     """Pin a fact as binding. Only one fact per topic stays pinned."""
     if fact.get("pinned"):
         return
@@ -135,7 +135,7 @@ def pin(state: dict, fact: dict, reason: str, actor: str) -> None:
         other["pinned"] = False
     if previous:
         reason = f"{reason} (pin moved from {', '.join(f['id'] for f in previous)})"
-    store.change_fact(state, fact["id"], "pin", actor, reason, {"pinned": True}, extra={"others": others})
+    store.change_fact(state, fact["id"], action, actor, reason, {"pinned": True}, extra={"others": others, **(extra or {})})
 
 
 def _reaches(state: dict, start: dict, target_id: str) -> bool:
@@ -214,6 +214,93 @@ def stats(state: dict) -> dict:
         "cost": {"spent_usd": round(state.get("cost_spent", 0.0), 4), "cap_usd": state["config"]["cost_cap_usd"]},
         "last_ingest_at": state.get("meta", {}).get("ingested_at"),
     }
+
+
+def undo_targets(undo: dict) -> set[str]:
+    targets = {undo.get("fact"), undo.get("created")}
+    targets |= {fact["id"] for fact in undo.get("facts", [])}
+    return targets - {None}
+
+
+def apply_undo(state: dict, event: dict) -> None:
+    """Revert what an audit event did, using the before-values stored with it."""
+    undo = event["x"]["undo"]
+    if "created" in undo:
+        fact = state["facts"].pop(undo["created"], None)
+        if fact is not None:
+            topic = state["topics"].get(fact["topic"])
+            if topic and fact["id"] in topic["fact_ids"]:
+                topic["fact_ids"].remove(fact["id"])
+            for other in state["facts"].values():
+                for key in ("supersedes", "superseded_by"):
+                    if other.get(key) == fact["id"]:
+                        other[key] = None
+            state["open_questions"] = {k: q for k, q in state["open_questions"].items() if q["fact_id"] != fact["id"]}
+    if "fact" in undo and undo["fact"] in state["facts"]:
+        fact = state["facts"][undo["fact"]]
+        before = store.view(state, fact)
+        old_topic = fact["topic"]
+        fact.update(undo.get("fields", {}))
+        fact["x"].update(undo.get("x", {}))
+        if fact["topic"] != old_topic:
+            store.move_fact(state, fact, old_topic)
+        for other in event["x"].get("others", []):
+            if other["fact"] in state["facts"]:
+                state["facts"][other["fact"]].update(other["fields"])
+        after = store.view(state, fact)
+        changes = {k: {"from": before[k], "to": after[k]} for k in store.PUBLIC_FACT_FIELDS if before[k] != after[k]}
+        store.ensure_history(state, fact).append({"at": store.now(), "actor": "system", "action": "undo", "changes": changes, "snapshot": after})
+    if "document" in undo:
+        state["documents"][undo["document"]["id"]] = undo["document"]
+        for fact in undo.get("facts", []):
+            state["facts"][fact["id"]] = fact
+            store.move_fact(state, fact, fact["topic"])
+        for link in undo.get("links", []):
+            if link["fact"] in state["facts"]:
+                state["facts"][link["fact"]].update(link["fields"])
+    if "question" in undo:
+        state["open_questions"][undo["question"]["id"]] = undo["question"]
+    if "maintenance" in undo and undo["maintenance"] in state["maintenance"]:
+        state["maintenance"][undo["maintenance"]]["status"] = "pending"
+    conflict = state["conflicts"].get(event["x"].get("conflict") or "")
+    if conflict is not None:
+        conflict["resolution"] = None
+
+
+def delete_document(state: dict, doc_id: str, actor: str) -> dict:
+    """Remove a document with every fact extracted from it and the links that pointed to them."""
+    document = state["documents"].pop(doc_id)
+    removed = [f for f in state["facts"].values() if f.get("doc_id") == doc_id]
+    ids = {f["id"] for f in removed}
+    links = []
+    for fact in state["facts"].values():
+        if fact["id"] in ids:
+            continue
+        fields = {key: fact[key] for key in ("supersedes", "superseded_by") if fact.get(key) in ids}
+        if fields:
+            if fact["type"] == "SUPERSEDED" and "superseded_by" in fields:
+                fields["type"] = fact["type"]
+                fact["type"] = fact["x"].get("base_type") or "DECISION"
+            links.append({"fact": fact["id"], "fields": dict(fields)})
+            for key in ("supersedes", "superseded_by"):
+                if key in fields:
+                    fact[key] = None
+    for fact in removed:
+        del state["facts"][fact["id"]]
+        topic = state["topics"].get(fact["topic"])
+        if topic and fact["id"] in topic["fact_ids"]:
+            topic["fact_ids"].remove(fact["id"])
+    state["open_questions"] = {k: q for k, q in state["open_questions"].items() if q["fact_id"] not in ids}
+    state["maintenance"] = {k: m for k, m in state["maintenance"].items() if m["fact_id"] not in ids}
+    event = store.audit(
+        state,
+        "delete_document",
+        actor,
+        None,
+        f"Deleted document {doc_id} and {len(removed)} facts.",
+        x={"undo": {"document": document, "facts": removed, "links": links}, "topics": sorted({f["topic"] for f in removed})},
+    )
+    return {"doc_id": doc_id, "deleted_fact_ids": sorted(ids), "audit_event_id": event["id"]}
 
 
 def sync_maintenance(state: dict) -> None:

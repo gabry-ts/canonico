@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from app import ops, store
-from app.http import out
-from app.models import Topic, TopicChain
+from app.http import ApiError, out
+from app.models import Topic, TopicChain, TopicCreate, TopicMergeRequest, TopicPatch
 from app.store import STORE
 
 router = APIRouter()
@@ -15,8 +15,13 @@ def list_topics():
 
 
 @router.post("/topics", operation_id="createTopic", status_code=201, response_model=Topic)
-def create_topic() -> None:
-    raise HTTPException(501, "not implemented")
+def create_topic(body: TopicCreate):
+    with STORE.write() as state:
+        topic_id = store.slugify(body.id or body.label)
+        if topic_id in state["topics"]:
+            raise ApiError(409, f"Topic {topic_id} already exists.")
+        state["topics"][topic_id] = {"id": topic_id, "label": body.label, "fact_ids": [], "x": {}}
+        return out(Topic, ops.topic_view(state["topics"][topic_id]), 201)
 
 
 @router.get("/topics/{topic_id}/chain", operation_id="getTopicChain", status_code=200, response_model=TopicChain)
@@ -28,10 +33,33 @@ def get_topic_chain(topic_id: str):
 
 
 @router.patch("/topics/{topic_id}", operation_id="patchTopic", status_code=200, response_model=Topic)
-def patch_topic() -> None:
-    raise HTTPException(501, "not implemented")
+def patch_topic(topic_id: str, body: TopicPatch):
+    with STORE.write() as state:
+        topic = ops.require_topic(state, topic_id)
+        topic["label"] = body.label
+        return out(Topic, ops.topic_view(topic))
 
 
 @router.post("/topics/{topic_id}/merge", operation_id="mergeTopic", status_code=200, response_model=Topic)
-def merge_topic() -> None:
-    raise HTTPException(501, "not implemented")
+def merge_topic(topic_id: str, body: TopicMergeRequest):
+    with STORE.write() as state:
+        source = ops.require_topic(state, topic_id)
+        target = ops.require_topic(state, body.into_topic_id)
+        if source is target:
+            raise ApiError(409, "A topic cannot be merged into itself.")
+        moved = list(source["fact_ids"])
+        for fact_id in moved:
+            fact = state["facts"].get(fact_id)
+            if fact is not None:
+                store.ensure_history(state, fact)
+                fact["topic"] = target["id"]
+                if fact_id not in target["fact_ids"]:
+                    target["fact_ids"].append(fact_id)
+        target["fact_ids"].sort(key=lambda i: (state["facts"][i]["date"], i) if i in state["facts"] else ("", i))
+        target.setdefault("x", {}).setdefault("keywords", []).extend(source.get("x", {}).get("keywords", []) + [source["label"]])
+        for record in list(state["conflicts"].values()) + list(state["open_questions"].values()):
+            if record["topic"] == source["id"]:
+                record["topic"] = target["id"]
+        del state["topics"][source["id"]]
+        store.audit(state, "merge", body.actor, None, f"Merged topic {source['id']} into {target['id']} ({len(moved)} facts).", x={"topic": target["id"]})
+        return out(Topic, ops.topic_view(target))

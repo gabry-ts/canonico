@@ -155,6 +155,7 @@ def build_seed() -> dict:
         )
     for question in _read_json(seed_dir() / "open_questions.json", []):
         state["open_questions"][question["id"]] = copy.deepcopy(question)
+        state["seq"]["oq"] = max(state["seq"]["oq"], int(question["id"].split("-")[1]))
     sync_open_questions(state)
     return state
 
