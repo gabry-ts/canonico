@@ -100,7 +100,7 @@ Open `http://localhost:8080`. The API answers under the same address, for exampl
 - Reset the demo: `curl -X POST http://localhost:8080/api/demo/reset`.
 - Offline mode: `curl -X PATCH http://localhost:8080/api/config -H 'content-type: application/json' -d '{"offline_mode": true}'`, or `CANONICO_OFFLINE=1` in `api/.env` to start that way. A reset goes back to the value of `CANONICO_OFFLINE`.
 - One replica only: memory lives in the `api` process. Do not scale the service.
-- To reach the server from outside without opening ports, point a Cloudflare Tunnel or a Tailscale Funnel at `http://localhost:8080`; both give an HTTPS address, which then goes into `PUBLIC_URL`. There is no authentication in this demo, so share that address only with the people who need it.
+- To reach the server from outside without opening ports, point a Cloudflare Tunnel or a Tailscale Funnel at `http://localhost:8080`; both give an HTTPS address, which then goes into `PUBLIC_URL`. Reads are public; set `CANONICO_AUTH_REQUIRED=true` so every write needs a session (see "Sign-in"), and share the address only with the people who need it.
 
 ## Switching the LLM provider
 
