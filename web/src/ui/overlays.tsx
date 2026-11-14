@@ -84,7 +84,8 @@ export function Menu({
 
   useLayoutEffect(() => {
     if (!open || !anchor.current || !menu.current) return
-    const r = anchor.current.getBoundingClientRect()
+    // The anchor is `display: contents` and has no box of its own: measure the trigger inside it.
+    const r = (anchor.current.firstElementChild ?? anchor.current).getBoundingClientRect()
     const w = menu.current.offsetWidth
     const h = menu.current.offsetHeight
     let left = align === 'right' ? r.right - w : r.left
