@@ -481,6 +481,33 @@ describe('Setup', () => {
       await waitFor(() => expect(cont()).toBeEnabled())
     })
 
+    it('reuses the project and its routing rule when the person comes back from step 4 and continues', async () => {
+      const { user, app } = renderWithApp(<Setup />)
+      await toSources(user)
+      await user.click(back())
+      await title('Create the first project')
+      await user.click(cont())
+
+      expect(await title('Connect the first sources')).toBeInTheDocument()
+      expect(api.callsTo('POST', '/projects')).toHaveLength(1)
+      expect(api.callsTo('POST', '/org/mail/rules')).toHaveLength(1)
+      expect(app.setProjectId).toHaveBeenLastCalledWith('proj-pilot')
+    })
+
+    it('adds the routing rule on the second pass when it failed the first time', async () => {
+      api.post('/org/mail/rules', fail(500, 'Rules are down'))
+      const { user } = renderWithApp(<Setup />)
+      await toSources(user)
+      await user.click(back())
+      await title('Create the first project')
+      api.post('/org/mail/rules', { id: 'rule-1' })
+      await user.click(cont())
+
+      expect(await title('Connect the first sources')).toBeInTheDocument()
+      expect(api.callsTo('POST', '/projects')).toHaveLength(1)
+      expect(api.callsTo('POST', '/org/mail/rules')).toHaveLength(2)
+    })
+
     it('goes back to the mailbox', async () => {
       const { user } = renderWithApp(<Setup />)
       await toProject(user)

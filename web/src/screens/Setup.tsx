@@ -23,6 +23,8 @@ export default function Setup() {
   const [job, setJob] = useState<Job | null>(null)
   
   const timer = useRef<number | undefined>(undefined)
+  // What step 3 created, so going Back from step 4 and continuing again does not create it twice.
+  const created = useRef<{ projectId?: string; rule?: boolean }>({})
   const done = job?.status === 'done'
   const failed = job?.status === 'error'
   const running = !!job && !done && !failed
@@ -71,10 +73,14 @@ export default function Setup() {
       } else if (step === 2) {
         await call(client.PUT('/org/mail', { body: mailBody() }))
       } else if (step === 3) {
-        const p = await call(client.POST('/projects', { body: { name: proj.name.trim(), description: proj.desc.trim() || null } }))
-        app.setProjectId(p.id)
-        if (proj.rule) {
-          await call(client.POST('/org/mail/rules', { body: { match_type: 'sender_domain', value: '@' + dom, project_id: p.id, priority: 10 } })).catch((e) => toastError(errMsg(e)))
+        const id = created.current.projectId ?? (await call(client.POST('/projects', { body: { name: proj.name.trim(), description: proj.desc.trim() || null } }))).id
+        created.current.projectId = id
+        app.setProjectId(id)
+        if (proj.rule && !created.current.rule) {
+          await call(client.POST('/org/mail/rules', { body: { match_type: 'sender_domain', value: '@' + dom, project_id: id, priority: 10 } })).then(
+            () => (created.current.rule = true),
+            (e) => toastError(errMsg(e)),
+          )
         }
       }
       setStep(step + 1)
