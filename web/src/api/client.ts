@@ -40,6 +40,9 @@ function savedSession(): Session | null {
 }
 
 let session: Session | null = savedSession()
+// True when the session was opened by a sign-in on this page. A session restored from storage that the backend no
+// longer knows (sessions live in memory, so after a restart) ends quietly, without the "session ended" notice.
+let sessionUsed = false
 const sessionListeners = new Set<() => void>()
 let sessionEnded: () => void = () => {}
 
@@ -54,6 +57,7 @@ export const subscribeSession = (cb: () => void) => {
 /** Keep the session opened by a sign-in. Null forgets it: requests go back to the demo identity. */
 export function setSession(s: Session | null) {
   session = s
+  sessionUsed = s !== null
   try {
     if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s))
     else localStorage.removeItem(SESSION_KEY)
@@ -66,8 +70,9 @@ export function setSession(s: Session | null) {
 /** The session stopped being valid without a sign-out: expired, revoked, or the backend restarted. */
 export function endSession() {
   if (!session) return
+  const notify = sessionUsed
   setSession(null)
-  sessionEnded()
+  if (notify) sessionEnded()
 }
 
 /** Called once each time a session ends on its own (see `endSession`). */
