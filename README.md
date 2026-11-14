@@ -68,6 +68,23 @@ The seeded memory answers `POST /ask {"question": "How long does onboarding take
 
 Other flows that work offline: `POST /demo/send-email` (a client email confirms 5 weeks and supersedes the final report figure), `POST /documents/{doc_id}/versions` (a new version of a library document supersedes what the previous version said on the same topic), `POST /mail/poll` on the mocked inbox in `data/seed/mail/`. Values are found by a deterministic rule (a sentence that states a quantity on a known topic), so these flows need no model. `PATCH /config {"offline_mode": true}` blocks every live model call.
 
+## Organisation, projects and sources
+
+One organisation holds several projects. A request with `project_id` (query parameter, or body field on `POST /ask`) sees only that project: its documents, topics, facts, conflicts and audit events. Without it the request has organisation scope and sees everything. The seed has two projects, `proj-clearpath` (the 46 corpus documents, a document library, a mailbox) and `proj-internal` (an internal handbook and a GitHub source).
+
+Sources of a project:
+
+- `documents`: uploaded or ingested documents.
+- `document_library` (provider `local_mock`): versioned documents seeded from `data/seed/library/` with a `manifest.json` (document id, version, `version_of`, `uploaded_at`). `POST /documents/{doc_id}/versions` stores a new version; facts of the previous version on the same topic get a SUPERSEDES link to the new fact and one audit event, which can be undone.
+- `github`: a public repository, read with the unauthenticated GitHub REST API (README and issues become documents). Responses are cached in `api/.cache/github/` and reused when the rate limit is hit, when GitHub is unreachable and in offline mode.
+- `mail`: `imap_mock` polls the seeded inbox in `data/seed/mail/` (`POST /mail/poll`), `webhook` receives `POST /mail/inbound`. Mail settings live on the organisation and are inherited by projects, a project can override them. Routing rules (`sender_domain`, `sender_address`, `recipient`, `subject_contains`) are evaluated by ascending priority, the first match decides the project; `sender_domain` compares the exact domain. An email that no rule matches is stored at organisation scope.
+
+Fact ids tell where a fact came from: `M-1xx` and `M-2xx` curated demo facts, `M-1001` and above extracted from the corpus, `M-301` and above typed in by a person or taken from an uploaded version of a plain document, `E-301` and above from email, `L-4xx` from the document library.
+
+Members and roles are a demo layer without real authentication. `GET /roles` lists what each role may do. Writes check the role of the member named in the `X-Demo-Actor` header and return 403 when the permission is missing; a project role overrides the organisation role inside that project. Without the header the owner acts.
+
+`GET /stats` also returns dashboard figures. `needs_attention.stale_active` counts facts that were superseded but are still active. `time_to_fix_seconds` is measured, not configured: for every retire or resolve of a fact, the seconds between the first answer that showed that fact as a conflict and the moment it was retired; `median` is null until there is a sample.
+
 ## License
 
 MIT
