@@ -1288,6 +1288,173 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/org/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List organisation members
+         * @description Sample data only. All names are invented.
+         */
+        get: operations["listOrgMembers"];
+        put?: never;
+        /**
+         * Invite a member
+         * @description Creates a member with status `invited`. Requires `manage_members`.
+         */
+        post: operations["inviteOrgMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/members/{member_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a member */
+        get: operations["getOrgMember"];
+        put?: never;
+        post?: never;
+        /**
+         * Remove a member
+         * @description Removes the member and their project roles. The last owner cannot be removed (409). Requires `manage_members`.
+         */
+        delete: operations["deleteOrgMember"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a member
+         * @description Changes name, email or organisation role. Requires `manage_members`.
+         */
+        patch: operations["patchOrgMember"];
+        trace?: never;
+    };
+    "/projects/{project_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List effective project members
+         * @description Effective role of each organisation member on the project. A project role overrides the organisation role for that project; `inherited` is true when the role comes from the organisation role.
+         */
+        get: operations["listProjectMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/members/{member_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set a project role
+         * @description Sets an explicit project role that overrides the organisation role for this project. Requires `manage_members`.
+         */
+        put: operations["setProjectMemberRole"];
+        post?: never;
+        /**
+         * Reset to the inherited role
+         * @description Removes the explicit project role so the organisation role applies again. Requires `manage_members`.
+         */
+        delete: operations["clearProjectMemberRole"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Role permission matrix */
+        get: operations["listRoles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Current actor (demo only)
+         * @description Demo only, no real authentication. The actor is chosen with the `X-Demo-Actor` header or the `actor` query parameter (a member id or name); the header wins when both are set. Without either, a default demo actor is returned. Effective permissions are those of the actor's organisation role, or of the project role when `project_id` is given.
+         */
+        get: operations["getMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * First-run organisation setup
+         * @description Creates the organisation, its default mail config and the first admin member (role owner). Returns 409 if the organisation is already set up.
+         */
+        post: operations["setupOrg"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org/setup/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Onboarding status */
+        get: operations["getOrgSetupStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1423,6 +1590,8 @@ export interface components {
             at: string;
             /** @description User name, or `system` for ingest and classify. */
             actor: string;
+            /** @description Role of the actor when the event was written. Optional. */
+            actor_role?: components["schemas"]["Role"] | null;
             action: components["schemas"]["AuditAction"];
             /** @description Null for ingest events. */
             fact_id: string | null;
@@ -2128,6 +2297,79 @@ export interface components {
             facts_created: string[];
             supersedes_created: components["schemas"]["SupersedeLink"][];
         };
+        /** @enum {string} */
+        Role: "owner" | "admin" | "editor" | "viewer";
+        /** @enum {string} */
+        Permission: "ask" | "read_facts" | "retire_fact" | "restore_fact" | "correct_fact" | "resolve_conflict" | "manage_sources" | "manage_mail" | "manage_members" | "admin_demo";
+        /** @enum {string} */
+        MemberStatus: "active" | "invited";
+        /** @description Organisation member. Sample data only, names are invented. */
+        Member: {
+            id: string;
+            name: string;
+            email: string;
+            org_role: components["schemas"]["Role"];
+            /** Format: date-time */
+            created_at: string;
+            status: components["schemas"]["MemberStatus"];
+        };
+        /** @description Invite a member. */
+        MemberCreate: {
+            name: string;
+            email: string;
+            org_role: components["schemas"]["Role"];
+        };
+        MemberPatch: {
+            name?: string;
+            email?: string;
+            org_role?: components["schemas"]["Role"];
+        };
+        MemberPage: {
+            total: number;
+            items: components["schemas"]["Member"][];
+        };
+        ProjectMember: {
+            member_id: string;
+            project_id: string;
+            role: components["schemas"]["Role"];
+            /** @description True when the role comes from the organisation role, false when set explicitly on the project. */
+            inherited: boolean;
+        };
+        ProjectMemberSet: {
+            /** @description Must match the member_id in the path. */
+            member_id: string;
+            role: components["schemas"]["Role"];
+        };
+        RolePermissions: {
+            role: components["schemas"]["Role"];
+            permissions: components["schemas"]["Permission"][];
+        };
+        /** @description Current demo actor. Demo only, no real authentication. */
+        Me: {
+            member: components["schemas"]["Member"];
+            role: components["schemas"]["Role"];
+            permissions: components["schemas"]["Permission"][];
+        };
+        OrgSetupRequest: {
+            organisation_name: string;
+            primary_email_domain: string;
+            mail_config?: components["schemas"]["MailConfigWrite"] | null;
+            first_admin: {
+                name: string;
+                email: string;
+            };
+        };
+        /** @enum {string} */
+        SetupStepState: "done" | "pending";
+        SetupStatus: {
+            completed: boolean;
+            steps: {
+                org: components["schemas"]["SetupStepState"];
+                mail: components["schemas"]["SetupStepState"];
+                first_project: components["schemas"]["SetupStepState"];
+                first_source: components["schemas"]["SetupStepState"];
+            };
+        };
     };
     responses: {
         /** @description Malformed request. */
@@ -2190,6 +2432,21 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
+        /** @description The actor lacks the permission required for this write (see GET /roles). Demo actor is set with X-Demo-Actor. */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "code": "forbidden",
+                 *       "message": "Role viewer lacks permission retire_fact."
+                 *     }
+                 */
+                "application/json": components["schemas"]["Error"];
+            };
+        };
     };
     parameters: {
         /** @example M-103 */
@@ -2215,6 +2472,13 @@ export interface components {
         RuleId: string;
         /** @example sync-0001 */
         JobId: string;
+        /** @example mem-sara-conti */
+        MemberId: string;
+        /**
+         * @description Demo only, no real authentication. Member id or name of the acting demo identity.
+         * @example mem-sara-conti
+         */
+        DemoActorHeader: string;
     };
     requestBodies: never;
     headers: never;
@@ -2469,6 +2733,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
         };
@@ -2521,6 +2786,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
         };
@@ -2572,6 +2838,7 @@ export interface operations {
                     "application/json": components["schemas"]["Fact"];
                 };
             };
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
         };
@@ -3169,6 +3436,7 @@ export interface operations {
                     "application/json": components["schemas"]["Fact"];
                 };
             };
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["Unprocessable"];
@@ -3205,6 +3473,7 @@ export interface operations {
                     "application/json": components["schemas"]["Fact"];
                 };
             };
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
         };
@@ -3621,6 +3890,7 @@ export interface operations {
                     "application/json": components["schemas"]["Conflict"];
                 };
             };
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["Unprocessable"];
@@ -4906,6 +5176,7 @@ export interface operations {
                     "application/json": components["schemas"]["Stats"];
                 };
             };
+            403: components["responses"]["Forbidden"];
         };
     };
     exportMemory: {
@@ -5487,6 +5758,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["Unprocessable"];
@@ -5564,6 +5836,7 @@ export interface operations {
                     };
                 };
             };
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
         };
@@ -5617,6 +5890,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
         };
@@ -5654,6 +5928,7 @@ export interface operations {
                     "application/json": components["schemas"]["SyncJob"];
                 };
             };
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
         };
@@ -5765,6 +6040,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
             422: components["responses"]["Unprocessable"];
         };
     };
@@ -5859,6 +6135,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
         };
@@ -5898,6 +6175,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProjectMail"];
                 };
             };
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -5976,6 +6254,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["Unprocessable"];
@@ -6059,6 +6338,7 @@ export interface operations {
                     };
                 };
             };
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
         };
     };
@@ -6102,6 +6382,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
         };
@@ -6415,6 +6696,550 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["Unprocessable"];
+        };
+    };
+    listOrgMembers: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Members of the organisation. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "total": 3,
+                     *       "items": [
+                     *         {
+                     *           "id": "mem-giulia-ferri",
+                     *           "name": "Giulia Ferri",
+                     *           "email": "giulia.ferri@meridianlabs.example",
+                     *           "org_role": "owner",
+                     *           "created_at": "2026-11-14T09:00:00Z",
+                     *           "status": "active"
+                     *         },
+                     *         {
+                     *           "id": "mem-sara-conti",
+                     *           "name": "Sara Conti",
+                     *           "email": "sara.conti@meridianlabs.example",
+                     *           "org_role": "editor",
+                     *           "created_at": "2026-11-14T09:10:00Z",
+                     *           "status": "active"
+                     *         },
+                     *         {
+                     *           "id": "mem-luca-bassi",
+                     *           "name": "Luca Bassi",
+                     *           "email": "luca.bassi@meridianlabs.example",
+                     *           "org_role": "viewer",
+                     *           "created_at": "2026-11-14T09:20:00Z",
+                     *           "status": "invited"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MemberPage"];
+                };
+            };
+        };
+    };
+    inviteOrgMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "name": "Luca Bassi",
+                 *       "email": "luca.bassi@meridianlabs.example",
+                 *       "org_role": "viewer"
+                 *     }
+                 */
+                "application/json": components["schemas"]["MemberCreate"];
+            };
+        };
+        responses: {
+            /** @description The invited member. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "mem-luca-bassi",
+                     *       "name": "Luca Bassi",
+                     *       "email": "luca.bassi@meridianlabs.example",
+                     *       "org_role": "viewer",
+                     *       "created_at": "2026-11-14T09:20:00Z",
+                     *       "status": "invited"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getOrgMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example mem-sara-conti */
+                member_id: components["parameters"]["MemberId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The member. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "mem-sara-conti",
+                     *       "name": "Sara Conti",
+                     *       "email": "sara.conti@meridianlabs.example",
+                     *       "org_role": "editor",
+                     *       "created_at": "2026-11-14T09:10:00Z",
+                     *       "status": "active"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteOrgMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example mem-sara-conti */
+                member_id: components["parameters"]["MemberId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    patchOrgMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example mem-sara-conti */
+                member_id: components["parameters"]["MemberId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "org_role": "admin"
+                 *     }
+                 */
+                "application/json": components["schemas"]["MemberPatch"];
+            };
+        };
+        responses: {
+            /** @description The updated member. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "mem-sara-conti",
+                     *       "name": "Sara Conti",
+                     *       "email": "sara.conti@meridianlabs.example",
+                     *       "org_role": "admin",
+                     *       "created_at": "2026-11-14T09:10:00Z",
+                     *       "status": "active"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    listProjectMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Effective project members. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "member_id": "mem-giulia-ferri",
+                     *         "project_id": "proj-clearpath",
+                     *         "role": "owner",
+                     *         "inherited": true
+                     *       },
+                     *       {
+                     *         "member_id": "mem-luca-bassi",
+                     *         "project_id": "proj-clearpath",
+                     *         "role": "editor",
+                     *         "inherited": false
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["ProjectMember"][];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    setProjectMemberRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+                /** @example mem-sara-conti */
+                member_id: components["parameters"]["MemberId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "member_id": "mem-luca-bassi",
+                 *       "role": "editor"
+                 *     }
+                 */
+                "application/json": components["schemas"]["ProjectMemberSet"];
+            };
+        };
+        responses: {
+            /** @description The effective project member. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "member_id": "mem-luca-bassi",
+                     *       "project_id": "proj-clearpath",
+                     *       "role": "editor",
+                     *       "inherited": false
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ProjectMember"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    clearProjectMemberRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @example proj-clearpath */
+                project_id: components["parameters"]["ProjectId"];
+                /** @example mem-sara-conti */
+                member_id: components["parameters"]["MemberId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The effective project member, now inherited. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "member_id": "mem-luca-bassi",
+                     *       "project_id": "proj-clearpath",
+                     *       "role": "viewer",
+                     *       "inherited": true
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ProjectMember"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Permissions of each role. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "role": "viewer",
+                     *         "permissions": [
+                     *           "ask",
+                     *           "read_facts"
+                     *         ]
+                     *       },
+                     *       {
+                     *         "role": "editor",
+                     *         "permissions": [
+                     *           "ask",
+                     *           "read_facts",
+                     *           "retire_fact",
+                     *           "restore_fact",
+                     *           "correct_fact",
+                     *           "resolve_conflict"
+                     *         ]
+                     *       },
+                     *       {
+                     *         "role": "admin",
+                     *         "permissions": [
+                     *           "ask",
+                     *           "read_facts",
+                     *           "retire_fact",
+                     *           "restore_fact",
+                     *           "correct_fact",
+                     *           "resolve_conflict",
+                     *           "manage_sources",
+                     *           "manage_mail",
+                     *           "manage_members"
+                     *         ]
+                     *       },
+                     *       {
+                     *         "role": "owner",
+                     *         "permissions": [
+                     *           "ask",
+                     *           "read_facts",
+                     *           "retire_fact",
+                     *           "restore_fact",
+                     *           "correct_fact",
+                     *           "resolve_conflict",
+                     *           "manage_sources",
+                     *           "manage_mail",
+                     *           "manage_members",
+                     *           "admin_demo"
+                     *         ]
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["RolePermissions"][];
+                };
+            };
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Demo actor, member id or name. Same as the X-Demo-Actor header.
+                 * @example mem-sara-conti
+                 */
+                actor?: string;
+                /**
+                 * @description Restrict to one project. When absent the request has organisation scope and sees all projects.
+                 * @example proj-clearpath
+                 */
+                project_id?: components["parameters"]["ProjectIdQuery"];
+            };
+            header?: {
+                /**
+                 * @description Demo only, no real authentication. Member id or name of the acting demo identity.
+                 * @example mem-sara-conti
+                 */
+                "X-Demo-Actor"?: components["parameters"]["DemoActorHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The current demo actor. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "member": {
+                     *         "id": "mem-sara-conti",
+                     *         "name": "Sara Conti",
+                     *         "email": "sara.conti@meridianlabs.example",
+                     *         "org_role": "editor",
+                     *         "created_at": "2026-11-14T09:10:00Z",
+                     *         "status": "active"
+                     *       },
+                     *       "role": "editor",
+                     *       "permissions": [
+                     *         "ask",
+                     *         "read_facts",
+                     *         "retire_fact",
+                     *         "restore_fact",
+                     *         "correct_fact",
+                     *         "resolve_conflict"
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    setupOrg: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "organisation_name": "Meridian Labs",
+                 *       "primary_email_domain": "meridianlabs.example",
+                 *       "mail_config": {
+                 *         "mode": "imap_mock",
+                 *         "imap_host": "mock.meridianlabs.example",
+                 *         "imap_user": "brain@meridianlabs.example",
+                 *         "inbound_address": "brain@inbound.meridianlabs.example",
+                 *         "poll_interval_s": 60
+                 *       },
+                 *       "first_admin": {
+                 *         "name": "Giulia Ferri",
+                 *         "email": "giulia.ferri@meridianlabs.example"
+                 *       }
+                 *     }
+                 */
+                "application/json": components["schemas"]["OrgSetupRequest"];
+            };
+        };
+        responses: {
+            /** @description The created organisation. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "org-meridian",
+                     *       "name": "Meridian Labs",
+                     *       "mail_config": {
+                     *         "mode": "imap_mock",
+                     *         "imap_host": "mock.meridianlabs.example",
+                     *         "imap_user": "brain@meridianlabs.example",
+                     *         "inbound_address": "brain@inbound.meridianlabs.example",
+                     *         "poll_interval_s": 60
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Organisation"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getOrgSetupStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Setup progress. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "completed": false,
+                     *       "steps": {
+                     *         "org": "done",
+                     *         "mail": "done",
+                     *         "first_project": "pending",
+                     *         "first_source": "pending"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["SetupStatus"];
+                };
+            };
         };
     };
 }

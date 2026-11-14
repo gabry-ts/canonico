@@ -902,6 +902,112 @@ class DocumentVersionResult(BaseModel):
     supersedes_created: list[SupersedeLink]
 
 
+class Role(StrEnum):
+    owner = 'owner'
+    admin = 'admin'
+    editor = 'editor'
+    viewer = 'viewer'
+
+
+class Permission(StrEnum):
+    ask = 'ask'
+    read_facts = 'read_facts'
+    retire_fact = 'retire_fact'
+    restore_fact = 'restore_fact'
+    correct_fact = 'correct_fact'
+    resolve_conflict = 'resolve_conflict'
+    manage_sources = 'manage_sources'
+    manage_mail = 'manage_mail'
+    manage_members = 'manage_members'
+    admin_demo = 'admin_demo'
+
+
+class MemberStatus(StrEnum):
+    active = 'active'
+    invited = 'invited'
+
+
+class Member(BaseModel):
+    id: str
+    name: str
+    email: str
+    org_role: Role
+    created_at: AwareDatetime
+    status: MemberStatus
+
+
+class MemberCreate(BaseModel):
+    name: str = Field(..., min_length=1)
+    email: str
+    org_role: Role
+
+
+class MemberPatch(BaseModel):
+    name: str | None = Field(None, min_length=1)
+    email: str | None = None
+    org_role: Role | None = None
+
+
+class MemberPage(BaseModel):
+    total: int
+    items: list[Member]
+
+
+class ProjectMember(BaseModel):
+    member_id: str
+    project_id: str
+    role: Role
+    inherited: bool = Field(
+        ...,
+        description='True when the role comes from the organisation role, false when set explicitly on the project.',
+    )
+
+
+class ProjectMemberSet(BaseModel):
+    member_id: str = Field(..., description='Must match the member_id in the path.')
+    role: Role
+
+
+class RolePermissions(BaseModel):
+    role: Role
+    permissions: list[Permission]
+
+
+class Me(BaseModel):
+    member: Member
+    role: Role
+    permissions: list[Permission]
+
+
+class FirstAdmin(BaseModel):
+    name: str = Field(..., min_length=1)
+    email: str
+
+
+class OrgSetupRequest(BaseModel):
+    organisation_name: str = Field(..., min_length=1)
+    primary_email_domain: str = Field(..., min_length=1)
+    mail_config: MailConfigWrite | None = None
+    first_admin: FirstAdmin
+
+
+class SetupStepState(StrEnum):
+    done = 'done'
+    pending = 'pending'
+
+
+class Steps(BaseModel):
+    org: SetupStepState
+    mail: SetupStepState
+    first_project: SetupStepState
+    first_source: SetupStepState
+
+
+class SetupStatus(BaseModel):
+    completed: bool
+    steps: Steps
+
+
 class AuditEvent(BaseModel):
     project_id: str | None = Field(
         None, description='Owning project. Null or absent means organisation scope.'
@@ -910,6 +1016,9 @@ class AuditEvent(BaseModel):
     at: AwareDatetime
     actor: str = Field(
         ..., description='User name, or `system` for ingest and classify.'
+    )
+    actor_role: Role | None = Field(
+        None, description='Role of the actor when the event was written. Optional.'
     )
     action: AuditAction
     fact_id: str | None = Field(..., description='Null for ingest events.')
