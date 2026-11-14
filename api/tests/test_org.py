@@ -33,7 +33,7 @@ def test_organisation_and_projects(client, spec):
     clearpath = assert_contract(client.get(f"/projects/{CLEARPATH}"), "GET", "/projects/{project_id}")
     assert clearpath["name"] == "ClearPath engagement" and clearpath["mail_config_override"] is None
     assert clearpath["effective_mail_config"] == ORG_MAIL
-    assert clearpath["source_ids"] == ["src-clearpath-docs", "src-clearpath-library", "src-clearpath-mail"]
+    assert clearpath["source_ids"] == ["src-clearpath-docs", "src-clearpath-hook", "src-clearpath-library", "src-clearpath-mail"]
     created = assert_contract(client.post("/projects", json={"name": "Pilot Team", "description": "Trial"}), "POST", "/projects", 201)
     assert created["id"] == "proj-pilot-team" and created["source_ids"] == []
     assert_contract(client.post("/projects", json={"id": CLEARPATH, "name": "Again"}), "POST", "/projects", 409)
@@ -313,7 +313,7 @@ def test_new_version_of_a_corpus_document_matches_the_contract_example(client):
 
 def test_sources_and_github_sync(client, monkeypatch, spec):
     listed = assert_contract(client.get(f"/projects/{CLEARPATH}/sources"), "GET", "/projects/{project_id}/sources")["items"]
-    assert {s["id"]: (s["type"], s["items"]) for s in listed} == {"src-clearpath-docs": ("documents", 46), "src-clearpath-library": ("document_library", 2), "src-clearpath-mail": ("mail", 0)}
+    assert {s["id"]: (s["type"], s["items"]) for s in listed} == {"src-clearpath-docs": ("documents", 46), "src-clearpath-library": ("document_library", 2), "src-clearpath-mail": ("mail", 0), "src-clearpath-hook": ("webhook", 0)}
     assert_contract(client.get("/projects/nope/sources"), "GET", "/projects/{project_id}/sources", 404)
     seeded = assert_contract(client.get("/sources/src-internal-gh"), "GET", "/sources/{source_id}")
     assert seeded["config"] == {"repo_url": "https://github.com/gabry-ts/canonico", "include": ["issues", "readme"]}
