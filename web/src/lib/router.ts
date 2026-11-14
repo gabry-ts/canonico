@@ -21,7 +21,8 @@ export type Route = { r: RouteName; sub: string | null }
 /** Hash routing, same as the prototype: #/memory/M-106, #/projects/proj-clearpath, #/settings/members. */
 export function parseHash(hash: string = location.hash): Route {
   const h = hash.replace(/^#\/?/, '')
-  const [r, ...rest] = h.split('/')
+  const [first, ...rest] = h.split('/')
+  const r = first === 'home' ? 'dashboard' : first
   const sub = rest.length ? decodeURIComponent(rest.join('/')) : null
   return { r: (ROUTES as readonly string[]).includes(r) ? (r as RouteName) : 'app', sub: sub || null }
 }
