@@ -186,6 +186,7 @@
   .badge.contested { background: transparent; color: hsl(var(--warning-text)); box-shadow: inset 0 0 0 1px hsl(var(--warning) / .55); }
   .badge.open { background: hsl(var(--open-soft)); color: hsl(var(--open-text)); box-shadow: inset 0 0 0 1px hsl(var(--open) / .25); }
   .badge.superseded { background: transparent; color: hsl(var(--muted-foreground)); box-shadow: inset 0 0 0 1px hsl(var(--border)); text-decoration: line-through; text-decoration-color: hsl(var(--muted-foreground) / .6); }
+  .badge.held { background: transparent; color: hsl(var(--muted-foreground)); box-shadow: inset 0 0 0 1px hsl(var(--border)); }
   .badge.retired { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
   .badge.ok { background: transparent; color: hsl(var(--foreground)); box-shadow: inset 0 0 0 1px hsl(var(--border)); }
   .badge .bd { width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
@@ -517,7 +518,23 @@ const r105 = () => S.step >= 4 && S.c001?.kept !== 'M-105';
 const isQ2 = () => S.step === 5;
 const emailIn = () => S.step >= 6;
 const v3 = () => S.step >= 7;
-const bindingQ1 = () => S.c001?.kept === 'M-105' ? 'M-105' : v3() ? 'L-402' : (emailIn() ? 'E-301' : 'M-106');
+/* single source of truth: per topic ONE binding fact = the pinned fact if any, else the latest-dated active fact */
+const topicFacts = q => FACT_ORDER.filter(id => FACTS[id].q === q && visible(id));
+const pinnedIn = q => topicFacts(q).filter(id => S.fx[id]?.pinned && !retiredInfo(id));
+function bindingCandidates(q){
+  const ids = q === 'q01' ? CHAIN() : topicFacts(q).filter(id => FACTS[id].type === 'Decision');
+  return ids.filter(id => !retiredInfo(id) && FACTS[id].type !== 'Superseded');
+}
+function bindingFor(q){
+  const p = pinnedIn(q).sort((a, b) => FACTS[b].date.localeCompare(FACTS[a].date));
+  if (p.length) return p[0];
+  return bindingCandidates(q).reduce((best, id) => !best || FACTS[id].date >= FACTS[best].date ? id : best, null);
+}
+const heldBy = b => !b || !S.fx[b]?.pinned ? [] : bindingCandidates(FACTS[b].q).filter(id => id !== b && FACTS[id].date > FACTS[b].date);
+function heldTopics(){
+  return Object.keys(TOPICS).map(bindingFor).filter(b => b && S.fx[b]?.pinned && S.c001?.kept !== b && heldBy(b).length);
+}
+const bindingQ1 = () => bindingFor('q01');
 const visible = id => (id !== 'E-301' || emailIn()) && (id !== 'L-402' || v3());
 const CHAIN = () => ['M-101','M-102','M-103','M-104','M-105','M-106'].concat(emailIn() ? ['E-301'] : [], v3() ? ['L-402'] : []);
 function changes(chain){ let n = 0; for (let i = 1; i < chain.length; i++) if (FACTS[chain[i]].val !== FACTS[chain[i-1]].val) n++; return n; }
@@ -538,8 +555,9 @@ function replacedBy(id){
 function factStatus(id){
   const f = FACTS[id]; const u = S.fx[id] || {};
   if (retiredInfo(id)) return { key:'retired', badge:'Retired', cls:'retired', dim:true };
-  if (u.pinned) return { key:'binding', badge:'Binding', cls:'binding', binding:true, pinned:true };
-  if (f.q === 'q01' && id === bindingQ1()) return { key:'binding', badge:'Binding', cls:'binding', binding:true };
+  const b = bindingFor(f.q);
+  if (id === b) return { key:'binding', badge:'Binding', cls:'binding', binding:true, pinned:!!u.pinned };
+  if (heldBy(b).includes(id)) return { key:'held', badge:'Newer · held by pin', cls:'held', held:true };
   if (id === 'M-105') return { key:'conflict', badge:'Still active', cls:'conflict', conflict:true };
   if (id === 'M-106' && S.c001?.kept === 'M-105') return { key:'superseded', badge:'Superseded', cls:'superseded', dim:true };
   if (id === 'E-301' && v3()) return { key:'active', badge:'Confirms', cls:'ok' };
@@ -548,10 +566,9 @@ function factStatus(id){
   if (f.type === 'Superseded') return { key:'superseded', badge:'Superseded', cls:'superseded', dim:true };
   if (f.type === 'Contested') return { key:'contested', badge:'Contested', cls:'contested' };
   if (f.type === 'Open question') { const oq = OQS.find(o => o.fact === id); if (oq && S.oq[oq.id]) return { key:'active', badge:'Answered', cls:'ok' }; if (id === 'M-701') return { key:'active', badge:'Answered', cls:'ok' }; return { key:'open', badge:'Open question', cls:'open' }; }
-  if (f.type === 'Decision') return { key:'binding', badge:'Binding', cls:'binding', binding:true };
   return { key:'active', badge:'Active', cls:'ok' };
 }
-function badge(st){ return `<span class="badge ${st.cls}">${st.cls === 'conflict' || st.cls === 'open' ? '<span class="bd"></span>' : ''}${esc(st.badge)}</span>`; }
+function badge(st){ return `<span class="badge ${st.cls}">${st.pinned ? ic('pin','sm') : ''}${st.cls === 'conflict' || st.cls === 'open' ? '<span class="bd"></span>' : ''}${esc(st.badge)}</span>`; }
 
 function srcOfFact(f){ if (f.src === 'mail') return 'Mail'; if (f.src === 'library') return 'Document library'; return 'Documents'; }
 function factSource(f){ return f.src === 'mail' ? 'client@meridianlabs.org' : shortDoc(f.doc); }
@@ -685,7 +702,7 @@ window.addEventListener('hashchange', () => {
 });
 
 /* ---------------- counts ---------------- */
-function openConflicts(){ return r105() || S.c001 ? 0 : 1; }
+function openConflicts(){ return (r105() || S.c001 ? 0 : 1) + heldTopics().length; }
 function openQuestionsCount(){ return OQS.filter(o => !S.oq[o.id]).length; }
 function maintItems(){ return MAINT.filter(m => !m.when || (m.when === 'v3' && v3())); }
 function maintPending(){ return maintItems().filter(m => !S.mq[m.id] && !S.fx[m.fact]?.retired).length; }
@@ -849,10 +866,11 @@ function ghost(answer, src, note){
 }
 function rightAnswer(id, time, note){
   const f = FACTS[id];
+  if (S.fx[id]?.pinned) note = `<span class="font-medium">Pinned fact wins.</span> <span class="text-muted-foreground">${esc(f.val)} stays binding over newer versions until it is unpinned.</span>`;
   return `<div class="fade-in max-w-[600px]">${asstMeta('new', time, '<span class="badge binding">binding</span>')}
     ${note ? changedNote(note) : ''}
     <div class="card px-5 py-4">
-      <div class="text-[22px] font-semibold tracking-tight">${f.say}</div>
+      <div class="text-[22px] font-semibold tracking-tight">${f.say || esc(claimOf(id))}</div>
       <div class="mt-1 flex items-center gap-2 flex-wrap text-[13.5px] text-muted-foreground">
         <span>from: ${citeBtn(id, f.label)} · <span class="mono">${fmtDate(f.date)}</span></span>
         <span class="badge ok !h-[22px] !text-[12px]"><span class="text-success">${ic('check','sm')}</span>No ticket</span>
@@ -909,12 +927,12 @@ function renderChat(){
     P.push(dayDivider(`New email from client@meridianlabs.org · routed to ${esc(proj('proj-clearpath').name)} · <span class="mono">14:09</span>`, 'emailDivider'));
     if (s === 6) {
       P.push(userMsg(QS, '14:09'));
-      P.push(rightAnswer('E-301', '14:09', `<span class="font-medium">Changed because a new email from client@meridianlabs.org superseded 3–4 weeks.</span> <span class="text-muted-foreground">The final report is kept as history, not deleted.</span>`));
+      P.push(rightAnswer(bindingQ1(), '14:09', `<span class="font-medium">Changed because a new email from client@meridianlabs.org superseded 3–4 weeks.</span> <span class="text-muted-foreground">The final report is kept as history, not deleted.</span>`));
     } else {
       P.push(`<div class="fade-in max-w-[600px] text-[13.5px] text-muted-foreground"><span class="mono">14:09</span> · Five weeks, from the client email.</div>`);
       P.push(dayDivider('Onboarding standard v3 uploaded to the document library · <span class="mono">14:11</span>', 'versionDivider'));
       P.push(userMsg(QS, '14:11'));
-      P.push(rightAnswer('L-402', '14:11', `<span class="font-medium">Changed because Onboarding standard v3 replaced v2</span> <span class="text-muted-foreground">in the document library. The value matches the email; the source is now the versioned document.</span>`));
+      P.push(rightAnswer(bindingQ1(), '14:11', `<span class="font-medium">Changed because Onboarding standard v3 replaced v2</span> <span class="text-muted-foreground">in the document library. The value matches the email; the source is now the versioned document.</span>`));
     }
   }
   $('chat').innerHTML = `<div class="max-w-[720px] mx-auto space-y-6">${P.join('')}</div>`;
@@ -974,7 +992,7 @@ function chainTable(){
 }
 function panelQ1(){
   const b = bindingQ1(); const f = FACTS[b];
-  const replaced = CHAIN().filter(id => id !== b && id !== 'M-105');
+  const replaced = CHAIN().filter(id => id !== b && id !== 'M-105' && !heldBy(b).includes(id) && FACTS[id].date <= FACTS[b].date);
   return `
     <button class="block w-full text-left rounded-[12px] bg-primary-soft shadow-[inset_0_0_0_1px_hsl(var(--primary)/.3)] px-5 py-4 hover:shadow-[inset_0_0_0_1px_hsl(var(--primary)/.55)] transition ${S.app.flash === b ? 'flash' : ''}" data-action="fact" data-id="${b}" data-endpoint="GET /facts/{fact_id}">
       <div class="flex items-center gap-2"><span class="badge binding">binding</span><span class="text-[13px] text-muted-foreground">from the ${f.label}</span></div>
@@ -1042,7 +1060,7 @@ function renderApp(){
    #/memory  find a fact and fix it
    ===================================================================== */
 const TYPE_FILTER = ['Decision','Constraint','Evidence','Estimate','Contested','Open question','Superseded'];
-const STATUS_FILTER = [['binding','Binding'],['active','Active'],['conflict','Still active, conflicting'],['contested','Contested'],['open','Open question'],['superseded','Superseded'],['retired','Retired']];
+const STATUS_FILTER = [['binding','Binding'],['active','Active'],['conflict','Still active, conflicting'],['contested','Contested'],['open','Open question'],['superseded','Superseded'],['held','Newer · held by pin'],['retired','Retired']];
 function memMatches(id){
   const f = FACTS[id]; const m = S.mem; const st = factStatus(id);
   if (m.topic !== 'all' && f.q !== m.topic) return false;
@@ -1127,10 +1145,11 @@ const ACTION_LABEL = { retire:'Retired', restore:'Restored', ingest:'Ingested', 
 function drawerAction(id){
   const a = S.ui.act; if (!a || a.id !== id) return '';
   const title = { retire:'Retire this fact', restore:'Restore this fact', correct:'Correct this fact', pin:'Pin as binding', unpin:'Unpin' }[a.kind];
-  const help = { retire:'It stays in history, marked as retired. Answers stop using it.', restore:'It becomes active again and can be used in answers.', correct:'The corrected sentence is used from the next answer on. The original stays in history.', pin:'Pinned facts win over newer versions until unpinned.', unpin:'Precedence goes back to dates and supersedes links.' }[a.kind];
+  const help = { retire:'It stays in history, marked as retired. Answers stop using it.', restore:'It becomes active again and can be used in answers.', correct:'The corrected sentence is used from the next answer on. The original stays in history.', pin:'Pinned facts win over newer versions until unpinned. One pin per topic: pinning this replaces the current pin.', unpin:'Precedence goes back to dates and supersedes links.' }[a.kind];
   const ep = { retire:'POST /facts/{fact_id}/retire', restore:'POST /facts/{fact_id}/restore', correct:'PATCH /facts/{fact_id}', pin:'POST /facts/{fact_id}/pin', unpin:'POST /facts/{fact_id}/unpin' }[a.kind];
   return `<div class="fade-in rounded-[12px] bg-muted/50 shadow-[inset_0_0_0_1px_hsl(var(--border))] p-4 mt-4">
     <div class="font-medium text-[14px]">${title}</div><p class="mt-0.5 text-[13px] text-muted-foreground">${help}</p>
+    ${a.kind === 'pin' && pinnedIn(FACTS[id].q).some(x => x !== id) ? `<p class="mt-2 text-[13px] font-medium">Replaces the current pin on ${pinnedIn(FACTS[id].q).filter(x => x !== id).map(x => esc(FACTS[x].val || claimOf(x))).join(', ')}</p>` : ''}
     ${a.kind === 'correct' ? `<label class="label mt-3" for="actValue">Corrected sentence</label><input id="actValue" class="input ${a.errValue ? 'invalid' : ''}" data-bind="actValue" value="${esc(a.value ?? claimOf(id))}">${a.errValue ? `<div class="err">${ic('alert','sm')}Write the corrected sentence.</div>` : ''}` : ''}
     <label class="label mt-3" for="actReason">Reason</label>
     <textarea id="actReason" class="input ${a.err ? 'invalid' : ''}" data-bind="actReason" placeholder="Why are you changing this? It is shown in history and the audit log.">${esc(a.reason || '')}</textarea>
@@ -1186,7 +1205,7 @@ function drawerHtml(id){
         <button class="btn btn-outline btn-sm" data-action="act" data-kind="correct" data-id="${id}" data-perm="correct_fact" data-endpoint="PATCH /facts/{fact_id}">${ic('edit','sm')}Correct</button>
         ${isRet ? `<button class="btn btn-outline btn-sm" data-action="act" data-kind="restore" data-id="${id}" data-perm="restore_fact" data-endpoint="POST /facts/{fact_id}/restore">${ic('restore','sm')}Restore</button>`
                 : `<button class="btn btn-outline btn-sm" data-action="act" data-kind="retire" data-id="${id}" data-perm="retire_fact" data-endpoint="POST /facts/{fact_id}/retire">${ic('retire','sm')}Retire</button>`}
-        <button class="btn btn-outline btn-sm" data-action="act" data-kind="${u.pinned ? 'unpin' : 'pin'}" data-id="${id}" data-perm="correct_fact" data-endpoint="POST /facts/{fact_id}/${u.pinned ? 'unpin' : 'pin'}">${ic('pin','sm')}${u.pinned ? 'Unpin' : 'Pin as binding'}</button>
+        <button class="btn btn-outline btn-sm" data-action="act" data-kind="${u.pinned ? 'unpin' : 'pin'}" data-id="${id}" ${isRet ? 'aria-disabled="true" data-tip="Retired facts cannot be pinned. Restore it first."' : 'data-perm="correct_fact"'} data-endpoint="POST /facts/{fact_id}/${u.pinned ? 'unpin' : 'pin'}">${ic('pin','sm')}${u.pinned ? 'Unpin' : 'Pin as binding'}</button>
       </div>
       ${drawerAction(id)}
       <h3 class="mt-7 mb-3 text-[13px] font-medium flex items-center justify-between">Timeline<span class="text-[12px] font-normal text-muted-foreground">${topicName(f.q)} · oldest first</span></h3>
@@ -1263,7 +1282,7 @@ function attention(pid){
   if (clear) return `<div class="p-5 text-[13.5px] text-muted-foreground flex items-center gap-2">${ic('ok','text-success')}Nothing needs a person in this project.</div>`;
   return `<div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
     ${col('Superseded, still active', active.length, 'text-warning-text', 'maintenance', active.slice(0, 2).map(m => `<div class="truncate"><span class="font-medium">${FACTS[m.fact].val || claimOf(m.fact)}</span> <span class="text-muted-foreground">· ${FACTS[m.fact].label || shortDoc(FACTS[m.fact].doc)}</span></div>`).join('') || '<div class="text-muted-foreground">All clear.</div>', 'GET /maintenance/queue')}
-    ${col('Open conflicts', conf, 'text-warning-text', 'conflicts', conf ? `<div class="truncate"><span class="font-medium">Onboarding target</span> <span class="text-muted-foreground">· 4 weeks vs 3–4 weeks</span></div>` : '<div class="text-muted-foreground">No open conflicts.</div>', 'GET /conflicts')}
+    ${col('Open conflicts', conf, 'text-warning-text', 'conflicts', conf ? conflictsData().filter(c => c.status === 'open').slice(0, 2).map(c => `<div class="truncate"><span class="font-medium">${esc(c.title)}</span> <span class="text-muted-foreground">· ${esc(c.short)}</span></div>`).join('') : '<div class="text-muted-foreground">No open conflicts.</div>', 'GET /conflicts')}
     ${col('Open questions', oqs.length, 'text-open-text', 'open-questions', oqs.slice(0, 2).map(o => `<div class="truncate text-muted-foreground">${esc(o.question)}</div>`).join('') || '<div class="text-muted-foreground">No open questions.</div>', 'GET /open-questions')}
   </div>`;
 }
@@ -1284,7 +1303,7 @@ function fixMetric(){
 function healthCard(pid){
   const ids = visibleFacts(); const by = {}; const ty = {};
   ids.forEach(id => { const k = factStatus(id).key; by[k] = (by[k] || 0) + 1; const t = FACTS[id].type; ty[t] = (ty[t] || 0) + 1; });
-  const ST = [['binding','Binding','bg-primary'],['active','Active','bg-foreground/35'],['conflict','Still active, conflicting','bg-warning'],['contested','Contested','bg-warning/50'],['open','Open question','bg-open'],['superseded','Superseded','bg-muted-foreground/25'],['retired','Retired','bg-muted-foreground/50']];
+  const ST = [['binding','Binding','bg-primary'],['active','Active','bg-foreground/35'],['conflict','Still active, conflicting','bg-warning'],['contested','Contested','bg-warning/50'],['open','Open question','bg-open'],['superseded','Superseded','bg-muted-foreground/25'],['held','Newer · held by pin','bg-foreground/20'],['retired','Retired','bg-muted-foreground/50']];
   const tot = ids.length; const maxT = Math.max(...Object.values(ty));
   return `<div class="card" data-endpoint="GET /stats">${cardHead('Memory health', '', `sample subset · ${tot} of 214 facts`)}
     <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1359,10 +1378,11 @@ function sideCard(id, opts = {}){
 function conflictsData(){
   const resolved = r105() || S.c001;
   const rc = S.c001 || (r105() ? { kept:'M-106', by: retiredInfo('M-105')?.by || 'mem-giulia-ferri', at: retiredInfo('M-105')?.at || '14:04', reason: retiredInfo('M-105')?.reason } : null);
-  return [
-    { id:'C-001', topic:'q01', title:'Onboarding target', summary:'Two active facts give different onboarding targets. Nothing links the final report to the preview a week earlier, so plain retrieval returns the older one.', facts:['M-105','M-106'], detected:'14 Nov 2026, 09:01', status: resolved ? 'resolved' : 'open', res: rc },
+  const pins = heldTopics().map(b => ({ id:'P-' + FACTS[b].q.toUpperCase(), topic:FACTS[b].q, title:topicName(FACTS[b].q), short:`pin holds ${FACTS[b].val || claimOf(b)}`, summary:'A pinned older fact wins over newer versions until it is unpinned. Open the pinned fact to unpin it, or pin a newer one.', facts:[b].concat(heldBy(b)), detected:'14 Nov 2026', status:'open', pin:true }));
+  return pins.concat([
+    { id:'C-001', topic:'q01', title:'Onboarding target', summary:'Two active facts give different onboarding targets. Nothing links the final report to the preview a week earlier, so plain retrieval returns the older one.', facts:['M-105','M-106'], short:'4 weeks vs 3–4 weeks', detected:'14 Nov 2026, 09:01', status: resolved ? 'resolved' : 'open', res: rc },
     { id:'C-002', topic:'q02', title:'Audit queue time', summary:'Three estimates from the same observation note, none measured.', facts:['M-203','M-201','M-202'], detected:'14 Nov 2026, 09:01', status:'resolved', res:{ kept:'contested', by:'mem-sara-conti', at:'09:06', reason:'Kept as contested, no measurement exists.' } }
-  ];
+  ]);
 }
 function renderConflicts(){
   const all = conflictsData(); const tab = S.tabs.conflicts;
@@ -1376,8 +1396,8 @@ function renderConflicts(){
           <h2 class="mt-1.5 text-[17px] font-semibold tracking-tight">${c.title}</h2><p class="mt-1 text-[13.5px] text-muted-foreground max-w-[720px] leading-relaxed">${c.summary}</p></div>
         <span class="text-[12px] text-muted-foreground whitespace-nowrap">Detected ${c.detected}</span></header>
       <div class="px-5 pb-5 grid grid-cols-1 ${cols} gap-3">${c.facts.map(id => sideCard(id, {
-        win: !open && c.res && c.res.kept === id, lose: !open && c.res && c.res.kept !== 'contested' && c.res.kept !== id,
-        button: open ? `<button class="btn btn-outline btn-sm mt-3 self-start" data-action="dialog" data-dialog="resolve" data-conflict="${c.id}" data-id="${id}" data-perm="resolve_conflict" data-endpoint="POST /conflicts/{conflict_id}/resolve">${ic('check','sm')}Resolve: keep this one</button>` : '' })).join('')}</div>
+        win: c.pin ? id === c.facts[0] : !open && c.res && c.res.kept === id, lose: c.pin ? false : !open && c.res && c.res.kept !== 'contested' && c.res.kept !== id,
+        button: open && !c.pin ? `<button class="btn btn-outline btn-sm mt-3 self-start" data-action="dialog" data-dialog="resolve" data-conflict="${c.id}" data-id="${id}" data-perm="resolve_conflict" data-endpoint="POST /conflicts/{conflict_id}/resolve">${ic('check','sm')}Resolve: keep this one</button>` : '' })).join('')}</div>
       ${!open && c.res ? `<footer class="px-5 py-3 border-t bg-muted/30 flex items-center gap-3 text-[13px]">${av(member(c.res.by))}<div class="min-w-0 flex-1"><span class="font-medium">${esc(member(c.res.by)?.name || '')}</span> <span class="text-muted-foreground">${c.res.kept === 'contested' ? 'kept it contested' : `kept ${esc(FACTS[c.res.kept].val)} from the ${esc(FACTS[c.res.kept].label)}`} · <span class="mono">${c.res.at}</span></span>${c.res.reason ? `<div class="text-muted-foreground truncate">${esc(c.res.reason)}</div>` : ''}</div>
         ${c.id === 'C-001' ? `<button class="btn btn-ghost btn-sm" data-action="unresolve" data-perm="resolve_conflict" data-endpoint="POST /audit/{event_id}/undo">${ic('undo','sm')}Undo</button>` : ''}</footer>` : ''}
     </article>`; }).join('') : `<div class="card">${empty('ok', tab === 'open' ? 'No open conflicts' : 'Nothing resolved yet', tab === 'open' ? 'Every topic has one binding fact. New conflicts appear here when two active facts disagree.' : 'Resolved conflicts keep the winning fact, the reason and who decided.')}</div>`;
@@ -2017,7 +2037,7 @@ function doUndo(id){
   if (!can('retire_fact')) { toast(`Requires ${minRole('retire_fact')}`, { icon:'lock' }); return; }
   const u = a.undo || {};
   if (u.type === 'r105') { delete S.fx['M-105']; S.c001 = null; if (S.logged) delete S.logged.r105; S.step = Math.min(S.step, 2); }
-  else if (u.type === 'fx') { if (u.prev) S.fx[u.id] = u.prev; else delete S.fx[u.id]; }
+  else if (u.type === 'fx') { if (u.prev) S.fx[u.id] = u.prev; else delete S.fx[u.id]; (u.also || []).forEach(o => { S.fx[o.id] = o.prev; }); if ('c001' in u) S.c001 = u.c001; }
   else if (u.type === 'oq') delete S.oq[u.id];
   else if (u.type === 'mq') { delete S.mq[u.id]; if (u.fact) delete S.fx[u.fact]; }
   else if (u.type === 'c001') { S.c001 = null; if (u.kept === 'M-106') { delete S.fx['M-105']; if (S.logged) delete S.logged.r105; S.step = Math.min(S.step, 2); } else if (S.fx['M-105']) delete S.fx['M-105'].pinned; }
@@ -2060,14 +2080,22 @@ const A = {
     if (id === 'M-105' && a.kind === 'retire') { ev = retire105(a.reason); }
     else if (id === 'M-105' && a.kind === 'restore') { delete S.fx['M-105']; S.step = Math.min(S.step, 2); ev = addAudit('restore', id, a.reason, { type:'fx', id, prev:{ retired:true, by:S.actor, at:now() } }); }
     else {
+      if (a.kind === 'pin' && retiredInfo(id)) { S.ui.act = null; render(); return; }
+      const prevC = S.c001; const also = []; let replaced = '';
+      if (a.kind === 'pin') pinnedIn(FACTS[id].q).filter(x => x !== id).forEach(x => {
+        also.push({ id:x, prev:{ ...S.fx[x] } }); S.fx[x] = { ...S.fx[x], pinned:false }; replaced += (replaced ? ', ' : '') + (FACTS[x].val || claimOf(x));
+        const e2 = addAudit('unpin', x, `Replaced by the pin on ${FACTS[id].val || claimOf(id)}.`, null); e2.project = 'proj-clearpath';
+      });
+      if ((a.kind === 'unpin' || also.length) && S.c001?.kept === id || also.some(o => o.id === S.c001?.kept)) S.c001 = null;
       const u = S.fx[id] = { ...(S.fx[id] || {}), by:S.actor, at:now(), reason:a.reason };
-      if (a.kind === 'retire') u.retired = true; if (a.kind === 'restore') u.retired = false;
+      if (a.kind === 'retire') { u.retired = true; u.pinned = false; } if (a.kind === 'restore') u.retired = false;
       if (a.kind === 'correct') u.corrected = a.value; if (a.kind === 'pin') u.pinned = true; if (a.kind === 'unpin') u.pinned = false;
-      ev = addAudit({ correct:'patch' }[a.kind] || a.kind, id, a.reason, { type:'fx', id, prev });
+      ev = addAudit({ correct:'patch' }[a.kind] || a.kind, id, a.reason, { type:'fx', id, prev, also, c001:prevC });
+      a.replaced = replaced;
     }
     ev.project = 'proj-clearpath';
     S.ui.act = null; render();
-    toast({ retire:'Fact retired. The next answer will not use it.', restore:'Fact restored.', correct:'Fact corrected. The next answer uses the new sentence.', pin:'Pinned as binding.', unpin:'Unpinned.' }[a.kind], { undo: ev.id });
+    toast({ retire:'Fact retired. The next answer will not use it.', restore:'Fact restored.', correct:'Fact corrected. The next answer uses the new sentence.', pin:'Pinned as binding.' + (a.replaced ? ' Replaced the pin on ' + esc(a.replaced) + '.' : ''), unpin:'Unpinned.' }[a.kind], { undo: ev.id });
   },
   memtopic: (el, e) => { e.preventDefault(); S.mem.topic = el.dataset.topic; S.ui.drawer = null; if (route.r !== 'memory') nav('memory'); else render(); },
   memclear: () => { S.mem = { q:'', type:'all', status:'all', topic:'all' }; render(); },
