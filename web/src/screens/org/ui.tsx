@@ -78,10 +78,10 @@ export function CopyField({ value }: { value: string }) {
 }
 
 /** A card body that could not be loaded: the backend's reason and a way to ask again. */
-export function LoadErr({ message, onRetry }: { message: string; onRetry: () => void }) {
+export function LoadErr({ message, onRetry, className = 'p-5 text-[13.5px]' }: { message: string; onRetry: () => void; className?: string }) {
   const { t } = useI18n()
   return (
-    <div className="p-5 text-[13.5px]">
+    <div className={className}>
       {t('common.loadError', { message })}{' '}
       <button className="link" onClick={onRetry}>
         {t('common.retry')}
