@@ -1,6 +1,6 @@
 """Write operations on memory. Every one of them leaves an audit event."""
 
-from app import store
+from app import settings, store
 from app.http import ApiError, not_found
 
 
@@ -31,6 +31,8 @@ def sync_conflicts(state: dict) -> None:
             if f["status"] == "active" and not store.is_superseded(state, f) and store.effective_type(state, f) in store.BINDING_TYPES
         ]
         if len(live) < 2:
+            continue
+        if not topic.get("x", {}).get("curated") and not any(f["x"].get("manual") or f["x"].get("edited") for f in live):
             continue
         ids = {f["id"] for f in live}
         open_records = [c for c in state["conflicts"].values() if c["topic"] == topic["id"] and store.conflict_status(state, c) == "open"]
@@ -96,6 +98,93 @@ def restore(state: dict, fact: dict, reason: str | None, actor: str) -> dict | N
     return event
 
 
+def create_fact(state: dict, *, topic: str, value: str, type: str, doc_id: str | None, quote: str, date: str, confidence: float, actor: str, action: str = "create", x: dict | None = None) -> dict:
+    fact_id = store.next_fact_id(state)
+    fact = {
+        "id": fact_id,
+        "topic": topic,
+        "value": value,
+        "type": type,
+        "status": "active",
+        "doc_id": doc_id,
+        "quote": quote,
+        "date": date,
+        "supersedes": None,
+        "superseded_by": None,
+        "confidence": confidence,
+        "retired_reason": None,
+        "pinned": False,
+        "x": {"manual": True, **(x or {})},
+    }
+    state["facts"][fact_id] = fact
+    store.move_fact(state, fact, topic)
+    event = store.audit(state, action, actor, fact_id, None, x={"undo": {"created": fact_id}})
+    state["history"][fact_id] = [{"at": event["at"], "actor": actor, "action": action, "changes": {}, "snapshot": store.view(state, fact)}]
+    return fact
+
+
+def pin(state: dict, fact: dict, reason: str, actor: str) -> None:
+    """Pin a fact as binding. Only one fact per topic stays pinned."""
+    if fact.get("pinned"):
+        return
+    previous = [f for f in store.topic_facts(state, fact["topic"]) if f.get("pinned") and f is not fact]
+    others = []
+    for other in previous:
+        store.ensure_history(state, other)
+        others.append({"fact": other["id"], "fields": {"pinned": True}})
+        other["pinned"] = False
+    if previous:
+        reason = f"{reason} (pin moved from {', '.join(f['id'] for f in previous)})"
+    store.change_fact(state, fact["id"], "pin", actor, reason, {"pinned": True}, extra={"others": others})
+
+
+def _reaches(state: dict, start: dict, target_id: str) -> bool:
+    seen, current = set(), start
+    while current is not None and current["id"] not in seen:
+        if current["id"] == target_id:
+            return True
+        seen.add(current["id"])
+        current = state["facts"].get(current.get("superseded_by") or "")
+    return False
+
+
+def supersede(state: dict, older: dict, newer: dict, reason: str, actor: str) -> None:
+    """Declare that `newer` replaces `older`."""
+    if older["id"] == newer["id"]:
+        raise ApiError(422, "A fact cannot supersede itself.")
+    if older["topic"] != newer["topic"]:
+        raise ApiError(422, "Both facts must share the same topic.")
+    if newer["date"] < older["date"]:
+        raise ApiError(422, f"Fact {newer['id']} is older than {older['id']} and cannot replace it.")
+    if _reaches(state, newer, older["id"]):
+        raise ApiError(409, "This link would create a cycle.")
+    if older.get("superseded_by") == newer["id"] and not older["x"].get("retire_linked"):
+        return
+    others = []
+    previous = state["facts"].get(older.get("superseded_by") or "")
+    if previous is not None and previous is not newer and previous.get("supersedes") == older["id"]:
+        others.append({"fact": previous["id"], "fields": {"supersedes": previous["supersedes"]}})
+        previous["supersedes"] = None
+    others.append({"fact": newer["id"], "fields": {"supersedes": newer.get("supersedes")}})
+    store.ensure_history(state, newer)
+    newer["supersedes"] = older["id"]
+    store.change_fact(state, older["id"], "supersede", actor, reason, {"superseded_by": newer["id"]}, {"retire_linked": False}, extra={"others": others})
+
+
+def unlink(state: dict, newer: dict, reason: str, actor: str) -> None:
+    """Remove the edge from a fact to the older fact it replaces."""
+    older = state["facts"].get(newer["supersedes"])
+    others = []
+    if older is not None and older.get("superseded_by") == newer["id"]:
+        fields = {"superseded_by": older["superseded_by"], "type": older["type"]}
+        others.append({"fact": older["id"], "fields": fields})
+        store.ensure_history(state, older)
+        older["superseded_by"] = None
+        if older["type"] == "SUPERSEDED":
+            older["type"] = older["x"].get("base_type") or "DECISION"
+    store.change_fact(state, newer["id"], "unlink", actor, reason, {"supersedes": None}, extra={"others": others})
+
+
 def require_topic(state: dict, topic_id: str) -> dict:
     topic = state["topics"].get(topic_id)
     if topic is None:
@@ -127,4 +216,50 @@ def stats(state: dict) -> dict:
     }
 
 
-__all__ = ["ApiError", "get_fact", "retire", "restore", "sync_conflicts", "require_topic", "topic_view", "stats"]
+def sync_maintenance(state: dict) -> None:
+    """Propose facts for retirement: superseded but still retrievable, stale, or low confidence."""
+    threshold = state["config"]["low_confidence_threshold"]
+    wanted: dict[tuple[str, str], str] = {}
+    bindings: dict[str, dict | None] = {}
+    for fact in state["facts"].values():
+        if fact["status"] != "active" or fact.get("pinned"):
+            continue
+        topic_id = fact["topic"]
+        if topic_id not in bindings:
+            bindings[topic_id] = store.binding_of(state, topic_id)
+        binding = bindings[topic_id]
+        newer = store.successor(state, fact)
+        if newer is not None:
+            wanted[(fact["id"], "superseded_still_retrievable")] = f"Superseded by {newer['id']} on {newer['date']} but still ranked in plain retrieval."
+        elif binding is not None and binding is not fact and store.effective_type(state, fact) in store.BINDING_TYPES and fact["date"] < binding["date"]:
+            wanted[(fact["id"], "stale")] = "Older than the latest decision on the same topic and not linked to it."
+        elif fact["confidence"] < threshold:
+            wanted[(fact["id"], "low_confidence")] = f"Confidence {fact['confidence']:.2f} is below the threshold {threshold:.2f}."
+    known = {(m["fact_id"], m["reason"]): m for m in state["maintenance"].values()}
+    for key, item in known.items():
+        if item["status"] == "pending" and key not in wanted:
+            del state["maintenance"][item["id"]]
+    fresh = [k for k in wanted if k not in known]
+    fresh.sort(key=lambda k: (state["facts"][k[0]]["date"], k[0]), reverse=True)
+    for fact_id, reason in fresh:
+        state["seq"]["mq"] += 1
+        item_id = f"MQ-{state['seq']['mq']:03d}"
+        state["maintenance"][item_id] = {
+            "id": item_id,
+            "fact_id": fact_id,
+            "reason": reason,
+            "detail": wanted[(fact_id, reason)],
+            "proposed_action": "retire",
+            "status": "pending",
+            "proposed_at": settings.PROPOSED_AT if state["version"] == 0 else store.now(),
+        }
+
+
+def sync(state: dict) -> None:
+    """Derived records follow the facts: conflicts, open questions and the maintenance queue."""
+    sync_conflicts(state)
+    store.sync_open_questions(state)
+    sync_maintenance(state)
+
+
+store.STORE.after_change = sync

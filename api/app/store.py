@@ -30,9 +30,9 @@ PUBLIC_FACT_FIELDS = (
 BINDING_TYPES = ("DECISION", "CONSTRAINT")
 DEFAULT_CONFIG = {
     "models": {
-        "extraction": "claude-haiku-4-5",
-        "classification": "claude-haiku-4-5",
-        "answer": "claude-sonnet-4-5",
+        "extraction": "claude-haiku-5-5",
+        "classification": "claude-sonnet-5-5",
+        "answer": "claude-sonnet-5-5",
     },
     "cost_cap_usd": 2.0,
     "active_corpus": settings.CORPUS,
@@ -147,6 +147,12 @@ def build_seed() -> dict:
     for key, name in (("extraction", "CANONICO_MODEL_EXTRACTION"), ("classification", "CANONICO_MODEL_CLASSIFICATION"), ("answer", "CANONICO_MODEL_ANSWER")):
         if os.environ.get(name):
             state["config"]["models"][key] = os.environ[name]
+    meta = state["meta"]
+    if meta.get("ingested_at"):
+        usage = meta.get("usage", {})
+        state["jobs"].append(
+            {"id": "job-7f3a", "kind": "ingest", "status": "done", "docs": meta.get("documents", len(state["documents"])), "facts": len(facts), "cost_usd": usage.get("cost_usd", 0.0)}
+        )
     for question in _read_json(seed_dir() / "open_questions.json", []):
         state["open_questions"][question["id"]] = copy.deepcopy(question)
     sync_open_questions(state)
@@ -332,6 +338,11 @@ class Store:
     def __init__(self) -> None:
         self.lock = threading.RLock()
         self.state: dict | None = None
+        self.after_change = None
+
+    def _derive(self) -> None:
+        if self.after_change and self.state is not None:
+            self.after_change(self.state)
 
     def _load(self) -> None:
         path = settings.state_file()
@@ -346,6 +357,7 @@ class Store:
         self.state = build_seed()
         audit(self.state, "ingest", "system", None, "Seeded demo memory from the ClearPath corpus.", bump=False)
         self.state["audit"][-1]["at"] = settings.SEED_AT
+        self._derive()
         self._save()
 
     def _save(self) -> None:
@@ -373,6 +385,7 @@ class Store:
             if self.state is None:
                 self._load()
             yield self.state
+            self._derive()
             self._save()
 
     def reset(self, actor: str = "system") -> dict:
@@ -381,6 +394,7 @@ class Store:
             audit(self.state, "ingest", "system", None, "Seeded demo memory from the ClearPath corpus.", bump=False)
             self.state["audit"][-1]["at"] = settings.SEED_AT
             audit(self.state, "reset", actor, None, "Demo state restored from the seed.", bump=False)
+            self._derive()
             self._save()
             return self.state
 
