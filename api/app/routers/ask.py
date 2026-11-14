@@ -1,5 +1,9 @@
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+import asyncio
+import json
+import re
+
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from app import engine
 from app.http import ApiError, dump
@@ -23,6 +27,28 @@ def ask(body: AskRequest):
         return JSONResponse(run_ask(state, body))
 
 
+def _event(name: str, data: dict) -> str:
+    return f"event: {name}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
 @router.post("/ask/stream", operation_id="askStream", status_code=200, response_model=None)
-def ask_stream() -> None:
-    raise HTTPException(501, "not implemented")
+async def ask_stream(body: AskRequest):
+    async def events():
+        try:
+            with STORE.write() as state:
+                response = run_ask(state, body)
+        except ApiError as exc:
+            yield _event("error", {"code": exc.code, "message": exc.message})
+            return
+        except Exception:
+            yield _event("error", {"code": "internal_error", "message": "Unexpected server error."})
+            return
+        used = ([response["binding"]] if response["binding"] else []) + response["superseded"] + response["conflicts"]
+        yield _event("retrieval", {"fact_ids": [fact["id"] for fact in used]})
+        for chunk in re.findall(r"\S+\s*(?:\S+\s*){0,2}", response["answer"]):
+            yield _event("token", {"text": chunk})
+            await asyncio.sleep(0.03)
+        yield _event("final", response)
+
+    headers = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+    return StreamingResponse(events(), media_type="text/event-stream", headers=headers)

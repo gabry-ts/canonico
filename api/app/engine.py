@@ -90,6 +90,65 @@ def plain_retrieval(state: dict, query: str, top_k: int = 10) -> list[dict]:
     ]
 
 
+STATUS_WEIGHT = {"binding": 1.0, "conflict": 0.9, "superseded": 0.7, "live": 0.6, "EVIDENCE": 0.5, "OPEN": 0.5, "HYPOTHESIS": 0.4}
+
+
+def fact_status(state: dict, fact: dict, cache: dict) -> str | None:
+    """Epistemic role of a fact inside its topic, or None when answers must not use it."""
+    if fact["status"] != "active":
+        return None
+    topic_id = fact["topic"]
+    if topic_id not in cache:
+        cache[topic_id] = topic_state(state, topic_id)
+    ts = cache[topic_id]
+    if ts["binding"] is fact:
+        return "binding"
+    if fact in ts["conflicts"]:
+        return "conflict"
+    if store.is_superseded(state, fact):
+        return "superseded"
+    kind = store.effective_type(state, fact)
+    return "live" if kind in store.BINDING_TYPES else kind
+
+
+def facts_index(state: dict) -> BM25:
+    docs = {}
+    for fact in state["facts"].values():
+        topic = state["topics"].get(fact["topic"], {})
+        extra = topic.get("x", {})
+        text = " ".join([fact["value"], fact["quote"], topic.get("label", ""), " ".join(extra.get("keywords", []))])
+        docs[fact["id"]] = tokenize(text)
+    return BM25(docs, k1=1.2, b=0.5)
+
+
+def canonico_ranking(state: dict, query: str, top_k: int = 10, weight: float = 1.0) -> list[str]:
+    """Documents ranked by text match plus the epistemic status of the facts they are the source of.
+
+    A document gains when it is the source of a fact that matches the question, and gains more
+    when that fact is binding or part of an open conflict than when it was superseded or is an estimate.
+    """
+    tokens = tokenize(query)
+    plain = docs_index(state).rank(tokens)
+    top_plain = plain[0][1] if plain else 1.0
+    scores = {doc_id: score / top_plain for doc_id, score in plain}
+    matches = facts_index(state).rank(tokens)
+    top_fact = matches[0][1] if matches else 1.0
+    cache: dict = {}
+    boost: dict[str, float] = {}
+    for fact_id, score in matches[:40]:
+        fact = state["facts"][fact_id]
+        role = fact_status(state, fact, cache)
+        doc_id = fact.get("doc_id")
+        if role is None or doc_id not in state["documents"]:
+            continue
+        gain = STATUS_WEIGHT[role] * score / top_fact
+        boost[doc_id] = max(boost.get(doc_id, 0.0), gain)
+    for doc_id, gain in boost.items():
+        scores[doc_id] = scores.get(doc_id, 0.0) + weight * gain
+    ranked = sorted(scores.items(), key=lambda item: (-item[1], item[0]))
+    return [doc_id for doc_id, _ in ranked[:top_k]]
+
+
 # ---------------------------------------------------------------- answer
 
 
@@ -273,6 +332,13 @@ def _net_events(events: list[dict]) -> list[dict]:
     return out
 
 
+def explain_change(state: dict, since_version: int, topic_id: str | None) -> str:
+    """Why an answer on a topic differs from the one given at an earlier memory version."""
+    fact_ids = set(state["topics"][topic_id]["fact_ids"]) if topic_id in state["topics"] else set()
+    events = [e for e in state["audit"] if e["x"].get("version", 0) > since_version and (e.get("fact_id") in fact_ids or (topic_id and e["x"].get("topic") == topic_id))]
+    return _describe(state, _net_events(events)) or "memory changed since the previous answer"
+
+
 def ask(state: dict, question: str, topic_id: str | None = None, include_plain: bool = False) -> tuple[dict, dict]:
     """Answer a question, store the answer and return (response, record)."""
     matched = topic_id or match_topic(state, question)
@@ -288,13 +354,7 @@ def ask(state: dict, question: str, topic_id: str | None = None, include_plain: 
         if previous["memory_version"] == state["version"]:
             response["changed_because"] = previous["response"].get("changed_because")
         elif _signature(previous["response"]) != _signature(response):
-            fact_ids = set(state["topics"][matched]["fact_ids"]) if matched else set()
-            events = [
-                e
-                for e in state["audit"]
-                if e["x"].get("version", 0) > previous["memory_version"] and (e.get("fact_id") in fact_ids or e["x"].get("topic") == matched)
-            ]
-            response["changed_because"] = _describe(state, _net_events(events)) or "memory changed since the previous answer"
+            response["changed_because"] = explain_change(state, previous["memory_version"], matched)
 
     if include_plain:
         ranked = plain_retrieval(state, question, top_k=1)
