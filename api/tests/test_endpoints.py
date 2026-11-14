@@ -154,17 +154,13 @@ def test_documents_create_list_facts_and_delete(client):
     assert client.get("/documents/05-meetings%2Fmeeting-005-final-presentation").status_code == 200
 
 
-PENDING = {
-    "listOrgMembers", "inviteOrgMember", "getOrgMember", "patchOrgMember", "deleteOrgMember",
-    "listProjectMembers", "setProjectMemberRole", "clearProjectMemberRole",
-    "setupOrg", "getOrgSetupStatus", "listSourceDocuments", "previewGithubSource",
-}
+PENDING: set[str] = set()
 
 
 def test_every_operation_of_the_contract_is_implemented(client, spec):
     samples = {"fact_id": "M-103", "topic_id": "onboarding-target", "doc_id": "01-scope/requirements", "job_id": "job-7f3a", "run_id": "eval-none",
                "conflict_id": "C-001", "question_id": "OQ-001", "item_id": "MQ-001", "answer_id": "ans-0001", "event_id": "a-0001",
-               "project_id": "proj-internal", "source_id": "src-internal-docs", "rule_id": "rule-002", "member_id": "mem-none"}
+               "project_id": "proj-internal", "source_id": "src-internal-docs", "rule_id": "rule-002", "member_id": "mem-luca-bassi"}
     missing = set()
     for path, item in spec["paths"].items():
         for method, operation in item.items():
