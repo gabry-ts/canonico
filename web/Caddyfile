@@ -1,6 +1,13 @@
 :80 {
 	encode gzip
 
+	# Behind the tunnel, a visitor on plain http is sent to https.
+	@insecure header X-Forwarded-Proto http
+	redir @insecure https://{host}{uri} 308
+
+	@secure header X-Forwarded-Proto https
+	header @secure Strict-Transport-Security "max-age=31536000"
+
 	# Same origin for site and API, so the browser needs no CORS.
 	handle_path /api/* {
 		reverse_proxy api:8000 {
