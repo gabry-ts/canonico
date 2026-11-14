@@ -8,22 +8,22 @@ slug: 8hack-start
 title: 8hack · start
 content (from the next line to the end of the section):
 ================================================================
-Track: Making memory visible to people
+Giulia runs operations. A new hire asks the company AI how long onboarding takes and it says four weeks; the final report of 28 Nov 2025 says three to four. Fixing it today means a ticket and an engineer.
 
-A new hire asks the company assistant how long onboarding takes. It says four weeks, a figure the final report of 28 Nov 2025 replaced with three to four weeks.
+Live: Giulia opens what the AI believes. Three to four weeks is binding, quoted from the final report, with the four versions it replaced and the old "4 weeks" still active. She retires it. Next answer: three to four weeks, no ticket.
 
-Live: Giulia, the operations lead, sees the binding fact with its verbatim source, the four versions it replaced and the stale "4 weeks" still active. She retires it and the next answer is "three to four weeks". No ticket, no engineer.
-
-First test, 5 evolving-decision questions from KVA's ClearPath corpus: binding version right 3/5 (model router), plain retrieval 0/5.
+First test, 5 evolving-decision questions from KVA's ClearPath corpus: binding version found 3/5 (model router), plain retrieval 0/5.
 
 Demo: [DEMO_URL]
 Code: https://github.com/gabry-ts/canonico
+
+Track: Making memory visible to people
 
 Team
 Emanuele Beffa (banking and finance background, frontend), Davide Chiattelli (pitch and business model), Gabriele Partiti (backend, deploy, benchmark).
 
 Plan
-Canonico keeps an organisation's memory split into isolated projects, each fed by sources: documents, a versioned document library, public GitHub, mail and webhooks for meetings, notes and tickets. It extracts facts with their verbatim quote, links each fact to the one it replaces and says which decision is binding now. People find, correct, retire or pin a fact, and the assistant uses the change in its next answer. Every action is audited and can be undone.
+Canonico shows what the AI believes, where it came from and what it replaced, and lets the person who knows the facts retire the wrong one. The next answer changes. Buyer: companies rolling out an internal AI assistant. Paid pilot EUR 6,000, then EUR 15,000 a year [declared].
 
 Riskiest assumption [declared]
 The AI programme lead of a company rolling out an internal assistant will pay for a separate layer that decides which fact is binding, instead of waiting for the assistant vendor's memory settings.
@@ -37,23 +37,21 @@ slug: 8hack-check
 title: 8hack · check
 content (from the next line to the end of the section):
 ================================================================
-Onboarding question: the assistant says "four weeks", a figure the final report of 28 Nov 2025 replaced with three to four weeks.
+Onboarding question: the company AI says "four weeks"; the final report of 28 Nov 2025 says three to four. Fixing it today means a ticket and an engineer.
 
-Works live: Giulia, the operations lead, sees the binding version with its verbatim source and the four it replaced, retires the stale "4 weeks", and the next answer becomes "three to four weeks".
+Works live: Giulia, the operations lead, sees the binding version with its verbatim source and the four it replaced, retires the stale "4 weeks", and the next answer becomes "three to four weeks". No ticket.
 
-Check set: a first test on 5 evolving-decision questions from KVA's ClearPath corpus. Binding version right 3/5 for Canonico with the model router (2/5 offline), 0/5 for plain retrieval. A first signal.
+First test on 5 evolving-decision questions from KVA's ClearPath corpus: binding version found 3/5 (model router, 2/5 offline), plain retrieval 0/5. A first signal.
 
 Demo: [DEMO_URL]
 Code: https://github.com/gabry-ts/canonico
-
-Also working: audit with undo, conflicts, maintenance queue, dashboard, members and roles, English and Italian.
 
 Riskiest assumption: AI programme leads will pay for a binding-fact layer next to their assistant [declared]. What we learned today: [team: fill in, or write "not tested with a buyer yet"].
 
 Slipped: the timed test with a person outside the team (can they find and fix a wrong fact alone, in how many minutes) [team: replace with the result if done].
 
-One cut: real erasure for GDPR requests. Retire keeps the history, which is right for a superseded procedure and wrong for personal data that must leave the memory. It stays on the plan, not in the demo.
+One cut: real erasure for GDPR requests. Retire keeps the history, which is right for a superseded procedure and wrong for personal data that must leave the memory. It is the next thing we build.
 
 Question for the mentor: who signs the purchase order in a company rolling out an internal assistant, the AI programme lead or the process owner whose procedure is wrong?
 
-Built with Claude Code: FastAPI backend (112 API operations, 107 tests), React frontend, Docker on our own server. In the product, Anthropic Claude Haiku for extraction and routing, Sonnet for topics and links; LLM cost so far about USD 0.41. The demo path also runs offline.
+Built with Claude Code. In the product, Anthropic Claude Haiku and Sonnet through the API. The demo path also runs offline.

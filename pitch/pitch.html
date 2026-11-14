@@ -30,47 +30,39 @@ footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line)}
 <body>
 <main>
 <h1>Canonico</h1>
-<p class="lede">The company assistant knows which decision is binding now, and the people who own the decision can fix it.</p>
+<p class="lede">Giulia runs operations. She knows onboarding takes three to four weeks, and the company AI keeps telling new hires four.</p>
 
 <h2><span>01</span>Monday morning</h2>
-<p>A new hire asks the company assistant how long onboarding takes. It says four weeks. The figure changed five times across the documents, and the final report of 28 November 2025 set it at three to four weeks. Today the only way to find out why the assistant is wrong is a ticket to an engineer.</p>
+<p>A new hire asks how long onboarding takes. The AI says four weeks. The final report of 28 November 2025 says three to four. To fix it today, Giulia opens a ticket and waits for an engineer.</p>
 
 <h2><span>02</span>What Canonico does</h2>
-<p>Giulia runs operations. She asks the same question in Canonico and sees the binding answer, three to four weeks, with the sentence from the final report it comes from. Under it she sees the four versions it replaced and the old "4 weeks" that is still active. She retires it. The assistant's next answer is "three to four weeks". She did it in the browser, without a ticket.</p>
+<p>It shows what the AI believes, where it came from and what it replaced, and lets the person who knows the facts retire the wrong one. The next answer changes.</p>
+
+<h2><span>03</span>Live, two minutes</h2>
+<ol>
+<li>We ask "How long does onboarding take?" The AI says four weeks. Wrong.</li>
+<li>We open what the AI believes. Three to four weeks is binding, quoted from the final report. Under it sit the four versions it replaced, and the old "4 weeks" still active.</li>
+<li>Giulia retires "4 weeks" and writes why.</li>
+<li>We ask again. Three to four weeks, and nobody opened a ticket.</li>
+</ol>
+<p>When a client email later sets a new target, Canonico reads it and updates the memory itself.</p>
+
+<h2><span>04</span>The one number</h2>
+<div class="num"><strong>3 of 5</strong> against <strong>0 of 5</strong></div>
+<p>We asked five questions about decisions that changed over time, on KVA's ClearPath corpus. Canonico found the binding version three times, with a model routing each question to its topic. Plain retrieval found it zero times. It is a first test on five queries.</p>
+
+<h2><span>05</span>Who pays</h2>
+<p>Companies rolling out an internal AI assistant. A paid pilot on one process costs €6,000, then a licence of €15,000 a year. Our published model, all estimates: €192,000 run-rate in year two, €9,300 to win a customer, payback in 11.2 months.</p>
+
+<h2><span>06</span>Next</h2>
+<p>A first paid pilot on one process. If you know a company rolling out an internal assistant, introduce us.</p>
+
+<footer class="small">
 <div class="links">
 <a href="[DEMO_URL]">Live demo</a>
 <a href="https://github.com/gabry-ts/canonico">Code on GitHub</a>
 </div>
-
-<h2><span>03</span>How it works</h2>
-<ol>
-<li>A company connects its sources to a project: documents, a versioned document library, public GitHub, mail, and webhooks for meetings, notes and tickets.</li>
-<li>Canonico pulls out each decision with its verbatim quote and links it to the one it replaces, so it can say which version binds today.</li>
-<li>People find, correct, retire or pin a fact. The next answer uses the change. Every action is in the audit log and can be undone.</li>
-</ol>
-
-<h2><span>04</span>The one number</h2>
-<div class="num"><strong>3 of 5</strong> against <strong>0 of 5</strong></div>
-<p>We asked five questions about decisions that changed over time, on ClearPath, the 46-document corpus from KVA's own OIDA benchmark. Canonico, with a small model picking the topic, gave the binding version three times; with keyword matching only, as it runs offline, two. Plain retrieval gave it zero times. It is a first test on five queries, so read it as a signal.</p>
-
-<h2><span>05</span>Why now</h2>
-<p>Companies are putting assistants with memory in front of their staff. The memory tools on the market are built for developers or for one person's chat. KVA's own research for this track finds no organisation-wide place to see what the system believes, with source and history, and fix it so the next answer changes.</p>
-
-<h2><span>06</span>Competition</h2>
-<p>Mem0, Zep and Letta store memory for developers; Zep keeps fact history but has no screen for a process owner. Claude and ChatGPT let one user edit their own memory, without sources or versions.</p>
-<p>Among today's teams, others track an old and a new supplier file or replay credit decisions under rules. Canonico is the layer underneath: which version binds, across the company's sources, fixed by the person who owns it.</p>
-
-<h2><span>07</span>Business model</h2>
-<p>We sell to the AI programme lead of a company rolling out an internal assistant, with process owners and compliance at the table. A paid eight-week pilot on one process costs €6,000, then an annual licence of €15,000. Our year-two assumption is 12 pilots and 8 licences, about €192,000 of revenue, €120,000 of it recurring. Winning a customer costs about €9,300, which pays back in 11.2 months, with a first-year return of 1.72 times. All of these are our estimates, still to check with buyers.</p>
-
-<h2><span>08</span>What's next</h2>
-<p>Time five people outside the team as they find and fix a wrong fact alone. Add real erasure for personal data, since retiring keeps history. Test on the full ClearPath set. Then a first paid pilot.</p>
-
-<h2><span>09</span>Team</h2>
-<p>Emanuele Beffa comes from banking and finance and built the frontend. Gabriele Partiti built the backend, the deploy and the benchmark. Davide Chiattelli wrote the pitch and the business model. Built today: a FastAPI backend with 112 API operations and 107 tests, a React frontend, Docker on our own server, in English and Italian.</p>
-
-<footer class="small">
-<p><strong>AI tools used.</strong> Claude Code as coding assistant. Anthropic Claude models through the API inside the product, Haiku for extraction and routing and Sonnet for topics and links, about $0.41 of model cost so far. The demo path also runs offline. Outside the product, Whisper on Groq to transcribe other teams' videos for our notes.</p>
+<p><strong>AI tools used.</strong> Claude Code as coding assistant. Inside the product, Anthropic Claude Haiku and Sonnet through the API. Outside the product, Whisper on Groq to transcribe videos for our notes.</p>
 <p><strong>Prior work.</strong> The night before, a team member built an exploratory prototype in another domain. We declared it to the organisers. No code from it is reused here.</p>
 <p><strong>Data.</strong> OIDA Benchmark Corpora (KVA) by Federico Bottino, Carlo Ferrero, Nicholas Dosio and Pierfrancesco Beneventano, ClearPath corpus, licensed CC BY 4.0. No real personal data.</p>
 </footer>

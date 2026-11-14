@@ -4,10 +4,11 @@ Presenter: Davide (speaks). Driver: [team: name] (clicks). Spare: [team: name] w
 server and runs the fallback commands.
 Labels in square brackets are screen names in the app; check the exact button wording on the
 deployed build before the slot.
+One problem, one flow. Do not list features on stage. If asked, the answers are in Q&A below.
 
 BEFORE THE SLOT (T minus 10 min)
 - Reset the demo state:  curl -X POST [DEMO_URL]/api/demo/reset
-- Open three tabs: [DEMO_URL] on Ask, the same on Maintenance, the same on Audit log.
+- Open two tabs: [DEMO_URL] on Ask, the same on Demo control (for the optional email beat).
 - Acting as Giulia (owner, the default demo identity, no real login). Language EN.
 - Ask the onboarding question once and check that "4 weeks" (final presentation) shows
   as still active under the binding answer, then reset again.
@@ -15,61 +16,53 @@ BEFORE THE SLOT (T minus 10 min)
 - Phone hotspot ready in case the venue network drops.
 
 ----------------------------------------------------------------
-0:00 to 0:25  PROBLEM AND OWNER   (no clicks, Ask screen visible)
-SAY: "A new hire at ClearPath asks the company assistant how long onboarding takes.
-It says four weeks. Wrong. The figure changed five times across the files, and the
-final report says three to four weeks. The only way to find out why the
-assistant is wrong is a ticket to an engineer. Giulia runs operations there.
-She knows the right answer. She just can't fix it."
+0:00 to 0:20  MONDAY   (no clicks, Ask screen visible)
+SAY: "Giulia runs operations at ClearPath. On Monday a new hire asks the company AI how
+long onboarding takes. It says four weeks. The final report says three to four. Giulia
+knows that. To fix it today she has to open a ticket and wait for an engineer."
 Note: ClearPath is the case in KVA's own OIDA corpus, not a real customer. Say so if asked.
 
-0:25 to 1:20  DEMO, EARLY
-1. CLICK [Ask], type "How long does onboarding take?", Enter, then [Show what the AI believes].
-   SAY: "Here is what the assistant sees. The binding answer is three to four weeks, from
-   the final report of 28 November, and this is the sentence it comes from, word for word."
-2. Point at "The 4 versions it replaced" and the "changed 5 times" table in the same panel.
-   SAY: "These are the four versions it replaced. And this one, four weeks from the final
-   presentation, is still active. That is why the assistant said four weeks."
+0:20 to 0:30  WHAT CANONICO DOES
+SAY: "Canonico shows what the AI believes, where it came from and what it replaced, and
+lets the person who knows the facts retire the wrong one. The next answer changes."
+
+0:30 to 1:45  LIVE
+1. CLICK [Ask], type "How long does onboarding take?", Enter.
+   SAY: "How long does onboarding take? Four weeks. Wrong."
+2. CLICK [Show what the AI believes].
+   SAY: "This is what the AI believes. Three to four weeks is binding, and this is the
+   sentence from the final report it comes from. Below it are the four versions it
+   replaced. This one, four weeks, is still active. That is why the AI said four."
 3. CLICK [Retire] on the "4 weeks" row marked still active, reason "superseded by final
    report", then [Confirm retire].
-   SAY: "Giulia retires it. She writes why."
+   SAY: "Giulia retires it and writes why."
 4. CLICK [Ask again], same question.
-   SAY: "Same question. Three to four weeks, and it says why it changed. No ticket, no
-   engineer."   <-- THE MOMENT. Pause one second here.
-5. CLICK [Audit log].
-   SAY: "Everything she did is logged with her name, and she can undo it."
+   SAY: "Same question. Three to four weeks. Nobody opened a ticket."
+   <-- THE MOMENT. Pause one second here.
 
-1:20 to 1:55  EVIDENCE
-SAY: "We ran it on ClearPath, forty-six documents from KVA's own benchmark. On five
-questions where a decision changed over time, Canonico picked the binding version three
-times, with a small model picking the topic. Plain retrieval got zero. It's a first test
-on five queries, so it's a signal, not a result. The two misses are a known bug: on a broad topic we take a later email instead
-of the one with the decision."
+1:45 to 2:10  OPTIONAL: THE EMAIL   (skip if behind time, give the seconds to step 4)
+CLICK the Demo control tab, [Send demo email] (from client@meridianlabs.org, "Onboarding
+target confirmed", 5 weeks). Back to Ask, [Ask again].
+SAY: "Later a client writes that the target is now five weeks. Nobody touches anything.
+Same question: five weeks, and the source is that email."
+[check on the deployed build that the answer shows the email as source]
 
-1:55 to 2:15  WHY IT IS HARD TO COPY
-SAY: "Memory tools for developers decide by themselves what to keep. Personal memory in
-Claude or ChatGPT has no sources and no versions. We keep a fact only if its quote is a
-verbatim sentence of its document, we link every fact to the one it replaced, and the
-people who own the decision can change what the assistant says. It works across
-documents, a versioned library, GitHub, mail and webhooks for meetings and tickets."
+2:10 to 2:25  THE NUMBER
+SAY: "We asked five questions about decisions that changed over time, on KVA's ClearPath
+corpus. Canonico found the binding version three times, with a model routing each
+question to its topic. Plain retrieval found it zero times. It is a first test on five
+queries."
 
-2:15 to 2:35  BUSINESS CASE
-SAY: "We sell to the person rolling out the company assistant. A paid pilot on one process
-is six thousand euros for eight weeks, then fifteen thousand a year. Those are our
-estimates, not quotes from buyers yet. With one founder selling and no ads, a new
-customer costs about nine thousand three hundred euros to win and pays back in eleven
-months."
+2:25 to 2:45  WHO PAYS
+SAY: "Companies rolling out an internal AI assistant pay for it. A pilot on one process
+is six thousand euros, then fifteen thousand a year. In our published model, all
+estimates, that is a hundred and ninety-two thousand a year by year two, and a customer
+pays back in about eleven months."
 (Numbers must match the saved economic model. If the team changes the model, change this.)
 
-2:35 to 2:45  METHOD AND AI TOOLS
-SAY: "We built it today with Claude Code. Inside the product, Claude Haiku extracts and
-routes, Sonnet groups topics and links; about forty cents of model cost so far. The demo you just saw needs no model at all, it runs offline."
-
-2:45 to 3:00  NEXT TEST
-SAY: "Next week we put five people from outside the team in front of it and time how long
-they take to find and fix a wrong fact alone. And we ask five AI programme leads if
-they'd pay for this. If three say their vendor already does it, we stop and look at
-compliance teams instead. Thank you."
+2:45 to 3:00  NEXT
+SAY: "Next is a first paid pilot on one process. If you know a company rolling out an
+internal assistant, introduce us. Thank you."
 
 ----------------------------------------------------------------
 FALLBACK, IF SOMETHING BREAKS
@@ -88,57 +81,65 @@ FALLBACK, IF SOMETHING BREAKS
 ----------------------------------------------------------------
 Q&A PREP (about 1:30, answer in two sentences, then stop)
 
-1. Why not OIDA itself?
+1. Does it connect to our systems?
+   Yes: document uploads, a versioned document library, public GitHub repositories, a
+   mailbox, and webhooks for meetings, notes and tickets. We have not run it on a real
+   customer's data yet.
+
+2. Does it scale? Can we have several teams or projects?
+   One organisation holds isolated projects, each with its own sources, members and roles.
+   Today it is one process with state in a file on one server; for a pilot we move state to
+   a database and add single sign-on, since the demo has no real login.
+
+3. Does it work in Italian?
+   Yes. The interface and the answers are in English and Italian.
+
+4. How do you deploy?
+   Docker on your own server, one command, then a four-step setup wizard in the browser.
+   The demo runs on ours.
+
+5. Why not Mem0 or Zep?
+   Mem0's model decides by itself what to add, and its open-source extraction only adds, so
+   old facts pile up [verified: KVA track research]. Zep keeps fact history but has no screen
+   where an operations lead retires a fact; that screen is what we built.
+
+6. Why not OIDA itself?
    OIDA is KVA's benchmark and the paper that says retrieval is not enough. We used its
    data to test; Canonico is the tool a process owner uses to see and fix the binding fact.
 
-2. Why not Glean or Copilot?
+7. Why not Glean or Copilot?
    They find documents and answer from them; deciding which version still binds is left to
    the reader [unverified: we did not test them today]. Canonico can sit under them through
    its API and hand them the binding fact with its source.
 
-3. Why not Mem0 or Zep?
-   Mem0's model decides by itself what to add, and its open-source extraction only adds, so
-   old facts pile up [verified: KVA track research]. Zep keeps fact history but has no screen
-   where an operations lead retires a fact; we are that screen and the rules behind it.
+8. GDPR: can you erase personal data?
+   Not yet. Retire keeps the history, which is right for a superseded procedure. Real erasure
+   under Article 17 is the next thing we build.
 
-4. Who pays?
-   The AI programme lead of a company rolling out an internal assistant. Process owners and
-   compliance are in the room because they own the facts [declared].
+9. What else is in the product?
+   A dashboard of stale facts, a maintenance queue that proposes what to retire, an audit
+   log with undo for every action. Built today: a FastAPI backend with 112 API operations
+   and 107 tests, and a React frontend.
 
-5. How much?
-   A paid pilot of six thousand euros for eight weeks, then fifteen thousand a year per
-   company. Our estimate, to check with the first buyers [declared].
+10. Isn't five queries too few?
+    Yes, it is a first signal. Three of five against zero of five on KVA's own corpus, with
+    the model routing the topic (two of five offline). Next step is the full ClearPath set.
 
-6. What happens with real company data?
-   The connectors are there: document uploads, a versioned library, GitHub, mail and webhooks
-   for meetings and tickets. We have not run it on a real customer's data, and the demo has no
-   real login yet; single sign-on comes before any pilot.
+11. Who pays, and how much?
+    The AI programme lead of a company rolling out an internal assistant, with process owners
+    and compliance in the room. Six thousand euros for an eight-week pilot, then fifteen
+    thousand a year; CAC 9,300, payback 11.2 months. Our estimates [declared].
 
-7. GDPR: is retire the same as erasure?
-   No. Retire keeps the history, which is right for a superseded procedure. Personal data
-   under Article 17 must leave the memory and the audit must not keep its content. That is
-   not built yet and is the next feature for the compliance buyer.
-
-8. Isn't five queries too few?
-   Yes, it is a first signal. Three of five against zero of five, on KVA's own corpus, with the
-   model picking the topic (two of five offline), and we know why the two misses fail. Next step is the full ClearPath set.
-
-9. How does it scale?
-   Today it is one process with state in a file, one replica on our server, and every
-   organisation has isolated projects. For a pilot we move state to a database. Model cost is
-   small: about forty cents of model calls so far for the whole build and corpus.
-
-10. Why this team?
+12. Why this team?
     Emanuele comes from banking and finance, where which decision binds is a regulatory
-    question every day. Together we built a backend with 112 API operations, 107 tests
-    and the full interface during the event.
+    question every day. Gabriele built the backend and the benchmark, Davide the pitch and
+    the business model.
 
-11. What happens after the hackathon?
-    Timed test with five outside people, five conversations with AI programme leads, then a
-    first paid pilot on one process. The repo stays public.
+13. What happens after the hackathon?
+    Five people outside the team find and fix a wrong fact alone while we time them, five
+    conversations with AI programme leads, then a first paid pilot. The repo stays public.
 
-12. Prize: option A (EUR 1,500 cash) or option B (a company with KVA investing EUR 1,500 for 15%)?
+14. Prize: option A (EUR 1,500 cash) or option B (a company with KVA investing EUR 1,500 for 15%)?
     [team: decide before the slot and give one reason.] Do not improvise this on stage.
 
 Also ready if asked: "Did an AI write the pitch?" We used Claude Code to build and we said
