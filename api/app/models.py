@@ -859,6 +859,7 @@ class Provider2(StrEnum):
     local_mock = 'local_mock'
     sharepoint = 'sharepoint'
     google_drive = 'google_drive'
+    s3 = 's3'
 
 
 class DocumentLibraryConfig(BaseModel):
@@ -867,7 +868,7 @@ class DocumentLibraryConfig(BaseModel):
     )
     provider: Provider2 = Field(
         ...,
-        description='Only `local_mock` is implemented. `sharepoint` and `google_drive` are out of scope for the MVP.',
+        description='`local_mock` reads the seeded library; `s3` stores every version as an object in an S3-compatible bucket (Garage), `root_path` is the key prefix. `sharepoint` and `google_drive` are out of scope for the MVP.',
     )
     root_path: str
 

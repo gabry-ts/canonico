@@ -1017,7 +1017,7 @@ export interface paths {
         put?: never;
         /**
          * Add a source to a project
-         * @description `github` accepts public repositories only. `document_library` only supports provider `local_mock`. Real connectors (Gmail/Outlook OAuth, real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP. No authentication (demo).
+         * @description `github` accepts public repositories only. `document_library` supports providers `local_mock` and `s3`. Real connectors (Gmail/Outlook OAuth, real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP. No authentication (demo).
          */
         post: operations["createSource"];
         delete?: never;
@@ -2574,10 +2574,10 @@ export interface components {
         };
         DocumentLibraryConfig: {
             /**
-             * @description Only `local_mock` is implemented. `sharepoint` and `google_drive` are out of scope for the MVP.
+             * @description `local_mock` reads the seeded library; `s3` stores every version as an object in an S3-compatible bucket (Garage), `root_path` is the key prefix. `sharepoint` and `google_drive` are out of scope for the MVP.
              * @enum {string}
              */
-            provider: "local_mock" | "sharepoint" | "google_drive";
+            provider: "local_mock" | "sharepoint" | "google_drive" | "s3";
             root_path: string;
         };
         /** @description No settings, documents are uploaded or ingested directly. */
