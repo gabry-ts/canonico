@@ -1,0 +1,4101 @@
+openapi: 3.1.0
+info:
+  title: Canonico API
+  version: 0.1.0
+  summary: Canonical memory for company brains.
+  description: |
+    Canonico ingests a company's documents, extracts facts, classifies each one
+    (DECISION, CONSTRAINT, EVIDENCE, HYPOTHESIS, SUPERSEDED, OPEN), links facts on
+    the same topic with SUPERSEDES edges ordered by date, and answers questions with
+    the binding fact, its source quote, the facts it replaced and any conflicts.
+    People can retire or restore a fact and the next answer changes. Every change is
+    recorded in an audit log. A benchmark compares plain retrieval with Canonico.
+
+    Conventions: JSON only, snake_case fields, ISO 8601 dates (`YYYY-MM-DD` for
+    dates, RFC 3339 for timestamps), string ids.
+
+    Authentication: none. This is a hackathon demo only, do not expose it publicly.
+
+    Demo corpus: OIDA Benchmark Corpora, `org-consulting-clearpath` (46 documents,
+    26 queries, CC BY 4.0).
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://localhost:8000
+  description: Local development
+- url: https://api.canonico.example.com
+  description: Production (placeholder)
+tags:
+- name: health
+  description: Liveness check
+- name: ask
+  description: Ask a question and get the binding answer
+- name: facts
+  description: Extracted facts, retire and restore
+- name: topics
+  description: Topics and their supersedes chains
+- name: documents
+  description: Source documents
+- name: audit
+  description: Audit log of every change
+- name: ingest
+  description: Corpus ingestion jobs
+- name: eval
+  description: Benchmark, plain retrieval vs Canonico
+- name: conflicts
+  description: Contested topics and their resolution
+- name: open-questions
+  description: OPEN facts waiting for an answer
+- name: maintenance
+  description: Queue of facts proposed for retirement
+- name: search
+  description: Hybrid search and the plain retrieval baseline
+- name: answers
+  description: Stored answers, history and replay
+- name: admin
+  description: Stats, config, demo reset, export and import
+paths:
+  /health:
+    get:
+      tags:
+      - health
+      operationId: getHealth
+      summary: Liveness check
+      responses:
+        '200':
+          description: Service is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - version
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                  version:
+                    type: string
+              example:
+                status: ok
+                version: 0.1.0
+  /ask:
+    post:
+      tags:
+      - ask
+      operationId: ask
+      summary: Ask a question
+      description: |
+        Returns the binding fact with its source quote, the superseded facts it
+        replaced and any conflicts. `status` is `binding` when one fact wins,
+        `contested` when sources disagree and none can be picked, `no_answer`
+        when memory holds nothing relevant. `changed_because` is set when a
+        retire or restore changed the answer compared with the previous one.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskRequest'
+            examples:
+              onboarding:
+                summary: q01, with plain retrieval comparison
+                value:
+                  question: What is the target time for onboarding new consultants?
+                  include_plain_retrieval: true
+              audit_queue:
+                summary: q02, scoped to a topic
+                value:
+                  question: How long does a report spend in the audit queue?
+                  topic: audit-queue-time
+      responses:
+        '200':
+          description: Answer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskResponse'
+              examples:
+                q01_before_retire:
+                  summary: q01 with an unresolved conflict
+                  value:
+                    question: What is the target time for onboarding new consultants?
+                    status: binding
+                    answer: The onboarding target is 3–4 weeks, set in the final report. One conflict remains, requirement
+                      R1.1 still says 3 weeks or less.
+                    binding:
+                      id: M-106
+                      topic: onboarding-target
+                      value: 'Onboarding SLA: 3–4 weeks'
+                      type: DECISION
+                      status: active
+                      doc_id: 07-documents/report-final
+                      quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                      date: '2025-11-28'
+                      supersedes: M-105
+                      superseded_by: null
+                      confidence: 0.94
+                      retired_reason: null
+                    superseded:
+                    - id: M-105
+                      topic: onboarding-target
+                      value: 'Target recommendation: 4 weeks'
+                      type: SUPERSEDED
+                      status: active
+                      doc_id: 05-meetings/meeting-005-final-presentation
+                      quote: Our target recommendation is four weeks total for new consultants to be fully autonomous
+                        and billing-ready.
+                      date: '2025-11-21'
+                      supersedes: null
+                      superseded_by: M-106
+                      confidence: 0.9
+                      retired_reason: null
+                    conflicts:
+                    - id: M-103
+                      topic: onboarding-target
+                      value: 'Requirement R1.1: 3 weeks or less'
+                      type: CONSTRAINT
+                      status: active
+                      doc_id: 01-scope/requirements
+                      quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks
+                        or less.
+                      date: '2025-09-29'
+                      supersedes: null
+                      superseded_by: null
+                      confidence: 0.88
+                      retired_reason: null
+                    citations:
+                    - doc_id: 07-documents/report-final
+                      quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                    - doc_id: 05-meetings/meeting-005-final-presentation
+                      quote: Our target recommendation is four weeks total for new consultants to be fully autonomous
+                        and billing-ready.
+                    - doc_id: 01-scope/requirements
+                      quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks
+                        or less.
+                    plain_retrieval:
+                      doc_id: 01-scope/requirements
+                      quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks
+                        or less.
+                      rank: 1
+                    changed_because: null
+                q01_after_retire:
+                  summary: q01 after retiring requirement R1.1
+                  value:
+                    question: What is the target time for onboarding new consultants?
+                    status: binding
+                    answer: The onboarding target is 3–4 weeks, set in the final report. Requirement R1.1 (3 weeks
+                      or less) is no longer binding.
+                    binding:
+                      id: M-106
+                      topic: onboarding-target
+                      value: 'Onboarding SLA: 3–4 weeks'
+                      type: DECISION
+                      status: active
+                      doc_id: 07-documents/report-final
+                      quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                      date: '2025-11-28'
+                      supersedes: M-105
+                      superseded_by: null
+                      confidence: 0.94
+                      retired_reason: null
+                    superseded: []
+                    conflicts: []
+                    citations:
+                    - doc_id: 07-documents/report-final
+                      quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                    changed_because: you retired requirement R1.1
+                q02_contested:
+                  summary: q02, three estimates, nobody measured
+                  value:
+                    question: How long does a report spend in the audit queue?
+                    status: contested
+                    answer: Three people gave different estimates and nobody measured it, so there is no single
+                      binding value.
+                    binding: null
+                    superseded: []
+                    conflicts:
+                    - id: M-201
+                      topic: audit-queue-time
+                      value: 3–4 business days (Marco Fiore, audit team lead)
+                      type: HYPOTHESIS
+                      status: active
+                      doc_id: 02-subject/observation-003-audit-workflow
+                      quote: 'Marco Fiore estimated: 3–4 business days'
+                      date: '2025-10-02'
+                      supersedes: null
+                      superseded_by: null
+                      confidence: 0.6
+                      retired_reason: null
+                    - id: M-202
+                      topic: audit-queue-time
+                      value: 6–8 business days (Laura Galli, audit team lead)
+                      type: HYPOTHESIS
+                      status: active
+                      doc_id: 02-subject/observation-003-audit-workflow
+                      quote: 'Laura Galli estimated: 6–8 business days'
+                      date: '2025-10-02'
+                      supersedes: null
+                      superseded_by: null
+                      confidence: 0.6
+                      retired_reason: null
+                    - id: M-203
+                      topic: audit-queue-time
+                      value: 2–3 days (junior auditor)
+                      type: HYPOTHESIS
+                      status: active
+                      doc_id: 02-subject/observation-003-audit-workflow
+                      quote: 'One junior auditor estimated: 2–3 days'
+                      date: '2025-10-02'
+                      supersedes: null
+                      superseded_by: null
+                      confidence: 0.6
+                      retired_reason: null
+                    citations:
+                    - doc_id: 02-subject/observation-003-audit-workflow
+                      quote: it was not possible to measure the actual time spent at each stage of the audit queue
+                    - doc_id: 02-subject/bottleneck-analysis
+                      quote: no data available — estimate only
+                    plain_retrieval:
+                      doc_id: 07-documents/report-final
+                      quote: Audit process bottleneck (5–8 day average, 3–5 day variance)
+                      rank: 1
+                    changed_because: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /facts:
+    get:
+      tags:
+      - facts
+      operationId: listFacts
+      summary: List facts
+      parameters:
+      - name: topic
+        in: query
+        description: Topic id.
+        schema:
+          type: string
+        example: onboarding-target
+      - name: type
+        in: query
+        schema:
+          $ref: '#/components/schemas/FactType'
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/FactStatus'
+      - name: doc_id
+        in: query
+        schema:
+          type: string
+        example: 07-documents/report-final
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Page of facts, ordered by date descending.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactPage'
+              example:
+                items:
+                - id: M-106
+                  topic: onboarding-target
+                  value: 'Onboarding SLA: 3–4 weeks'
+                  type: DECISION
+                  status: active
+                  doc_id: 07-documents/report-final
+                  quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                  date: '2025-11-28'
+                  supersedes: M-105
+                  superseded_by: null
+                  confidence: 0.94
+                  retired_reason: null
+                total: 1
+                limit: 50
+                offset: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    post:
+      tags:
+      - facts
+      operationId: createFact
+      summary: Create a fact manually
+      description: Writes an audit event (action create). The fact is linked into the topic chain by date. If a
+        fact with the same topic and a later date exists, the new fact gets `superseded_by` set automatically only
+        when requested via the supersede endpoint, never implicitly.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FactCreate'
+            example:
+              topic: onboarding-target
+              value: Onboarding SLA confirmed at 3–4 weeks by the steering committee
+              type: DECISION
+              doc_id: 05-meetings/meeting-005-final-presentation
+              quote: Our target recommendation is four weeks total for new consultants to be fully autonomous and
+                billing-ready.
+              date: '2025-12-02'
+              confidence: 1.0
+              actor: gabriele
+      responses:
+        '201':
+          description: Created fact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fact'
+              example:
+                id: M-301
+                topic: onboarding-target
+                value: Onboarding SLA confirmed at 3–4 weeks by the steering committee
+                type: DECISION
+                status: active
+                doc_id: 05-meetings/meeting-005-final-presentation
+                quote: Our target recommendation is four weeks total for new consultants to be fully autonomous
+                  and billing-ready.
+                date: '2025-12-02'
+                supersedes: null
+                superseded_by: null
+                confidence: 1.0
+                retired_reason: null
+                pinned: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /facts/{fact_id}:
+    get:
+      tags:
+      - facts
+      operationId: getFact
+      summary: Get one fact
+      parameters:
+      - $ref: '#/components/parameters/FactId'
+      responses:
+        '200':
+          description: The fact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fact'
+              example:
+                id: M-103
+                topic: onboarding-target
+                value: 'Requirement R1.1: 3 weeks or less'
+                type: CONSTRAINT
+                status: active
+                doc_id: 01-scope/requirements
+                quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.
+                date: '2025-09-29'
+                supersedes: null
+                superseded_by: null
+                confidence: 0.88
+                retired_reason: null
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+      - facts
+      operationId: patchFact
+      summary: Correct a fact
+      description: Edits value, type and/or topic. A reason is mandatory. Writes an audit event (action patch) and
+        a new entry in the fact history.
+      parameters:
+      - $ref: '#/components/parameters/FactId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FactPatch'
+            example:
+              value: 'Onboarding SLA: 3–4 weeks (target, not guarantee)'
+              reason: Clarified wording after review with the engagement lead.
+              actor: gabriele
+      responses:
+        '200':
+          description: Updated fact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fact'
+              examples:
+                updated:
+                  $ref: '#/components/examples/FactM106'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /facts/{fact_id}/retire:
+    post:
+      tags:
+      - facts
+      operationId: retireFact
+      summary: Retire a fact
+      description: Marks the fact as retired (never deleted) and writes an audit event. The next answer will not
+        use it. Retiring an already retired fact is idempotent and returns 200.
+      parameters:
+      - $ref: '#/components/parameters/FactId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetireRequest'
+            example:
+              reason: Replaced by the final report, which sets 3–4 weeks.
+              actor: gabriele
+      responses:
+        '200':
+          description: The updated fact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fact'
+              example:
+                id: M-103
+                topic: onboarding-target
+                value: 'Requirement R1.1: 3 weeks or less'
+                type: CONSTRAINT
+                status: retired
+                doc_id: 01-scope/requirements
+                quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.
+                date: '2025-09-29'
+                supersedes: null
+                superseded_by: M-106
+                confidence: 0.88
+                retired_reason: Replaced by the final report, which sets 3–4 weeks.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /facts/{fact_id}/restore:
+    post:
+      tags:
+      - facts
+      operationId: restoreFact
+      summary: Restore a retired fact
+      description: Sets the fact back to active and writes an audit event. Idempotent.
+      parameters:
+      - $ref: '#/components/parameters/FactId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreRequest'
+            example:
+              actor: gabriele
+              reason: Retired by mistake.
+      responses:
+        '200':
+          description: The updated fact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fact'
+              example:
+                id: M-103
+                topic: onboarding-target
+                value: 'Requirement R1.1: 3 weeks or less'
+                type: CONSTRAINT
+                status: active
+                doc_id: 01-scope/requirements
+                quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.
+                date: '2025-09-29'
+                supersedes: null
+                superseded_by: null
+                confidence: 0.88
+                retired_reason: null
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /topics:
+    get:
+      tags:
+      - topics
+      operationId: listTopics
+      summary: List topics
+      responses:
+        '200':
+          description: All topics.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+              example:
+              - id: onboarding-target
+                label: Onboarding target
+                fact_ids:
+                - M-101
+                - M-102
+                - M-103
+                - M-104
+                - M-105
+                - M-106
+                - M-107
+              - id: audit-queue-time
+                label: Audit queue time
+                fact_ids:
+                - M-201
+                - M-202
+                - M-203
+                - M-204
+                - M-205
+                - M-206
+                - M-207
+                - M-208
+    post:
+      tags:
+      - topics
+      operationId: createTopic
+      summary: Create a topic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicCreate'
+            example:
+              id: billing-rate
+              label: Billing rate
+      responses:
+        '201':
+          description: Created topic.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+              example:
+                id: billing-rate
+                label: Billing rate
+                fact_ids: []
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /topics/{topic_id}/chain:
+    get:
+      tags:
+      - topics
+      operationId: getTopicChain
+      summary: Supersedes chain of a topic
+      description: Facts of the topic ordered oldest to newest. Each fact's `supersedes` points to the older fact
+        it replaces. Retired facts are included with status `retired`.
+      parameters:
+      - name: topic_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: onboarding-target
+      responses:
+        '200':
+          description: Ordered chain.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicChain'
+              example:
+                topic:
+                  id: onboarding-target
+                  label: Onboarding target
+                  fact_ids:
+                  - M-103
+                  - M-105
+                  - M-106
+                facts:
+                - id: M-103
+                  topic: onboarding-target
+                  value: 'Requirement R1.1: 3 weeks or less'
+                  type: CONSTRAINT
+                  status: active
+                  doc_id: 01-scope/requirements
+                  quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or
+                    less.
+                  date: '2025-09-29'
+                  supersedes: null
+                  superseded_by: null
+                  confidence: 0.88
+                  retired_reason: null
+                - id: M-105
+                  topic: onboarding-target
+                  value: 'Target recommendation: 4 weeks'
+                  type: SUPERSEDED
+                  status: active
+                  doc_id: 05-meetings/meeting-005-final-presentation
+                  quote: Our target recommendation is four weeks total for new consultants to be fully autonomous
+                    and billing-ready.
+                  date: '2025-11-21'
+                  supersedes: null
+                  superseded_by: M-106
+                  confidence: 0.9
+                  retired_reason: null
+                - id: M-106
+                  topic: onboarding-target
+                  value: 'Onboarding SLA: 3–4 weeks'
+                  type: DECISION
+                  status: active
+                  doc_id: 07-documents/report-final
+                  quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                  date: '2025-11-28'
+                  supersedes: M-105
+                  superseded_by: null
+                  confidence: 0.94
+                  retired_reason: null
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /documents:
+    get:
+      tags:
+      - documents
+      operationId: listDocuments
+      summary: List documents (without text)
+      responses:
+        '200':
+          description: All ingested documents.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+              example:
+              - id: 07-documents/report-final
+                title: Final report
+                date: '2025-11-28'
+                path: 07-documents/report-final.md
+              - id: 01-scope/requirements
+                title: Requirements
+                date: '2025-09-29'
+                path: 01-scope/requirements.md
+    post:
+      tags:
+      - documents
+      operationId: createDocument
+      summary: Upload a document
+      description: Accepts JSON with text or markdown, or multipart with a text, markdown or PDF file. With `ingest`
+        true (default) an ingestion job is started and returned in the `ingest_job` field.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentCreate'
+            example:
+              id: 07-documents/addendum-onboarding
+              title: Onboarding addendum
+              date: '2025-12-05'
+              format: markdown
+              text: |
+                # Addendum
+
+                The onboarding SLA stays at 3–4 weeks.
+              ingest: true
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentUpload'
+      responses:
+        '201':
+          description: Stored document.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentCreated'
+              example:
+                document:
+                  id: 07-documents/addendum-onboarding
+                  title: Onboarding addendum
+                  date: '2025-12-05'
+                  path: 07-documents/addendum-onboarding.md
+                ingest_job:
+                  id: job-8c10
+                  kind: ingest
+                  status: queued
+                  docs: 0
+                  facts: 0
+                  cost_usd: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /documents/{doc_id}:
+    get:
+      tags:
+      - documents
+      operationId: getDocument
+      summary: Get a document with full text
+      description: '`doc_id` contains a slash, so clients must URL-encode it (`07-documents%2Freport-final`). The
+        backend must accept the encoded form.'
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        description: URL-encoded document id.
+        schema:
+          type: string
+        example: 07-documents%2Freport-final
+      responses:
+        '200':
+          description: The document including `text`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+              example:
+                id: 07-documents/report-final
+                title: Final report
+                date: '2025-11-28'
+                path: 07-documents/report-final.md
+                text: |
+                  # Final report
+
+                  ## Recommendations
+
+                  Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+      - documents
+      operationId: deleteDocument
+      summary: Delete a document and its facts
+      description: Removes the document and every fact extracted from it. Supersedes links that pointed to removed
+        facts are cleared. Writes audit events (action delete_document). Irreversible except through POST /audit/{event_id}/undo.
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        description: URL-encoded document id.
+        schema:
+          type: string
+        example: 05-meetings%2Fmeeting-005-final-presentation
+      - name: actor
+        in: query
+        required: true
+        schema:
+          type: string
+        example: gabriele
+      responses:
+        '200':
+          description: Deletion summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDeleted'
+              example:
+                doc_id: 05-meetings/meeting-005-final-presentation
+                deleted_fact_ids:
+                - M-105
+                - M-207
+                audit_event_id: a-0043
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /audit:
+    get:
+      tags:
+      - audit
+      operationId: listAudit
+      summary: Audit log
+      description: Most recent events first.
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - name: actor
+        in: query
+        schema:
+          type: string
+        example: gabriele
+      - name: action
+        in: query
+        schema:
+          $ref: '#/components/schemas/AuditAction'
+      - name: fact_id
+        in: query
+        schema:
+          type: string
+        example: M-103
+      - name: since
+        in: query
+        description: Only events at or after this timestamp.
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-14T00:00:00Z'
+      responses:
+        '200':
+          description: Audit events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditEvent'
+              example:
+              - id: a-0042
+                at: '2026-11-14T14:04:12Z'
+                actor: gabriele
+                action: retire
+                fact_id: M-103
+                reason: Replaced by the final report, which sets 3–4 weeks.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /ingest:
+    post:
+      tags:
+      - ingest
+      operationId: startIngest
+      summary: Start an ingestion job
+      description: Runs asynchronously. Poll `GET /ingest/{job_id}`. If the corpus was already ingested and `force`
+        is false, the existing finished job is returned with 202.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestRequest'
+            example:
+              corpus: org-consulting-clearpath
+              force: false
+      responses:
+        '202':
+          description: Job accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestJob'
+              example:
+                id: job-7f3a
+                status: queued
+                docs: 0
+                facts: 0
+                cost_usd: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /ingest/{job_id}:
+    get:
+      tags:
+      - ingest
+      operationId: getIngestJob
+      summary: Get ingestion job status
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: job-7f3a
+      responses:
+        '200':
+          description: Job.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestJob'
+              example:
+                id: job-7f3a
+                status: done
+                docs: 46
+                facts: 312
+                cost_usd: 1.84
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /eval/latest:
+    get:
+      tags:
+      - eval
+      operationId: getLatestEval
+      summary: Latest benchmark result
+      responses:
+        '200':
+          description: Most recent evaluation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvalResult'
+              example:
+                corpus: org-consulting-clearpath
+                metrics:
+                  ndcg_at_10_plain: 0.61
+                  ndcg_at_10_canonico: 0.78
+                  binding_accuracy_plain: 0.42
+                  binding_accuracy_canonico: 0.81
+                per_query:
+                - query_id: q01
+                  text: What is the target time for onboarding new consultants?
+                  tests: binding version
+                  plain_top_doc: 01-scope/requirements
+                  canonico_top_doc: 07-documents/report-final
+                  gold_doc: 07-documents/report-final
+                  pass_plain: false
+                  pass_canonico: true
+                - query_id: q02
+                  text: Why do the team leads disagree about how long a report spends in the audit queue?
+                  tests: conflict detection
+                  plain_top_doc: 07-documents/report-final
+                  canonico_top_doc: 02-subject/observation-003-audit-workflow
+                  gold_doc: 02-subject/observation-003-audit-workflow
+                  pass_plain: false
+                  pass_canonico: true
+                measured_at: '2026-11-14T13:30:00Z'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /eval/run:
+    post:
+      tags:
+      - eval
+      operationId: runEval
+      summary: Run the benchmark
+      description: Runs asynchronously and returns the run. Poll GET /eval/runs/{run_id}; when done, GET /eval/latest
+        returns the same result.
+      responses:
+        '202':
+          description: Run accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvalRun'
+              example:
+                id: eval-19c2
+                status: queued
+                started_at: '2026-11-14T13:28:00Z'
+                finished_at: null
+                cost_usd: 0
+                result: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /facts/{fact_id}/pin:
+    post:
+      tags:
+      - facts
+      operationId: pinFact
+      summary: Mark a fact as binding
+      description: 'Pins the fact so it wins over any automatic choice for its topic until unpinned. Only one fact
+        per topic can be pinned: pinning another one moves the pin and the previous one is reported in the audit
+        reason. Writes an audit event (action pin).'
+      parameters:
+      - $ref: '#/components/parameters/FactId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinRequest'
+            example:
+              reason: Final report is the approved deliverable.
+              actor: gabriele
+      responses:
+        '200':
+          description: The pinned fact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fact'
+              examples:
+                pinned:
+                  $ref: '#/components/examples/FactM106Pinned'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /facts/{fact_id}/unpin:
+    post:
+      tags:
+      - facts
+      operationId: unpinFact
+      summary: Remove the binding pin
+      parameters:
+      - $ref: '#/components/parameters/FactId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinRequest'
+            example:
+              reason: Pin no longer needed.
+              actor: gabriele
+      responses:
+        '200':
+          description: The unpinned fact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fact'
+              examples:
+                unpinned:
+                  $ref: '#/components/examples/FactM106'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /facts/{fact_id}/history:
+    get:
+      tags:
+      - facts
+      operationId: getFactHistory
+      summary: All versions and edits of a fact
+      description: Newest first. Includes creation, edits, retire, restore, pin and supersede changes.
+      parameters:
+      - $ref: '#/components/parameters/FactId'
+      responses:
+        '200':
+          description: Versions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FactVersion'
+              example:
+              - version: 2
+                at: '2026-11-14T14:04:12Z'
+                actor: gabriele
+                action: retire
+                changes:
+                  status:
+                    from: active
+                    to: retired
+                  retired_reason:
+                    from: null
+                    to: Replaced by the final report, which sets 3–4 weeks.
+                snapshot:
+                  id: M-103
+                  topic: onboarding-target
+                  value: 'Requirement R1.1: 3 weeks or less'
+                  type: CONSTRAINT
+                  status: retired
+                  doc_id: 01-scope/requirements
+                  quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or
+                    less.
+                  date: '2025-09-29'
+                  supersedes: null
+                  superseded_by: M-106
+                  confidence: 0.88
+                  retired_reason: Replaced by the final report, which sets 3–4 weeks.
+                  pinned: false
+              - version: 1
+                at: '2026-11-14T09:12:00Z'
+                actor: system
+                action: classify
+                changes: {}
+                snapshot:
+                  id: M-103
+                  topic: onboarding-target
+                  value: 'Requirement R1.1: 3 weeks or less'
+                  type: CONSTRAINT
+                  status: active
+                  doc_id: 01-scope/requirements
+                  quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or
+                    less.
+                  date: '2025-09-29'
+                  supersedes: null
+                  superseded_by: null
+                  confidence: 0.88
+                  retired_reason: null
+                  pinned: false
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /facts/{fact_id}/supersede:
+    post:
+      tags:
+      - facts
+      operationId: supersedeFact
+      summary: Declare that another fact replaces this one
+      description: 'Creates the link: this fact gets `superseded_by = by_fact_id`, the newer one gets `supersedes
+        = fact_id`. Both must share the same topic and the newer one must not be older by date (422). A link that
+        would create a cycle returns 409. Writes an audit event (action supersede).'
+      parameters:
+      - $ref: '#/components/parameters/FactId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupersedeRequest'
+            example:
+              by_fact_id: M-106
+              reason: The final report restates the target as 3–4 weeks.
+              actor: gabriele
+      responses:
+        '200':
+          description: The superseded (older) fact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fact'
+              examples:
+                superseded:
+                  $ref: '#/components/examples/FactM103Superseded'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /facts/{fact_id}/supersedes:
+    delete:
+      tags:
+      - facts
+      operationId: deleteSupersedesLink
+      summary: Remove the link to the fact this one supersedes
+      description: Removes the edge from this (newer) fact to the older one it replaces. Both facts are updated.
+        Writes an audit event (action unlink). Returns 404 if the fact has no supersedes link.
+      parameters:
+      - $ref: '#/components/parameters/FactId'
+      - name: reason
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+        example: Wrongly linked.
+      - name: actor
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+        example: gabriele
+      responses:
+        '200':
+          description: The newer fact without the link.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fact'
+              examples:
+                unlinked:
+                  $ref: '#/components/examples/FactM106Unlinked'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /facts/{fact_id}/dependents:
+    get:
+      tags:
+      - facts
+      operationId: getFactDependents
+      summary: What a change to this fact would affect
+      description: Facts linked to this one through supersedes edges or the same open conflict, and stored answers
+        whose snapshot used it.
+      parameters:
+      - $ref: '#/components/parameters/FactId'
+      responses:
+        '200':
+          description: Dependents.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dependents'
+              example:
+                fact_id: M-103
+                facts:
+                - id: M-106
+                  topic: onboarding-target
+                  value: 'Onboarding SLA: 3–4 weeks'
+                  type: DECISION
+                  status: active
+                  doc_id: 07-documents/report-final
+                  quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                  date: '2025-11-28'
+                  supersedes: M-105
+                  superseded_by: null
+                  confidence: 0.94
+                  retired_reason: null
+                  pinned: false
+                conflicts:
+                - C-001
+                answers:
+                - id: ans-0007
+                  question: What is the target time for onboarding new consultants?
+                  asked_at: '2026-11-14T14:01:30Z'
+                  status: binding
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /conflicts:
+    get:
+      tags:
+      - conflicts
+      operationId: listConflicts
+      summary: Contested topics
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - open
+          - resolved
+          default: open
+      - name: topic
+        in: query
+        schema:
+          type: string
+        example: audit-queue-time
+      responses:
+        '200':
+          description: Conflicts with their competing facts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Conflict'
+              example:
+              - id: C-001
+                topic: onboarding-target
+                status: open
+                summary: Requirement R1.1 says 3 weeks or less, the final report sets 3–4 weeks, and nothing links
+                  them.
+                facts:
+                - id: M-103
+                  topic: onboarding-target
+                  value: 'Requirement R1.1: 3 weeks or less'
+                  type: CONSTRAINT
+                  status: active
+                  doc_id: 01-scope/requirements
+                  quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or
+                    less.
+                  date: '2025-09-29'
+                  supersedes: null
+                  superseded_by: null
+                  confidence: 0.88
+                  retired_reason: null
+                  pinned: false
+                - id: M-106
+                  topic: onboarding-target
+                  value: 'Onboarding SLA: 3–4 weeks'
+                  type: DECISION
+                  status: active
+                  doc_id: 07-documents/report-final
+                  quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                  date: '2025-11-28'
+                  supersedes: M-105
+                  superseded_by: null
+                  confidence: 0.94
+                  retired_reason: null
+                  pinned: false
+                detected_at: '2026-11-14T09:15:00Z'
+                resolution: null
+              - id: C-002
+                topic: audit-queue-time
+                status: open
+                summary: Three estimates of audit queue time (2–3, 3–4 and 6–8 days), nobody measured it.
+                facts:
+                - id: M-201
+                  topic: audit-queue-time
+                  value: 3–4 business days (Marco Fiore, audit team lead)
+                  type: HYPOTHESIS
+                  status: active
+                  doc_id: 02-subject/observation-003-audit-workflow
+                  quote: 'Marco Fiore estimated: 3–4 business days'
+                  date: '2025-10-02'
+                  supersedes: null
+                  superseded_by: null
+                  confidence: 0.6
+                  retired_reason: null
+                  pinned: false
+                - id: M-202
+                  topic: audit-queue-time
+                  value: 6–8 business days (Laura Galli, audit team lead)
+                  type: HYPOTHESIS
+                  status: active
+                  doc_id: 02-subject/observation-003-audit-workflow
+                  quote: 'Laura Galli estimated: 6–8 business days'
+                  date: '2025-10-02'
+                  supersedes: null
+                  superseded_by: null
+                  confidence: 0.6
+                  retired_reason: null
+                  pinned: false
+                - id: M-203
+                  topic: audit-queue-time
+                  value: 2–3 days (junior auditor)
+                  type: HYPOTHESIS
+                  status: active
+                  doc_id: 02-subject/observation-003-audit-workflow
+                  quote: 'One junior auditor estimated: 2–3 days'
+                  date: '2025-10-02'
+                  supersedes: null
+                  superseded_by: null
+                  confidence: 0.6
+                  retired_reason: null
+                  pinned: false
+                detected_at: '2026-11-14T09:15:00Z'
+                resolution: null
+  /conflicts/{conflict_id}/resolve:
+    post:
+      tags:
+      - conflicts
+      operationId: resolveConflict
+      summary: Pick the winning fact of a conflict
+      description: The winner becomes binding, every other fact of the conflict is retired with the given reason.
+        Writes one audit event per changed fact (action resolve). Resolving a resolved conflict returns 409.
+      parameters:
+      - name: conflict_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: C-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConflictResolution'
+            example:
+              winning_fact_id: M-106
+              reason: Final report is later and approved by the client.
+              actor: gabriele
+      responses:
+        '200':
+          description: The resolved conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conflict'
+              example:
+                id: C-001
+                topic: onboarding-target
+                status: resolved
+                summary: Requirement R1.1 says 3 weeks or less, the final report sets 3–4 weeks, and nothing links
+                  them.
+                facts:
+                - id: M-103
+                  topic: onboarding-target
+                  value: 'Requirement R1.1: 3 weeks or less'
+                  type: CONSTRAINT
+                  status: retired
+                  doc_id: 01-scope/requirements
+                  quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or
+                    less.
+                  date: '2025-09-29'
+                  supersedes: null
+                  superseded_by: M-106
+                  confidence: 0.88
+                  retired_reason: Replaced by the final report, which sets 3–4 weeks.
+                  pinned: false
+                - id: M-106
+                  topic: onboarding-target
+                  value: 'Onboarding SLA: 3–4 weeks'
+                  type: DECISION
+                  status: active
+                  doc_id: 07-documents/report-final
+                  quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                  date: '2025-11-28'
+                  supersedes: M-105
+                  superseded_by: null
+                  confidence: 0.94
+                  retired_reason: null
+                  pinned: false
+                detected_at: '2026-11-14T09:15:00Z'
+                resolution:
+                  winning_fact_id: M-106
+                  reason: Final report is later and approved by the client.
+                  actor: gabriele
+                  resolved_at: '2026-11-14T14:04:12Z'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /open-questions:
+    get:
+      tags:
+      - open-questions
+      operationId: listOpenQuestions
+      summary: Open questions
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - open
+          - closed
+          default: open
+      - name: topic
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Open questions (facts of type OPEN).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OpenQuestion'
+              example:
+              - id: OQ-001
+                topic: audit-queue-time
+                question: What is the real audit queue time?
+                fact_id: M-204
+                doc_id: 02-subject/bottleneck-analysis
+                status: open
+                opened_at: '2025-10-02'
+                closed_at: null
+                answer_fact_id: null
+                note: null
+  /open-questions/{question_id}/close:
+    post:
+      tags:
+      - open-questions
+      operationId: closeOpenQuestion
+      summary: Close an open question
+      description: Provide `answer_fact_id` (an existing fact that answers it) or a `note`, or both. Writes an audit
+        event (action close).
+      parameters:
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: OQ-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenQuestionClose'
+            example:
+              note: Instrumentation added to the audit queue, measurement starts next month.
+              actor: gabriele
+      responses:
+        '200':
+          description: The closed question.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenQuestion'
+              example:
+                id: OQ-001
+                topic: audit-queue-time
+                question: What is the real audit queue time?
+                fact_id: M-204
+                doc_id: 02-subject/bottleneck-analysis
+                status: closed
+                opened_at: '2025-10-02'
+                closed_at: '2026-11-14'
+                answer_fact_id: null
+                note: Instrumentation added to the audit queue, measurement starts next month.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /maintenance/queue:
+    get:
+      tags:
+      - maintenance
+      operationId: getMaintenanceQueue
+      summary: Facts proposed for retirement
+      description: Proposed because the fact is superseded but still retrievable, stale, or low confidence.
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - approved
+          - dismissed
+          default: pending
+      - name: reason
+        in: query
+        schema:
+          $ref: '#/components/schemas/MaintenanceReason'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Queue items.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaintenanceItem'
+              example:
+              - id: MQ-001
+                fact:
+                  id: M-105
+                  topic: onboarding-target
+                  value: 'Target recommendation: 4 weeks'
+                  type: SUPERSEDED
+                  status: active
+                  doc_id: 05-meetings/meeting-005-final-presentation
+                  quote: Our target recommendation is four weeks total for new consultants to be fully autonomous
+                    and billing-ready.
+                  date: '2025-11-21'
+                  supersedes: null
+                  superseded_by: M-106
+                  confidence: 0.9
+                  retired_reason: null
+                  pinned: false
+                reason: superseded_still_retrievable
+                detail: Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval.
+                proposed_action: retire
+                status: pending
+                proposed_at: '2026-11-14T09:20:00Z'
+              - id: MQ-002
+                fact:
+                  id: M-103
+                  topic: onboarding-target
+                  value: 'Requirement R1.1: 3 weeks or less'
+                  type: CONSTRAINT
+                  status: active
+                  doc_id: 01-scope/requirements
+                  quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or
+                    less.
+                  date: '2025-09-29'
+                  supersedes: null
+                  superseded_by: null
+                  confidence: 0.88
+                  retired_reason: null
+                  pinned: false
+                reason: stale
+                detail: Older than the latest decision on the same topic and not linked to it.
+                proposed_action: retire
+                status: pending
+                proposed_at: '2026-11-14T09:20:00Z'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /maintenance/{item_id}/approve:
+    post:
+      tags:
+      - maintenance
+      operationId: approveMaintenanceItem
+      summary: Approve the proposed retirement
+      description: Retires the fact (audit action approve plus retire).
+      parameters:
+      - $ref: '#/components/parameters/ItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceDecision'
+            example:
+              actor: gabriele
+              note: Replaced by the final report.
+      responses:
+        '200':
+          description: The item, now approved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceItem'
+              example:
+                id: MQ-002
+                fact:
+                  id: M-103
+                  topic: onboarding-target
+                  value: 'Requirement R1.1: 3 weeks or less'
+                  type: CONSTRAINT
+                  status: retired
+                  doc_id: 01-scope/requirements
+                  quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or
+                    less.
+                  date: '2025-09-29'
+                  supersedes: null
+                  superseded_by: M-106
+                  confidence: 0.88
+                  retired_reason: Replaced by the final report, which sets 3–4 weeks.
+                  pinned: false
+                reason: stale
+                detail: Older than the latest decision on the same topic and not linked to it.
+                proposed_action: retire
+                status: approved
+                proposed_at: '2026-11-14T09:20:00Z'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /maintenance/{item_id}/dismiss:
+    post:
+      tags:
+      - maintenance
+      operationId: dismissMaintenanceItem
+      summary: Dismiss the proposal
+      description: Keeps the fact as it is. The same proposal is not raised again unless the fact changes.
+      parameters:
+      - $ref: '#/components/parameters/ItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceDecision'
+            example:
+              actor: gabriele
+              note: Still valid for the pilot team.
+      responses:
+        '200':
+          description: The item, now dismissed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceItem'
+              example:
+                id: MQ-001
+                fact:
+                  id: M-105
+                  topic: onboarding-target
+                  value: 'Target recommendation: 4 weeks'
+                  type: SUPERSEDED
+                  status: active
+                  doc_id: 05-meetings/meeting-005-final-presentation
+                  quote: Our target recommendation is four weeks total for new consultants to be fully autonomous
+                    and billing-ready.
+                  date: '2025-11-21'
+                  supersedes: null
+                  superseded_by: M-106
+                  confidence: 0.9
+                  retired_reason: null
+                  pinned: false
+                reason: superseded_still_retrievable
+                detail: Superseded by M-106 on 2025-11-28 but still ranked in plain retrieval.
+                proposed_action: retire
+                status: dismissed
+                proposed_at: '2026-11-14T09:20:00Z'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /topics/{topic_id}:
+    patch:
+      tags:
+      - topics
+      operationId: patchTopic
+      summary: Rename a topic
+      description: Only the label can change. The id is stable. To merge two topics use the merge endpoint.
+      parameters:
+      - $ref: '#/components/parameters/TopicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicPatch'
+            example:
+              label: Onboarding time target
+      responses:
+        '200':
+          description: Updated topic.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+              example:
+                id: onboarding-target
+                label: Onboarding time target
+                fact_ids:
+                - M-101
+                - M-102
+                - M-103
+                - M-104
+                - M-105
+                - M-106
+                - M-107
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /topics/{topic_id}/merge:
+    post:
+      tags:
+      - topics
+      operationId: mergeTopic
+      summary: Merge this topic into another
+      description: Moves every fact of `topic_id` to `into_topic_id`, rebuilds the chain by date and deletes the
+        source topic. Writes an audit event (action merge).
+      parameters:
+      - $ref: '#/components/parameters/TopicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicMergeRequest'
+            example:
+              into_topic_id: onboarding-target
+              actor: gabriele
+      responses:
+        '200':
+          description: The target topic after the merge.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+              example:
+                id: onboarding-target
+                label: Onboarding target
+                fact_ids:
+                - M-101
+                - M-102
+                - M-103
+                - M-104
+                - M-105
+                - M-106
+                - M-107
+                - M-110
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /documents/{doc_id}/facts:
+    get:
+      tags:
+      - documents
+      operationId: listDocumentFacts
+      summary: Facts extracted from a document
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        description: URL-encoded document id.
+        schema:
+          type: string
+        example: 07-documents%2Freport-final
+      responses:
+        '200':
+          description: Facts of the document.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Fact'
+              example:
+              - id: M-106
+                topic: onboarding-target
+                value: 'Onboarding SLA: 3–4 weeks'
+                type: DECISION
+                status: active
+                doc_id: 07-documents/report-final
+                quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                date: '2025-11-28'
+                supersedes: M-105
+                superseded_by: null
+                confidence: 0.94
+                retired_reason: null
+                pinned: false
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /search:
+    get:
+      tags:
+      - search
+      operationId: search
+      summary: Hybrid search over facts and documents
+      description: Combines keyword and embedding scores. Filter by epistemic type, status and kind of result.
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+        example: onboarding
+      - name: kind
+        in: query
+        schema:
+          type: string
+          enum:
+          - fact
+          - document
+          - all
+          default: all
+      - name: type
+        in: query
+        description: Epistemic type filter, repeatable.
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactType'
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/FactStatus'
+      - name: topic
+        in: query
+        schema:
+          type: string
+      - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Ranked results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+              example:
+                query: onboarding
+                total: 2
+                results:
+                - kind: fact
+                  id: M-106
+                  score: 0.91
+                  snippet: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                  doc_id: 07-documents/report-final
+                  topic: onboarding-target
+                  type: DECISION
+                - kind: document
+                  id: 01-scope/requirements
+                  score: 0.74
+                  snippet: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks
+                    or less.
+                  doc_id: 01-scope/requirements
+                  topic: null
+                  type: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /retrieve/plain:
+    post:
+      tags:
+      - search
+      operationId: retrievePlain
+      summary: Plain retrieval baseline
+      description: BM25 or embedding retrieval over documents only, with no facts, no supersedes and no conflicts.
+        This is the baseline Canonico is compared with.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlainRetrievalRequest'
+            example:
+              query: What is the target time for onboarding new consultants?
+              top_k: 3
+              method: bm25
+      responses:
+        '200':
+          description: Ranked documents.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlainRetrievalResult'
+              example:
+                query: What is the target time for onboarding new consultants?
+                method: bm25
+                results:
+                - rank: 1
+                  doc_id: 01-scope/requirements
+                  score: 11.2
+                  quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or
+                    less.
+                - rank: 2
+                  doc_id: 07-documents/report-final
+                  score: 10.8
+                  quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                - rank: 3
+                  doc_id: 05-meetings/meeting-005-final-presentation
+                  score: 9.1
+                  quote: Our target recommendation is four weeks total for new consultants to be fully autonomous
+                    and billing-ready.
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /ask/stream:
+    post:
+      tags:
+      - ask
+      operationId: askStream
+      summary: Ask with Server-Sent Events
+      description: |
+        Same request as POST /ask. The response is `text/event-stream`. Events, in order:
+        `retrieval` (data: list of candidate fact ids), `token` (data: `{"text": "..."}` chunk of the answer sentence, repeated),
+        `final` (data: the complete AskResponse JSON, identical to the body of POST /ask), `error` (data: Error) on failure.
+        The stream ends after `final` or `error`. The stored answer id is `answer_id` inside the final event.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskRequest'
+            example:
+              question: What is the target time for onboarding new consultants?
+      responses:
+        '200':
+          description: Event stream.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              example: |+
+                event: retrieval
+                data: {"fact_ids":["M-106","M-105","M-103"]}
+
+                event: token
+                data: {"text":"The onboarding target is "}
+
+                event: token
+                data: {"text":"3–4 weeks."}
+
+                event: final
+                data: {"question":"What is the target time for onboarding new consultants?","status":"binding","answer_id":"ans-0007"}
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /ask/history:
+    get:
+      tags:
+      - answers
+      operationId: listAskHistory
+      summary: Previous questions
+      description: Newest first.
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Answer summaries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnswerSummary'
+              example:
+              - id: ans-0008
+                question: How long does a report spend in the audit queue?
+                asked_at: '2026-11-14T14:07:10Z'
+                status: contested
+              - id: ans-0007
+                question: What is the target time for onboarding new consultants?
+                asked_at: '2026-11-14T14:01:30Z'
+                status: binding
+  /answers/{answer_id}:
+    get:
+      tags:
+      - answers
+      operationId: getAnswer
+      summary: Stored answer with the facts it used
+      parameters:
+      - $ref: '#/components/parameters/AnswerId'
+      responses:
+        '200':
+          description: The answer and the snapshot of the facts as they were when it was given.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerRecord'
+              example:
+                id: ans-0007
+                asked_at: '2026-11-14T14:01:30Z'
+                memory_version: 41
+                request:
+                  question: What is the target time for onboarding new consultants?
+                  include_plain_retrieval: false
+                response:
+                  question: What is the target time for onboarding new consultants?
+                  status: binding
+                  answer: The onboarding target is 3–4 weeks, set in the final report. One conflict remains, requirement
+                    R1.1 still says 3 weeks or less.
+                  binding:
+                    id: M-106
+                    topic: onboarding-target
+                    value: 'Onboarding SLA: 3–4 weeks'
+                    type: DECISION
+                    status: active
+                    doc_id: 07-documents/report-final
+                    quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                    date: '2025-11-28'
+                    supersedes: M-105
+                    superseded_by: null
+                    confidence: 0.94
+                    retired_reason: null
+                    pinned: false
+                  superseded:
+                  - id: M-105
+                    topic: onboarding-target
+                    value: 'Target recommendation: 4 weeks'
+                    type: SUPERSEDED
+                    status: active
+                    doc_id: 05-meetings/meeting-005-final-presentation
+                    quote: Our target recommendation is four weeks total for new consultants to be fully autonomous
+                      and billing-ready.
+                    date: '2025-11-21'
+                    supersedes: null
+                    superseded_by: M-106
+                    confidence: 0.9
+                    retired_reason: null
+                    pinned: false
+                  conflicts:
+                  - id: M-103
+                    topic: onboarding-target
+                    value: 'Requirement R1.1: 3 weeks or less'
+                    type: CONSTRAINT
+                    status: active
+                    doc_id: 01-scope/requirements
+                    quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks
+                      or less.
+                    date: '2025-09-29'
+                    supersedes: null
+                    superseded_by: null
+                    confidence: 0.88
+                    retired_reason: null
+                    pinned: false
+                  citations:
+                  - doc_id: 07-documents/report-final
+                    quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                  changed_because: null
+                fact_snapshot:
+                - id: M-106
+                  topic: onboarding-target
+                  value: 'Onboarding SLA: 3–4 weeks'
+                  type: DECISION
+                  status: active
+                  doc_id: 07-documents/report-final
+                  quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                  date: '2025-11-28'
+                  supersedes: M-105
+                  superseded_by: null
+                  confidence: 0.94
+                  retired_reason: null
+                  pinned: false
+                - id: M-105
+                  topic: onboarding-target
+                  value: 'Target recommendation: 4 weeks'
+                  type: SUPERSEDED
+                  status: active
+                  doc_id: 05-meetings/meeting-005-final-presentation
+                  quote: Our target recommendation is four weeks total for new consultants to be fully autonomous
+                    and billing-ready.
+                  date: '2025-11-21'
+                  supersedes: null
+                  superseded_by: M-106
+                  confidence: 0.9
+                  retired_reason: null
+                  pinned: false
+                - id: M-103
+                  topic: onboarding-target
+                  value: 'Requirement R1.1: 3 weeks or less'
+                  type: CONSTRAINT
+                  status: active
+                  doc_id: 01-scope/requirements
+                  quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or
+                    less.
+                  date: '2025-09-29'
+                  supersedes: null
+                  superseded_by: null
+                  confidence: 0.88
+                  retired_reason: null
+                  pinned: false
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /answers/{answer_id}/replay:
+    post:
+      tags:
+      - answers
+      operationId: replayAnswer
+      summary: Re-run an answer with the current memory
+      description: Runs the original request again against current memory, stores the new answer and returns the
+        differences against the original.
+      parameters:
+      - $ref: '#/components/parameters/AnswerId'
+      responses:
+        '200':
+          description: Diff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplayDiff'
+              example:
+                answer_id: ans-0007
+                new_answer_id: ans-0009
+                changed: true
+                changed_because: you retired requirement R1.1
+                diffs:
+                - field: conflicts
+                  before:
+                  - M-103
+                  after: []
+                - field: answer
+                  before: The onboarding target is 3–4 weeks, set in the final report. One conflict remains, requirement
+                    R1.1 still says 3 weeks or less.
+                  after: The onboarding target is 3–4 weeks, set in the final report. Requirement R1.1 (3 weeks
+                    or less) is no longer binding.
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /audit/{event_id}/undo:
+    post:
+      tags:
+      - audit
+      operationId: undoAuditEvent
+      summary: Undo a change
+      description: Reverts the effect of the event and writes a new event (action undo) that references it. Returns
+        409 when the event is not undoable (ingest, classify, undo) or when later changes depend on it.
+      parameters:
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: a-0042
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndoRequest'
+            example:
+              actor: gabriele
+              reason: Retired by mistake.
+      responses:
+        '200':
+          description: The new undo event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEvent'
+              example:
+                id: a-0044
+                at: '2026-11-14T14:10:00Z'
+                actor: gabriele
+                action: undo
+                fact_id: M-103
+                reason: Retired by mistake.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /classify:
+    post:
+      tags:
+      - ingest
+      operationId: classify
+      summary: Re-classify a document or a set of facts
+      description: Runs the extraction and classification again on one document or on a list of facts. Manual edits
+        and pins are kept unless `force` is true. Asynchronous.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClassifyRequest'
+            example:
+              doc_id: 01-scope/requirements
+              force: false
+      responses:
+        '202':
+          description: Job accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestJob'
+              example:
+                id: job-9d41
+                kind: classify
+                status: queued
+                docs: 0
+                facts: 0
+                cost_usd: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /ingest/jobs:
+    get:
+      tags:
+      - ingest
+      operationId: listIngestJobs
+      summary: List ingestion and classification jobs
+      description: Newest first. The fixed path `/ingest/jobs` takes precedence over `/ingest/{job_id}`.
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - queued
+          - running
+          - done
+          - error
+      - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Jobs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IngestJob'
+              example:
+              - id: job-9d41
+                kind: classify
+                status: running
+                docs: 1
+                facts: 4
+                cost_usd: 0.02
+              - id: job-7f3a
+                kind: ingest
+                status: done
+                docs: 46
+                facts: 312
+                cost_usd: 1.84
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /eval/runs:
+    get:
+      tags:
+      - eval
+      operationId: listEvalRuns
+      summary: List benchmark runs
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Runs, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EvalRun'
+              example:
+              - id: eval-19c2
+                status: done
+                started_at: '2026-11-14T13:28:00Z'
+                finished_at: '2026-11-14T13:30:00Z'
+                cost_usd: 0.42
+                result: null
+  /eval/runs/{run_id}:
+    get:
+      tags:
+      - eval
+      operationId: getEvalRun
+      summary: One benchmark run
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: eval-19c2
+      responses:
+        '200':
+          description: Run with its result when done.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvalRun'
+              example:
+                id: eval-19c2
+                status: done
+                started_at: '2026-11-14T13:28:00Z'
+                finished_at: '2026-11-14T13:30:00Z'
+                cost_usd: 0.42
+                result:
+                  corpus: org-consulting-clearpath
+                  metrics:
+                    ndcg_at_10_plain: 0.61
+                    ndcg_at_10_canonico: 0.78
+                    binding_accuracy_plain: 0.42
+                    binding_accuracy_canonico: 0.81
+                  per_query: []
+                  measured_at: '2026-11-14T13:30:00Z'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /eval/queries:
+    get:
+      tags:
+      - eval
+      operationId: listEvalQueries
+      summary: Corpus queries with gold documents
+      description: The 26 queries (q01 to q26) with the tests tag and the graded qrels (0 to 3).
+      responses:
+        '200':
+          description: Queries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EvalQuery'
+              example:
+              - query_id: q01
+                text: What is the target time for onboarding new consultants?
+                tests: binding version
+                gold_docs:
+                - doc_id: 07-documents/report-final
+                  grade: 3
+                - doc_id: 05-meetings/meeting-005-final-presentation
+                  grade: 1
+                - doc_id: 01-scope/requirements
+                  grade: 1
+              - query_id: q02
+                text: Why do the team leads disagree about how long a report spends in the audit queue, and was
+                  the discrepancy ever resolved with hard data?
+                tests: conflict detection
+                gold_docs:
+                - doc_id: 02-subject/observation-003-audit-workflow
+                  grade: 3
+                - doc_id: 02-subject/bottleneck-analysis
+                  grade: 2
+  /stats:
+    get:
+      tags:
+      - admin
+      operationId: getStats
+      summary: Counts and cost
+      responses:
+        '200':
+          description: Stats.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stats'
+              example:
+                documents: 46
+                topics: 24
+                facts_total: 312
+                by_type:
+                  DECISION: 38
+                  CONSTRAINT: 31
+                  EVIDENCE: 140
+                  HYPOTHESIS: 52
+                  SUPERSEDED: 29
+                  OPEN: 22
+                by_status:
+                  active: 310
+                  retired: 2
+                open_conflicts: 2
+                open_questions: 22
+                maintenance_pending: 5
+                cost:
+                  spent_usd: 2.31
+                  cap_usd: 10.0
+                last_ingest_at: '2026-11-14T09:12:00Z'
+  /config:
+    get:
+      tags:
+      - admin
+      operationId: getConfig
+      summary: Current configuration
+      responses:
+        '200':
+          description: Config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Config'
+              example:
+                models:
+                  extraction: model-extract-v1
+                  classification: model-classify-v1
+                  answer: model-answer-v1
+                cost_cap_usd: 10.0
+                active_corpus: org-consulting-clearpath
+                stale_after_days: 90
+                low_confidence_threshold: 0.5
+    patch:
+      tags:
+      - admin
+      operationId: patchConfig
+      summary: Change configuration
+      description: Partial update. Changing `active_corpus` does not ingest anything by itself. When the cost cap
+        is reached, ingest, classify and ask return 422 with code `cost_cap_reached`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigPatch'
+            example:
+              cost_cap_usd: 15.0
+      responses:
+        '200':
+          description: Updated config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Config'
+              example:
+                models:
+                  extraction: model-extract-v1
+                  classification: model-classify-v1
+                  answer: model-answer-v1
+                cost_cap_usd: 15.0
+                active_corpus: org-consulting-clearpath
+                stale_after_days: 90
+                low_confidence_threshold: 0.5
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /demo/reset:
+    post:
+      tags:
+      - admin
+      operationId: resetDemo
+      summary: Restore the seeded demo state
+      description: Replaces memory, audit log, stored answers and eval runs with the seeded demo snapshot (q01 with
+        conflict R1.1 active, q02 contested). Synchronous and fast, it makes no model calls.
+      responses:
+        '200':
+          description: State after the reset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stats'
+              example:
+                documents: 46
+                topics: 24
+                facts_total: 312
+                by_type:
+                  DECISION: 38
+                  CONSTRAINT: 31
+                  EVIDENCE: 140
+                  HYPOTHESIS: 52
+                  SUPERSEDED: 29
+                  OPEN: 22
+                by_status:
+                  active: 312
+                  retired: 0
+                open_conflicts: 2
+                open_questions: 22
+                maintenance_pending: 5
+                cost:
+                  spent_usd: 0
+                  cap_usd: 10.0
+                last_ingest_at: null
+  /export:
+    get:
+      tags:
+      - admin
+      operationId: exportMemory
+      summary: Export memory and audit log
+      responses:
+        '200':
+          description: JSON dump.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportBundle'
+              example:
+                version: 0.1.0
+                exported_at: '2026-11-14T15:00:00Z'
+                corpus: org-consulting-clearpath
+                documents: []
+                topics:
+                - id: onboarding-target
+                  label: Onboarding target
+                  fact_ids:
+                  - M-103
+                  - M-105
+                  - M-106
+                facts:
+                - id: M-106
+                  topic: onboarding-target
+                  value: 'Onboarding SLA: 3–4 weeks'
+                  type: DECISION
+                  status: active
+                  doc_id: 07-documents/report-final
+                  quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+                  date: '2025-11-28'
+                  supersedes: M-105
+                  superseded_by: null
+                  confidence: 0.94
+                  retired_reason: null
+                  pinned: false
+                audit:
+                - id: a-0042
+                  at: '2026-11-14T14:04:12Z'
+                  actor: gabriele
+                  action: retire
+                  fact_id: M-103
+                  reason: Replaced by the final report, which sets 3–4 weeks.
+                answers: []
+  /import:
+    post:
+      tags:
+      - admin
+      operationId: importMemory
+      summary: Import an export bundle
+      description: '`mode=replace` (default) wipes current memory first, `mode=merge` upserts by id. A bundle with
+        a different `version` major returns 422.'
+      parameters:
+      - name: mode
+        in: query
+        schema:
+          type: string
+          enum:
+          - replace
+          - merge
+          default: replace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportBundle'
+      responses:
+        '200':
+          description: Import summary.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - documents
+                - topics
+                - facts
+                - audit_events
+                properties:
+                  documents:
+                    type: integer
+                  topics:
+                    type: integer
+                  facts:
+                    type: integer
+                  audit_events:
+                    type: integer
+              example:
+                documents: 46
+                topics: 24
+                facts: 312
+                audit_events: 3
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+components:
+  parameters:
+    FactId:
+      name: fact_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: M-103
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    ItemId:
+      name: item_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: MQ-001
+    TopicId:
+      name: topic_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: onboarding-target
+    AnswerId:
+      name: answer_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: ans-0007
+  responses:
+    BadRequest:
+      description: Malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: bad_request
+            message: Malformed JSON body.
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: not_found
+            message: Fact M-999 not found.
+    Unprocessable:
+      description: Validation failed (field missing or out of range).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: validation_error
+            message: 'reason: field required'
+    Conflict:
+      description: State conflict (already resolved, cycle, not undoable, duplicate id).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: conflict
+            message: Conflict C-001 is already resolved.
+  schemas:
+    FactType:
+      type: string
+      enum:
+      - DECISION
+      - CONSTRAINT
+      - EVIDENCE
+      - HYPOTHESIS
+      - SUPERSEDED
+      - OPEN
+      description: DECISION is binding, OPEN is an open question.
+    FactStatus:
+      type: string
+      enum:
+      - active
+      - retired
+    Fact:
+      type: object
+      required:
+      - id
+      - topic
+      - value
+      - type
+      - status
+      - doc_id
+      - quote
+      - date
+      - supersedes
+      - superseded_by
+      - confidence
+      - retired_reason
+      properties:
+        id:
+          type: string
+          example: M-106
+        topic:
+          type: string
+          description: Topic id.
+          example: onboarding-target
+        value:
+          type: string
+          example: 'Onboarding SLA: 3–4 weeks'
+        type:
+          $ref: '#/components/schemas/FactType'
+        status:
+          $ref: '#/components/schemas/FactStatus'
+        doc_id:
+          type: string
+          example: 07-documents/report-final
+        quote:
+          type: string
+          description: Verbatim source quote.
+        date:
+          type: string
+          format: date
+          example: '2025-11-28'
+        supersedes:
+          type:
+          - string
+          - 'null'
+          description: Id of the older fact this one replaces.
+        superseded_by:
+          type:
+          - string
+          - 'null'
+          description: Id of the newer fact that replaces this one.
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.94
+        retired_reason:
+          type:
+          - string
+          - 'null'
+        pinned:
+          type: boolean
+          default: false
+          description: True when a person marked this fact as binding.
+    FactPage:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fact'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    Document:
+      type: object
+      required:
+      - id
+      - title
+      - date
+      - path
+      properties:
+        id:
+          type: string
+          example: 07-documents/report-final
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        path:
+          type: string
+        text:
+          type: string
+          description: Full text, only on GET /documents/{doc_id}.
+    Citation:
+      type: object
+      required:
+      - doc_id
+      - quote
+      properties:
+        doc_id:
+          type: string
+        quote:
+          type: string
+    Topic:
+      type: object
+      required:
+      - id
+      - label
+      - fact_ids
+      properties:
+        id:
+          type: string
+          example: onboarding-target
+        label:
+          type: string
+          example: Onboarding target
+        fact_ids:
+          type: array
+          items:
+            type: string
+    TopicChain:
+      type: object
+      required:
+      - topic
+      - facts
+      properties:
+        topic:
+          $ref: '#/components/schemas/Topic'
+        facts:
+          type: array
+          description: Oldest to newest.
+          items:
+            $ref: '#/components/schemas/Fact'
+    AskRequest:
+      type: object
+      required:
+      - question
+      properties:
+        question:
+          type: string
+          minLength: 1
+        topic:
+          type: string
+          description: Optional topic id to scope the answer.
+        include_plain_retrieval:
+          type: boolean
+          default: false
+    PlainRetrieval:
+      type: object
+      required:
+      - doc_id
+      - quote
+      - rank
+      properties:
+        doc_id:
+          type: string
+        quote:
+          type: string
+        rank:
+          type: integer
+          minimum: 1
+    AskResponse:
+      type: object
+      required:
+      - question
+      - status
+      - answer
+      - binding
+      - superseded
+      - conflicts
+      - citations
+      - changed_because
+      properties:
+        question:
+          type: string
+        status:
+          type: string
+          enum:
+          - binding
+          - contested
+          - no_answer
+        answer:
+          type: string
+          description: Plain-language sentence.
+        binding:
+          oneOf:
+          - $ref: '#/components/schemas/Fact'
+          - type: 'null'
+        superseded:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fact'
+        conflicts:
+          type: array
+          description: Contested values. For status contested these are the competing facts.
+          items:
+            $ref: '#/components/schemas/Fact'
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+        plain_retrieval:
+          description: Present only when include_plain_retrieval is true.
+          $ref: '#/components/schemas/PlainRetrieval'
+        changed_because:
+          type:
+          - string
+          - 'null'
+          example: you retired requirement R1.1
+    RetireRequest:
+      type: object
+      required:
+      - reason
+      - actor
+      properties:
+        reason:
+          type: string
+          minLength: 1
+        actor:
+          type: string
+          minLength: 1
+    RestoreRequest:
+      type: object
+      properties:
+        actor:
+          type: string
+          default: anonymous
+        reason:
+          type: string
+    AuditEvent:
+      type: object
+      required:
+      - id
+      - at
+      - actor
+      - action
+      - fact_id
+      - reason
+      properties:
+        id:
+          type: string
+        at:
+          type: string
+          format: date-time
+        actor:
+          type: string
+          description: User name, or `system` for ingest and classify.
+        action:
+          $ref: '#/components/schemas/AuditAction'
+        fact_id:
+          type:
+          - string
+          - 'null'
+          description: Null for ingest events.
+        reason:
+          type:
+          - string
+          - 'null'
+    IngestRequest:
+      type: object
+      properties:
+        corpus:
+          type: string
+          default: org-consulting-clearpath
+        force:
+          type: boolean
+          default: false
+    IngestJob:
+      type: object
+      required:
+      - id
+      - status
+      - docs
+      - facts
+      - cost_usd
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - done
+          - error
+        docs:
+          type: integer
+          minimum: 0
+        facts:
+          type: integer
+          minimum: 0
+        cost_usd:
+          type: number
+          minimum: 0
+        kind:
+          type: string
+          enum:
+          - ingest
+          - classify
+          default: ingest
+    EvalResult:
+      type: object
+      required:
+      - corpus
+      - metrics
+      - per_query
+      - measured_at
+      properties:
+        corpus:
+          type: string
+        metrics:
+          type: object
+          required:
+          - ndcg_at_10_plain
+          - ndcg_at_10_canonico
+          - binding_accuracy_plain
+          - binding_accuracy_canonico
+          properties:
+            ndcg_at_10_plain:
+              type: number
+              minimum: 0
+              maximum: 1
+            ndcg_at_10_canonico:
+              type: number
+              minimum: 0
+              maximum: 1
+            binding_accuracy_plain:
+              type: number
+              minimum: 0
+              maximum: 1
+            binding_accuracy_canonico:
+              type: number
+              minimum: 0
+              maximum: 1
+        per_query:
+          type: array
+          items:
+            type: object
+            required:
+            - query_id
+            - text
+            - tests
+            - plain_top_doc
+            - canonico_top_doc
+            - gold_doc
+            - pass_plain
+            - pass_canonico
+            properties:
+              query_id:
+                type: string
+                example: q01
+              text:
+                type: string
+              tests:
+                type: string
+                description: What the query tests
+                e.g. binding version or conflict detection.: null
+              plain_top_doc:
+                type: string
+              canonico_top_doc:
+                type: string
+              gold_doc:
+                type: string
+              pass_plain:
+                type: boolean
+              pass_canonico:
+                type: boolean
+        measured_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: 'Machine code: bad_request, not_found, validation_error, internal_error.'
+        message:
+          type: string
+    FactCreate:
+      type: object
+      required:
+      - topic
+      - value
+      - type
+      - quote
+      - date
+      - actor
+      properties:
+        topic:
+          type: string
+        value:
+          type: string
+        type:
+          $ref: '#/components/schemas/FactType'
+        doc_id:
+          type:
+          - string
+          - 'null'
+          description: Source document, null for a fact typed in by a person.
+        quote:
+          type: string
+        date:
+          type: string
+          format: date
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 1
+        actor:
+          type: string
+    FactPatch:
+      type: object
+      required:
+      - reason
+      - actor
+      minProperties: 3
+      properties:
+        value:
+          type: string
+        type:
+          $ref: '#/components/schemas/FactType'
+        topic:
+          type: string
+        reason:
+          type: string
+          minLength: 1
+        actor:
+          type: string
+          minLength: 1
+    PinRequest:
+      type: object
+      required:
+      - reason
+      - actor
+      properties:
+        reason:
+          type: string
+          minLength: 1
+        actor:
+          type: string
+          minLength: 1
+    SupersedeRequest:
+      type: object
+      required:
+      - by_fact_id
+      - reason
+      - actor
+      properties:
+        by_fact_id:
+          type: string
+          description: The newer fact that replaces the one in the path.
+        reason:
+          type: string
+          minLength: 1
+        actor:
+          type: string
+          minLength: 1
+    FactVersion:
+      type: object
+      required:
+      - version
+      - at
+      - actor
+      - action
+      - changes
+      - snapshot
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        at:
+          type: string
+          format: date-time
+        actor:
+          type: string
+        action:
+          $ref: '#/components/schemas/AuditAction'
+        changes:
+          type: object
+          description: Map of field name to {from, to}.
+          additionalProperties:
+            type: object
+            properties:
+              from: {}
+              to: {}
+        snapshot:
+          $ref: '#/components/schemas/Fact'
+    Dependents:
+      type: object
+      required:
+      - fact_id
+      - facts
+      - conflicts
+      - answers
+      properties:
+        fact_id:
+          type: string
+        facts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fact'
+        conflicts:
+          type: array
+          items:
+            type: string
+          description: Conflict ids.
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnswerSummary'
+    Conflict:
+      type: object
+      required:
+      - id
+      - topic
+      - status
+      - summary
+      - facts
+      - detected_at
+      - resolution
+      properties:
+        id:
+          type: string
+          example: C-001
+        topic:
+          type: string
+        status:
+          type: string
+          enum:
+          - open
+          - resolved
+        summary:
+          type: string
+        facts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fact'
+        detected_at:
+          type: string
+          format: date-time
+        resolution:
+          oneOf:
+          - $ref: '#/components/schemas/ConflictResolution'
+          - type: 'null'
+    ConflictResolution:
+      type: object
+      required:
+      - winning_fact_id
+      - reason
+      - actor
+      properties:
+        winning_fact_id:
+          type: string
+        reason:
+          type: string
+          minLength: 1
+        actor:
+          type: string
+          minLength: 1
+        resolved_at:
+          type: string
+          format: date-time
+          readOnly: true
+    OpenQuestion:
+      type: object
+      required:
+      - id
+      - topic
+      - question
+      - fact_id
+      - doc_id
+      - status
+      - opened_at
+      - closed_at
+      - answer_fact_id
+      - note
+      properties:
+        id:
+          type: string
+          example: OQ-001
+        topic:
+          type: string
+        question:
+          type: string
+        fact_id:
+          type: string
+          description: The OPEN fact.
+        doc_id:
+          type: string
+        status:
+          type: string
+          enum:
+          - open
+          - closed
+        opened_at:
+          type: string
+          format: date
+        closed_at:
+          type:
+          - string
+          - 'null'
+          format: date
+        answer_fact_id:
+          type:
+          - string
+          - 'null'
+        note:
+          type:
+          - string
+          - 'null'
+    OpenQuestionClose:
+      type: object
+      required:
+      - actor
+      anyOf:
+      - required:
+        - answer_fact_id
+      - required:
+        - note
+      properties:
+        answer_fact_id:
+          type: string
+        note:
+          type: string
+        actor:
+          type: string
+          minLength: 1
+    MaintenanceReason:
+      type: string
+      enum:
+      - superseded_still_retrievable
+      - stale
+      - low_confidence
+    MaintenanceItem:
+      type: object
+      required:
+      - id
+      - fact
+      - reason
+      - detail
+      - proposed_action
+      - status
+      - proposed_at
+      properties:
+        id:
+          type: string
+          example: MQ-001
+        fact:
+          $ref: '#/components/schemas/Fact'
+        reason:
+          $ref: '#/components/schemas/MaintenanceReason'
+        detail:
+          type: string
+        proposed_action:
+          type: string
+          enum:
+          - retire
+        status:
+          type: string
+          enum:
+          - pending
+          - approved
+          - dismissed
+        proposed_at:
+          type: string
+          format: date-time
+    MaintenanceDecision:
+      type: object
+      required:
+      - actor
+      properties:
+        actor:
+          type: string
+          minLength: 1
+        note:
+          type: string
+    TopicCreate:
+      type: object
+      required:
+      - label
+      properties:
+        id:
+          type: string
+          description: Optional slug. Generated from the label when omitted.
+        label:
+          type: string
+          minLength: 1
+    TopicPatch:
+      type: object
+      required:
+      - label
+      properties:
+        label:
+          type: string
+          minLength: 1
+    TopicMergeRequest:
+      type: object
+      required:
+      - into_topic_id
+      - actor
+      properties:
+        into_topic_id:
+          type: string
+        actor:
+          type: string
+          minLength: 1
+    DocumentCreate:
+      type: object
+      required:
+      - title
+      - date
+      - text
+      properties:
+        id:
+          type: string
+          description: Optional. Generated from the title when omitted.
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        format:
+          type: string
+          enum:
+          - text
+          - markdown
+          default: markdown
+        text:
+          type: string
+        ingest:
+          type: boolean
+          default: true
+    DocumentUpload:
+      type: object
+      required:
+      - file
+      - title
+      - date
+      properties:
+        file:
+          type: string
+          contentEncoding: base64
+          contentMediaType: application/octet-stream
+          description: Text, markdown or PDF file.
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        ingest:
+          type: boolean
+          default: true
+    DocumentCreated:
+      type: object
+      required:
+      - document
+      - ingest_job
+      properties:
+        document:
+          $ref: '#/components/schemas/Document'
+        ingest_job:
+          oneOf:
+          - $ref: '#/components/schemas/IngestJob'
+          - type: 'null'
+    DocumentDeleted:
+      type: object
+      required:
+      - doc_id
+      - deleted_fact_ids
+      - audit_event_id
+      properties:
+        doc_id:
+          type: string
+        deleted_fact_ids:
+          type: array
+          items:
+            type: string
+        audit_event_id:
+          type: string
+    SearchResult:
+      type: object
+      required:
+      - kind
+      - id
+      - score
+      - snippet
+      - doc_id
+      - topic
+      - type
+      properties:
+        kind:
+          type: string
+          enum:
+          - fact
+          - document
+        id:
+          type: string
+        score:
+          type: number
+        snippet:
+          type: string
+        doc_id:
+          type: string
+        topic:
+          type:
+          - string
+          - 'null'
+        type:
+          oneOf:
+          - $ref: '#/components/schemas/FactType'
+          - type: 'null'
+    SearchResponse:
+      type: object
+      required:
+      - query
+      - total
+      - results
+      properties:
+        query:
+          type: string
+        total:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+    PlainRetrievalRequest:
+      type: object
+      required:
+      - query
+      properties:
+        query:
+          type: string
+          minLength: 1
+        top_k:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        method:
+          type: string
+          enum:
+          - bm25
+          - embedding
+          default: bm25
+    PlainRetrievalResult:
+      type: object
+      required:
+      - query
+      - method
+      - results
+      properties:
+        query:
+          type: string
+        method:
+          type: string
+          enum:
+          - bm25
+          - embedding
+        results:
+          type: array
+          items:
+            type: object
+            required:
+            - rank
+            - doc_id
+            - score
+            - quote
+            properties:
+              rank:
+                type: integer
+                minimum: 1
+              doc_id:
+                type: string
+              score:
+                type: number
+              quote:
+                type: string
+    AnswerSummary:
+      type: object
+      required:
+      - id
+      - question
+      - asked_at
+      - status
+      properties:
+        id:
+          type: string
+          example: ans-0007
+        question:
+          type: string
+        asked_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - binding
+          - contested
+          - no_answer
+    AnswerRecord:
+      type: object
+      required:
+      - id
+      - asked_at
+      - memory_version
+      - request
+      - response
+      - fact_snapshot
+      properties:
+        id:
+          type: string
+        asked_at:
+          type: string
+          format: date-time
+        memory_version:
+          type: integer
+          description: Counter incremented by every memory change.
+        request:
+          $ref: '#/components/schemas/AskRequest'
+        response:
+          $ref: '#/components/schemas/AskResponse'
+        fact_snapshot:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fact'
+          description: Facts as they were when the answer was given.
+    ReplayDiff:
+      type: object
+      required:
+      - answer_id
+      - new_answer_id
+      - changed
+      - changed_because
+      - diffs
+      properties:
+        answer_id:
+          type: string
+        new_answer_id:
+          type: string
+        changed:
+          type: boolean
+        changed_because:
+          type:
+          - string
+          - 'null'
+        diffs:
+          type: array
+          items:
+            type: object
+            required:
+            - field
+            - before
+            - after
+            properties:
+              field:
+                type: string
+                description: 'AskResponse field name: status, answer, binding, superseded, conflicts, citations.'
+              before: {}
+              after: {}
+    UndoRequest:
+      type: object
+      required:
+      - actor
+      - reason
+      properties:
+        actor:
+          type: string
+          minLength: 1
+        reason:
+          type: string
+          minLength: 1
+    ClassifyRequest:
+      type: object
+      required:
+      - force
+      anyOf:
+      - required:
+        - doc_id
+      - required:
+        - fact_ids
+      properties:
+        doc_id:
+          type: string
+        fact_ids:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        force:
+          type: boolean
+          default: false
+    EvalRun:
+      type: object
+      required:
+      - id
+      - status
+      - started_at
+      - finished_at
+      - cost_usd
+      - result
+      properties:
+        id:
+          type: string
+          example: eval-19c2
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - done
+          - error
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        cost_usd:
+          type: number
+        result:
+          oneOf:
+          - $ref: '#/components/schemas/EvalResult'
+          - type: 'null'
+    EvalQuery:
+      type: object
+      required:
+      - query_id
+      - text
+      - tests
+      - gold_docs
+      properties:
+        query_id:
+          type: string
+          example: q01
+        text:
+          type: string
+        tests:
+          type: string
+        gold_docs:
+          type: array
+          items:
+            type: object
+            required:
+            - doc_id
+            - grade
+            properties:
+              doc_id:
+                type: string
+              grade:
+                type: integer
+                minimum: 0
+                maximum: 3
+    Stats:
+      type: object
+      required:
+      - documents
+      - topics
+      - facts_total
+      - by_type
+      - by_status
+      - open_conflicts
+      - open_questions
+      - maintenance_pending
+      - cost
+      - last_ingest_at
+      properties:
+        documents:
+          type: integer
+        topics:
+          type: integer
+        facts_total:
+          type: integer
+        by_type:
+          type: object
+          description: Count per FactType.
+          additionalProperties:
+            type: integer
+        by_status:
+          type: object
+          description: Count per FactStatus.
+          additionalProperties:
+            type: integer
+        open_conflicts:
+          type: integer
+        open_questions:
+          type: integer
+        maintenance_pending:
+          type: integer
+        cost:
+          type: object
+          required:
+          - spent_usd
+          - cap_usd
+          properties:
+            spent_usd:
+              type: number
+            cap_usd:
+              type: number
+        last_ingest_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+    Config:
+      type: object
+      required:
+      - models
+      - cost_cap_usd
+      - active_corpus
+      - stale_after_days
+      - low_confidence_threshold
+      properties:
+        models:
+          type: object
+          required:
+          - extraction
+          - classification
+          - answer
+          properties:
+            extraction:
+              type: string
+            classification:
+              type: string
+            answer:
+              type: string
+        cost_cap_usd:
+          type: number
+          minimum: 0
+        active_corpus:
+          type: string
+        stale_after_days:
+          type: integer
+          minimum: 1
+        low_confidence_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+    ConfigPatch:
+      type: object
+      minProperties: 1
+      properties:
+        models:
+          type: object
+          properties:
+            extraction:
+              type: string
+            classification:
+              type: string
+            answer:
+              type: string
+        cost_cap_usd:
+          type: number
+          minimum: 0
+        active_corpus:
+          type: string
+        stale_after_days:
+          type: integer
+          minimum: 1
+        low_confidence_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+    ExportBundle:
+      type: object
+      required:
+      - version
+      - exported_at
+      - corpus
+      - documents
+      - topics
+      - facts
+      - audit
+      - answers
+      properties:
+        version:
+          type: string
+          example: 0.1.0
+        exported_at:
+          type: string
+          format: date-time
+        corpus:
+          type: string
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+          description: Including text.
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
+        facts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fact'
+        audit:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnswerRecord'
+    AuditAction:
+      type: string
+      enum:
+      - retire
+      - restore
+      - ingest
+      - classify
+      - create
+      - patch
+      - pin
+      - unpin
+      - supersede
+      - unlink
+      - resolve
+      - close
+      - approve
+      - dismiss
+      - merge
+      - delete_document
+      - undo
+      - import
+      - reset
+  examples:
+    FactM103:
+      value:
+        id: M-103
+        topic: onboarding-target
+        value: 'Requirement R1.1: 3 weeks or less'
+        type: CONSTRAINT
+        status: active
+        doc_id: 01-scope/requirements
+        quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.
+        date: '2025-09-29'
+        supersedes: null
+        superseded_by: null
+        confidence: 0.88
+        retired_reason: null
+        pinned: false
+    FactM103Retired:
+      value:
+        id: M-103
+        topic: onboarding-target
+        value: 'Requirement R1.1: 3 weeks or less'
+        type: CONSTRAINT
+        status: retired
+        doc_id: 01-scope/requirements
+        quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.
+        date: '2025-09-29'
+        supersedes: null
+        superseded_by: M-106
+        confidence: 0.88
+        retired_reason: Replaced by the final report, which sets 3–4 weeks.
+        pinned: false
+    FactM103Superseded:
+      value:
+        id: M-103
+        topic: onboarding-target
+        value: 'Requirement R1.1: 3 weeks or less'
+        type: CONSTRAINT
+        status: active
+        doc_id: 01-scope/requirements
+        quote: Reduce time-to-independence for new consultants from the current ~6 weeks to 3 weeks or less.
+        date: '2025-09-29'
+        supersedes: null
+        superseded_by: M-106
+        confidence: 0.88
+        retired_reason: null
+        pinned: false
+    FactM105:
+      value:
+        id: M-105
+        topic: onboarding-target
+        value: 'Target recommendation: 4 weeks'
+        type: SUPERSEDED
+        status: active
+        doc_id: 05-meetings/meeting-005-final-presentation
+        quote: Our target recommendation is four weeks total for new consultants to be fully autonomous and billing-ready.
+        date: '2025-11-21'
+        supersedes: null
+        superseded_by: M-106
+        confidence: 0.9
+        retired_reason: null
+        pinned: false
+    FactM106:
+      value:
+        id: M-106
+        topic: onboarding-target
+        value: 'Onboarding SLA: 3–4 weeks'
+        type: DECISION
+        status: active
+        doc_id: 07-documents/report-final
+        quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+        date: '2025-11-28'
+        supersedes: M-105
+        superseded_by: null
+        confidence: 0.94
+        retired_reason: null
+        pinned: false
+    FactM106Pinned:
+      value:
+        id: M-106
+        topic: onboarding-target
+        value: 'Onboarding SLA: 3–4 weeks'
+        type: DECISION
+        status: active
+        doc_id: 07-documents/report-final
+        quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+        date: '2025-11-28'
+        supersedes: M-105
+        superseded_by: null
+        confidence: 0.94
+        retired_reason: null
+        pinned: true
+    FactM106Unlinked:
+      value:
+        id: M-106
+        topic: onboarding-target
+        value: 'Onboarding SLA: 3–4 weeks'
+        type: DECISION
+        status: active
+        doc_id: 07-documents/report-final
+        quote: 'Establish onboarding SLA: 3–4 weeks (vs. current 6–8 weeks)'
+        date: '2025-11-28'
+        supersedes: null
+        superseded_by: null
+        confidence: 0.94
+        retired_reason: null
+        pinned: false
+    FactM201:
+      value:
+        id: M-201
+        topic: audit-queue-time
+        value: 3–4 business days (Marco Fiore, audit team lead)
+        type: HYPOTHESIS
+        status: active
+        doc_id: 02-subject/observation-003-audit-workflow
+        quote: 'Marco Fiore estimated: 3–4 business days'
+        date: '2025-10-02'
+        supersedes: null
+        superseded_by: null
+        confidence: 0.6
+        retired_reason: null
+        pinned: false
+    FactM202:
+      value:
+        id: M-202
+        topic: audit-queue-time
+        value: 6–8 business days (Laura Galli, audit team lead)
+        type: HYPOTHESIS
+        status: active
+        doc_id: 02-subject/observation-003-audit-workflow
+        quote: 'Laura Galli estimated: 6–8 business days'
+        date: '2025-10-02'
+        supersedes: null
+        superseded_by: null
+        confidence: 0.6
+        retired_reason: null
+        pinned: false
+    FactM203:
+      value:
+        id: M-203
+        topic: audit-queue-time
+        value: 2–3 days (junior auditor)
+        type: HYPOTHESIS
+        status: active
+        doc_id: 02-subject/observation-003-audit-workflow
+        quote: 'One junior auditor estimated: 2–3 days'
+        date: '2025-10-02'
+        supersedes: null
+        superseded_by: null
+        confidence: 0.6
+        retired_reason: null
+        pinned: false
