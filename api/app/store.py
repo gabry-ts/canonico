@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from app import i18n, settings, wording
+from app import i18n, llm, settings, wording
 
 PUBLIC_FACT_FIELDS = (
     "id",
@@ -248,6 +248,7 @@ def build_seed() -> dict:
     state["config"]["offline_mode"] = os.environ.get("CANONICO_OFFLINE") == "1"
     provider = (os.environ.get("LLM_PROVIDER") or "anthropic").strip().lower()
     state["config"]["provider"] = provider if provider in ("anthropic", "gateway") else "anthropic"
+    state["config"]["models"] = llm.default_models()
     cap = os.environ.get("CANONICO_COST_CAP_USD")
     if cap:
         state["config"]["cost_cap_usd"] = float(cap)

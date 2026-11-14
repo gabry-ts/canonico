@@ -4,7 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app import http, i18n, settings
+import logging
+import os
+
+from app import http, i18n, llm, settings
 from app.routers import (
     admin,
     answers,
@@ -26,6 +29,9 @@ from app.routers import (
 )
 
 VERSION = settings.VERSION
+
+if not llm.available() and os.environ.get("CANONICO_LLM_DISABLED") != "1":
+    logging.getLogger("uvicorn.error").warning("LLM_PROVIDER=%s but %s is not set: running without a model, seeded demo flows only.", llm.provider(), llm.key_name())
 
 
 class Health(BaseModel):

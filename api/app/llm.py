@@ -83,11 +83,25 @@ def provider() -> str:
     return (os.environ.get("LLM_PROVIDER") or "anthropic").strip().lower()
 
 
+def key_name() -> str:
+    return "ANTHROPIC_API_KEY" if provider() == "anthropic" else "AI_GATEWAY_API_KEY"
+
+
 def available() -> bool:
     if os.environ.get("CANONICO_LLM_DISABLED") == "1":
         return False
-    key = "ANTHROPIC_API_KEY" if provider() == "anthropic" else "AI_GATEWAY_API_KEY"
-    return bool(os.environ.get(key))
+    return bool(os.environ.get(key_name()))
+
+
+def default_models() -> dict[str, str]:
+    """Model ids for the selected provider. LLM_MODEL_FAST and LLM_MODEL_SMART override the defaults."""
+    if provider() == "gateway":
+        fast, smart = "anthropic/claude-haiku-5.5", "anthropic/claude-sonnet-5.5"
+    else:
+        fast, smart = "claude-haiku-5-5", "claude-sonnet-5-5"
+    fast = os.environ.get("LLM_MODEL_FAST") or fast
+    smart = os.environ.get("LLM_MODEL_SMART") or smart
+    return {"extraction": fast, "classification": smart, "answer": smart}
 
 
 def bare_model(model: str) -> str:
