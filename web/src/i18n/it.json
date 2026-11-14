@@ -564,7 +564,8 @@
       "emptyOpenT": "Nessuna domanda aperta",
       "emptyOpenS": "Le domande compaiono quando le fonti lasciano qualcosa senza risposta o danno valori diversi.",
       "emptyClosedT": "Ancora nessuna domanda chiusa",
-      "emptyClosedS": "Le domande chiuse conservano la risposta e chi l'ha data."
+      "emptyClosedS": "Le domande chiuse conservano la risposta e chi l'ha data.",
+      "noteRequired": "Aggiungi una risposta o una nota."
     }
   },
   "ask": {

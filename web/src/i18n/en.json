@@ -564,7 +564,8 @@
       "emptyOpenT": "No open questions",
       "emptyOpenS": "Questions appear when sources leave something unanswered or give competing values.",
       "emptyClosedT": "No closed questions yet",
-      "emptyClosedS": "Closed questions keep the answer and who gave it."
+      "emptyClosedS": "Closed questions keep the answer and who gave it.",
+      "noteRequired": "Add an answer or a note."
     }
   },
   "ask": {

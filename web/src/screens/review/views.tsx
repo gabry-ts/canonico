@@ -77,6 +77,7 @@ export function ReasonDialog({
   onSubmit,
   extra,
   required = true,
+  requiredMsg,
 }: {
   title: ReactNode
   sub?: ReactNode
@@ -87,6 +88,7 @@ export function ReasonDialog({
   onSubmit: (reason: string) => Promise<void>
   extra?: ReactNode
   required?: boolean
+  requiredMsg?: string
 }) {
   const { t } = useI18n()
   const [reason, setReason] = useState('')
@@ -123,7 +125,7 @@ export function ReasonDialog({
         {label}
       </label>
       <textarea id="rvReason" className={'input ' + (err ? 'invalid' : '')} value={reason} placeholder={placeholder} onChange={(e) => { setReason(e.target.value); setErr(false) }} />
-      {err && <div className="mt-1 text-[12.5px]" style={{ color: 'hsl(var(--destructive))' }}>{t('review.reasonRequired')}</div>}
+      {err && <div className="mt-1 text-[12.5px]" style={{ color: 'hsl(var(--destructive))' }}>{requiredMsg ?? t('review.reasonRequired')}</div>}
     </Dialog>
   )
 }

@@ -57,6 +57,7 @@ function CloseDialog({ q, onClose, onDone }: { q: OQ; onClose: () => void; onDon
       placeholder={t('review.oq.notePh')}
       confirm={t('review.oq.closeConfirm')}
       required={!pick}
+      requiredMsg={t('review.oq.noteRequired')}
       extra={<Candidates q={q} value={pick} onChange={setPick} />}
       onClose={onClose}
       onSubmit={async (note) => {
