@@ -12,6 +12,7 @@ globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => api.handle
 const client = await import('../src/api/client')
 const i18n = await import('../src/i18n/core')
 const toasts = await import('../src/ui/toastStore')
+const reveal = await import('../src/lib/revealDelay')
 
 /** jsdom has no matchMedia. `setSystemDark(true)` in a test flips the answer and notifies listeners. */
 type MqListener = (e: { matches: boolean }) => void
@@ -41,6 +42,7 @@ function installBrowserStubs() {
 }
 
 beforeEach(() => {
+  reveal.revealConfig.enabled = false
   installBrowserStubs()
 })
 

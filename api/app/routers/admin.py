@@ -25,11 +25,12 @@ def get_config():
 
 
 @router.patch("/config", operation_id="patchConfig", status_code=200, response_model=Config)
-def patch_config(body: ConfigPatch):
+def patch_config(body: ConfigPatch, demo_actor: str | None = access.Actor):
     changes = body.model_dump(exclude_unset=True, exclude_none=True)
     if not changes:
         raise ApiError(422, "Provide at least one setting to change.")
     with STORE.write() as state:
+        access.allow_role(state, demo_actor, "admin")
         models = changes.pop("models", None)
         if models:
             state["config"]["models"].update(models)
@@ -68,11 +69,12 @@ def export_memory(project_id: str | None = None):
 
 
 @router.post("/import", operation_id="importMemory", status_code=200, response_model=dict[str, int])
-def import_memory(body: ExportBundle, mode: Literal["replace", "merge"] = "replace"):
+def import_memory(body: ExportBundle, mode: Literal["replace", "merge"] = "replace", demo_actor: str | None = access.Actor):
     if body.version.split(".")[0] != settings.VERSION.split(".")[0]:
         raise ApiError(422, f"version: bundle version {body.version} is not compatible with {settings.VERSION}.")
     bundle = dump(ExportBundle, body.model_dump(mode="json", by_alias=True))
     with STORE.write() as state:
+        access.allow_role(state, demo_actor, "admin")
         old_facts, old_topics = state["facts"], state["topics"]
         if mode == "replace":
             state["documents"], state["facts"], state["topics"] = {}, {}, {}

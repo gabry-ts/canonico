@@ -3,69 +3,506 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Canonico</title>
+<title>Canonico — pitch</title>
 <style>
-:root{--ink:#18181B;--paper:#FFFFFF;--surface:#F4F4F5;--muted:#64748B;--line:#E4E4E7;--accent:#2563EB;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#F4F4F5;--paper:#111113;--surface:#1C1C1F;--muted:#A1A1AA;--line:#2A2A2E;--accent:#60A5FA;color-scheme:dark}}
-:root[data-theme="dark"]{--ink:#F4F4F5;--paper:#111113;--surface:#1C1C1F;--muted:#A1A1AA;--line:#2A2A2E;--accent:#60A5FA;color-scheme:dark}
+:root{
+  color-scheme:light;
+  --background:0 0% 100%;--foreground:240 10% 4%;--card:0 0% 100%;--muted:240 5% 96%;--muted-foreground:240 4% 44%;
+  --accent:240 5% 94.5%;--border:240 6% 90%;--sidebar:240 5% 98%;
+  --primary:221 83% 53%;--primary-soft:217 100% 97%;--primary-text:221 83% 45%;
+  --destructive:0 72% 48%;--warning:38 92% 50%;--warning-soft:45 100% 95%;--warning-text:30 85% 30%;
+  --open:262 83% 58%;--open-soft:260 100% 97.5%;--open-text:263 60% 44%;--success:152 55% 38%;
+}
+@media (prefers-color-scheme:dark){:root{
+  color-scheme:dark;
+  --background:240 6% 6%;--foreground:0 0% 96%;--card:240 5% 8.5%;--muted:240 4% 13%;--muted-foreground:240 5% 64%;
+  --accent:240 4% 15%;--border:240 4% 16%;--sidebar:240 6% 7.5%;
+  --primary:221 83% 55%;--primary-soft:222 45% 14%;--primary-text:213 94% 70%;
+  --destructive:0 72% 58%;--warning:38 92% 55%;--warning-soft:36 55% 11%;--warning-text:43 96% 64%;
+  --open:263 80% 68%;--open-soft:263 35% 14%;--open-text:263 90% 78%;--success:152 50% 50%;
+}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 "Inter","Geist",system-ui,-apple-system,"Segoe UI",sans-serif;text-align:left}
-main{max-width:720px;margin:0 auto;padding:48px 16px 64px}
-h1{font-size:2.2rem;line-height:1.15;margin:0 0 8px;letter-spacing:-0.02em}
-.lede{font-size:1.15rem;color:var(--muted);margin:0 0 32px}
-h2{font-size:1.05rem;margin:40px 0 8px;display:flex;gap:10px;align-items:baseline}
-h2 span{color:var(--accent);font-variant-numeric:tabular-nums;font-weight:600}
-p{margin:0 0 12px}
-a{color:var(--accent)}
-.links{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 8px}
-.links a{display:inline-block;padding:8px 14px;border:1px solid var(--line);border-radius:8px;text-decoration:none;background:var(--surface)}
-ol{padding-left:22px;margin:0 0 12px}
-li{margin:0 0 6px}
-.num{background:var(--surface);border-left:3px solid var(--accent);padding:16px 18px;border-radius:6px;margin:8px 0 12px}
-.num strong{color:var(--accent);font-size:1.6rem;font-variant-numeric:tabular-nums}
-.small{font-size:.9rem;color:var(--muted)}
-footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line)}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));
+  font:15px/1.6 "Geist",system-ui,-apple-system,"Segoe UI",sans-serif}
+.mono,code,pre{font-family:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace}
+code{font-size:.9em;background:hsl(var(--muted));border:1px solid hsl(var(--border));border-radius:6px;padding:1px 5px}
+a{color:hsl(var(--primary-text));text-decoration:none}
+a:hover{text-decoration:underline}
+.top{border-bottom:1px solid hsl(var(--border));background:hsl(var(--sidebar))}
+.top .in{max-width:900px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{width:26px;height:26px;border-radius:8px;background:hsl(var(--primary));color:#fff;display:grid;place-items:center;font-weight:600;font-size:14px}
+.brand{font-weight:600}
+.top .meta{color:hsl(var(--muted-foreground));font-size:13px;margin-left:auto}
+main{max-width:900px;margin:0 auto;padding:28px 16px 64px}
+h1{font-size:30px;line-height:1.2;letter-spacing:-.02em;margin:0 0 12px;font-weight:600}
+h2{font-size:18px;letter-spacing:-.01em;margin:0 0 10px;font-weight:600;display:flex;align-items:center;gap:10px}
+h2 .n{font:500 12px "Geist Mono",ui-monospace,monospace;color:hsl(var(--muted-foreground));border:1px solid hsl(var(--border));border-radius:6px;padding:1px 6px}
+p{margin:0 0 10px}
+.lead{font-size:17px;color:hsl(var(--foreground))}
+.muted{color:hsl(var(--muted-foreground))}
+.small{font-size:13px}
+.card{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:12px;padding:20px;margin:16px 0}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 4px}
+.btn{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:8px 14px;font-weight:500;font-size:14px;border:1px solid hsl(var(--border));color:hsl(var(--foreground));background:hsl(var(--card))}
+.btn.primary{background:hsl(var(--primary));border-color:hsl(var(--primary));color:#fff}
+.btn:hover{text-decoration:none;filter:brightness(1.05)}
+.badge{display:inline-block;font:500 11px/1.6 "Geist Mono",ui-monospace,monospace;letter-spacing:.03em;text-transform:uppercase;border-radius:6px;padding:0 6px;border:1px solid transparent;white-space:nowrap}
+.b-bind{background:hsl(var(--primary-soft));color:hsl(var(--primary-text));border-color:hsl(var(--primary)/.35)}
+.b-conf{background:hsl(var(--warning-soft));color:hsl(var(--warning-text));border-color:hsl(var(--warning)/.4)}
+.b-sup{background:hsl(var(--muted));color:hsl(var(--muted-foreground));border-color:hsl(var(--border))}
+.b-open{background:hsl(var(--open-soft));color:hsl(var(--open-text));border-color:hsl(var(--open)/.35)}
+.b-ok{color:hsl(var(--success));border-color:hsl(var(--success)/.4)}
+.b-sim{color:hsl(var(--muted-foreground));border-color:hsl(var(--border))}
+.tag{font:12px "Geist Mono",ui-monospace,monospace;color:hsl(var(--muted-foreground))}
+/* demo mock */
+.chat{display:grid;gap:12px}
+.q{justify-self:end;background:hsl(var(--primary));color:#fff;border-radius:12px 12px 4px 12px;padding:8px 12px;font-size:14px;max-width:85%}
+.a{border:1px solid hsl(var(--border));border-radius:12px;padding:14px;background:hsl(var(--background))}
+.fact{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline;padding:6px 0}
+.fact+.fact{border-top:1px dashed hsl(var(--border))}
+.fact .v{font-weight:600}
+.fact .src{grid-column:2;font-size:13px;color:hsl(var(--muted-foreground))}
+.strike{text-decoration:line-through;color:hsl(var(--muted-foreground))}
+.step{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:hsl(var(--muted-foreground));padding:2px 4px}
+.step .dot{flex:none;width:20px;height:20px;border-radius:50%;background:hsl(var(--accent));color:hsl(var(--foreground));display:grid;place-items:center;font:500 11px "Geist Mono",monospace;margin-top:1px}
+.changed{margin-top:8px;font-size:13px;border-left:3px solid hsl(var(--primary));padding:4px 10px;background:hsl(var(--primary-soft));border-radius:0 6px 6px 0}
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;font:12px "Geist Mono",monospace}
+.chain span.c{border:1px solid hsl(var(--border));border-radius:6px;padding:1px 6px;color:hsl(var(--muted-foreground))}
+.chain span.c.bind{border-color:hsl(var(--primary)/.5);color:hsl(var(--primary-text));background:hsl(var(--primary-soft))}
+.chain span.c.conf{border-color:hsl(var(--warning)/.5);color:hsl(var(--warning-text));background:hsl(var(--warning-soft))}
+pre.flow{margin:0;font-size:12.5px;line-height:1.55;overflow-x:auto;color:hsl(var(--foreground))}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid hsl(var(--border))}
+th{font-weight:500;color:hsl(var(--muted-foreground));font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+tr:last-child td{border-bottom:0}
+.tw{overflow-x:auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.kpi{border:1px solid hsl(var(--border));border-radius:12px;padding:12px 14px;background:hsl(var(--card))}
+.kpi .l{font-size:12px;color:hsl(var(--muted-foreground))}
+.kpi .v{font-size:22px;font-weight:600;letter-spacing:-.02em}
+.kpi .v.blue{color:hsl(var(--primary-text))}
+.kpi .s{font-size:12px;color:hsl(var(--muted-foreground))}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){h1{font-size:24px}.two{grid-template-columns:1fr}.card{padding:16px}.top .meta{margin-left:0}}
+footer{max-width:900px;margin:0 auto;padding:0 16px 40px;font-size:13px;color:hsl(var(--muted-foreground))}
+
+/* flow map */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:16px 0 0;counter-reset:st}
+.st{position:relative;border:1px solid hsl(var(--border));background:hsl(var(--background));padding:16px 14px 14px;border-radius:0}
+.st:first-child{border-radius:12px 0 0 12px}
+.st:last-child{border-radius:0 12px 12px 0}
+.st+.st{border-left:0}
+.st+.st::before{content:"→";position:absolute;left:-11px;top:16px;width:20px;height:20px;border-radius:50%;background:hsl(var(--card));border:1px solid hsl(var(--border));display:grid;place-items:center;font-size:12px;color:hsl(var(--muted-foreground));z-index:1}
+.st .k{font:500 11px "Geist Mono",monospace;color:hsl(var(--muted-foreground))}
+.st h4{margin:2px 0 8px;font-size:16px;font-weight:600}
+.st p{font-size:13.5px;margin:0 0 10px;color:hsl(var(--foreground))}
+.st .rule{font-size:12.5px;color:hsl(var(--muted-foreground));border-top:1px dashed hsl(var(--border));padding-top:8px;margin:0}
+.who{display:inline-block;font:500 10.5px/1.7 "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.04em;border-radius:6px;padding:0 6px;margin:0 4px 8px 0;border:1px solid}
+.who.m{background:hsl(var(--open-soft));color:hsl(var(--open-text));border-color:hsl(var(--open)/.35)}
+.who.c{background:hsl(var(--muted));color:hsl(var(--muted-foreground));border-color:hsl(var(--border))}
+.who.p{background:hsl(var(--primary-soft));color:hsl(var(--primary-text));border-color:hsl(var(--primary)/.35)}
+.loopbar{border:1px solid hsl(var(--primary)/.35);border-top:0;border-radius:0 0 12px 12px;background:hsl(var(--primary-soft));color:hsl(var(--primary-text));font-size:13px;padding:8px 14px;margin:0 0 18px;text-align:right}
+.tl{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 4px;padding-top:18px}
+.tl::before{content:"";position:absolute;left:6px;right:6px;top:24px;height:2px;background:hsl(var(--border))}
+.ev{position:relative;font-size:13px}
+.ev .dot{width:14px;height:14px;border-radius:50%;border:2px solid hsl(var(--border));background:hsl(var(--card));position:relative;z-index:1;margin-bottom:8px}
+.ev .val{font-weight:600;font-size:15px}
+.ev .src{color:hsl(var(--muted-foreground));font-size:12.5px}
+.ev.old .val{text-decoration:line-through;color:hsl(var(--muted-foreground));font-weight:500}
+.ev.stale .dot{border-color:hsl(var(--warning));background:hsl(var(--warning-soft))}
+.ev.stale .val{color:hsl(var(--warning-text))}
+.ev.bind .dot{border-color:hsl(var(--primary));background:hsl(var(--primary))}
+.ev.bind .val{color:hsl(var(--primary-text))}
+.ev.next .dot{border-style:dashed;border-color:hsl(var(--primary))}
+.ev.next{opacity:.8}
+@media(max-width:720px){
+ .steps{grid-template-columns:1fr}
+ .st,.st:first-child,.st:last-child{border-radius:0}
+ .st:first-child{border-radius:12px 12px 0 0}
+ .st+.st{border-left:1px solid hsl(var(--border));border-top:0}
+ .st+.st::before{content:"↓";left:14px;top:-11px}
+ .tl{grid-template-columns:1fr 1fr}
+ .tl::before{display:none}
+}
+.deep{display:grid;gap:10px;margin:18px 0 14px}
+.dp{border:1px solid hsl(var(--border));border-radius:12px;padding:14px 16px;background:hsl(var(--background))}
+.dp h4{margin:0 0 8px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dp h4 .k{font:500 11px "Geist Mono",monospace;color:hsl(var(--muted-foreground));border:1px solid hsl(var(--border));border-radius:6px;padding:0 6px}
+.dp h4 .who{margin:0}
+.dp p{font-size:14px;margin:0 0 8px}
+.dp p:last-child{margin-bottom:0}
+.dp .ex{font-size:13px;color:hsl(var(--muted-foreground));border-left:3px solid hsl(var(--border));padding-left:10px}
+.archwrap{overflow-x:auto;margin:14px 0 6px;border:1px solid hsl(var(--border));border-radius:12px;background:hsl(var(--background));padding:10px}
+.arch{display:block;width:100%;min-width:760px;height:auto;font-family:"Geist",system-ui,sans-serif}
+.arch .ab{stroke-width:1;fill:hsl(var(--card));stroke:hsl(var(--border))}
+.arch .ab.mod{fill:hsl(var(--open-soft));stroke:hsl(var(--open)/.5)}
+.arch .ab.cod{fill:hsl(var(--muted));stroke:hsl(var(--border))}
+.arch .ab.mix{fill:hsl(var(--muted));stroke:hsl(var(--open)/.5);stroke-dasharray:4 3}
+.arch .ab.mem{fill:hsl(var(--success)/.12);stroke:hsl(var(--success)/.6)}
+.arch .ab.bnd{fill:hsl(var(--primary-soft));stroke:hsl(var(--primary)/.55)}
+.arch .ab.stl{fill:hsl(var(--warning-soft));stroke:hsl(var(--warning)/.6)}
+.arch .ab.per{fill:hsl(var(--primary-soft));stroke:hsl(var(--primary));stroke-width:1.5}
+.arch .ab.grd{fill:none;stroke:hsl(var(--border));stroke-dasharray:4 3}
+.arch .ax{fill:hsl(var(--foreground))}
+.arch .at{font:600 9.5px "Geist Mono",ui-monospace,monospace;letter-spacing:.04em;fill:hsl(var(--muted-foreground))}
+.arch .modt{fill:hsl(var(--open-text))}.arch .bndt,.arch .pert{fill:hsl(var(--primary-text))}.arch .stlt{fill:hsl(var(--warning-text))}.arch .memt{fill:hsl(var(--success))}
+.arch .ah{font:600 12px "Geist Mono",ui-monospace,monospace;letter-spacing:.06em;fill:hsl(var(--foreground))}
+.arch .al{font-size:10.5px;fill:hsl(var(--muted-foreground))}
+.arch .aa{fill:none;stroke:hsl(var(--muted-foreground));stroke-width:1.3}
+.arch .aa.blue{stroke:hsl(var(--primary));stroke-width:1.8}
+.arch .amk{fill:hsl(var(--muted-foreground))}.arch .amkb{fill:hsl(var(--primary))}
+.arch .sep{stroke:hsl(var(--border));stroke-dasharray:3 4}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:hsl(var(--muted-foreground))}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid hsl(var(--border))}
+.legend .lm::before{background:hsl(var(--open-soft));border-color:hsl(var(--open)/.5)}
+.legend .lc::before{background:hsl(var(--muted))}
+.legend .lb::before{background:hsl(var(--primary-soft));border-color:hsl(var(--primary)/.55)}
+.legend .ls::before{background:hsl(var(--warning-soft));border-color:hsl(var(--warning)/.6)}
 </style>
 </head>
 <body>
+
+<div class="top"><div class="in">
+  <div class="logo">C</div><span class="brand">Canonico</span>
+  <span class="badge b-open">track 3b</span>
+  <span class="meta">Making memory visible to people · KVA hackathon · Turin, 14 Nov 2026</span>
+</div></div>
+
 <main>
-<h1>Canonico</h1>
-<p class="lede">Giulia runs operations. She knows onboarding takes three to four weeks, and the company AI keeps telling new hires four.</p>
 
-<h2><span>01</span>Monday morning</h2>
-<p>A new hire asks how long onboarding takes. The AI says four weeks. The final report of 28 November 2025 says three to four. To fix it today, Giulia opens a ticket and waits for an engineer.</p>
+<h1>Canonico shows the people who know the facts what the company AI believes, where each belief came from, and lets them replace it. All tracked.</h1>
+<p class="lead">When they retire a wrong fact, the AI's next answer changes.</p>
 
-<h2><span>02</span>What Canonico does</h2>
-<p>It shows what the AI believes, where it came from and what it replaced, and lets the person who knows the facts retire the wrong one. The next answer changes.</p>
-
-<h2><span>03</span>Live, two minutes</h2>
-<ol>
-<li>We ask "How long does onboarding take?" The AI says four weeks. Wrong.</li>
-<li>We open what the AI believes. Three to four weeks is binding, quoted from the final report. Under it sit the four versions it replaced, and the old "4 weeks" still active.</li>
-<li>Giulia retires "4 weeks" and writes why.</li>
-<li>We ask again. Three to four weeks, and nobody opened a ticket.</li>
-</ol>
-<p>When a client email later sets a new target, Canonico reads it and updates the memory itself.</p>
-
-<h2><span>04</span>The one number</h2>
-<div class="num"><strong>3 of 5</strong> against <strong>0 of 5</strong></div>
-<p>We asked five questions about decisions that changed over time, on KVA's ClearPath corpus. Canonico found the binding version three times, with a model routing each question to its topic. Plain retrieval found it zero times. It is a first test on five queries.</p>
-
-<h2><span>05</span>Who pays</h2>
-<p>Companies rolling out an internal AI assistant. A paid pilot on one process costs €6,000, then a licence of €15,000 a year. Our published model, all estimates: €192,000 run-rate in year two, €9,300 to win a customer, payback in 11.2 months.</p>
-
-<h2><span>06</span>Next</h2>
-<p>A first paid pilot on one process. If you know a company rolling out an internal assistant, introduce us.</p>
-
-<footer class="small">
-<div class="links">
-<a href="https://canonico.magikarp.uk">Live demo</a>
-<a href="https://github.com/gabry-ts/canonico">Code on GitHub</a>
+<div class="cta">
+  <a class="btn primary" href="https://canonico.magikarp.uk/">Open the live demo →</a>
+  <a class="btn" href="https://github.com/gabry-ts/canonico">Public repo</a>
 </div>
-<p><strong>AI tools used.</strong> Built with Claude Code, Anthropic's coding agent. Inside the product, through the Anthropic API: Claude Haiku 5.5 (<code>claude-haiku-5-5</code>) extracts facts from documents and routes each question to a topic, and Claude Sonnet 5.5 (<code>claude-sonnet-5-5</code>) groups facts into topics and links the versions of a decision. Model calls during the build and the tests ran on our own Anthropic API key, not on the team key. The live demo also runs on that key for now and switches to the team's Vercel AI Gateway key by configuration (<code>LLM_PROVIDER=gateway</code>, models <code>anthropic/claude-haiku-5.5</code> and <code>anthropic/claude-sonnet-5.5</code>); the demo path itself needs no model call. For the idea video, ElevenLabs text-to-speech (eleven_v4) generated the voice-over. Outside the product, Whisper on Groq to transcribe videos for our notes.</p>
-<p><strong>Prior work.</strong> The night before, a team member built an exploratory prototype in another domain. We declared it to the organisers. No code from it is reused here.</p>
-<p><strong>Data.</strong> OIDA Benchmark Corpora (KVA) by Federico Bottino, Carlo Ferrero, Nicholas Dosio and Pierfrancesco Beneventano, ClearPath corpus, licensed CC BY 4.0. No real personal data.</p>
-</footer>
+<p class="small muted">canonico.magikarp.uk: no password needed, click the demo-account button on the login page.</p>
+
+<!-- 1 -->
+<section class="card">
+<h2><span class="n">01</span>The problem</h2>
+<p>A new consultant asks the company AI how long client onboarding takes. It says four weeks, which is wrong. The target changed five times across meetings and reports, and the final report of 28 November 2025 says three to four weeks. The old figure from the final presentation is still in memory, and still active.</p>
+<p>Today she opens a ticket and waits for an engineer to read the logs and the vector store <span class="tag">[not verified]</span>. Giulia, the operations lead, would know the right answer in ten seconds, but she cannot see what the AI believes, and she cannot change it.</p>
+<p class="muted small">56% of the 48,000 people surveyed say they made mistakes at work because of AI <span class="tag">[verified: KPMG and University of Melbourne, 2025]</span>.</p>
+</section>
+
+<!-- 2 -->
+<section class="card">
+<h2><span class="n">02</span>What you will see live</h2>
+<div class="two">
+  <div class="chat">
+    <div class="tag">before</div>
+    <div class="q">How long does onboarding take?</div>
+    <div class="a">
+      <div class="fact"><span class="badge b-bind">binding</span><span class="v">3–4 weeks</span><span class="src">final report · 28 Nov 2025</span></div>
+      <div class="fact"><span class="badge b-conf">conflict</span><span class="v">4 weeks</span><span class="src">final presentation · replaced by the final report, but still active</span></div>
+      <div class="tag" style="margin-top:8px">History: the target changed 5 times, each version shown with its document and date</div>
+    </div>
+  </div>
+  <div class="chat">
+    <div class="tag">after Giulia retires the old "4 weeks"</div>
+    <div class="q">How long does onboarding take?</div>
+    <div class="a">
+      <div class="fact"><span class="badge b-bind">binding</span><span class="v">3–4 weeks</span><span class="src">final report · 28 Nov 2025</span></div>
+      <div class="fact"><span class="badge b-sup">retired</span><span class="v strike">4 weeks</span><span class="src">final presentation · retired by Giulia: "replaced by the final report"</span></div>
+      <div class="changed">No conflict. The answer changed because Giulia retired the old figure.</div>
+    </div>
+  </div>
+</div>
+<div style="margin-top:14px">
+  <div class="step"><span class="dot">1</span>Start from Monday's wrong answer, "Four weeks" (replayed as fixed text). Ask the question and see the binding answer, its source and date, and the stale fact still active.</div>
+  <div class="step"><span class="dot">2</span>Open the history: every version as a sentence quoted from a dated document.</div>
+  <div class="step"><span class="dot">3</span>Retire the old "4 weeks" with a reason. Who did it, when and why are recorded.</div>
+  <div class="step"><span class="dot">4</span>Ask the same question again. The answer has changed, and it says why.</div>
+</div>
+<p class="small muted" style="margin-top:10px">The retire is written into the memory the agent answers from, so what Giulia sees and what the AI says cannot drift apart.</p>
+</section>
+
+<!-- 3 -->
+<section class="card">
+<h2><span class="n">03</span>How it works</h2>
+<p>The model reads, the code decides, and the log remembers.</p>
+<div class="tag" style="margin-top:6px">Architecture</div>
+<div class="archwrap"><svg class="arch" viewBox="0 0 1000 660" role="img" aria-label="Canonico architecture">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="amk"/></marker>
+<marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="amkb"/></marker></defs>
+<text class="ah" x="10" y="18">SOURCES</text>
+<text class="ah" x="196" y="18">INGESTION</text>
+<text class="ah" x="580" y="18">MEMORY</text>
+<text class="ah" x="786" y="18">QUESTION → ANSWER</text>
+<rect class="ab src" x="10" y="34" width="156" height="54" rx="8"/>
+<text class="ax" x="19" y="66.7" font-size="11">Project documents</text>
+<rect class="ab src" x="10" y="100" width="156" height="54" rx="8"/>
+<text class="ax" x="19" y="125.5" font-size="11">Document library, one</text>
+<text class="ax" x="19" y="140.0" font-size="11">file per version</text>
+<rect class="ab src" x="10" y="166" width="156" height="54" rx="8"/>
+<text class="ax" x="19" y="191.5" font-size="11">Mailbox: IMAP or</text>
+<text class="ax" x="19" y="206.0" font-size="11">inbound webhook</text>
+<rect class="ab src" x="10" y="232" width="156" height="54" rx="8"/>
+<text class="ax" x="19" y="257.5" font-size="11">Webhook items:</text>
+<text class="ax" x="19" y="272.0" font-size="11">meeting, note, ticket</text>
+<rect class="ab src" x="10" y="298" width="156" height="54" rx="8"/>
+<text class="ax" x="19" y="323.5" font-size="11">Uploads and public</text>
+<text class="ax" x="19" y="338.0" font-size="11">GitHub repos</text>
+<text class="al" x="196" y="42" text-anchor="start">A · first load of the corpus, in batch</text>
+<rect class="ab mod" x="196" y="50" width="170" height="80" rx="8"/>
+<text class="at modt" x="205" y="69">MODEL · HAIKU 5.5</text>
+<text class="ax" x="205" y="95.5" font-size="11">extracts 4–14 facts per</text>
+<text class="ax" x="205" y="110.0" font-size="11">document as strict JSON</text>
+<rect class="ab cod" x="388" y="50" width="170" height="80" rx="8"/>
+<text class="at codt" x="397" y="69">CODE</text>
+<text class="ax" x="397" y="88.2" font-size="11">keeps a fact only if its</text>
+<text class="ax" x="397" y="102.7" font-size="11">quote is verbatim in the</text>
+<text class="ax" x="397" y="117.3" font-size="11">document</text>
+<rect class="ab mod" x="196" y="150" width="170" height="92" rx="8"/>
+<text class="at modt" x="205" y="169">MODEL · SONNET 5.5</text>
+<text class="ax" x="205" y="194.2" font-size="11">groups facts into topics</text>
+<text class="ax" x="205" y="208.7" font-size="11">and proposes replace</text>
+<text class="ax" x="205" y="223.3" font-size="11">links and conflicts</text>
+<rect class="ab cod" x="388" y="150" width="170" height="92" rx="8"/>
+<text class="at codt" x="397" y="169">CODE</text>
+<text class="ax" x="397" y="194.2" font-size="11">checks every link: newer</text>
+<text class="ax" x="397" y="208.7" font-size="11">replaces older, one</text>
+<text class="ax" x="397" y="223.3" font-size="11">successor, no cycles</text>
+<path class="aa " d="M366,90 L386,90" marker-end="url(#ah)"/>
+<path class="aa " d="M473,130 L473,140 L281,140 L281,148" marker-end="url(#ah)"/>
+<path class="aa " d="M366,196 L386,196" marker-end="url(#ah)"/>
+<text class="al" x="196" y="270" text-anchor="start">B · live: email, new version, webhook, upload</text>
+<rect class="ab cod" x="196" y="278" width="170" height="80" rx="8"/>
+<text class="at codt" x="205" y="297">CODE · RULE FIRST</text>
+<text class="ax" x="205" y="323.5" font-size="11">a sentence that states a</text>
+<text class="ax" x="205" y="338.0" font-size="11">value on a known topic</text>
+<rect class="ab mod" x="388" y="278" width="170" height="80" rx="8"/>
+<text class="at modt" x="397" y="297">MODEL · ONLY IF NEEDED</text>
+<text class="ax" x="397" y="323.5" font-size="11">reads the item when the</text>
+<text class="ax" x="397" y="338.0" font-size="11">rule finds nothing</text>
+<rect class="ab cod" x="196" y="374" width="362" height="62" rx="8"/>
+<text class="at codt" x="205" y="393">CODE</text>
+<text class="ax" x="205" y="410.5" font-size="11">new value → replaces the binding fact (one audit</text>
+<text class="ax" x="205" y="425.0" font-size="11">event) · same value → confirms it</text>
+<path class="aa " d="M366,318 L386,318" marker-end="url(#ah)"/>
+<path class="aa " d="M281,358 L281,372" marker-end="url(#ah)"/>
+<path class="aa " d="M473,358 L473,372" marker-end="url(#ah)"/>
+<path class="aa" d="M166,61 L180,61 L180,325"/>
+<path class="aa" d="M166,127 L180,127"/>
+<path class="aa" d="M166,193 L180,193"/>
+<path class="aa" d="M166,259 L180,259"/>
+<path class="aa" d="M166,325 L180,325"/>
+<path class="aa " d="M180,90 L194,90" marker-end="url(#ah)"/>
+<path class="aa " d="M180,318 L194,318" marker-end="url(#ah)"/>
+<rect class="ab mem" x="580" y="34" width="180" height="128" rx="8"/>
+<text class="at memt" x="589" y="53">MEMORY</text>
+<text class="ax" x="589" y="74.4" font-size="11">facts, topics, replace</text>
+<text class="ax" x="589" y="89.0" font-size="11">links, conflicts, open</text>
+<text class="ax" x="589" y="103.5" font-size="11">questions</text>
+<text class="ax" x="589" y="118.0" font-size="11">46 documents · 426 facts ·</text>
+<text class="ax" x="589" y="132.5" font-size="11">59 topics · 84 links · 21</text>
+<text class="ax" x="589" y="147.0" font-size="11">conflicts</text>
+<rect class="ab bnd" x="580" y="182" width="180" height="166" rx="8"/>
+<text class="at bndt" x="589" y="201">WHICH FACT BINDS · CODE</text>
+<text class="ax" x="589" y="234.2" font-size="11">one per topic</text>
+<text class="ax" x="589" y="248.7" font-size="11">1. a pinned active fact</text>
+<text class="ax" x="589" y="263.2" font-size="11">wins</text>
+<text class="ax" x="589" y="277.7" font-size="11">2. else the newest active</text>
+<text class="ax" x="589" y="292.3" font-size="11">decision or constraint</text>
+<text class="ax" x="589" y="306.8" font-size="11">3. a retired fact never</text>
+<text class="ax" x="589" y="321.3" font-size="11">binds</text>
+<path class="aa " d="M558,196 L570,196 L570,98 L578,98" marker-end="url(#ah)"/>
+<path class="aa " d="M558,405 L570,405 L570,130 L578,130" marker-end="url(#ah)"/>
+<path class="aa " d="M670,162 L670,180" marker-end="url(#ah)"/>
+<rect class="ab src" x="786" y="34" width="204" height="54" rx="8"/>
+<text class="ax" x="795" y="59.5" font-size="11">&quot;How long does onboarding</text>
+<text class="ax" x="795" y="74.0" font-size="11">take?&quot;</text>
+<rect class="ab mix" x="786" y="104" width="204" height="104" rx="8"/>
+<text class="at mixt" x="795" y="123">FIND THE TOPIC</text>
+<text class="ax" x="795" y="147.0" font-size="11">known phrasing (code), then</text>
+<text class="ax" x="795" y="161.5" font-size="11">Haiku router (model, 8 s</text>
+<text class="ax" x="795" y="176.0" font-size="11">timeout), then keywords</text>
+<text class="ax" x="795" y="190.5" font-size="11">(code)</text>
+<rect class="ab cod" x="786" y="224" width="204" height="132" rx="8"/>
+<text class="at codt" x="795" y="243">ANSWER · CODE, NO MODEL</text>
+<text class="ax" x="795" y="281.0" font-size="11">binding value, verbatim</text>
+<text class="ax" x="795" y="295.5" font-size="11">quote, source, date, replaced</text>
+<text class="ax" x="795" y="310.0" font-size="11">versions, conflicts, &quot;changed</text>
+<text class="ax" x="795" y="324.5" font-size="11">because…&quot; after a correction</text>
+<path class="aa " d="M888,88 L888,102" marker-end="url(#ah)"/>
+<path class="aa " d="M888,208 L888,222" marker-end="url(#ah)"/>
+<path class="aa blue" d="M760,265 L784,265" marker-end="url(#ahb)"/>
+<text class="al" x="786" y="376" text-anchor="start">three possible outcomes</text>
+<rect class="ab bnd" x="786" y="384" width="62" height="32" rx="8"/>
+<text class="ax" x="795" y="405.4" font-size="10">binding</text>
+<rect class="ab stl" x="854" y="384" width="82" height="32" rx="8"/>
+<text class="ax" x="863" y="405.4" font-size="10">contested</text>
+<rect class="ab src" x="942" y="384" width="48" height="32" rx="8"/>
+<text class="ax" x="951" y="405.4" font-size="10">none</text>
+<rect class="ab grd" x="196" y="452" width="362" height="54" rx="8"/>
+<text class="at grdt" x="205" y="471">GUARDRAILS ON EVERY MODEL CALL</text>
+<text class="ax" x="205" y="486.0" font-size="10">schema-bound JSON · disk cache · $2 cost cap · offline</text>
+<text class="ax" x="205" y="499.2" font-size="10">switch</text>
+<line class="sep" x1="10" y1="514" x2="990" y2="514"/>
+<text class="ah" x="10" y="538">PEOPLE CORRECT</text>
+<rect class="ab stl" x="10" y="550" width="170" height="76" rx="8"/>
+<text class="at stlt" x="19" y="569">MAINTENANCE QUEUE</text>
+<text class="ax" x="19" y="593.5" font-size="11">proposes retiring stale</text>
+<text class="ax" x="19" y="608.0" font-size="11">facts: approve or keep</text>
+<rect class="ab per" x="196" y="550" width="362" height="76" rx="8"/>
+<text class="at pert" x="205" y="569">GIULIA, OPERATIONS LEAD</text>
+<text class="ax" x="205" y="593.5" font-size="11">retire · restore · pin · correct · resolve a conflict</text>
+<text class="ax" x="205" y="608.0" font-size="11">· close an open question</text>
+<rect class="ab cod" x="580" y="550" width="180" height="76" rx="8"/>
+<text class="at codt" x="589" y="569">AUDIT · CODE</text>
+<text class="ax" x="589" y="593.5" font-size="11">who, when, why, before and</text>
+<text class="ax" x="589" y="608.0" font-size="11">after, with undo</text>
+<path class="aa " d="M180,588 L194,588" marker-end="url(#ah)"/>
+<path class="aa " d="M558,588 L578,588" marker-end="url(#ah)"/>
+<path class="aa blue" d="M670,550 L670,350" marker-end="url(#ahb)"/>
+<text class="al" x="680" y="470" text-anchor="start">memory changes,</text>
+<text class="al" x="680" y="483" text-anchor="start">so the next answer</text>
+<text class="al" x="680" y="496" text-anchor="start">changes too</text>
+<text class="al" x="10" y="650" text-anchor="start">Organisation → isolated projects → sources. Roles: viewer asks · editor retires, corrects, resolves · admin manages sources and members.</text>
+</svg></div>
+<div class="legend" style="margin:0 0 6px"><span class="lm">model reads</span><span class="lc">code decides</span><span class="lb">binding</span><span class="ls">still active or contested</span></div>
+
+<div class="steps">
+  <div class="st">
+    <div class="k">STEP 1</div><h4>Read</h4>
+    <span class="who m">model</span>
+    <p>Documents, emails and uploads come in. The model pulls out each fact as a sentence, with its source and date.</p>
+    <p class="rule">Code throws away any fact whose quote is not word for word in the document.</p>
+  </div>
+  <div class="st">
+    <div class="k">STEP 2</div><h4>Order</h4>
+    <span class="who m">model</span><span class="who c">code</span>
+    <p>The model suggests which fact replaces which. Code checks every link and sorts the versions by date.</p>
+    <p class="rule">One fact binds per topic: the pinned one, otherwise the newest active one. A retired fact never binds.</p>
+  </div>
+  <div class="st">
+    <div class="k">STEP 3</div><h4>Answer</h4>
+    <span class="who c">code only</span>
+    <p>Code builds the answer from the facts, with no model: the binding fact, its quote, source and date.</p>
+    <p class="rule">If two active facts disagree, the answer says so. If nothing is known, it says that too.</p>
+  </div>
+  <div class="st">
+    <div class="k">STEP 4</div><h4>Correct</h4>
+    <span class="who p">a person</span>
+    <p>Giulia retires, pins or corrects a fact, or settles a conflict.</p>
+    <p class="rule">Every action is logged with who, when and why, and can be undone.</p>
+  </div>
+</div>
+<div class="loopbar">↺ Step 4 feeds step 3: the next answer reads the corrected memory.</div>
+
+<div class="tag">Example: how long does onboarding take?</div>
+<div class="tl">
+  <div class="ev old"><div class="dot"></div><div class="val">4 earlier versions</div><div class="src">replaced, kept in the history</div></div>
+  <div class="ev stale"><div class="dot"></div><div class="val">4 weeks</div><div class="src">final presentation · 21 Nov 2025<br>replaced, but still active → Giulia retires it</div></div>
+  <div class="ev bind"><div class="dot"></div><div class="val">3–4 weeks</div><div class="src">final report · 28 Nov 2025<br>binding today</div></div>
+  <div class="ev next"><div class="dot"></div><div class="val">5 weeks</div><div class="src">if a client email or a new library version says so, it becomes binding</div></div>
+</div>
+<div class="deep">
+  <div class="dp">
+    <h4><span class="k">STEP 1</span>Read: from documents to facts <span class="who m">model</span><span class="who c">code</span></h4>
+    <p>Sources arrive through four doors: the project's documents, a versioned document library, a mailbox, and a webhook or upload for meeting notes and tickets. Each new item is read by Claude Haiku 5.5, which returns its facts as strict JSON. A fact is one sentence with a value, its type (a decision, a constraint, evidence, a hypothesis or an open question), the document it comes from, its date and the exact words it was taken from.</p>
+    <p>Then the code checks the model's work. If the quoted words are not found word for word in the document, the fact is discarded. The model cannot invent a source, and every fact on screen can be traced back to a sentence someone actually wrote.</p>
+    <p class="ex">In the example, the final presentation of 21 November yields "onboarding takes 4 weeks", and the final report of 28 November yields "3 to 4 weeks", each with its quote.</p>
+  </div>
+  <div class="dp">
+    <h4><span class="k">STEP 2</span>Order: which version holds now <span class="who m">model</span><span class="who c">code</span></h4>
+    <p>Claude Sonnet 5.5 groups the facts by topic, such as "onboarding time", and suggests which fact replaces which. These are only proposals. The code checks every link and puts the versions of a topic in date order, oldest first, so each topic becomes a history you can read.</p>
+    <p>The code then picks the one fact that binds for each topic. A fact that a person has pinned wins. Without a pin, the most recent active fact wins. A retired fact never binds. An old version that a newer one replaced stays in the history, struck through. If an old version was replaced but is still marked active, it goes to a maintenance queue so a person can retire it. When two sources state the same value, there is no conflict: the later one binds and the answer says the other one confirms it.</p>
+    <p class="ex">Onboarding has six versions. "3–4 weeks" from the final report binds. "4 weeks" from the final presentation was replaced but is still active, so it is flagged.</p>
+  </div>
+  <div class="dp">
+    <h4><span class="k">STEP 3</span>Answer: built by code, with its source <span class="who m">model</span><span class="who c">code</span></h4>
+    <p>A question is first matched to a topic. The code tries known phrasings first. If none fits, Claude Haiku 5.5 picks the topic from the list of topics, without seeing any document. If the model is slow or unavailable, the code falls back to keywords.</p>
+    <p>The answer itself is written by code from the facts, with no model. It gives the binding value with its quote, source and date. If two active facts disagree, the answer says the topic is contested and shows both. If the memory holds nothing on the question, it says so instead of guessing. When a person has corrected something, the answer adds "changed because…" with who did it and why.</p>
+    <p class="ex">Before the fix, the answer is "3–4 weeks", with a warning that "4 weeks" is still active in the memory.</p>
+  </div>
+  <div class="dp">
+    <h4><span class="k">STEP 4</span>Correct: the people who know the facts fix them <span class="who p">a person</span><span class="who c">code</span></h4>
+    <p>The operations lead opens a fact and sees its sentence, its source, its date and the versions it replaced. From there she can retire it, restore it, pin the right one, correct a value, settle a conflict, or decide what the maintenance queue proposes (approve the retirement or keep the fact). She never sees a log file, an embedding or a similarity score.</p>
+    <p>Every action is written to an audit trail with who, when and why, and it can be undone. The change goes into the same memory the answers are built from, so the next answer uses it immediately. Nothing has to be retrained or re-indexed.</p>
+    <p class="ex">Giulia retires "4 weeks" with the reason "replaced by the final report". The same question now gets "3–4 weeks" with no warning, and the answer says it changed because Giulia retired the old figure.</p>
+  </div>
+</div>
+
+<p>The answer never comes from a model. Each fact on screen is a sentence quoted from a dated document, with no embeddings and no similarity scores. A conflict and "no answer in memory" are outcomes the user sees. New sources keep arriving through uploads, inbound webhooks, a mailbox and new versions of library documents, and each one extends the chain instead of overwriting it.</p>
+<p class="muted small">The demo path makes no model calls and also runs offline, so the venue Wi-Fi cannot break the core flow.</p>
+</section>
+
+<!-- 4 -->
+<section class="card">
+<h2><span class="n">04</span>What is real and what is simulated</h2>
+<div class="tw"><table>
+<tr><th>Step</th><th>State</th><th>Notes</th></tr>
+<tr><td>Ingest sources</td><td><span class="badge b-ok">real</span></td><td>46 ClearPath documents, uploads, inbound webhooks, new document versions</td></tr>
+<tr><td>Extract facts</td><td><span class="badge b-ok">real</span></td><td>model extraction with a verbatim-quote check; one run cost $0.40, committed in the repo</td></tr>
+<tr><td>Versions and conflicts</td><td><span class="badge b-ok">real</span></td><td>model proposes the links, code checks and orders them; the two demo topics are curated by hand</td></tr>
+<tr><td>Memory interface</td><td><span class="badge b-ok">real</span></td><td>on the live API at canonico.magikarp.uk</td></tr>
+<tr><td>Retire and resolve</td><td><span class="badge b-ok">real</span></td><td>audit trail, undo, time-to-fix measured by the product</td></tr>
+<tr><td>Agent answer</td><td><span class="badge b-ok">real</span></td><td>same endpoint before and after the retire</td></tr>
+<tr><td>Monday's wrong answer ("Four weeks")</td><td><span class="badge b-sim">replayed</span></td><td>fixed text on the Ask screen that shows the answer the assistant gave on Monday; it is not generated live</td></tr>
+<tr><td>Document library, mailbox</td><td><span class="badge b-sim">simulated</span></td><td>local mock library, seeded IMAP inbox</td></tr>
+<tr><td>Members and roles</td><td><span class="badge b-sim">simulated</span></td><td>demo identity Giulia, roles checked on every write, no real authentication behind it</td></tr>
+</table></div>
+<p class="small muted" style="margin-top:10px">The data is synthetic: the ClearPath corpus of the OIDA Benchmark Corpora (CC BY 4.0). It holds no real personal data and nothing from any member's employer.</p>
+</section>
+
+<!-- 5 -->
+<section class="card">
+<h2><span class="n">05</span>Evidence</h2>
+<div class="kpis">
+  <div class="kpi"><div class="l">Binding version found, Canonico</div><div class="v blue">3 / 5</div><div class="s">evolving-decision questions</div></div>
+  <div class="kpi"><div class="l">Binding version found, plain BM25</div><div class="v">0 / 5</div><div class="s">same 46 documents</div></div>
+</div>
+<p>On the five benchmark questions where a decision changed over time, Canonico answers from the binding version 3 times out of 5. Plain retrieval over the same documents gets none.</p>
+<p class="small muted">The benchmark is the OIDA ClearPath set: 26 queries with graded judgments. The code is in <code>eval/</code>, and one command prints the score. Five questions are a small sample, since one question moves the number by 20 points. The weights were tuned on the same queries and there is no held-out set. Two of the five (q05, q06) still fail, and the repo says why.</p>
+<p><strong>Test with people outside the team.</strong> Three people who had never seen Canonico tried the live app today, and all three gave positive feedback <span class="tag">[declared]</span>. Three people are a first signal, not a measurement.</p>
+</section>
+
+<!-- 6 -->
+<section class="card">
+<h2><span class="n">06</span>Why us, why now</h2>
+<p>Mem0 raised $24M in October 2025 <span class="tag">[verified: mem0.ai]</span> and sells a memory layer to developers. Since April 2026 its open-source extraction only adds facts, so wrong and outdated ones pile up next to the right ones <span class="tag">[verified: GitHub mem0ai/mem0]</span>. Zep's Graphiti keeps facts with validity windows <span class="tag">[verified: GitHub getzep/graphiti]</span>. That is the right data model, but nobody outside engineering can open it and fix a fact. Letta's agents edit their own memory. Claude and ChatGPT let one person edit their own memory, with no sources and no view across the organisation <span class="tag">[verified: Claude release notes] [declared: openai.com]</span>.</p>
+<p>Canonico gives the organisation one view of what its AI believes, built for the people who know the facts, and a retire that provably changes the next answer. Summarising memory to save space destroyed 60% of stored facts in one 2026 preprint <span class="tag">[verified: arXiv 2603.17781]</span>. We keep every version with its source sentence instead.</p>
+</section>
+
+<!-- 7 -->
+<section class="card">
+<h2><span class="n">07</span>Adoption</h2>
+<p>A firm starts from the hosted link: it logs in, connects a project to its documents, a mailbox or a webhook, and the memory fills up. Forwarding an email or posting a meeting note to the project's webhook is enough to add a source. A firm that wants its data at home runs <code>docker compose up</code> from the public repo. Model calls go through one gateway key held on the server, with a spending cap on every run.</p>
+</section>
+
+<!-- 8 -->
+<section class="card">
+<h2><span class="n">08</span>Business</h2>
+<p>The first customers are Italian consulting firms with 10 or more people, about 505 firms <span class="tag">[verified: Assoconsult Osservatorio 2024-2025]</span>. Law firms follow on the same plans. The price is per organisation, on an annual contract, with any number of fact owners <span class="tag">[declared]</span>: Team at €490 a month, Business at €990 a month.</p>
+<div class="kpis">
+  <div class="kpi"><div class="l">Annual run-rate, month 12</div><div class="v">€70,800</div><div class="s">10 firms: 8 Team, 2 Business</div></div>
+  <div class="kpi"><div class="l">Blended CAC</div><div class="v">€4,800</div><div class="s">founder cost included</div></div>
+  <div class="kpi"><div class="l">CAC payback</div><div class="v blue">10.6 months</div><div class="s">economic model in Control8</div></div>
+</div>
+<div class="tw"><table>
+<tr><td>Channels</td><td>founder outbound, 8 calls a month, 8% convert; introductions from associations and IT integrators, 2 a month, 20% convert <span class="tag">[not verified]</span></td></tr>
+<tr><td>First buyer signals</td><td>two CEOs, one of them at a law firm, said today they intend to adopt Canonico <span class="tag">[declared]</span>; nothing is signed yet</td></tr>
+<tr><td>Cost to serve</td><td>$0.0087 per document, $0.00025 per routed question, measured today <span class="tag">[verified: repo data/seed/meta.json]</span></td></tr>
+</table></div>
+</section>
+
+<!-- 9 -->
+<section class="card">
+<h2><span class="n">09</span>Models and AI tools used</h2>
+<p><strong>Inside the product, through the Vercel AI Gateway:</strong> Claude Haiku 5.5 extracts facts and routes free questions to a topic, and Claude Sonnet 5.5 groups facts into topics and proposes which fact replaces which; code checks every proposal. Answers are composed by code, with no model. Build and test runs used our own Anthropic API key, not the team key.</p>
+<p><strong>Used to build it:</strong> Claude Code (Claude Opus 5.5) for the backend, the interface, the research, the economic model and this pitch.</p>
+</section>
+
+<!-- 10 -->
+<section class="card">
+<h2><span class="n">10</span>Next test</h2>
+<p>Next week we put Canonico in front of 5 operations leads at Italian consulting firms, each with one planted wrong fact. We continue if 4 of the 5 find and retire it alone in under 5 minutes and at least 2 accept a paid pilot at €490 a month. We stop if fewer than 3 manage it alone, or if nobody would pay.</p>
+</section>
+
 </main>
 </body>
 </html>

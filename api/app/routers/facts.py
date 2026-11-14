@@ -50,9 +50,10 @@ def list_facts(
 
 
 @router.post("/facts", operation_id="createFact", status_code=201, response_model=Fact)
-def create_fact(body: FactCreate):
+def create_fact(body: FactCreate, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
-        ops.require_topic(state, body.topic)
+        topic = ops.require_topic(state, body.topic)
+        access.allow(state, demo_actor, "correct_fact", topic.get("project_id"))
         if body.doc_id and body.doc_id not in state["documents"]:
             raise not_found(f"Document {body.doc_id}")
         fact = ops.create_fact(
@@ -150,18 +151,20 @@ def get_fact_history(fact_id: str):
 
 
 @router.post("/facts/{fact_id}/supersede", operation_id="supersedeFact", status_code=200, response_model=Fact)
-def supersede_fact(fact_id: str, body: SupersedeRequest):
+def supersede_fact(fact_id: str, body: SupersedeRequest, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         older = ops.get_fact(state, fact_id)
+        access.allow(state, demo_actor, "correct_fact", older.get("project_id"))
         newer = ops.get_fact(state, body.by_fact_id)
         ops.supersede(state, older, newer, body.reason, body.actor)
         return out(Fact, store.view(state, older))
 
 
 @router.delete("/facts/{fact_id}/supersedes", operation_id="deleteSupersedesLink", status_code=200, response_model=Fact)
-def delete_supersedes_link(fact_id: str, reason: str = Query(..., min_length=1), actor: str = Query(..., min_length=1)):
+def delete_supersedes_link(fact_id: str, reason: str = Query(..., min_length=1), actor: str = Query(..., min_length=1), demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         newer = ops.get_fact(state, fact_id)
+        access.allow(state, demo_actor, "correct_fact", newer.get("project_id"))
         if not newer.get("supersedes"):
             raise not_found(f"Supersedes link of fact {fact_id}")
         ops.unlink(state, newer, reason, actor)

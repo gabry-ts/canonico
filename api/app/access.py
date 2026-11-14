@@ -78,4 +78,14 @@ def allow(state: dict, actor: str | None, permission: str, project_id: str | Non
         raise ApiError(403, f"Role {role} lacks permission {permission}.", "forbidden")
 
 
+def allow_role(state: dict, actor: str | None, minimum: str, project_id: str | None = None) -> None:
+    """Raise 403 unless the demo actor has at least this role. For writes no single permission names (config, import, eval)."""
+    member = (find_member(state, actor) if actor else None) or default_member(state)
+    if member is None:
+        return
+    role, _ = project_role(state, member, project_id if project_id in state["projects"] else None)
+    if ROLE_ORDER.index(role) < ROLE_ORDER.index(minimum):
+        raise ApiError(403, f"Role {role} needs at least role {minimum}.", "forbidden")
+
+
 Actor = Header(None, alias="X-Demo-Actor")

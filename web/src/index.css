@@ -281,6 +281,8 @@
   @keyframes pop2 { from { opacity: 0; transform: translateY(-3px); } }
   @keyframes slide { from { opacity: .4; transform: translateX(24px); } }
   @keyframes slidel { from { opacity: .4; transform: translateX(-16px); } }
+  .typing-dot { width: 7px; height: 7px; border-radius: 999px; background: hsl(var(--muted-foreground)); animation: typing 1s ease-in-out infinite; }
+  @keyframes typing { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
   .fade-in { animation: fi .28s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes fi { from { opacity: 0; transform: translateY(4px); } }
   .tip { position: fixed; z-index: 80; pointer-events: none; padding: 5px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; background: hsl(var(--foreground)); color: hsl(var(--background)); white-space: nowrap; opacity: 0; transition: opacity .12s; }

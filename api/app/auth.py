@@ -1,11 +1,12 @@
 """Username and password sessions.
 
 A random token is handed to the client (HttpOnly cookie, or bearer for API clients) and only its
-SHA-256 is kept, in memory and in `sessions.json` next to the runtime state, so a restart or a
-redeploy keeps the sessions that have not expired. With CANONICO_AUTH_REQUIRED=true every request
-needs a session, except the health check, the sign-in endpoints, first-run setup and the webhooks
-(which check their own X-Canonico-Token). When a session is present its member is the actor of the
-request, whatever the demo header or the `actor` field of the body say.
+SHA-256 is kept, with the member, the creation time and the expiry, in memory and in their own file
+next to the runtime state (settings.sessions_file), so a restart or a redeploy keeps the sessions
+that have not expired and a demo reset leaves them alone. With CANONICO_AUTH_REQUIRED=true every
+request needs a session, except the health check, the sign-in endpoints, first-run setup and the
+webhooks (which check their own X-Canonico-Token). When a session is present its member is the actor
+of the request, whatever the demo header or the `actor` field of the body say.
 """
 
 import hashlib
@@ -25,7 +26,7 @@ from app import i18n, settings, store
 from app.store import STORE
 
 COOKIE = "canonico_session"
-TTL_S = 12 * 3600
+TTL_S = 7 * 24 * 3600
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 # Reachable without a session even when sessions are required. The webhooks authenticate with their own token,
 # first-run setup refuses once the organisation has an owner, and the API description is the public contract.
@@ -35,7 +36,7 @@ DEFAULT_DEMO_MEMBER = "mem-giulia-ferri"
 SESSION_REQUIRED = "Sign in to continue."
 LOG = logging.getLogger("uvicorn.error")
 
-_sessions: dict[str, tuple[str, float]] = {}
+_sessions: dict[str, dict] = {}
 _loaded_from: str | None = None
 _lock = threading.Lock()
 
@@ -97,9 +98,8 @@ def _digest(token: str) -> str:
 
 
 def sessions_file():
-    """Where sessions are kept between restarts: next to the runtime state (the canonico-runtime volume)."""
-    state = settings.state_file()
-    return state.parent / "sessions.json" if state else None
+    """Where sessions are kept between restarts: settings.sessions_file, next to the runtime state by default."""
+    return settings.sessions_file()
 
 
 def _ensure_loaded() -> None:
@@ -114,43 +114,54 @@ def _ensure_loaded() -> None:
     if not path or not path.exists():
         return
     try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+        stored = json.loads(path.read_text(encoding="utf-8")).get("sessions") or {}
+    except (OSError, ValueError, AttributeError):
         LOG.warning("sessions: %s could not be read, everyone signs in again", path)
         return
     now = time.time()
-    for digest, entry in (raw.get("sessions") or {}).items():
+    for digest, entry in stored.items():
         try:
-            member_id, expires = str(entry[0]), float(entry[1])
-        except (TypeError, ValueError, IndexError):
+            member_id, expires = str(entry["member_id"]), float(entry["expires_at"])
+            created = float(entry.get("created_at", expires - TTL_S))
+        except (TypeError, ValueError, KeyError, AttributeError):
             continue
-        if expires > now:
-            _sessions[digest] = (member_id, expires)
+        if member_id and expires > now:
+            _sessions[digest] = {"member_id": member_id, "created_at": created, "expires_at": expires}
 
 
 def _save() -> None:
-    """Persist the live sessions (token digests only). Call with the lock held."""
+    """Write the live sessions (token digests only) to disk, dropping expired ones. Call with the lock held."""
+    now = time.time()
+    for digest in [d for d, s in _sessions.items() if s["expires_at"] <= now]:
+        del _sessions[digest]
     path = sessions_file()
     if not path:
         return
-    now = time.time()
-    live = {d: [m, e] for d, (m, e) in _sessions.items() if e > now}
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps({"sessions": live}), encoding="utf-8")
+        tmp.write_text(json.dumps({"sessions": _sessions}), encoding="utf-8")
         os.chmod(tmp, 0o600)
         os.replace(tmp, path)
     except OSError:
         LOG.warning("sessions: %s could not be written", path)
 
 
+def reload() -> None:
+    """Forget the sessions held in memory: the next lookup reads the file again, as after a restart."""
+    global _loaded_from
+    with _lock:
+        _sessions.clear()
+        _loaded_from = None
+
+
 def issue(member_id: str) -> tuple[str, str]:
     token = secrets.token_urlsafe(32)
-    expires = time.time() + TTL_S
+    created = time.time()
+    expires = created + TTL_S
     with _lock:
         _ensure_loaded()
-        _sessions[_digest(token)] = (member_id, expires)
+        _sessions[_digest(token)] = {"member_id": member_id, "created_at": created, "expires_at": expires}
         _save()
     return token, expires_text(expires)
 
@@ -171,7 +182,7 @@ def revoke_member(member_id: str) -> None:
     """End every session of a member, for example when the member is removed."""
     with _lock:
         _ensure_loaded()
-        doomed = [d for d, (m, _) in _sessions.items() if m == member_id]
+        doomed = [d for d, s in _sessions.items() if s["member_id"] == member_id]
         for digest in doomed:
             del _sessions[digest]
         if doomed:
@@ -187,11 +198,11 @@ def session_entry(token: str | None) -> tuple[str, float] | None:
         entry = _sessions.get(_digest(token))
         if entry is None:
             return None
-        if entry[1] < time.time():
+        if entry["expires_at"] <= time.time():
             _sessions.pop(_digest(token), None)
             _save()
             return None
-        return entry
+        return entry["member_id"], entry["expires_at"]
 
 
 def session_member_id(token: str | None) -> str | None:

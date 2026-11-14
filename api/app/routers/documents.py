@@ -3,7 +3,7 @@ import json
 from fastapi import APIRouter, Query, Request
 from pydantic import ValidationError
 
-from app import files, inbox, ingest, library_s3, ops, store
+from app import access, files, inbox, ingest, library_s3, ops, store
 from app.http import ApiError, not_found, out
 from app.models import Document, DocumentCreate, DocumentCreated, DocumentDeleted, DocumentVersion, DocumentVersionCreate, DocumentVersionResult, Fact
 from app.store import STORE
@@ -77,7 +77,7 @@ def list_documents(project_id: str | None = None, source_id: str | None = None, 
 
 
 @router.post("/documents", operation_id="createDocument", status_code=201, response_model=DocumentCreated)
-async def create_document(request: Request):
+async def create_document(request: Request, demo_actor: str | None = access.Actor):
     body = await _parse(request)
     if not body.text.strip():
         raise ApiError(422, "text: the document is empty.")
@@ -94,6 +94,7 @@ async def create_document(request: Request):
                 raise ApiError(422, f"source_id: source {body.source_id} belongs to another project.")
         project_id = body.project_id or (source["project_id"] if source else store.DEFAULT_PROJECT)
         ops.require_project(state, project_id)
+        access.allow(state, demo_actor, "correct_fact", project_id)
         if source is None:
             source = next((x for x in state["sources"].values() if x["project_id"] == project_id and x["type"] == "documents"), None)
         library = source is not None and source["type"] == "document_library"
@@ -130,12 +131,13 @@ def list_document_versions(doc_id: str):
 
 
 @router.post("/documents/{doc_id:path}/versions", operation_id="uploadDocumentVersion", status_code=201, response_model=DocumentVersionResult)
-def upload_document_version(doc_id: str, body: DocumentVersionCreate):
+def upload_document_version(doc_id: str, body: DocumentVersionCreate, demo_actor: str | None = access.Actor):
     if not body.text.strip():
         raise ApiError(422, "text: the new version is empty.")
     files.require_text(body.text)
     with STORE.write() as state:
         document = require_doc(state, doc_id)
+        access.allow(state, demo_actor, "correct_fact", document.get("project_id"))
         if body.text.strip() == document["text"].strip():
             raise ApiError(409, "This text is identical to the current version.")
         labels = {v.get("version_label") for v in inbox.ensure_versions(document)}
@@ -166,7 +168,8 @@ def get_document(doc_id: str):
 
 
 @router.delete("/documents/{doc_id:path}", operation_id="deleteDocument", status_code=200, response_model=DocumentDeleted)
-def delete_document(doc_id: str, actor: str = Query(..., min_length=1)):
+def delete_document(doc_id: str, actor: str = Query(..., min_length=1), demo_actor: str | None = access.Actor):
     with STORE.write() as state:
-        require_doc(state, doc_id)
+        document = require_doc(state, doc_id)
+        access.allow(state, demo_actor, "manage_sources", document.get("project_id"))
         return out(DocumentDeleted, ops.delete_document(state, doc_id, actor))

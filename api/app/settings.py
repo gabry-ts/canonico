@@ -38,6 +38,15 @@ def state_file() -> Path | None:
     return Path(value) if value else None
 
 
+def sessions_file() -> Path | None:
+    """Signed-in sessions. Next to the state file but outside it, so a demo reset keeps everyone signed in."""
+    value = os.environ.get("CANONICO_SESSIONS_FILE")
+    if value is not None:
+        return Path(value) if value else None
+    state = state_file()
+    return state.parent / "sessions.json" if state else None
+
+
 def cache_dir() -> Path:
     """Where model and GitHub responses are cached. A volume in the Docker deployment."""
     return Path(env("CANONICO_CACHE_DIR") or API_DIR / ".cache")

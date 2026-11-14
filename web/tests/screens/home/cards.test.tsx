@@ -321,6 +321,16 @@ describe('AnswersCard', () => {
     expect(screen.queryByText('Binding')).not.toBeInTheDocument()
     expect(screen.queryByText(/^Contested answers show/)).not.toBeInTheDocument()
   })
+
+  it('shows the error with a retry instead of a placeholder when the figures cannot be loaded', async () => {
+    const retry = vi.fn()
+    const { user, container } = renderI18n(<AnswersCard stats={undefined} error="stats offline" onRetry={retry} />)
+    expect(screen.getByText('Could not load this. stats offline')).toBeInTheDocument()
+    expect(container.querySelector('.skel')).not.toBeInTheDocument()
+    expect(screen.queryByText('Binding')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(retry).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('FixMetric', () => {
@@ -351,6 +361,25 @@ describe('FixMetric', () => {
     expect(screen.getByText(shown)).not.toHaveClass('text-muted-foreground')
     expect(screen.queryByText('not measured')).not.toBeInTheDocument()
     expect(screen.queryByText('Not measured yet')).not.toBeInTheDocument()
+  })
+
+  it.each([null, undefined])('shows a placeholder and does not say "not measured" while the figures load (%s)', (none) => {
+    const { container } = renderI18n(<FixMetric stats={none} />)
+    expect(screen.getByRole('heading', { name: 'Time to fix a wrong fact' })).toBeInTheDocument()
+    expect(container.querySelector('.skel')).toBeInTheDocument()
+    expect(screen.queryByText('not measured')).not.toBeInTheDocument()
+    expect(screen.queryByText('Not measured yet')).not.toBeInTheDocument()
+    expect(screen.queryByText('—')).not.toBeInTheDocument()
+  })
+
+  it('shows the error with a retry instead of "not measured" when the figures cannot be loaded', async () => {
+    const retry = vi.fn()
+    const { user } = renderI18n(<FixMetric stats={undefined} error="stats offline" onRetry={retry} />)
+    expect(screen.getByText('Could not load this. stats offline')).toBeInTheDocument()
+    expect(screen.queryByText('not measured')).not.toBeInTheDocument()
+    expect(screen.queryByText('Not measured yet')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(retry).toHaveBeenCalledTimes(1)
   })
 
   it.each([
@@ -454,6 +483,20 @@ describe('HealthCard', () => {
     expect(screen.getByRole('heading', { name: 'Memory health' })).toBeInTheDocument()
     expect(screen.queryByText('By status')).not.toBeInTheDocument()
     expect(screen.queryByText(/facts ·/)).not.toBeInTheDocument()
+  })
+
+  it('shows the error with a retry instead of a placeholder when the figures cannot be loaded, and still what is under it', async () => {
+    const retry = vi.fn()
+    const { user, container } = renderI18n(
+      <HealthCard stats={undefined} error="stats offline" onRetry={retry}>
+        <p>Sources of the project</p>
+      </HealthCard>,
+    )
+    expect(screen.getByText('Could not load this. stats offline')).toBeInTheDocument()
+    expect(container.querySelector('.skel')).not.toBeInTheDocument()
+    expect(screen.getByText('Sources of the project')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(retry).toHaveBeenCalledTimes(1)
   })
 
   it('renders what the page puts under it, loaded or not', () => {

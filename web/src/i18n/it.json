@@ -647,7 +647,7 @@
     "selectEstimate": "Seleziona una stima per vederne la fonte.",
     "sources": "Fonti",
     "noAnswerTitle": "Nella memoria non c’è una risposta",
-    "thinking": "Cerco nella memoria…",
+    "thinking": "Canonico sta scrivendo…",
     "askFailed": "Non è stato possibile rispondere. {message}",
     "composer": "Chiedi al cervello aziendale…",
     "composerAria": "Domanda",
@@ -831,6 +831,7 @@
       "actions": "Azioni",
       "move": "sposta",
       "open": "apri",
+      "error": "La ricerca non è disponibile in questo momento.",
       "noResults": "Nessun risultato per “{q}”.",
       "tagFacts_one": "{count} fatto",
       "tagFacts_other": "{count} fatti",
@@ -1136,7 +1137,9 @@
       "docs": {
         "drop": "Scegli uno o più file",
         "help": "Ogni file diventa un documento del progetto. I fatti vengono estratti in background.",
-        "needFile": "Scegli almeno un file."
+        "needFile": "Scegli almeno un file.",
+        "noText_one": "Il file scelto non contiene testo.",
+        "noText_other": "Nessuno dei {count} file scelti contiene testo."
       },
       "mail": {
         "inherit": "Usa la casella dell'organizzazione",

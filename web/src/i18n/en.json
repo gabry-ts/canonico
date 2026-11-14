@@ -647,7 +647,7 @@
     "selectEstimate": "Select an estimate to see its source.",
     "sources": "Sources",
     "noAnswerTitle": "Nothing in memory answers this",
-    "thinking": "Looking in memory…",
+    "thinking": "Canonico is typing…",
     "askFailed": "The question could not be answered. {message}",
     "composer": "Ask the company brain…",
     "composerAria": "Question",
@@ -831,6 +831,7 @@
       "actions": "Actions",
       "move": "move",
       "open": "open",
+      "error": "Search is not available right now.",
       "noResults": "No results for “{q}”.",
       "tagFacts_one": "{count} fact",
       "tagFacts_other": "{count} facts",
@@ -1136,7 +1137,9 @@
       "docs": {
         "drop": "Choose one or more files",
         "help": "Each file becomes a document of this project. Facts are extracted in the background.",
-        "needFile": "Choose at least one file."
+        "needFile": "Choose at least one file.",
+        "noText_one": "The chosen file has no text.",
+        "noText_other": "None of the {count} chosen files has any text."
       },
       "mail": {
         "inherit": "Use the organisation mailbox",

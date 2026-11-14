@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app import ops, store
+from app import access, ops, store
 from app.http import ApiError, dump, out
 from app.models import Topic, TopicChain, TopicCreate, TopicMergeRequest, TopicPatch
 from app.store import STORE
@@ -17,14 +17,15 @@ def list_topics(project_id: str | None = None):
 
 
 @router.post("/topics", operation_id="createTopic", status_code=201, response_model=Topic)
-def create_topic(body: TopicCreate):
+def create_topic(body: TopicCreate, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
-        topic_id = store.slugify(body.id or body.label)
-        if topic_id in state["topics"]:
-            raise ApiError(409, f"Topic {topic_id} already exists.")
         project_id = getattr(body, "project_id", None)
         if project_id is not None:
             ops.require_project(state, project_id)
+        access.allow(state, demo_actor, "correct_fact", project_id or store.DEFAULT_PROJECT)
+        topic_id = store.slugify(body.id or body.label)
+        if topic_id in state["topics"]:
+            raise ApiError(409, f"Topic {topic_id} already exists.")
         state["topics"][topic_id] = {"id": topic_id, "label": body.label, "fact_ids": [], "project_id": project_id or store.DEFAULT_PROJECT, "x": {}}
         return out(Topic, ops.topic_view(state["topics"][topic_id], state), 201)
 
@@ -44,17 +45,19 @@ def get_topic_chain(topic_id: str):
 
 
 @router.patch("/topics/{topic_id}", operation_id="patchTopic", status_code=200, response_model=Topic)
-def patch_topic(topic_id: str, body: TopicPatch):
+def patch_topic(topic_id: str, body: TopicPatch, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         topic = ops.require_topic(state, topic_id)
+        access.allow(state, demo_actor, "correct_fact", topic.get("project_id"))
         topic["label"] = body.label
         return out(Topic, ops.topic_view(topic, state))
 
 
 @router.post("/topics/{topic_id}/merge", operation_id="mergeTopic", status_code=200, response_model=Topic)
-def merge_topic(topic_id: str, body: TopicMergeRequest):
+def merge_topic(topic_id: str, body: TopicMergeRequest, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         source = ops.require_topic(state, topic_id)
+        access.allow(state, demo_actor, "correct_fact", source.get("project_id"))
         target = ops.require_topic(state, body.into_topic_id)
         if source is target:
             raise ApiError(409, "A topic cannot be merged into itself.")

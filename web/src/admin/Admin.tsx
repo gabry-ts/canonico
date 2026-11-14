@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ApiError, call, client, errMsg, type Schemas } from '../api/client'
 import { useI18n } from '../i18n'
-import { useApi } from '../lib/useApi'
+import { useApi, type ApiState } from '../lib/useApi'
 import { useApp } from '../lib/store'
 import { Ic } from '../ui/Icon'
 import { Empty, Skeleton } from '../ui/overlays'
 import { toast, toastError } from '../ui/toast'
 import AddSourceDialog from '../ui/AddSourceDialog'
 
+type ProjectSources = { p: Schemas['Project']; items: Schemas['Source'][] }[]
 type Result = { ep: string; at: string; code: number | string; body: ReactNode; err?: boolean }
 
 function ResultBox({ r }: { r?: Result }) {
@@ -54,6 +55,18 @@ function Card({ title, right, children }: { title: ReactNode; right?: ReactNode;
 }
 
 const mono = (s: ReactNode) => <span className="mono">{s}</span>
+
+/** What a card shows in place of its list when the read failed: the backend's reason and a retry. */
+function LoadErr({ t, message, onRetry }: { t: T; message: string; onRetry: () => void }) {
+  return (
+    <div className="py-4 text-[13px]">
+      {t('common.loadError', { message })}{' '}
+      <button className="link" onClick={onRetry}>
+        {t('common.retry')}
+      </button>
+    </div>
+  )
+}
 
 export default function Admin() {
   const app = useApp()
@@ -145,9 +158,9 @@ export default function Admin() {
           </div>
           <div className="space-y-5">
             <LibraryCard {...{ results, busy, run, t, fmtDateTime }} />
-            <GithubCard {...{ results, busy, run, t, put, stamp, sources: allSources.data, fmtDateTime }} />
-            <ProjectsCard {...{ t, projects, sources: allSources.data, loading: allSources.loading, refresh, app }} />
-            <AuditCard {...{ t, audit: audit.data, loading: audit.loading, app, fmtDateTime }} />
+            <GithubCard {...{ results, busy, run, t, put, stamp, sources: allSources, fmtDateTime }} />
+            <ProjectsCard {...{ t, projects, sources: allSources, refresh, app }} />
+            <AuditCard {...{ t, audit, app, fmtDateTime }} />
             <MiscCard {...{ t, me, app }} />
           </div>
         </div>
@@ -420,7 +433,7 @@ function LibraryCard({ results, busy, run, t, fmtDateTime }: Common & { fmtDateT
 function GithubCard({ results, busy, run, t, put, stamp, sources, fmtDateTime }: Common & {
   put: (k: string, r: Result) => void
   stamp: (ep: string, code: number | string, body: ReactNode, err?: boolean) => Result
-  sources?: { p: Schemas['Project']; items: Schemas['Source'][] }[]
+  sources: ApiState<ProjectSources>
   fmtDateTime: (s: string) => string
 }) {
   const { refresh } = useApp()
@@ -428,7 +441,7 @@ function GithubCard({ results, busy, run, t, put, stamp, sources, fmtDateTime }:
   const [repo, setRepo] = useState('https://github.com/gabry-ts/canonico')
   const alive = useRef(true)
   useEffect(() => () => { alive.current = false }, [])
-  const gh = (sources ?? []).flatMap((x) => x.items).filter((s) => s.type === 'github')
+  const gh = sources.error ? [] : (sources.data ?? []).flatMap((x) => x.items).filter((s) => s.type === 'github')
 
   async function sync(s: Schemas['Source']) {
     const ep = 'POST /sources/{source_id}/sync'
@@ -452,7 +465,13 @@ function GithubCard({ results, busy, run, t, put, stamp, sources, fmtDateTime }:
 
   return (
     <Card title={t('admin.github')}>
-      {gh.length === 0 && <div className="py-4 text-[13px] text-muted-foreground">{t('admin.githubNone')}</div>}
+      {sources.loading && !sources.data ? (
+        <Skeleton rows={1} className="h-9 mt-4" />
+      ) : sources.error || !sources.data ? (
+        <LoadErr t={t} message={sources.error ?? ''} onRetry={() => void sources.reload()} />
+      ) : (
+        gh.length === 0 && <div className="py-4 text-[13px] text-muted-foreground">{t('admin.githubNone')}</div>
+      )}
       {gh.map((s) => {
         const syncing = job?.src === s.id
         return (
@@ -495,11 +514,10 @@ function GithubCard({ results, busy, run, t, put, stamp, sources, fmtDateTime }:
   )
 }
 
-function ProjectsCard({ t, projects, sources, loading, refresh }: {
+function ProjectsCard({ t, projects, sources, refresh }: {
   t: T
   projects: Schemas['Project'][]
-  sources?: { p: Schemas['Project']; items: Schemas['Source'][] }[]
-  loading: boolean
+  sources: ApiState<ProjectSources>
   refresh: () => Promise<void>
   app: unknown
 }) {
@@ -507,6 +525,8 @@ function ProjectsCard({ t, projects, sources, loading, refresh }: {
   const [desc, setDesc] = useState('')
   const [saving, setSaving] = useState(false)
   const [addFor, setAddFor] = useState<string | null>(null)
+  /** The sources of each project, only when the last read succeeded. */
+  const known = sources.error ? undefined : sources.data
   async function create() {
     setSaving(true)
     try {
@@ -524,24 +544,29 @@ function ProjectsCard({ t, projects, sources, loading, refresh }: {
     <Card title={t('admin.projects')}>
       <div className="py-4">
         <div className="mono text-[11.5px] text-muted-foreground mb-2">GET /projects · GET /projects/{'{id}'}/sources</div>
-        {loading && !sources ? <Skeleton rows={2} className="h-9" /> : (
-          <ul className="space-y-3">
-            {projects.map((p) => {
-              const items = sources?.find((x) => x.p.id === p.id)?.items ?? []
-              return (
-                <li key={p.id} className="rounded-[10px] shadow-[inset_0_0_0_1px_hsl(var(--border))] px-4 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0"><span className="text-[13.5px] font-medium">{p.name}</span> <span className="mono text-[11.5px] text-muted-foreground">{p.id}</span></div>
-                    <button className="btn btn-outline btn-xs" onClick={() => setAddFor(p.id)}>{t('admin.addSource')}</button>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {items.length === 0 && <span className="text-[12.5px] text-muted-foreground">{t('admin.noSources')}</span>}
-                    {items.map((s) => <span key={s.id} className="tag" title={s.id}>{s.type} · {s.label}</span>)}
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
+        {sources.loading && !sources.data ? <Skeleton rows={2} className="h-9" /> : (
+          <>
+            {!known && <LoadErr t={t} message={sources.error ?? ''} onRetry={() => void sources.reload()} />}
+            <ul className="space-y-3">
+              {projects.map((p) => {
+                const items = known?.find((x) => x.p.id === p.id)?.items ?? []
+                return (
+                  <li key={p.id} className="rounded-[10px] shadow-[inset_0_0_0_1px_hsl(var(--border))] px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0"><span className="text-[13.5px] font-medium">{p.name}</span> <span className="mono text-[11.5px] text-muted-foreground">{p.id}</span></div>
+                      <button className="btn btn-outline btn-xs" onClick={() => setAddFor(p.id)}>{t('admin.addSource')}</button>
+                    </div>
+                    {known && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {items.length === 0 && <span className="text-[12.5px] text-muted-foreground">{t('admin.noSources')}</span>}
+                        {items.map((s) => <span key={s.id} className="tag" title={s.id}>{s.type} · {s.label}</span>)}
+                      </div>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </>
         )}
       </div>
       <div className="py-4 border-t">
@@ -558,9 +583,10 @@ function ProjectsCard({ t, projects, sources, loading, refresh }: {
   )
 }
 
-function AuditCard({ t, audit, loading, app, fmtDateTime }: {
-  t: T; audit?: Schemas['AuditEvent'][]; loading: boolean; app: ReturnType<typeof useApp>; fmtDateTime: (s: string) => string
+function AuditCard({ t, audit: q, app, fmtDateTime }: {
+  t: T; audit: ApiState<Schemas['AuditEvent'][]>; app: ReturnType<typeof useApp>; fmtDateTime: (s: string) => string
 }) {
+  const audit = q.data
   const [busy, setBusy] = useState<string | null>(null)
   async function undo(id: string) {
     setBusy(id)
@@ -578,7 +604,7 @@ function AuditCard({ t, audit, loading, app, fmtDateTime }: {
     <Card title={t('admin.audit')}>
       <div className="py-3">
         <div className="mono text-[11.5px] text-muted-foreground mb-2">GET /audit · POST /audit/{'{event_id}'}/undo</div>
-        {loading && !audit ? <Skeleton rows={3} className="h-9" /> : !audit?.length ? <Empty icon="inbox" title={t('admin.noAudit')} /> : (
+        {q.loading && !audit ? <Skeleton rows={3} className="h-9" /> : q.error || !audit ? <LoadErr t={t} message={q.error ?? ''} onRetry={() => void q.reload()} /> : !audit.length ? <Empty icon="inbox" title={t('admin.noAudit')} /> : (
           <ul className="divide-y">
             {audit.map((a) => (
               <li key={a.id} className="flex items-center gap-3 py-2 text-[13px]">

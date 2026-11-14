@@ -69,7 +69,7 @@
   "selectEstimate": "Select an estimate to see its source.",
   "sources": "Sources",
   "noAnswerTitle": "Nothing in memory answers this",
-  "thinking": "Looking in memory…",
+  "thinking": "Canonico is typing…",
   "askFailed": "The question could not be answered. {message}",
   "composer": "Ask the company brain…",
   "composerAria": "Question",

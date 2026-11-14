@@ -9,6 +9,8 @@ import { Empty, Skeleton } from '../../ui/overlays'
 import { CardHead, ErrorBox, humanTopic } from './shared'
 
 type Stats = Schemas['Stats']
+/** What the figure cards get from the page's `GET /stats`: the figures once loaded, or why they could not be. */
+type StatsProps = { stats: Stats | null | undefined; error?: string | null; onRetry?: () => void }
 
 /* ---------------- Needs attention ---------------- */
 
@@ -154,7 +156,7 @@ export function Feed({ pid, limit = 8 }: { pid: string | undefined; limit?: numb
 
 /* ---------------- Answers ---------------- */
 
-export function AnswersCard({ stats }: { stats: Stats | null | undefined }) {
+export function AnswersCard({ stats, error, onRetry }: StatsProps) {
   const { t, fmtDateShort } = useI18n()
   const a = stats?.answers ?? {}
   const rows: [string, number, string][] = [
@@ -169,48 +171,60 @@ export function AnswersCard({ stats }: { stats: Stats | null | undefined }) {
         title={t('home.answers.title')}
         right={a.since ? <span className="badge line">{t('home.answers.since', { date: fmtDateShort(a.since) })}</span> : undefined}
       />
-      <div className="p-5">
-        {!stats ? (
-          <Skeleton rows={3} className="h-5" />
-        ) : (
-          <>
-            <div className="flex h-2 rounded-full overflow-hidden gap-0.5 bg-muted">
-              {tot > 0 && rows.filter((r) => r[1]).map((r) => <span key={r[0]} className={r[2]} style={{ width: `${(r[1] / tot) * 100}%` }} />)}
-            </div>
-            <ul className="mt-4 space-y-2">
-              {rows.map((r) => (
-                <li key={r[0]} className="flex items-center gap-2.5 text-[13.5px]">
-                  <span className={`w-2 h-2 rounded-full ${r[2]}`} />
-                  <span className="flex-1">{r[0]}</span>
-                  <span className="mono">{r[1]}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-[12.5px] text-muted-foreground leading-relaxed">{t('home.answers.note')}</p>
-          </>
-        )}
-      </div>
+      {!stats && error ? (
+        <ErrorBox message={error} onRetry={onRetry} />
+      ) : (
+        <div className="p-5">
+          {!stats ? (
+            <Skeleton rows={3} className="h-5" />
+          ) : (
+            <>
+              <div className="flex h-2 rounded-full overflow-hidden gap-0.5 bg-muted">
+                {tot > 0 && rows.filter((r) => r[1]).map((r) => <span key={r[0]} className={r[2]} style={{ width: `${(r[1] / tot) * 100}%` }} />)}
+              </div>
+              <ul className="mt-4 space-y-2">
+                {rows.map((r) => (
+                  <li key={r[0]} className="flex items-center gap-2.5 text-[13.5px]">
+                    <span className={`w-2 h-2 rounded-full ${r[2]}`} />
+                    <span className="flex-1">{r[0]}</span>
+                    <span className="mono">{r[1]}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-[12.5px] text-muted-foreground leading-relaxed">{t('home.answers.note')}</p>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
 /* ---------------- Time to fix ---------------- */
 
-export function FixMetric({ stats }: { stats: Stats | null | undefined }) {
+export function FixMetric({ stats, error, onRetry }: StatsProps) {
   const { t, fmtNum } = useI18n()
   const m = stats?.time_to_fix_seconds
   const sec = m?.median ?? null
   const val = sec === null ? '—' : sec < 60 ? `${Math.round(sec)} s` : `${Math.floor(sec / 60)} min ${Math.round(sec % 60)} s`
   return (
     <div className="card">
-      <CardHead title={t('home.fix.title')} right={sec === null ? <span className="badge open">{t('home.fix.notYet')}</span> : undefined} />
-      <div className="p-5">
-        <div className={`mono text-[30px] font-medium tracking-tight ${sec === null ? 'text-muted-foreground' : ''}`}>{val}</div>
-        <div className="mt-1 text-[13.5px] font-medium">
-          {sec === null ? t('home.fix.pending') : t('home.fix.median', { count: m?.samples ?? 0, n: fmtNum(m?.samples ?? 0) })}
+      <CardHead title={t('home.fix.title')} right={stats && sec === null ? <span className="badge open">{t('home.fix.notYet')}</span> : undefined} />
+      {!stats && error ? (
+        <ErrorBox message={error} onRetry={onRetry} />
+      ) : !stats ? (
+        <div className="p-5">
+          <Skeleton rows={2} className="h-6" />
         </div>
-        <p className="mt-2 text-[12.5px] text-muted-foreground leading-relaxed">{t('home.fix.note')}</p>
-      </div>
+      ) : (
+        <div className="p-5">
+          <div className={`mono text-[30px] font-medium tracking-tight ${sec === null ? 'text-muted-foreground' : ''}`}>{val}</div>
+          <div className="mt-1 text-[13.5px] font-medium">
+            {sec === null ? t('home.fix.pending') : t('home.fix.median', { count: m?.samples ?? 0, n: fmtNum(m?.samples ?? 0) })}
+          </div>
+          <p className="mt-2 text-[12.5px] text-muted-foreground leading-relaxed">{t('home.fix.note')}</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -228,7 +242,7 @@ const STATUS_COLOR: Record<string, string> = {
 const STATUS_KEYS = ['binding', 'held', 'stillActive', 'superseded', 'retired', 'open', 'active', 'contested']
 const TYPE_KEYS = ['DECISION', 'CONSTRAINT', 'EVIDENCE', 'HYPOTHESIS', 'SUPERSEDED', 'OPEN']
 
-export function HealthCard({ stats, children }: { stats: Stats | null | undefined; children?: ReactNode }) {
+export function HealthCard({ stats, error, onRetry, children }: StatsProps & { children?: ReactNode }) {
   const { t, fmtNum } = useI18n()
   const by = stats?.facts_by_status ?? stats?.by_status ?? {}
   const ty = stats?.facts_by_type ?? stats?.by_type ?? {}
@@ -239,7 +253,9 @@ export function HealthCard({ stats, children }: { stats: Stats | null | undefine
   return (
     <div className="card overflow-hidden">
       <CardHead title={t('home.health.title')} sub={stats ? t('home.health.sub', { count: tot, n: fmtNum(tot), docs: fmtNum(stats.documents), topics: fmtNum(stats.topics) }) : undefined} />
-      {!stats ? (
+      {!stats && error ? (
+        <ErrorBox message={error} onRetry={onRetry} />
+      ) : !stats ? (
         <div className="p-5">
           <Skeleton rows={3} className="h-5" />
         </div>

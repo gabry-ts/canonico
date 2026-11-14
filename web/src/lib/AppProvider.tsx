@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { ApiError, call, client, endSession, getDemoActor, getSession, onSessionEnded, setDemoActor, setSession, subscribeSession, type Schemas } from '../api/client'
 import { currentLocale, translate } from '../i18n'
+import { NO_FILTERS, setFilters } from '../screens/memory/api'
 import { toast } from '../ui/toast'
 import { AppContext, type AppState, type Scope } from './appContext'
 import { useApi } from './useApi'
@@ -86,6 +87,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch {
       // storage unavailable
     }
+    // Memory filters belong to the project they were typed in.
+    setFilters(NO_FILTERS)
     setSavedProject(id)
     setVersion((v) => v + 1)
   }, [])
@@ -99,6 +102,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback((login: Schemas['LoginResponse']) => {
     // The token stays in the HttpOnly cookie the backend set; the page keeps only who signed in and until when.
     setSession({ expiresAt: login.expires_at, memberId: login.member.id })
+    setFilters(NO_FILTERS)
     setVersion((v) => v + 1)
   }, [])
 

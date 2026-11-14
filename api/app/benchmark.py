@@ -71,7 +71,8 @@ def answer_document(state: dict, question: str, ranking: list[str], route: list[
     from app.text import tokenize
 
     routed = next((t for t in route or [] if t in state["topics"]), None)
-    topic_id = engine.alias_topic(state, question, PROJECT) or routed or engine.match_topic(state, question, project_id=PROJECT)
+    abstained = route is not None and routed is None
+    topic_id = engine.alias_topic(state, question, PROJECT) or routed or (None if abstained else engine.match_topic(state, question, project_id=PROJECT))
     if topic_id is not None:
         answer = engine.answer_topic(state, topic_id, engine.focus_facts(state, topic_id, tokenize(question)))
         basis = answer["binding"] or answer.get("_basis")
@@ -94,7 +95,7 @@ def evaluate(state: dict, router=None) -> dict:
             continue
         plain = [r["doc_id"] for r in engine.plain_retrieval(state, query["text"], top_k=10, project_id=PROJECT)]
         route = router(query["text"]) if router else None
-        canonico = engine.canonico_ranking(state, query["text"], top_k=10, project_id=PROJECT, route=route or None)
+        canonico = engine.canonico_ranking(state, query["text"], top_k=10, project_id=PROJECT, route=route)
         gold = gold_document(grades, dates)
         answered = answer_document(state, query["text"], canonico, route)
         ndcg_plain.append(ndcg_at_k(plain, grades))
@@ -143,10 +144,10 @@ def model_router(state: dict, meter):
     lines = engine.topic_lines(view, PROJECT)
     model = state["config"]["models"]["extraction"]
 
-    def route(question: str) -> list[str]:
+    def route(question: str) -> list[str] | None:
         try:
             return engine.model_route(question, lines, model, meter)
         except Exception:
-            return []
+            return None
 
     return route

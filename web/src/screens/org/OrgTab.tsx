@@ -7,7 +7,7 @@ import { usePerm } from '../../lib/perm'
 import { Ic } from '../../ui/Icon'
 import { Dialog } from '../../ui/overlays'
 import { toast, toastError } from '../../ui/toast'
-import { CardHead, CopyField, FieldErr, Loading } from './ui'
+import { CardHead, CopyField, FieldErr, LoadErr, Loading } from './ui'
 
 type Mail = Schemas['MailConfig']
 
@@ -63,7 +63,7 @@ export function OrgMailCard() {
   const over = useApi(
     async () => {
       const r = await Promise.all(app.projects.map((p) => call(client.GET('/projects/{project_id}/mail', { params: { path: { project_id: p.id } } })).then((m) => m.overridden)))
-      return r.filter(Boolean).length
+      return { inherited: r.filter((o) => !o).length, total: r.length }
     },
     [app.version, app.projects.length],
   )
@@ -94,7 +94,6 @@ export function OrgMailCard() {
       toastError(errMsg(e))
     }
   }
-  const inherited = app.projects.length - (over.data ?? 0)
   return (
     <div className="card overflow-hidden">
       <CardHead title={t('org.orgmail.title')} right={<span className="badge">{t('org.orgmail.badge')}</span>} />
@@ -126,7 +125,13 @@ export function OrgMailCard() {
           <label className="label">{t('org.mail.inboundAddress')}</label>
           <input className="input mono !text-[13px]" value={cur.inbound_address ?? ''} onChange={(e) => set({ inbound_address: e.target.value })} />
         </div>
-        <p className="text-[12.5px] text-muted-foreground">{t('org.orgmail.inheritedBy', { count: inherited, total: app.projects.length })}</p>
+        {over.error && !over.loading ? (
+          <LoadErr className="text-[12.5px]" message={over.error} onRetry={() => void over.reload()} />
+        ) : over.data ? (
+          <p className="text-[12.5px] text-muted-foreground">{t('org.orgmail.inheritedBy', { count: over.data.inherited, total: over.data.total })}</p>
+        ) : (
+          <div className="skel h-4 w-1/2" />
+        )}
       </div>
       <footer className="px-5 py-3 border-t bg-muted/30 flex justify-end">
         <button className="btn btn-primary btn-sm" {...attrs('manage_mail')} onClick={() => can('manage_mail') && void save()}>
@@ -308,6 +313,8 @@ export function HooksRow() {
         />
         {rules.loading && !rules.data ? (
           <Loading />
+        ) : rules.error || !rules.data ? (
+          <LoadErr message={rules.error ?? ''} onRetry={() => void rules.reload()} />
         ) : (
           <table className="tbl">
             <thead>

@@ -4,7 +4,7 @@ import { AppContext } from '../../../src/lib/appContext'
 import { HooksRow, OrgCard, OrgMailCard } from '../../../src/screens/org/OrgTab'
 import { api, deferred, fail } from '../../helpers/api'
 import { me, MEMBERS, org, project, PROJECTS } from '../../helpers/fixtures'
-import { hookConfig, mailConfig, mockOrgTab, tagRule } from '../../helpers/org'
+import { hookConfig, mailConfig, mockOrgTab, projectMail, tagRule } from '../../helpers/org'
 import { makeApp, renderI18n, renderWithApp } from '../../helpers/render'
 
 const toastText = (text: string) => screen.findByText(text, { selector: '.toast *' })
@@ -188,6 +188,34 @@ describe('OrgMailCard', () => {
       renderWithApp(<OrgMailCard />)
       expect(await screen.findByText('Inherited by 1 of 2 projects.')).toBeInTheDocument()
       expect(api.callsTo('GET', '/projects/:project_id/mail').map((c) => c.params.project_id).sort()).toEqual(['proj-clearpath', 'proj-internal'])
+    })
+
+    it('shows no count while the project mail settings load', async () => {
+      mockOrgTab()
+      const gate = deferred()
+      api.get('/projects/:project_id/mail', (req) => (req.params.project_id === 'proj-internal' ? gate.promise : projectMail({ project_id: req.params.project_id })))
+      renderWithApp(<OrgMailCard />)
+      await screen.findByRole('button', { name: 'Save mail settings' })
+      await waitFor(() => expect(api.callsTo('GET', '/projects/:project_id/mail')).toHaveLength(2))
+      expect(screen.queryByText(/^Inherited by/)).not.toBeInTheDocument()
+
+      gate.resolve(projectMail({ project_id: 'proj-internal', overridden: true }))
+      expect(await screen.findByText('Inherited by 1 of 2 projects.')).toBeInTheDocument()
+    })
+
+    it('shows the error instead of a count when a project mail setting cannot be loaded, and counts on retry', async () => {
+      mockOrgTab()
+      api.get('/projects/:project_id/mail', (req) => (req.params.project_id === 'proj-internal' ? fail(500, 'database is locked') : projectMail({ project_id: req.params.project_id })))
+      const { user } = renderWithApp(<OrgMailCard />)
+      expect(await screen.findByText('Could not load this. database is locked')).toBeInTheDocument()
+      expect(screen.queryByText(/^Inherited by/)).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Save mail settings' })).toBeInTheDocument()
+
+      mockOrgTab({ overridden: ['proj-internal'] })
+      await user.click(screen.getByRole('button', { name: 'Try again' }))
+      expect(await screen.findByText('Inherited by 1 of 2 projects.')).toBeInTheDocument()
+      expect(screen.queryByText('Could not load this. database is locked')).not.toBeInTheDocument()
+      expect(api.callsTo('GET', '/org/mail')).toHaveLength(1)
     })
 
     it('is zero of zero without projects, and asks for no project', async () => {
@@ -475,6 +503,22 @@ describe('HooksRow', () => {
       renderWithApp(<HooksRow />)
       expect(await screen.findByText('No tag rules. Items posted to the organisation webhook stay in the inbox.')).toBeInTheDocument()
       expect(screen.getAllByRole('row')).toHaveLength(2)
+    })
+
+    it('shows the error instead of "no rules" when the rules cannot be loaded, and loads them again on retry', async () => {
+      mockOrgTab()
+      api.get('/org/tag-rules', fail(500, 'database is locked'))
+      const { user } = renderWithApp(<HooksRow />)
+      expect(await screen.findByText('Could not load this. database is locked')).toBeInTheDocument()
+      expect(screen.queryByText(/No tag rules/)).not.toBeInTheDocument()
+      expect(screen.queryByRole('table')).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Rotate secret' })).toBeInTheDocument()
+
+      api.get('/org/tag-rules', { items: RULES })
+      await user.click(screen.getByRole('button', { name: 'Try again' }))
+      expect(await screen.findByText('clearpath', { selector: '.tag' })).toBeInTheDocument()
+      expect(screen.queryByText('Could not load this. database is locked')).not.toBeInTheDocument()
+      expect(api.callsTo('GET', '/org/tag-rules')).toHaveLength(2)
     })
 
     it('deletes a rule, says so and refreshes', async () => {

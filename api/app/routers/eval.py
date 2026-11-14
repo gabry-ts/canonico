@@ -5,7 +5,7 @@ import threading
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app import benchmark, store
+from app import access, benchmark, store
 from app.http import dump, not_found, out
 from app.models import EvalQuery, EvalResult, EvalRun
 from app.store import STORE
@@ -50,8 +50,9 @@ def get_latest_eval():
 
 
 @router.post("/eval/run", operation_id="runEval", status_code=202, response_model=EvalRun)
-def run_eval():
+def run_eval(demo_actor: str | None = access.Actor):
     with STORE.write() as state:
+        access.allow_role(state, demo_actor, "admin")
         run = {"id": f"eval-{secrets.token_hex(2)}", "status": "queued", "started_at": store.now(), "finished_at": None, "cost_usd": 0.0, "result": None}
         state["eval_runs"].append(run)
         view = run_view(run)

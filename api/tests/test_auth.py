@@ -1,8 +1,13 @@
 """Email and password sessions, the demo sign-in and enforcement of sessions on writes."""
 
+import hashlib
+import json
+import time
+
 import pytest
 
-from app import auth
+from app import auth, settings
+from app.store import STORE
 from tests.conftest import assert_contract
 
 GIULIA = {"email": "giulia.ferri@meridianlabs.org", "password": "canonico-demo"}
@@ -207,3 +212,46 @@ def test_cookie_is_not_secure_on_plain_http_without_public_url(client, monkeypat
     monkeypatch.delenv("CANONICO_PUBLIC_URL", raising=False)
     cookie = client.post("/auth/login", json=GIULIA).headers["set-cookie"]
     assert "Secure" not in cookie
+
+
+def _digest(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def test_session_survives_a_restart_and_is_stored_hashed(client, required):
+    token = client.post("/auth/login", json=GIULIA).json()["token"]
+    path = settings.sessions_file()
+    assert path.parent == settings.state_file().parent and token not in path.read_text(encoding="utf-8")
+    record = json.loads(path.read_text(encoding="utf-8"))["sessions"][_digest(token)]
+    assert record["member_id"] == "mem-giulia-ferri" and record["expires_at"] - record["created_at"] == auth.TTL_S == 7 * 24 * 3600
+    auth.reload()
+    STORE.state = None
+    client.cookies.clear()
+    assert client.post("/facts/M-105/retire", json=RETIRE, headers=bearer(token)).status_code == 200
+    assert client.get("/me", headers=bearer(token)).json()["member"]["id"] == "mem-giulia-ferri"
+
+
+def test_demo_reset_keeps_people_signed_in(client, required):
+    token = client.post("/auth/login", json=GIULIA).json()["token"]
+    client.cookies.clear()
+    assert client.post("/demo/reset", headers=bearer(token)).status_code == 200
+    auth.reload()
+    assert client.post("/facts/M-105/retire", json=RETIRE, headers=bearer(token)).status_code == 200
+
+
+def test_logout_revokes_the_session_on_disk(client, required):
+    token = client.post("/auth/login", json=GIULIA).json()["token"]
+    client.cookies.clear()
+    assert client.post("/auth/logout", headers=bearer(token)).status_code == 204
+    auth.reload()
+    assert client.post("/facts/M-105/retire", json=RETIRE, headers=bearer(token)).status_code == 401
+    assert _digest(token) not in settings.sessions_file().read_text(encoding="utf-8")
+
+
+def test_expired_sessions_are_refused_and_dropped(client, required, monkeypatch):
+    token = client.post("/auth/login", json=GIULIA).json()["token"]
+    client.cookies.clear()
+    later = time.time() + auth.TTL_S + 1
+    monkeypatch.setattr(auth.time, "time", lambda: later)
+    assert client.post("/facts/M-105/retire", json=RETIRE, headers=bearer(token)).status_code == 401
+    assert _digest(token) not in settings.sessions_file().read_text(encoding="utf-8")

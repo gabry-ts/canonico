@@ -3,7 +3,7 @@ from typing import Literal
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app import i18n, ops, store
+from app import access, i18n, ops, store
 from app.http import ApiError, dump, not_found
 from app.models import MaintenanceDecision, MaintenanceItem, MaintenanceReason
 from app.store import STORE
@@ -70,10 +70,11 @@ def get_maintenance_queue(
 
 
 @router.post("/maintenance/{item_id}/approve", operation_id="approveMaintenanceItem", status_code=200, response_model=MaintenanceItem)
-def approve_maintenance_item(item_id: str, body: MaintenanceDecision):
+def approve_maintenance_item(item_id: str, body: MaintenanceDecision, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         item = pending_item(state, item_id)
         fact = state["facts"][item["fact_id"]]
+        access.allow(state, demo_actor, "retire_fact", fact.get("project_id"))
         note = body.note or detail(item)
         # One audit event for the decision and the retirement it causes, so one undo reverts both.
         event = ops.retire(state, fact, note, body.actor, action="approve", extra={"item": item_id})
@@ -86,9 +87,10 @@ def approve_maintenance_item(item_id: str, body: MaintenanceDecision):
 
 
 @router.post("/maintenance/{item_id}/dismiss", operation_id="dismissMaintenanceItem", status_code=200, response_model=MaintenanceItem)
-def dismiss_maintenance_item(item_id: str, body: MaintenanceDecision):
+def dismiss_maintenance_item(item_id: str, body: MaintenanceDecision, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         item = pending_item(state, item_id)
+        access.allow(state, demo_actor, "retire_fact", state["facts"][item["fact_id"]].get("project_id"))
         item["status"] = "dismissed"
         event = store.audit(state, "dismiss", body.actor, item["fact_id"], body.note, x={"item": item_id, "undo": {"maintenance": item_id}}, bump=False)
         item["event"] = event["id"]

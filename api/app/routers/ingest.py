@@ -2,7 +2,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Query
 
-from app import ingest, llm
+from app import access, ingest, llm
 from app.http import ApiError, not_found, out
 from app.models import ClassifyRequest, IngestJob, IngestRequest
 from app.store import STORE
@@ -29,9 +29,10 @@ def list_ingest_jobs(status: Literal["queued", "running", "done", "error"] | Non
 
 
 @router.post("/ingest", operation_id="startIngest", status_code=202, response_model=IngestJob)
-def start_ingest(body: IngestRequest | None = None):
+def start_ingest(body: IngestRequest | None = None, demo_actor: str | None = access.Actor):
     body = body or IngestRequest()
     with STORE.write() as state:
+        access.allow(state, demo_actor, "manage_sources")
         if body.corpus and body.corpus != state["config"]["active_corpus"]:
             raise ApiError(422, f"corpus: unknown corpus {body.corpus}")
         if not body.force:
@@ -55,9 +56,10 @@ def get_ingest_job(job_id: str):
 
 
 @router.post("/classify", operation_id="classify", status_code=202, response_model=IngestJob)
-def classify(body: ClassifyRequest):
+def classify(body: ClassifyRequest, demo_actor: str | None = access.Actor):
     request = body.root
     with STORE.write() as state:
+        access.allow(state, demo_actor, "manage_sources")
         if request.doc_id and request.doc_id not in state["documents"]:
             raise not_found(f"Document {request.doc_id}")
         for fact_id in request.fact_ids or []:

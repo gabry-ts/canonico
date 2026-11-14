@@ -745,6 +745,32 @@ describe('Admin', () => {
       expect(card('GitHub').queryByRole('button', { name: 'Sync now' })).not.toBeInTheDocument()
     })
 
+    it('shows the error instead of "no GitHub source" when the sources cannot be loaded, and loads them again on retry', async () => {
+      mockAdmin()
+      api.get('/projects/:project_id/sources', fail(500, 'database is locked'))
+      const { user } = renderWithApp(<Admin />)
+      expect(await card('GitHub').findByText('Could not load this. database is locked')).toBeInTheDocument()
+      expect(card('GitHub').queryByText(/No GitHub source/)).not.toBeInTheDocument()
+      expect(card('GitHub').getByRole('button', { name: 'Preview' })).toBeInTheDocument()
+
+      mockAdmin({ sources: { 'proj-clearpath': [GH], 'proj-internal': [] } })
+      await user.click(card('GitHub').getByRole('button', { name: 'Try again' }))
+      expect(await card('GitHub').findByText('gabry-ts/canonico')).toBeInTheDocument()
+      expect(card('GitHub').queryByText('Could not load this. database is locked')).not.toBeInTheDocument()
+    })
+
+    it('says nothing about GitHub sources while they load', async () => {
+      mockAdmin()
+      const gate = deferred()
+      api.get('/projects/:project_id/sources', () => gate.promise)
+      renderWithApp(<Admin />)
+      await screen.findByText(/^Provider/)
+      expect(card('GitHub').queryByText(/No GitHub source/)).not.toBeInTheDocument()
+
+      gate.resolve({ items: [] })
+      expect(await card('GitHub').findByText(/No GitHub source/)).toBeInTheDocument()
+    })
+
     it('lists the GitHub sources of every project with their items and last sync', async () => {
       await open({
         sources: {
@@ -963,6 +989,21 @@ describe('Admin', () => {
       expect(projects.querySelector('.skel')).not.toBeInTheDocument()
     })
 
+    it('shows the error instead of "no sources" when the sources cannot be loaded, keeps the projects, and loads them again on retry', async () => {
+      mockAdmin()
+      api.get('/projects/:project_id/sources', fail(500, 'database is locked'))
+      const { user } = renderWithApp(<Admin />)
+      expect(await card('Projects and sources').findByText('Could not load this. database is locked')).toBeInTheDocument()
+      expect(card('Projects and sources').queryByText('No sources.')).not.toBeInTheDocument()
+      expect(item('proj-internal').getByRole('button', { name: 'Add source' })).toBeInTheDocument()
+
+      mockAdmin({ sources: { 'proj-clearpath': [source()], 'proj-internal': [] } })
+      await user.click(card('Projects and sources').getByRole('button', { name: 'Try again' }))
+      expect(await item('proj-clearpath').findByText('documents · ClearPath documents')).toBeInTheDocument()
+      expect(item('proj-internal').getByText('No sources.')).toBeInTheDocument()
+      expect(card('Projects and sources').queryByText('Could not load this. database is locked')).not.toBeInTheDocument()
+    })
+
     it('Add source opens the dialog for that project, and closing it leaves the page as it was', async () => {
       const { user } = await open()
       api.get('/projects/:project_id/mail', (req) => projectMail({ project_id: req.params.project_id }))
@@ -1083,6 +1124,20 @@ describe('Admin', () => {
       await open({ audit: [] })
       expect(card('Recent audit').getByText('Nothing in the audit log yet.')).toBeInTheDocument()
       expect(card('Recent audit').queryByRole('listitem')).not.toBeInTheDocument()
+    })
+
+    it('shows the error instead of "nothing in the log" when the log cannot be loaded, and loads it again on retry', async () => {
+      mockAdmin()
+      api.get('/audit', fail(500, 'database is locked'))
+      const { user } = renderWithApp(<Admin />)
+      expect(await card('Recent audit').findByText('Could not load this. database is locked')).toBeInTheDocument()
+      expect(card('Recent audit').queryByText('Nothing in the audit log yet.')).not.toBeInTheDocument()
+
+      api.get('/audit', EVENTS)
+      await user.click(card('Recent audit').getByRole('button', { name: 'Try again' }))
+      expect(await card('Recent audit').findByText('Out of date')).toBeInTheDocument()
+      expect(card('Recent audit').queryByText('Could not load this. database is locked')).not.toBeInTheDocument()
+      expect(api.callsTo('GET', '/audit')).toHaveLength(2)
     })
 
     it('shows a placeholder while the log loads', async () => {

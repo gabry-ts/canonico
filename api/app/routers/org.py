@@ -60,8 +60,9 @@ def get_org():
 
 
 @router.patch("/org", operation_id="patchOrg", status_code=200, response_model=Organisation)
-def patch_org(body: OrganisationPatch):
+def patch_org(body: OrganisationPatch, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
+        access.allow(state, demo_actor, "manage_members")
         if body.name:
             state["org"]["name"] = body.name
         return out(Organisation, org_view(state))
@@ -75,8 +76,9 @@ def list_projects(limit: int = Query(50, ge=1, le=500), offset: int = Query(0, g
 
 
 @router.post("/projects", operation_id="createProject", status_code=201, response_model=Project)
-def create_project(body: ProjectCreate):
+def create_project(body: ProjectCreate, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
+        access.allow(state, demo_actor, "manage_sources")
         project_id = body.id or "proj-" + store.slugify(body.name)
         if project_id in state["projects"]:
             raise ApiError(409, f"Project {project_id} already exists.")
@@ -97,9 +99,10 @@ def get_project(project_id: str):
 
 
 @router.patch("/projects/{project_id}", operation_id="patchProject", status_code=200, response_model=Project)
-def patch_project(project_id: str, body: ProjectPatch):
+def patch_project(project_id: str, body: ProjectPatch, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         project = ops.require_project(state, project_id)
+        access.allow(state, demo_actor, "manage_sources", project_id)
         changes = body.model_dump(exclude_unset=True)
         if changes.get("name"):
             project["name"] = changes["name"]
@@ -109,9 +112,10 @@ def patch_project(project_id: str, body: ProjectPatch):
 
 
 @router.delete("/projects/{project_id}", operation_id="deleteProject", status_code=200, response_model=None)
-def delete_project(project_id: str):
+def delete_project(project_id: str, demo_actor: str | None = access.Actor):
     with STORE.write() as state:
         ops.require_project(state, project_id)
+        access.allow(state, demo_actor, "manage_sources", project_id)
         sources.delete_project(state, project_id)
     return JSONResponse({"id": project_id, "deleted": True})
 

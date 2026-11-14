@@ -1729,7 +1729,7 @@ export interface paths {
         put?: never;
         /**
          * Sign in with email and password
-         * @description Checks the credentials and opens a session of 12 hours. The token is returned in the body and set as the HttpOnly `canonico_session` cookie (SameSite=Lax, Secure over https). An unknown email and a wrong password give the same 401.
+         * @description Checks the credentials and opens a session of 7 days that survives a server restart. The token is returned in the body and set as the HttpOnly `canonico_session` cookie (SameSite=Lax, Secure over https). An unknown email and a wrong password give the same 401.
          */
         post: operations["login"];
         delete?: never;

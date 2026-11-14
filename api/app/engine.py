@@ -46,8 +46,10 @@ def topic_index(state: dict, project_id: str | None = None) -> BM25:
 
 def rank_topics(state: dict, question: str, project_id: str | None = None) -> list[tuple[str, float, float]]:
     """Topics ranked for a question as (topic_id, score, coverage of the question terms)."""
-    index = topic_index(state, project_id)
-    query = list(dict.fromkeys(tokenize(question)))
+    return _rank(topic_index(state, project_id), list(dict.fromkeys(tokenize(question))))
+
+
+def _rank(index: BM25, query: list[str]) -> list[tuple[str, float, float]]:
     if not query:
         return []
     top_idf = max(index.idf.values(), default=1.0)
@@ -78,8 +80,14 @@ ROUTE_SYSTEM = """You route a question to the topics of a company memory.
 Each topic is one question the memory can answer. Pick the topics whose facts answer the user's question: at most two, the best one first.
 The question can be in any language, have typos or name the client. Match it by meaning.
 When a question asks how long something takes or what a value is, and says nothing about the current, measured or observed situation, put the topic of the agreed target or decision first and the topic of the measured current state second.
-Return an empty list when no topic fits. Use only ids from the list."""
-ROUTE_SCHEMA = {"type": "object", "properties": {"topics": {"type": "array", "items": {"type": "string"}}}, "required": ["topics"], "additionalProperties": False}
+Return an empty list when no topic fits. A topic fits only when its facts can answer what is asked, sharing a place, a person or a word is not enough: a wifi password, the weather or a lunch menu are not in memory because an office or a city is.
+Set confidence to low when you are not sure that the first topic answers the question. Use only ids from the list."""
+ROUTE_SCHEMA = {
+    "type": "object",
+    "properties": {"topics": {"type": "array", "items": {"type": "string"}}, "confidence": {"type": "string", "enum": ["high", "low"]}},
+    "required": ["topics", "confidence"],
+    "additionalProperties": False,
+}
 
 
 def topic_lines(state: dict, project_id: str | None = None) -> dict[str, str]:
@@ -93,11 +101,16 @@ def topic_lines(state: dict, project_id: str | None = None) -> dict[str, str]:
 
 
 def model_route(question: str, lines: dict[str, str], model: str, meter) -> list[str]:
-    """Topics a small model picks for a question, best first. One cached call, a few seconds at most."""
+    """Topics a small model picks for a question, best first. One cached call, a few seconds at most.
+
+    An empty list means the model abstained: no topic fits, or it is not confident the first one does.
+    """
     from app import llm
 
     user = "Topics (id | label | question):\n" + "\n".join(lines.values()) + f"\n\nQuestion: {question}"
     data = llm.complete_json(model, ROUTE_SYSTEM, user, ROUTE_SCHEMA, meter, name="route", max_tokens=2000, timeout=8.0, retries=1)
+    if data.get("confidence") == "low":
+        return []
     return [t for t in dict.fromkeys(data.get("topics", [])) if t in lines][:2]
 
 
@@ -117,22 +130,32 @@ def moved_topic(state: dict, topic_id: str | None) -> str | None:
     return targets.pop() if len(targets) == 1 else topic_id
 
 
+MIN_MATCHED_TERMS = 2
+MAX_UNKNOWN_SHARE = 0.5
+
+
 def match_topic(state: dict, question: str, min_coverage: float = 0.34, project_id: str | None = None) -> str | None:
-    """Keyword fallback. A question of several terms needs at least two of them on the topic: a single shared
-    word ("France" in "What is the capital of France?") is a coincidence, not a match, and gets no answer."""
+    """Keyword fallback: the best topic, or None when the match is too thin to answer from.
+
+    The best topic must hold at least `min_coverage` of the IDF weight of the question terms and at
+    least two of them (one for a one-word question), and at most half of the question terms may be
+    words memory has never seen. "What's the wifi password at the Milan office?" shares "Milan office"
+    with a topic, but "wifi" and "password" are nowhere in memory, so nothing is answered.
+    """
     alias = alias_topic(state, question, project_id)
     if alias is not None:
         return alias
-    ranked = rank_topics(state, question, project_id)
+    index = topic_index(state, project_id)
+    query = list(dict.fromkeys(tokenize(question)))
+    ranked = _rank(index, query)
     if not ranked:
         return None
     topic_id, _, coverage = ranked[0]
-    if coverage < min_coverage:
+    hits = sum(1 for t in query if t in index.tf[topic_id])
+    unknown = sum(1 for t in query if t not in index.idf)
+    if coverage < min_coverage or hits < min(MIN_MATCHED_TERMS, len(query)) or unknown / len(query) >= MAX_UNKNOWN_SHARE:
         return None
-    terms = list(dict.fromkeys(tokenize(question)))
-    index = topic_index(state, project_id)
-    hits = sum(1 for t in terms if t in index.tf[topic_id])
-    return topic_id if hits >= 2 or len(terms) == 1 else None
+    return topic_id
 
 
 _DOCS_CACHE: dict = {}
@@ -514,10 +537,12 @@ def ask(state: dict, question: str, topic_id: str | None = None, include_plain: 
 
     With a project the answer only uses that project's memory. Without one it has organisation scope.
     The topic is the one given, else a known phrasing of the question, else the first topic of
-    `route` (picked by the model router), else the keyword match.
+    `route` (picked by the model router), else the keyword match. An empty `route` means the router
+    abstained: memory has no topic for the question and the answer is no_answer, not a keyword guess.
     """
     routed = next((t for t in route or [] if t in state["topics"] and store.in_scope(state["topics"][t].get("project_id"), project_id)), None)
-    matched = topic_id or alias_topic(state, question, project_id) or routed or match_topic(state, question, project_id=project_id)
+    abstained = route is not None and routed is None
+    matched = topic_id or alias_topic(state, question, project_id) or routed or (None if abstained else match_topic(state, question, project_id=project_id))
     matched = moved_topic(state, matched)
     focus = None
     if matched is None:

@@ -3,6 +3,7 @@ import { ApiError, call, client, errMsg } from '../api/client'
 import { useI18n } from '../i18n'
 import { docLabel } from '../lib/facts'
 import { usePerm } from '../lib/perm'
+import { revealDelayMs, sleep } from '../lib/revealDelay'
 import { useApp } from '../lib/store'
 import { useApi } from '../lib/useApi'
 import { Ic } from '../ui/Icon'
@@ -34,6 +35,8 @@ export default function Ask() {
   const seq = useRef(1)
   const todayShown = useRef(false)
   const chatRef = useRef<HTMLDivElement>(null)
+
+  const waiting = items.some((i) => i.k === 'pending')
 
   const chainApi = useApi(async () => {
     const c = await call(client.GET('/topics/{topic_id}/chain', { params: { path: { topic_id: topic } } }))
@@ -68,7 +71,10 @@ export default function Ask() {
       add.push({ k: 'user', id: seq.current++, text: q, at: new Date().toISOString() }, { k: 'pending', id: pendingId })
       setItems((prev) => [...prev, ...add])
       try {
+        const started = Date.now()
         const res = await call(client.POST('/ask', { body: { question: q, project_id: app.pid, include_plain_retrieval: true } }))
+        // Hold the typing row for a natural pause, counted from the start of the request.
+        await sleep(Math.max(0, revealDelayMs(res.answer?.length ?? 0) - (Date.now() - started)))
         setItems((prev) => prev.map((i) => (i.id === pendingId ? { k: 'answer', id: pendingId, res, at: new Date().toISOString() } : i)))
         const tp = res.binding?.topic ?? res.conflicts[0]?.topic
         if (tp) {
@@ -215,7 +221,7 @@ export default function Ask() {
   const retireTarget = topic === DEMO.topic ? view.stillActive[0] : undefined
 
   const next = async () => {
-    if (busy) return
+    if (busy || waiting) return
     if (step === 1) {
       setRevealed(true)
       setSheet(true)
@@ -236,13 +242,13 @@ export default function Ask() {
       setStep(5)
       setInput(q2)
       await ask(q2)
-    } else if (step === 5) await sendEmail()
-    else if (step === 6) await uploadVersion()
+    } else if (step === 5) perm.guard('correct_fact', () => void sendEmail())()
+    else if (step === 6) perm.guard('correct_fact', () => void uploadVersion())()
     else perm.guard('admin_demo', () => void reset())()
   }
 
   const back = async () => {
-    if (busy) return
+    if (busy || waiting) return
     if (step === 2) {
       setRevealed(false)
       setStep(1)
@@ -295,7 +301,7 @@ export default function Ask() {
               : step === 6
                 ? t('ask.next.uploadVersion')
                 : t('ask.restart')
-  const nextPerm = step === 2 && retireTarget ? 'retire_fact' : step === 3 ? 'retire_fact' : step === LAST ? 'admin_demo' : null
+  const nextPerm = step === 2 && retireTarget ? 'retire_fact' : step === 3 ? 'retire_fact' : step === LAST ? 'admin_demo' : step === 5 || step === 6 ? 'correct_fact' : null
   const scopeName = app.scope === 'org' ? t('shell.wholeOrg') : (app.project?.name ?? '')
 
   return (
@@ -338,12 +344,12 @@ export default function Ask() {
             </button>
           )}
           {step >= 2 && step <= 4 && (
-            <button className="btn btn-ghost btn-sm" onClick={() => void back()} disabled={busy}>
+            <button className="btn btn-ghost btn-sm" onClick={() => void back()} disabled={busy || waiting}>
               <Ic n="arrowl" className="sm" />
               {t('ask.back')}
             </button>
           )}
-          <button className="btn btn-primary btn-sm" onClick={() => void next()} disabled={busy} {...(nextPerm ? perm.attrs(nextPerm) : {})}>
+          <button className="btn btn-primary btn-sm" onClick={() => void next()} disabled={busy || waiting} {...(nextPerm ? perm.attrs(nextPerm) : {})}>
             {busy && <span className="spin" />}
             {nextLabel}
             <Ic n={step >= LAST ? 'restore' : 'arrow'} className="sm" />
@@ -379,7 +385,7 @@ export default function Ask() {
                 className="flex items-center gap-3 rounded-[12px] bg-card shadow-[inset_0_0_0_1px_hsl(var(--input))] px-4 h-12 focus-within:shadow-[inset_0_0_0_1px_hsl(var(--ring)),0_0_0_3px_hsl(var(--ring)/.15)]"
                 onSubmit={(e) => {
                   e.preventDefault()
-                  void ask(input)
+                  if (!waiting) void ask(input)
                 }}
               >
                 <input
@@ -392,7 +398,7 @@ export default function Ask() {
                 <span className="hidden md:inline-block max-w-[45%] truncate text-[12px] text-muted-foreground">
                   {t('ask.asking')} <span className="text-foreground font-medium">{scopeName}</span>
                 </span>
-                <button type="submit" className="btn btn-primary btn-icon btn-sm" aria-label={t('ask.askAria')} disabled={!input.trim()}>
+                <button type="submit" className="btn btn-primary btn-icon btn-sm" aria-label={t('ask.askAria')} disabled={!input.trim() || waiting}>
                   <Ic n="send" className="sm" />
                 </button>
               </form>

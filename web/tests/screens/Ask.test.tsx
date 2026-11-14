@@ -394,7 +394,7 @@ describe('Ask', () => {
       expect(await chat().findByText('The question could not be answered. The model is not reachable')).toBeInTheDocument()
       expect(posts()).toEqual(['/ask', '/facts/M-105/retire', '/ask'])
       onStep(4)
-      expect(chat().queryByText('Looking in memory…')).not.toBeInTheDocument()
+      expect(chat().queryByText('Canonico is typing…')).not.toBeInTheDocument()
     })
 
     it('locks the screen while the retirement is sent', async () => {
@@ -903,7 +903,7 @@ describe('Ask', () => {
       await user.clear(composer())
       await user.type(composer(), 'What is the onboarding target?{Enter}')
 
-      expect(await chat().findByText('Looking in memory…')).toBeInTheDocument()
+      expect(await chat().findByText('Canonico is typing…')).toBeInTheDocument()
       expect(chat().getByText('Today')).toBeInTheDocument()
       expect(chat().getByText('What is the onboarding target?')).toBeInTheDocument()
       expect(chat().getAllByText('Giulia')).toHaveLength(2)
@@ -913,7 +913,7 @@ describe('Ask', () => {
 
       gate.resolve(askResponse())
       expect(await chat().findByText('Three to four weeks.')).toBeInTheDocument()
-      expect(chat().queryByText('Looking in memory…')).not.toBeInTheDocument()
+      expect(chat().queryByText('Canonico is typing…')).not.toBeInTheDocument()
       expect(chat().getByText('“New consultants should reach autonomy in three to four weeks.”')).toBeInTheDocument()
       expect(app.refresh).toHaveBeenCalledTimes(1)
       expect(composer()).toHaveValue('What is the onboarding target?')
@@ -970,7 +970,7 @@ describe('Ask', () => {
       await user.click(screen.getByRole('button', { name: 'Ask' }))
 
       expect(await chat().findByText('The question could not be answered. The model is not reachable')).toBeInTheDocument()
-      expect(chat().queryByText('Looking in memory…')).not.toBeInTheDocument()
+      expect(chat().queryByText('Canonico is typing…')).not.toBeInTheDocument()
       expect(chat().getAllByText(QUESTION)).toHaveLength(2)
       expect(app.refresh).not.toHaveBeenCalled()
       onStep(1)
@@ -1140,5 +1140,23 @@ describe('Ask', () => {
       await waitFor(() => expect(api.callsTo('GET', '/topics/:topic_id/chain')).toHaveLength(2))
       expect(api.unhandled).toEqual([])
     })
+  })
+})
+
+describe('Ask typing delay', () => {
+  it('shows the typing row before the answer and blocks the demo bar meanwhile', async () => {
+    const { revealConfig } = await import('../../src/lib/revealDelay')
+    revealConfig.enabled = true
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { default: userEvent } = await import('@testing-library/user-event')
+    const user = userEvent.setup()
+    await start()
+    await user.click(screen.getByRole('button', { name: 'Ask' }))
+    expect(await chat().findByText('Canonico is typing…')).toBeInTheDocument()
+    expect(next('Open memory')).toBeDisabled()
+    expect(chat().queryByText('Three to four weeks.')).not.toBeInTheDocument()
+    expect(await chat().findByText('Three to four weeks.', {}, { timeout: 3500 })).toBeInTheDocument()
+    expect(chat().queryByText('Canonico is typing…')).not.toBeInTheDocument()
+    vi.restoreAllMocks()
   })
 })

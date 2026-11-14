@@ -575,5 +575,17 @@ describe('Project', () => {
       await screen.findByText('2 of 2')
       expect(card('Answers').queryByText('Binding')).not.toBeInTheDocument()
     })
+
+    it('shows the error with a retry instead of a placeholder when the stats cannot be loaded, and the figures on retry', async () => {
+      api.get('/stats', fail(500, 'stats offline'))
+      const { user } = renderWithApp(<Project />)
+      expect(await card('Answers').findByText('Could not load this. stats offline')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Answers' }).closest('.card')!.querySelector('.skel')).not.toBeInTheDocument()
+
+      api.get('/stats', stats({ answers: { binding: 6, contested: 3, no_answer: 1 } }))
+      await user.click(card('Answers').getByRole('button', { name: 'Try again' }))
+      expect(await card('Answers').findByText('Binding')).toBeInTheDocument()
+      expect(card('Answers').queryByText('Could not load this. stats offline')).not.toBeInTheDocument()
+    })
   })
 })
