@@ -1,0 +1,36 @@
+[
+  {
+    "id": "C-001",
+    "topic": "onboarding-target",
+    "fact_ids": [
+      "M-103",
+      "M-106"
+    ],
+    "summary": "Requirement R1.1 says 3 weeks or less, the final report sets 3–4 weeks, and nothing links them.",
+    "detected_at": "2026-11-14T09:15:00Z",
+    "resolution": null,
+    "x": {
+      "curated": true
+    }
+  },
+  {
+    "id": "C-002",
+    "topic": "audit-queue-time",
+    "fact_ids": [
+      "M-201",
+      "M-202",
+      "M-203"
+    ],
+    "summary": "Three estimates of audit queue time (2–3, 3–4 and 6–8 days), nobody measured it.",
+    "detected_at": "2026-11-14T09:15:00Z",
+    "resolution": null,
+    "x": {
+      "curated": true,
+      "explained_by": [
+        "M-205",
+        "M-204"
+      ],
+      "answer": "Three people gave different estimates and nobody measured it, so there is no single binding value."
+    }
+  }
+]
