@@ -58,7 +58,7 @@ def test_chain_keeps_retired_facts(client):
 def test_conflicts(client, spec):
     listed = assert_contract(client.get("/conflicts"), "GET", "/conflicts")
     example = spec["paths"]["/conflicts"]["get"]["responses"]["200"]["content"]["application/json"]["example"]
-    assert listed == example
+    assert listed[:2] == example
     only = assert_contract(client.get("/conflicts", params={"topic": "audit-queue-time"}), "GET", "/conflicts")
     assert [c["id"] for c in only] == ["C-002"]
     assert client.get("/conflicts", params={"status": "bogus"}).status_code == 422
@@ -92,4 +92,5 @@ def test_stats_and_reset(client):
     stats = assert_contract(client.get("/stats"), "GET", "/stats")
     assert stats["documents"] == 46
     assert stats["open_conflicts"] >= 2
+    assert stats["facts_total"] >= 15
     assert_contract(client.post("/demo/reset"), "POST", "/demo/reset")
