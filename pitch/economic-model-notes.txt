@@ -1,6 +1,7 @@
-CANONICO ECONOMIC MODEL, DRAFT ARITHMETIC
+CANONICO ECONOMIC MODEL, ARITHMETIC
 All figures are assumptions to validate. None is measured. Horizon: year 2 run-rate.
 Payload: pitch/economic-model.json (schemaVersion 1, EUR, integer cents).
+Published on Control8: version 1, model em_a21fdbc7_7f3, coverage complete, no checks open.
 
 WHAT WE SELL
 - Paid pilot, 8 weeks, one process: EUR 6,000 one-off (project_fee).            [declared]
@@ -21,24 +22,25 @@ ACQUISITION (per month)
   partnership      3    300        900      10%          0.3
   events           4    400      1,600     2.5%          0.1
   Total           19             4,300                   1.0 pilot / month = 12 / year
+  Control8 rounds per channel per year: outbound 7, partners 4, events 1 = 12.
   Founder seller (1 x 5,000 / month)   5,000
   Ad budget                                0
   Acquisition spend                    9,300 EUR / month = 111,600 / year
 
-CAC
-  Per pilot customer:     9,300 / 1.0          =  9,300 EUR
-  Per licensed customer:  9,300 x 1.5 (2/3 conv.) = 13,950 EUR
+CAC (as published on Control8)
+  Blended, per new customer: 111,600 / 12   =  9,300 EUR
 
 COST TO SERVE                                                                     [unverified]
   Hosting + model calls about 100 EUR / month per licence.
   Reference point: LLM cost on the 46-document ClearPath corpus so far about USD 0.41.
-  Licence per month: 15,000 / 12 = 1,250. Gross margin per month: 1,150 (about 92%).
+  Licence per month: 15,000 / 12 = 1,250. Gross margin per month: 1,150 (92%, about 90% in the model note).
 
-PAYBACK
-  Gross, ignoring pilot fees:  13,950 / 1,150      = about 12 months
-  Net of pilot fees: 13,950 - (1.5 pilots x 6,000) = 4,950 -> 4,950 / 1,150 = about 4.3 months
-  Note: Control8 derives its own CAC and payback from the JSON; it may differ
-  from these figures depending on how it treats one-off pilot revenue.
+PAYBACK AND RETURN (as published on Control8)
+  Recurring revenue per new customer: 120,000 / 12 = 10,000 / year = 833 / month
+  Payback: 9,300 / 833                         = 11.2 months
+  Revenue per new customer: 192,000 / 12       = 16,000
+  First-year return: 16,000 / 9,300            = 1.72x
+  These are the numbers the pitch uses.
 
 YEAR 2 CONTRIBUTION (rough)
   Revenue 192,000 - acquisition 111,600 - serving (8 x 100 x 12 = 9,600) = 70,800 EUR
@@ -53,8 +55,8 @@ THE NUMBER TO CHECK FIRST
   saying what they pay today for their assistant's retrieval layer, or a public
   price list of an enterprise search or knowledge tool for a comparable scope.
 
-HOW TO PUBLISH (team only)
+HOW TO UPDATE (team only)
   get_economic_model (project hack-hackathon-gltlcuzjyh3gt3nuw3w1uo6j), then
   update_economic_model with the whole content of pitch/economic-model.json as
   `definition`. If it returns invalid_input, fix the named paths and resend all.
-  Make sure the price and volumes in the pitch match the saved model.
+  After any change, copy the new CAC, payback and return into the pitch.

@@ -12,15 +12,15 @@ Track: Making memory visible to people
 
 A new hire asks the company assistant how long onboarding takes. It says four weeks, a figure the final report of 28 Nov 2025 replaced with three to four weeks.
 
-Live: Giulia, the operations lead, opens Canonico and sees the binding fact with its verbatim source, the four versions it replaced and the stale "4 weeks" still active. She retires it and the next answer is "three to four weeks". No ticket, no engineer.
+Live: Giulia, the operations lead, sees the binding fact with its verbatim source, the four versions it replaced and the stale "4 weeks" still active. She retires it and the next answer is "three to four weeks". No ticket, no engineer.
 
-First test, 5 evolving-decision questions from KVA's ClearPath corpus: binding version right 3/5, plain retrieval 0/5.
+First test, 5 evolving-decision questions from KVA's ClearPath corpus: binding version right 3/5 (model router), plain retrieval 0/5.
 
 Demo: [DEMO_URL]
 Code: https://github.com/gabry-ts/canonico
 
 Team
-Emanuele Beffa (banking and finance background), Davide Chiattelli (pitch and demo), Gabriele Partiti. [team: confirm roles]
+Emanuele Beffa (banking and finance background, frontend), Davide Chiattelli (pitch and business model), Gabriele Partiti (backend, deploy, benchmark).
 
 Plan
 Canonico keeps an organisation's memory split into isolated projects, each fed by sources: documents, a versioned document library, public GitHub, mail and webhooks for meetings, notes and tickets. It extracts facts with their verbatim quote, links each fact to the one it replaces and says which decision is binding now. People find, correct, retire or pin a fact, and the assistant uses the change in its next answer. Every action is audited and can be undone.
@@ -41,7 +41,7 @@ Onboarding question: the assistant says "four weeks", a figure the final report 
 
 Works live: Giulia, the operations lead, sees the binding version with its verbatim source and the four it replaced, retires the stale "4 weeks", and the next answer becomes "three to four weeks".
 
-Check set: a first test on 5 evolving-decision questions from KVA's ClearPath corpus. Binding version right 3/5 for Canonico, 0/5 for plain retrieval. Five queries is a first signal, not a benchmark.
+Check set: a first test on 5 evolving-decision questions from KVA's ClearPath corpus. Binding version right 3/5 for Canonico with the model router (2/5 offline), 0/5 for plain retrieval. A first signal.
 
 Demo: [DEMO_URL]
 Code: https://github.com/gabry-ts/canonico
@@ -56,4 +56,4 @@ One cut: real erasure for GDPR requests. Retire keeps the history, which is righ
 
 Question for the mentor: who signs the purchase order in a company rolling out an internal assistant, the AI programme lead or the process owner whose procedure is wrong?
 
-Built with: FastAPI backend (112 API operations, about 95 tests), React frontend, Docker on our own server. Anthropic Claude models for extraction, routing and links; LLM cost so far about USD 0.41. The demo path also runs offline.
+Built with Claude Code: FastAPI backend (112 API operations, 107 tests), React frontend, Docker on our own server. In the product, Anthropic Claude Haiku for extraction and routing, Sonnet for topics and links; LLM cost so far about USD 0.41. The demo path also runs offline.

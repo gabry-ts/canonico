@@ -7,42 +7,43 @@ deployed build before the slot.
 
 BEFORE THE SLOT (T minus 10 min)
 - Reset the demo state:  curl -X POST [DEMO_URL]/api/demo/reset
-- Open three tabs: [DEMO_URL] on Ask, the same on Maintenance, the same on Audit.
-- Logged in as Giulia (owner, the default demo identity). Language EN.
-- Ask the onboarding question once in a private tab and check the answer is the stale one
-  with the conflict flag, then reset again.
+- Open three tabs: [DEMO_URL] on Ask, the same on Maintenance, the same on Audit log.
+- Acting as Giulia (owner, the default demo identity, no real login). Language EN.
+- Ask the onboarding question once and check that "4 weeks" (final presentation) shows
+  as still active under the binding answer, then reset again.
 - Have the submitted video open and paused at the start, as backup.
 - Phone hotspot ready in case the venue network drops.
 
 ----------------------------------------------------------------
 0:00 to 0:25  PROBLEM AND OWNER   (no clicks, Ask screen visible)
 SAY: "A new hire at ClearPath asks the company assistant how long onboarding takes.
-It says four weeks. That number was changed. The final report says three to four
-weeks, and there are four older versions in the files. The only way to find out why the
+It says four weeks. Wrong. The figure changed five times across the files, and the
+final report says three to four weeks. The only way to find out why the
 assistant is wrong is a ticket to an engineer. Giulia runs operations there.
 She knows the right answer. She just can't fix it."
 Note: ClearPath is the case in KVA's own OIDA corpus, not a real customer. Say so if asked.
 
 0:25 to 1:20  DEMO, EARLY
-1. CLICK [Ask], type "How long does onboarding take?", Enter.
+1. CLICK [Ask], type "How long does onboarding take?", Enter, then [Show what the AI believes].
    SAY: "Here is what the assistant sees. The binding answer is three to four weeks, from
    the final report of 28 November, and this is the sentence it comes from, word for word."
-2. CLICK to open the history under the answer (the four replaced versions).
+2. Point at "The 4 versions it replaced" and the "changed 5 times" table in the same panel.
    SAY: "These are the four versions it replaced. And this one, four weeks from the final
    presentation, is still active. That is why the assistant said four weeks."
-3. CLICK on the flagged "4 weeks" fact, then [Retire], reason "superseded by final report".
+3. CLICK [Retire] on the "4 weeks" row marked still active, reason "superseded by final
+   report", then [Confirm retire].
    SAY: "Giulia retires it. She writes why."
-4. CLICK [Ask] again, same question.
+4. CLICK [Ask again], same question.
    SAY: "Same question. Three to four weeks, and it says why it changed. No ticket, no
    engineer."   <-- THE MOMENT. Pause one second here.
-5. CLICK [Audit].
+5. CLICK [Audit log].
    SAY: "Everything she did is logged with her name, and she can undo it."
 
 1:20 to 1:55  EVIDENCE
 SAY: "We ran it on ClearPath, forty-six documents from KVA's own benchmark. On five
 questions where a decision changed over time, Canonico picked the binding version three
-times. Plain retrieval got zero. It's a first test on five queries, so it's a signal, not
-a result. The two misses are a known bug: on a broad topic we take a later email instead
+times, with a small model picking the topic. Plain retrieval got zero. It's a first test
+on five queries, so it's a signal, not a result. The two misses are a known bug: on a broad topic we take a later email instead
 of the one with the decision."
 
 1:55 to 2:15  WHY IT IS HARD TO COPY
@@ -55,15 +56,14 @@ documents, a versioned library, GitHub, mail and webhooks for meetings and ticke
 2:15 to 2:35  BUSINESS CASE
 SAY: "We sell to the person rolling out the company assistant. A paid pilot on one process
 is six thousand euros for eight weeks, then fifteen thousand a year. Those are our
-estimates, not quotes from buyers yet. With one founder selling, a licensed customer
-costs about fourteen thousand to win and pays back in about a year, or four months if
-you count the pilot fee."
+estimates, not quotes from buyers yet. With one founder selling and no ads, a new
+customer costs about nine thousand three hundred euros to win and pays back in eleven
+months."
 (Numbers must match the saved economic model. If the team changes the model, change this.)
 
 2:35 to 2:45  METHOD AND AI TOOLS
 SAY: "We built it today with Claude Code. Inside the product, Claude Haiku extracts and
-routes, Sonnet groups topics; about forty cents of model cost so far. Whisper for
-transcription. The demo you just saw needs no model at all, it runs offline."
+routes, Sonnet groups topics and links; about forty cents of model cost so far. The demo you just saw needs no model at all, it runs offline."
 
 2:45 to 3:00  NEXT TEST
 SAY: "Next week we put five people from outside the team in front of it and time how long
@@ -79,7 +79,7 @@ FALLBACK, IF SOMETHING BREAKS
 - Model provider slow or down:
   curl -X PATCH [DEMO_URL]/api/config -H 'content-type: application/json' -d '{"offline_mode": true}'
   The whole demo path is seeded and makes no model calls, so nothing changes on screen.
-  The [Admin] page also shows and switches offline mode [check on the deployed build].
+  The [Demo control] page also shows and switches offline mode [check on the deployed build].
 - Server or network down: switch to the submitted video.
   SAY: "Here is the same flow, recorded on our server." Keep narrating
   from the step where it broke.
@@ -121,8 +121,8 @@ Q&A PREP (about 1:30, answer in two sentences, then stop)
    not built yet and is the next feature for the compliance buyer.
 
 8. Isn't five queries too few?
-   Yes, it is a first signal. Three of five against zero of five, on KVA's own corpus, and we
-   know why the two misses fail. Next step is the full ClearPath set.
+   Yes, it is a first signal. Three of five against zero of five, on KVA's own corpus, with the
+   model picking the topic (two of five offline), and we know why the two misses fail. Next step is the full ClearPath set.
 
 9. How does it scale?
    Today it is one process with state in a file, one replica on our server, and every
@@ -131,7 +131,7 @@ Q&A PREP (about 1:30, answer in two sentences, then stop)
 
 10. Why this team?
     Emanuele comes from banking and finance, where which decision binds is a regulatory
-    question every day. Together we built a backend with 112 API operations, about 95 tests
+    question every day. Together we built a backend with 112 API operations, 107 tests
     and the full interface during the event.
 
 11. What happens after the hackathon?
@@ -152,8 +152,8 @@ RUBRIC SELF-CHECK (gate 2, track 3b-memory-for-people weights; one reading, not 
 Criterion                         Weight  Score  Why
 Technical feasibility               12      6    Core built: supersession chain, verbatim quote
                                                  check, retire changes next answer [verified: README, tests]
-Financial sustainability            13      1    No economic model saved in Control8 yet
-                                                 [verified: get_economic_model returns no_model]
+Financial sustainability            13      4    Model published in Control8 (v1): CAC 9,300,
+                                                 payback 11.2 months, all declared [verified]
 Build quality                       14      6    Runs end to end, public repo, eval prints a score
                                                  [verified: README, eval/README]
 Fidelity to the 12:30 proposal      10      6    Demo is the submitted video flow [declared]
@@ -164,17 +164,15 @@ Frictionless adoption and deploy    17      5    Deployed with Docker, one comma
 Demo or reality                     18      5    Runs live on KVA's corpus; onboarding topic is
                                                  hand-curated seed, say so [verified: README]
 
-Total now: (12x6 + 13x1 + 14x6 + 10x6 + 16x5 + 17x5 + 18x5) / 100 = 4.84
-           (4.84 - 1) / 6 x 100 = 64.0 / 100
-With the economic model published (financial 4, all numbers declared):
-           sum 523 / 100 = 5.23 ; (5.23 - 1) / 6 x 100 = 70.5 / 100
+Total now: (12x6 + 13x4 + 14x6 + 10x6 + 16x5 + 17x5 + 18x5) / 100 = 5.23
+           (5.23 - 1) / 6 x 100 = 70.5 / 100
+Before the model was published (financial 1): 4.84, 64.0 / 100
 
-Weakest: Financial sustainability, 13.0 points to win back now ((7 - 1) x 13 / 6).
-Do now (before the 16:30 financial validation): publish pitch/economic-model.json with
-update_economic_model, then read it back with get_economic_model and copy its CAC and
-payback into the pitch. Even after that it stays the weakest (6.5 points, then Demo or
-reality at 6.0): the one move left is a sourced anchor for the EUR 15,000 price, a public
-price list or one AI programme lead's quote.
+Weakest: Financial sustainability, 6.5 points to win back ((7 - 4) x 13 / 6), then Demo or
+reality at 6.0. Done: pitch/economic-model.json published with update_economic_model, CAC
+9,300 and payback 11.2 months copied from get_economic_model into the pitch. The one move
+left is a sourced anchor for the EUR 15,000 price, a public price list or one AI programme
+lead's quote.
 
-Hand-in: pitch draft (not published) . repo public . economic model draft (not saved) .
+Hand-in: pitch draft (not published) . repo public . economic model published (v1) .
 AI tools declared in pitch . deck [team: check]

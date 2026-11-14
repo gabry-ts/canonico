@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "currency": "EUR",
-  "note": "DRAFT. All figures are assumptions to validate, none is measured. [declared] team estimates, horizon = year 2 run-rate. Buyer: companies rolling out an internal AI assistant (AI programme lead), with process owners and compliance as co-buyers. Sale = paid 8-week pilot on one process, then an annual licence per company. Assumed 2 of 3 pilots convert (12 pilots -> 8 licences). Cost to serve one licence [unverified]: about EUR 100/month hosting and model calls (LLM cost on the 46-document ClearPath corpus so far about USD 0.41), so gross margin about 90%. No paid ads. Founder-led sales. Arithmetic in pitch/economic-model-notes.txt in the repo.",
+  "note": "All figures are assumptions to validate, none is measured. [declared] team estimates, horizon = year 2 run-rate. Buyer: companies rolling out an internal AI assistant (AI programme lead), with process owners and compliance as co-buyers. Sale = paid 8-week pilot on one process, then an annual licence per company. Assumed 2 of 3 pilots convert (12 pilots -> 8 licences). Cost to serve one licence [unverified]: about EUR 100/month hosting and model calls (LLM cost on the 46-document ClearPath corpus so far about USD 0.41), so gross margin about 90%. No paid ads. Founder-led sales. Arithmetic in pitch/economic-model-notes.txt in the repo.",
   "revenueLines": [
     {
       "key": "company_licence",
