@@ -16,6 +16,11 @@ info:
 
     Authentication: none. This is a hackathon demo only, do not expose it publicly.
 
+    Scope: the organisation is the global brain over all projects. Projects are isolated:
+    a request with `project_id` only sees that project, a request without it has
+    organisation scope and sees all projects. Real connectors (Gmail/Outlook OAuth,
+    real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP.
+
     Demo corpus: OIDA Benchmark Corpora, `org-consulting-clearpath` (46 documents,
     26 queries, CC BY 4.0).
   license:
@@ -55,6 +60,14 @@ tags:
   description: Stored answers, history and replay
 - name: admin
   description: Stats, config, demo reset, export and import
+- name: org
+  description: The organisation, global brain over all projects. Single organisation in the MVP.
+- name: projects
+  description: Isolated projects inside the organisation
+- name: sources
+  description: Per-project sources (documents, document library, GitHub, mail, chat) and their sync jobs
+- name: mail
+  description: Mail configuration, routing rules, inbound webhook and mocked IMAP polling
 paths:
   /health:
     get:
@@ -275,6 +288,7 @@ paths:
       operationId: listFacts
       summary: List facts
       parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
       - name: topic
         in: query
         description: Topic id.
@@ -534,6 +548,8 @@ paths:
       - topics
       operationId: listTopics
       summary: List topics
+      parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
       responses:
         '200':
           description: All topics.
@@ -671,6 +687,8 @@ paths:
       - documents
       operationId: listDocuments
       summary: List documents (without text)
+      parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
       responses:
         '200':
           description: All ingested documents.
@@ -821,6 +839,7 @@ paths:
       summary: Audit log
       description: Most recent events first.
       parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
       - $ref: '#/components/parameters/Limit'
       - name: actor
         in: query
@@ -1247,6 +1266,7 @@ paths:
       operationId: listConflicts
       summary: Contested topics
       parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
       - name: status
         in: query
         schema:
@@ -1436,6 +1456,7 @@ paths:
       operationId: listOpenQuestions
       summary: Open questions
       parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
       - name: status
         in: query
         schema:
@@ -1524,6 +1545,7 @@ paths:
       summary: Facts proposed for retirement
       description: Proposed because the fact is superseded but still retrievable, stale, or low confidence.
       parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
       - name: status
         in: query
         schema:
@@ -1829,6 +1851,7 @@ paths:
       summary: Hybrid search over facts and documents
       description: Combines keyword and embedding scores. Filter by epistemic type, status and kind of result.
       parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
       - name: q
         in: query
         required: true
@@ -2388,6 +2411,8 @@ paths:
       - admin
       operationId: getStats
       summary: Counts and cost
+      parameters:
+      - $ref: '#/components/parameters/ProjectIdQuery'
       responses:
         '200':
           description: Stats.
@@ -2609,6 +2634,1093 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '422':
           $ref: '#/components/responses/Unprocessable'
+  /org:
+    get:
+      tags:
+      - org
+      operationId: getOrg
+      summary: Get the organisation
+      description: The single organisation of the MVP, global brain over all projects. Real connectors (Gmail/Outlook OAuth, real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP. No authentication (demo).
+      responses:
+        '200':
+          description: Organisation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organisation'
+              example:
+                id: org-meridian
+                name: Meridian Labs
+                mail_config:
+                  mode: imap_mock
+                  imap_host: mock.meridianlabs.org
+                  imap_user: brain@meridianlabs.org
+                  inbound_address: brain@inbound.meridianlabs.org
+                  poll_interval_s: 60
+    patch:
+      tags:
+      - org
+      operationId: patchOrg
+      summary: Update the organisation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganisationPatch'
+            example:
+              name: Meridian Labs
+      responses:
+        '200':
+          description: Updated organisation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organisation'
+              example:
+                id: org-meridian
+                name: Meridian Labs
+                mail_config:
+                  mode: imap_mock
+                  imap_host: mock.meridianlabs.org
+                  imap_user: brain@meridianlabs.org
+                  inbound_address: brain@inbound.meridianlabs.org
+                  poll_interval_s: 60
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /projects:
+    get:
+      tags:
+      - projects
+      operationId: listProjects
+      summary: List projects
+      description: Projects are isolated from each other. The organisation sees all of them.
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Page of projects.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectPage'
+              example:
+                items:
+                - id: proj-clearpath
+                  name: ClearPath engagement
+                  description: Consulting engagement for ClearPath, 46 documents.
+                  created_at: '2026-11-14T09:00:00Z'
+                  mail_config_override: null
+                  effective_mail_config:
+                    mode: imap_mock
+                    imap_host: mock.meridianlabs.org
+                    imap_user: brain@meridianlabs.org
+                    inbound_address: brain@inbound.meridianlabs.org
+                    poll_interval_s: 60
+                  source_ids:
+                  - src-clearpath-docs
+                  - src-clearpath-library
+                  - src-clearpath-mail
+                - id: proj-internal
+                  name: Internal
+                  description: Internal documents and tooling repository.
+                  created_at: '2026-11-14T09:05:00Z'
+                  mail_config_override:
+                    mode: webhook
+                    imap_host: null
+                    imap_user: null
+                    inbound_address: internal@inbound.meridianlabs.org
+                    poll_interval_s: 60
+                  effective_mail_config:
+                    mode: webhook
+                    imap_host: null
+                    imap_user: null
+                    inbound_address: internal@inbound.meridianlabs.org
+                    poll_interval_s: 60
+                  source_ids:
+                  - src-internal-docs
+                  - src-internal-gh
+                total: 2
+                limit: 50
+                offset: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    post:
+      tags:
+      - projects
+      operationId: createProject
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+            example:
+              id: proj-clearpath
+              name: ClearPath engagement
+              description: Consulting engagement for ClearPath, 46 documents.
+      responses:
+        '201':
+          description: Created project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+              example:
+                id: proj-clearpath
+                name: ClearPath engagement
+                description: Consulting engagement for ClearPath, 46 documents.
+                created_at: '2026-11-14T09:00:00Z'
+                mail_config_override: null
+                effective_mail_config:
+                  mode: imap_mock
+                  imap_host: mock.meridianlabs.org
+                  imap_user: brain@meridianlabs.org
+                  inbound_address: brain@inbound.meridianlabs.org
+                  poll_interval_s: 60
+                source_ids:
+                - src-clearpath-docs
+                - src-clearpath-library
+                - src-clearpath-mail
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /projects/{project_id}:
+    get:
+      tags:
+      - projects
+      operationId: getProject
+      summary: Get a project
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+              example:
+                id: proj-clearpath
+                name: ClearPath engagement
+                description: Consulting engagement for ClearPath, 46 documents.
+                created_at: '2026-11-14T09:00:00Z'
+                mail_config_override: null
+                effective_mail_config:
+                  mode: imap_mock
+                  imap_host: mock.meridianlabs.org
+                  imap_user: brain@meridianlabs.org
+                  inbound_address: brain@inbound.meridianlabs.org
+                  poll_interval_s: 60
+                source_ids:
+                - src-clearpath-docs
+                - src-clearpath-library
+                - src-clearpath-mail
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+      - projects
+      operationId: patchProject
+      summary: Update a project
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectPatch'
+            example:
+              description: ClearPath engagement, final report delivered.
+      responses:
+        '200':
+          description: Updated project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+              example:
+                id: proj-clearpath
+                name: ClearPath engagement
+                description: Consulting engagement for ClearPath, 46 documents.
+                created_at: '2026-11-14T09:00:00Z'
+                mail_config_override: null
+                effective_mail_config:
+                  mode: imap_mock
+                  imap_host: mock.meridianlabs.org
+                  imap_user: brain@meridianlabs.org
+                  inbound_address: brain@inbound.meridianlabs.org
+                  poll_interval_s: 60
+                source_ids:
+                - src-clearpath-docs
+                - src-clearpath-library
+                - src-clearpath-mail
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      tags:
+      - projects
+      operationId: deleteProject
+      summary: Delete a project
+      description: Deletes the project, its sources and its facts. Organisation mail rules that point to it are removed.
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - deleted
+                properties:
+                  id:
+                    type: string
+                  deleted:
+                    type: boolean
+              example:
+                id: proj-internal
+                deleted: true
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /projects/{project_id}/sources:
+    get:
+      tags:
+      - sources
+      operationId: listSources
+      summary: List sources of a project
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Sources.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Source'
+              example:
+                items:
+                - id: src-clearpath-docs
+                  project_id: proj-clearpath
+                  type: documents
+                  label: ClearPath documents
+                  status: ok
+                  last_synced_at: '2026-11-14T13:00:00Z'
+                  items: 46
+                  config: {}
+                - id: src-clearpath-library
+                  project_id: proj-clearpath
+                  type: document_library
+                  label: ClearPath library
+                  status: ok
+                  last_synced_at: '2026-11-14T13:00:00Z'
+                  items: 46
+                  config:
+                    provider: local_mock
+                    root_path: /corpus/org-consulting-clearpath
+                - id: src-clearpath-mail
+                  project_id: proj-clearpath
+                  type: mail
+                  label: ClearPath mailbox
+                  status: ok
+                  last_synced_at: '2026-11-14T14:30:05Z'
+                  items: 1
+                  config:
+                    mode: imap_mock
+                    mailbox: brain@meridianlabs.org
+                    match_rules:
+                    - rule-001
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+      - sources
+      operationId: createSource
+      summary: Add a source to a project
+      description: '`github` accepts public repositories only. `document_library` only supports provider `local_mock`. Real connectors (Gmail/Outlook OAuth, real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP. No authentication (demo).'
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceCreate'
+            example:
+              type: github
+              label: ClearPath tooling repo
+              config:
+                repo_url: https://github.com/meridianlabs/clearpath-tooling
+                include:
+                - issues
+                - readme
+      responses:
+        '201':
+          description: Created source.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+              example:
+                id: src-clearpath-gh
+                project_id: proj-clearpath
+                type: github
+                label: ClearPath tooling repo
+                status: idle
+                last_synced_at: null
+                items: 0
+                config:
+                  repo_url: https://github.com/meridianlabs/clearpath-tooling
+                  include:
+                  - issues
+                  - readme
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /sources/{source_id}:
+    get:
+      tags:
+      - sources
+      operationId: getSource
+      summary: Get a source
+      parameters:
+      - $ref: '#/components/parameters/SourceId'
+      responses:
+        '200':
+          description: Source.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+              example:
+                id: src-clearpath-mail
+                project_id: proj-clearpath
+                type: mail
+                label: ClearPath mailbox
+                status: ok
+                last_synced_at: '2026-11-14T14:30:05Z'
+                items: 1
+                config:
+                  mode: imap_mock
+                  mailbox: brain@meridianlabs.org
+                  match_rules:
+                  - rule-001
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+      - sources
+      operationId: patchSource
+      summary: Update a source
+      parameters:
+      - $ref: '#/components/parameters/SourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourcePatch'
+            example:
+              label: ClearPath mailbox
+      responses:
+        '200':
+          description: Updated source.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+              example:
+                id: src-clearpath-mail
+                project_id: proj-clearpath
+                type: mail
+                label: ClearPath mailbox
+                status: ok
+                last_synced_at: '2026-11-14T14:30:05Z'
+                items: 1
+                config:
+                  mode: imap_mock
+                  mailbox: brain@meridianlabs.org
+                  match_rules:
+                  - rule-001
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      tags:
+      - sources
+      operationId: deleteSource
+      summary: Delete a source
+      parameters:
+      - $ref: '#/components/parameters/SourceId'
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - deleted
+                properties:
+                  id:
+                    type: string
+                  deleted:
+                    type: boolean
+              example:
+                id: src-internal-gh
+                deleted: true
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /sources/{source_id}/sync:
+    post:
+      tags:
+      - sources
+      operationId: syncSource
+      summary: Start a sync of a source
+      description: Starts an asynchronous sync job. Poll `GET /sync-jobs/{job_id}`.
+      parameters:
+      - $ref: '#/components/parameters/SourceId'
+      responses:
+        '202':
+          description: Sync job accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJob'
+              example:
+                id: sync-0001
+                source_id: src-clearpath-mail
+                status: queued
+                items_added: 0
+                facts_created: 0
+                cost_usd: 0.0
+                started_at: null
+                finished_at: null
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /sync-jobs/{job_id}:
+    get:
+      tags:
+      - sources
+      operationId: getSyncJob
+      summary: Get a sync job
+      parameters:
+      - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Sync job.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJob'
+              example:
+                id: sync-0001
+                source_id: src-clearpath-mail
+                status: done
+                items_added: 1
+                facts_created: 1
+                cost_usd: 0.004
+                started_at: '2026-11-14T14:30:00Z'
+                finished_at: '2026-11-14T14:30:05Z'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /org/mail:
+    get:
+      tags:
+      - mail
+      operationId: getOrgMail
+      summary: Get the organisation mail config
+      description: Inherited by every project that has no override. Secrets are never returned. Real connectors (Gmail/Outlook OAuth, real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP. No authentication (demo).
+      responses:
+        '200':
+          description: Mail config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailConfig'
+              example:
+                mode: imap_mock
+                imap_host: mock.meridianlabs.org
+                imap_user: brain@meridianlabs.org
+                inbound_address: brain@inbound.meridianlabs.org
+                poll_interval_s: 60
+    put:
+      tags:
+      - mail
+      operationId: putOrgMail
+      summary: Set the organisation mail config
+      description: '`password` is accepted on write only.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailConfigWrite'
+            example:
+              mode: imap_mock
+              imap_host: mock.meridianlabs.org
+              imap_user: brain@meridianlabs.org
+              password: demo-only
+              inbound_address: brain@inbound.meridianlabs.org
+              poll_interval_s: 60
+      responses:
+        '200':
+          description: Saved mail config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailConfig'
+              example:
+                mode: imap_mock
+                imap_host: mock.meridianlabs.org
+                imap_user: brain@meridianlabs.org
+                inbound_address: brain@inbound.meridianlabs.org
+                poll_interval_s: 60
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /projects/{project_id}/mail:
+    get:
+      tags:
+      - mail
+      operationId: getProjectMail
+      summary: Get the effective mail config of a project
+      description: Returns the effective config and whether the project overrides the organisation one.
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Effective mail config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMail'
+              example:
+                project_id: proj-clearpath
+                overridden: false
+                effective_mail_config:
+                  mode: imap_mock
+                  imap_host: mock.meridianlabs.org
+                  imap_user: brain@meridianlabs.org
+                  inbound_address: brain@inbound.meridianlabs.org
+                  poll_interval_s: 60
+                mail_config_override: null
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - mail
+      operationId: putProjectMail
+      summary: Override the mail config of a project
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailConfigWrite'
+            example:
+              mode: webhook
+              inbound_address: internal@inbound.meridianlabs.org
+              poll_interval_s: 60
+      responses:
+        '200':
+          description: Project mail config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMail'
+              example:
+                project_id: proj-internal
+                overridden: true
+                effective_mail_config:
+                  mode: webhook
+                  imap_host: null
+                  imap_user: null
+                  inbound_address: internal@inbound.meridianlabs.org
+                  poll_interval_s: 60
+                mail_config_override:
+                  mode: webhook
+                  imap_host: null
+                  imap_user: null
+                  inbound_address: internal@inbound.meridianlabs.org
+                  poll_interval_s: 60
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      tags:
+      - mail
+      operationId: deleteProjectMail
+      summary: Remove the override, back to inherited
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Inherited mail config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMail'
+              example:
+                project_id: proj-internal
+                overridden: false
+                effective_mail_config:
+                  mode: imap_mock
+                  imap_host: mock.meridianlabs.org
+                  imap_user: brain@meridianlabs.org
+                  inbound_address: brain@inbound.meridianlabs.org
+                  poll_interval_s: 60
+                mail_config_override: null
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /org/mail/rules:
+    get:
+      tags:
+      - mail
+      operationId: listMailRules
+      summary: List mail routing rules
+      description: Rules are evaluated by ascending `priority`, first match wins.
+      responses:
+        '200':
+          description: Rules.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MailRule'
+              example:
+                items:
+                - id: rule-001
+                  match_type: sender_domain
+                  value: '@meridianlabs.org'
+                  project_id: proj-clearpath
+                  priority: 10
+    post:
+      tags:
+      - mail
+      operationId: createMailRule
+      summary: Create a mail routing rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailRuleCreate'
+            example:
+              match_type: sender_domain
+              value: '@meridianlabs.org'
+              project_id: proj-clearpath
+              priority: 10
+      responses:
+        '201':
+          description: Created rule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailRule'
+              example:
+                id: rule-001
+                match_type: sender_domain
+                value: '@meridianlabs.org'
+                project_id: proj-clearpath
+                priority: 10
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /org/mail/rules/test:
+    post:
+      tags:
+      - mail
+      operationId: testMailRules
+      summary: Test which project and rule would match an email
+      description: Dry run, nothing is stored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InboundEmail'
+            example:
+              message_id: <demo-0001@meridianlabs.org>
+              from: client@meridianlabs.org
+              to:
+              - brain@inbound.meridianlabs.org
+              cc: []
+              subject: Onboarding target confirmed
+              date: '2026-11-14T14:30:00Z'
+              text: Following our call, we confirm the onboarding target at 5 weeks.
+              attachments: []
+      responses:
+        '200':
+          description: Match result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleTestResult'
+              example:
+                matched: true
+                routed_project_id: proj-clearpath
+                rule_id: rule-001
+                reason: sender_domain @meridianlabs.org
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /org/mail/rules/{rule_id}:
+    patch:
+      tags:
+      - mail
+      operationId: patchMailRule
+      summary: Update a mail routing rule
+      parameters:
+      - $ref: '#/components/parameters/RuleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailRulePatch'
+            example:
+              priority: 5
+      responses:
+        '200':
+          description: Updated rule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailRule'
+              example:
+                id: rule-001
+                match_type: sender_domain
+                value: '@meridianlabs.org'
+                project_id: proj-clearpath
+                priority: 5
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      tags:
+      - mail
+      operationId: deleteMailRule
+      summary: Delete a mail routing rule
+      parameters:
+      - $ref: '#/components/parameters/RuleId'
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - deleted
+                properties:
+                  id:
+                    type: string
+                  deleted:
+                    type: boolean
+              example:
+                id: rule-001
+                deleted: true
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /mail/inbound:
+    post:
+      tags:
+      - mail
+      operationId: receiveInboundEmail
+      summary: Inbound email webhook
+      description: Routes the email with the organisation rules, stores it as a document of the matched project, extracts facts and links SUPERSEDES edges. Returns 200 with the result (processing is synchronous in the MVP). Real connectors (Gmail/Outlook OAuth, real IMAP/SMTP, SharePoint, Google Drive) are out of scope for the MVP. No authentication (demo).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InboundEmail'
+            example:
+              message_id: <demo-0001@meridianlabs.org>
+              from: client@meridianlabs.org
+              to:
+              - brain@inbound.meridianlabs.org
+              cc: []
+              subject: Onboarding target confirmed
+              date: '2026-11-14T14:30:00Z'
+              text: Following our call, we confirm the onboarding target at 5 weeks.
+              attachments: []
+      responses:
+        '200':
+          description: Processed email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboundEmailResult'
+              example:
+                message_id: <demo-0001@meridianlabs.org>
+                routed_project_id: proj-clearpath
+                rule_id: rule-001
+                document_id: mail/demo-0001
+                facts_created:
+                - M-301
+                supersedes_created:
+                - fact_id: M-301
+                  supersedes: M-106
+                audit_event_id: a-0043
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /mail/poll:
+    post:
+      tags:
+      - mail
+      operationId: pollMail
+      summary: Trigger the mocked IMAP poll
+      description: Polls the mocked inbox of a project, or of the organisation when `project_id` is absent. Real IMAP is out of scope for the MVP.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailPollRequest'
+            example:
+              project_id: proj-clearpath
+      responses:
+        '200':
+          description: Poll result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailPollResult'
+              example:
+                polled: 1
+                results:
+                - message_id: <demo-0001@meridianlabs.org>
+                  routed_project_id: proj-clearpath
+                  rule_id: rule-001
+                  document_id: mail/demo-0001
+                  facts_created:
+                  - M-301
+                  supersedes_created:
+                  - fact_id: M-301
+                    supersedes: M-106
+                  audit_event_id: a-0043
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /projects/{project_id}/messages:
+    get:
+      tags:
+      - mail
+      operationId: listProjectMessages
+      summary: List emails received by a project
+      description: Paginated, newest first.
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Page of messages.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagePage'
+              example:
+                items:
+                - message_id: <demo-0001@meridianlabs.org>
+                  project_id: proj-clearpath
+                  from: client@meridianlabs.org
+                  subject: Onboarding target confirmed
+                  date: '2026-11-14T14:30:00Z'
+                  rule_id: rule-001
+                  document_id: mail/demo-0001
+                total: 1
+                limit: 50
+                offset: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /demo/send-email:
+    post:
+      tags:
+      - mail
+      operationId: demoSendEmail
+      summary: Send the canned demo email (demo only)
+      description: Demo-only convenience for the live demo. Sends a canned InboundEmail from client@meridianlabs.org, subject "Onboarding target confirmed", text "Following our call, we confirm the onboarding target at 5 weeks." It is routed to proj-clearpath and supersedes M-106 (3–4 weeks) with a new fact M-301 (5 weeks). Not for production use.
+      responses:
+        '200':
+          description: Processed demo email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboundEmailResult'
+              example:
+                message_id: <demo-0001@meridianlabs.org>
+                routed_project_id: proj-clearpath
+                rule_id: rule-001
+                document_id: mail/demo-0001
+                facts_created:
+                - M-301
+                supersedes_created:
+                - fact_id: M-301
+                  supersedes: M-106
+                audit_event_id: a-0043
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /documents/{doc_id}/versions:
+    get:
+      tags:
+      - documents
+      operationId: listDocumentVersions
+      summary: List versions of a document
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        description: URL-encoded document id.
+        schema:
+          type: string
+        example: 07-documents%2Freport-final
+      responses:
+        '200':
+          description: Versions, oldest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocumentVersion'
+              example:
+              - document_id: 07-documents/report-final
+                version: 1
+                version_label: v1
+                uploaded_at: '2025-10-02T10:00:00Z'
+                supersedes_document_id: null
+                facts_superseded: []
+              - document_id: 07-documents/report-final
+                version: 2
+                version_label: v2
+                uploaded_at: '2026-11-14T14:40:00Z'
+                supersedes_document_id: 07-documents/report-final
+                facts_superseded:
+                - M-106
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+      - documents
+      operationId: uploadDocumentVersion
+      summary: Upload a new version of a document
+      description: Facts extracted from the previous version are marked superseded where the new version restates the same topic with a different value.
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        description: URL-encoded document id.
+        schema:
+          type: string
+        example: 07-documents%2Freport-final
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentVersionCreate'
+            example:
+              version_label: v2
+              text: 'Onboarding SLA: 5 weeks.'
+      responses:
+        '201':
+          description: New version and superseded facts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentVersionResult'
+              example:
+                version:
+                  document_id: 07-documents/report-final
+                  version: 2
+                  version_label: v2
+                  uploaded_at: '2026-11-14T14:40:00Z'
+                  supersedes_document_id: 07-documents/report-final
+                  facts_superseded:
+                  - M-106
+                facts_created:
+                - M-301
+                supersedes_created:
+                - fact_id: M-301
+                  supersedes: M-106
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 components:
   parameters:
     FactId:
@@ -2654,6 +3766,42 @@ components:
       schema:
         type: string
       example: ans-0007
+    ProjectIdQuery:
+      name: project_id
+      in: query
+      required: false
+      description: Restrict to one project. When absent the request has organisation scope and sees all projects.
+      schema:
+        type: string
+      example: proj-clearpath
+    ProjectId:
+      name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: proj-clearpath
+    SourceId:
+      name: source_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: src-clearpath-mail
+    RuleId:
+      name: rule_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: rule-001
+    JobId:
+      name: job_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: sync-0001
   responses:
     BadRequest:
       description: Malformed request.
@@ -2723,6 +3871,11 @@ components:
       - confidence
       - retired_reason
       properties:
+        project_id:
+          type:
+          - string
+          - 'null'
+          description: Owning project. Null or absent means organisation scope.
         id:
           type: string
           example: M-106
@@ -2796,6 +3949,24 @@ components:
       - date
       - path
       properties:
+        project_id:
+          type:
+          - string
+          - 'null'
+          description: Owning project. Null or absent means organisation scope.
+        source_id:
+          type:
+          - string
+          - 'null'
+        version:
+          type: integer
+          minimum: 1
+          default: 1
+        version_of:
+          type:
+          - string
+          - 'null'
+          description: Id of the document this one is a new version of.
         id:
           type: string
           example: 07-documents/report-final
@@ -2826,6 +3997,11 @@ components:
       - label
       - fact_ids
       properties:
+        project_id:
+          type:
+          - string
+          - 'null'
+          description: Owning project. Null or absent means organisation scope.
         id:
           type: string
           example: onboarding-target
@@ -2854,6 +4030,11 @@ components:
       required:
       - question
       properties:
+        project_id:
+          type:
+          - string
+          - 'null'
+          description: Restrict the answer to one project. Absence of project_id means organisation scope (all projects).
         question:
           type: string
           minLength: 1
@@ -2955,6 +4136,11 @@ components:
       - fact_id
       - reason
       properties:
+        project_id:
+          type:
+          - string
+          - 'null'
+          description: Owning project. Null or absent means organisation scope.
         id:
           type: string
         at:
@@ -3241,6 +4427,11 @@ components:
       - detected_at
       - resolution
       properties:
+        project_id:
+          type:
+          - string
+          - 'null'
+          description: Owning project. Null or absent means organisation scope.
         id:
           type: string
           example: C-001
@@ -3948,6 +5139,692 @@ components:
       - undo
       - import
       - reset
+    MailMode:
+      type: string
+      enum:
+      - imap_mock
+      - webhook
+      description: '`imap_mock` polls a mocked inbox, `webhook` receives `POST /mail/inbound`. Real IMAP/SMTP and Gmail/Outlook OAuth are out of scope for the MVP.'
+    MailConfig:
+      type: object
+      description: Mail settings. Never contains secrets.
+      required:
+      - mode
+      properties:
+        mode:
+          $ref: '#/components/schemas/MailMode'
+        imap_host:
+          type:
+          - string
+          - 'null'
+        imap_user:
+          type:
+          - string
+          - 'null'
+        inbound_address:
+          type:
+          - string
+          - 'null'
+          description: Address the webhook provider forwards to.
+        poll_interval_s:
+          type: integer
+          minimum: 5
+          default: 60
+      example:
+        mode: imap_mock
+        imap_host: mock.meridianlabs.org
+        imap_user: brain@meridianlabs.org
+        inbound_address: brain@inbound.meridianlabs.org
+        poll_interval_s: 60
+    MailConfigWrite:
+      type: object
+      description: Write schema for mail settings. `password` is accepted on write only and never returned.
+      required:
+      - mode
+      properties:
+        mode:
+          $ref: '#/components/schemas/MailMode'
+        imap_host:
+          type:
+          - string
+          - 'null'
+        imap_user:
+          type:
+          - string
+          - 'null'
+        password:
+          type:
+          - string
+          - 'null'
+          writeOnly: true
+        inbound_address:
+          type:
+          - string
+          - 'null'
+        poll_interval_s:
+          type: integer
+          minimum: 5
+          default: 60
+      example:
+        mode: imap_mock
+        imap_host: mock.meridianlabs.org
+        imap_user: brain@meridianlabs.org
+        password: demo-only
+        inbound_address: brain@inbound.meridianlabs.org
+        poll_interval_s: 60
+    Organisation:
+      type: object
+      required:
+      - id
+      - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        mail_config:
+          oneOf:
+          - $ref: '#/components/schemas/MailConfig'
+          - type: 'null'
+    OrganisationPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+      example:
+        name: Meridian Labs
+    Project:
+      type: object
+      required:
+      - id
+      - name
+      - created_at
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        created_at:
+          type: string
+          format: date-time
+        mail_config_override:
+          oneOf:
+          - $ref: '#/components/schemas/MailConfig'
+          - type: 'null'
+        effective_mail_config:
+          allOf:
+          - $ref: '#/components/schemas/MailConfig'
+          readOnly: true
+          description: The override when set, otherwise the organisation config.
+        source_ids:
+          type: array
+          items:
+            type: string
+    ProjectCreate:
+      type: object
+      required:
+      - name
+      properties:
+        id:
+          type: string
+          description: Optional slug. Generated when absent. 409 if it already exists.
+        name:
+          type: string
+          minLength: 1
+        description:
+          type:
+          - string
+          - 'null'
+        mail_config_override:
+          oneOf:
+          - $ref: '#/components/schemas/MailConfigWrite'
+          - type: 'null'
+      example:
+        id: proj-clearpath
+        name: ClearPath engagement
+        description: Consulting engagement for ClearPath, 46 documents.
+    ProjectPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type:
+          - string
+          - 'null'
+      example:
+        description: ClearPath engagement, final report delivered.
+    ProjectPage:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    ProjectMail:
+      type: object
+      required:
+      - project_id
+      - overridden
+      - effective_mail_config
+      properties:
+        project_id:
+          type: string
+        overridden:
+          type: boolean
+          description: True when the project has its own config, false when it inherits the organisation one.
+        effective_mail_config:
+          $ref: '#/components/schemas/MailConfig'
+        mail_config_override:
+          oneOf:
+          - $ref: '#/components/schemas/MailConfig'
+          - type: 'null'
+    SourceType:
+      type: string
+      enum:
+      - documents
+      - document_library
+      - github
+      - mail
+    SourceStatus:
+      type: string
+      enum:
+      - idle
+      - syncing
+      - ok
+      - error
+    GithubSourceConfig:
+      type: object
+      additionalProperties: false
+      required:
+      - repo_url
+      properties:
+        repo_url:
+          type: string
+          format: uri
+          description: Public repository only, no keys.
+        include:
+          type: array
+          items:
+            type: string
+            enum:
+            - issues
+            - readme
+            - discussions
+            - pulls
+    MailSourceConfig:
+      type: object
+      additionalProperties: false
+      required:
+      - mode
+      - mailbox
+      properties:
+        mode:
+          $ref: '#/components/schemas/MailMode'
+        mailbox:
+          type: string
+        match_rules:
+          type: array
+          description: MailRule ids that route into this source.
+          items:
+            type: string
+    DocumentLibraryConfig:
+      type: object
+      additionalProperties: false
+      required:
+      - provider
+      - root_path
+      properties:
+        provider:
+          type: string
+          enum:
+          - local_mock
+          - sharepoint
+          - google_drive
+          description: Only `local_mock` is implemented. `sharepoint` and `google_drive` are out of scope for the MVP.
+        root_path:
+          type: string
+    DocumentsSourceConfig:
+      type: object
+      additionalProperties: false
+      maxProperties: 0
+      description: No settings, documents are uploaded or ingested directly.
+    SourceConfig:
+      description: Shape depends on the source `type`.
+      oneOf:
+      - $ref: '#/components/schemas/GithubSourceConfig'
+      - $ref: '#/components/schemas/MailSourceConfig'
+      - $ref: '#/components/schemas/DocumentLibraryConfig'
+      - $ref: '#/components/schemas/DocumentsSourceConfig'
+    Source:
+      type: object
+      required:
+      - id
+      - project_id
+      - type
+      - label
+      - status
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        type:
+          $ref: '#/components/schemas/SourceType'
+        label:
+          type: string
+        status:
+          $ref: '#/components/schemas/SourceStatus'
+        last_synced_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        items:
+          type: integer
+          description: Number of items (documents, issues, messages) ingested from this source.
+        config:
+          $ref: '#/components/schemas/SourceConfig'
+    SourceCreate:
+      type: object
+      required:
+      - type
+      - label
+      properties:
+        type:
+          $ref: '#/components/schemas/SourceType'
+        label:
+          type: string
+        config:
+          $ref: '#/components/schemas/SourceConfig'
+      example:
+        type: github
+        label: ClearPath tooling repo
+        config:
+          repo_url: https://github.com/meridianlabs/clearpath-tooling
+          include:
+          - issues
+          - readme
+    SourcePatch:
+      type: object
+      properties:
+        label:
+          type: string
+        config:
+          $ref: '#/components/schemas/SourceConfig'
+      example:
+        label: ClearPath mailbox
+    SyncJob:
+      type: object
+      required:
+      - id
+      - source_id
+      - status
+      properties:
+        id:
+          type: string
+        source_id:
+          type: string
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - done
+          - error
+        items_added:
+          type: integer
+        facts_created:
+          type: integer
+        cost_usd:
+          type: number
+        started_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        finished_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+    MailMatchType:
+      type: string
+      enum:
+      - sender_domain
+      - sender_address
+      - recipient
+      - subject_contains
+    MailRule:
+      type: object
+      required:
+      - id
+      - match_type
+      - value
+      - project_id
+      - priority
+      properties:
+        id:
+          type: string
+        match_type:
+          $ref: '#/components/schemas/MailMatchType'
+        value:
+          type: string
+        project_id:
+          type: string
+        priority:
+          type: integer
+          description: Lower number wins when several rules match.
+    MailRuleCreate:
+      type: object
+      required:
+      - match_type
+      - value
+      - project_id
+      properties:
+        match_type:
+          $ref: '#/components/schemas/MailMatchType'
+        value:
+          type: string
+        project_id:
+          type: string
+        priority:
+          type: integer
+          default: 100
+      example:
+        match_type: sender_domain
+        value: '@meridianlabs.org'
+        project_id: proj-clearpath
+        priority: 10
+    MailRulePatch:
+      type: object
+      properties:
+        match_type:
+          $ref: '#/components/schemas/MailMatchType'
+        value:
+          type: string
+        project_id:
+          type: string
+        priority:
+          type: integer
+      example:
+        priority: 5
+    EmailAttachment:
+      type: object
+      required:
+      - filename
+      - text
+      properties:
+        filename:
+          type: string
+        content_type:
+          type: string
+        text:
+          type: string
+          description: Extracted text of the attachment.
+    InboundEmail:
+      type: object
+      required:
+      - message_id
+      - from
+      - to
+      - subject
+      - date
+      - text
+      properties:
+        message_id:
+          type: string
+        from:
+          type: string
+        to:
+          type: array
+          items:
+            type: string
+        cc:
+          type: array
+          items:
+            type: string
+        subject:
+          type: string
+        date:
+          type: string
+          format: date-time
+        text:
+          type: string
+        html:
+          type:
+          - string
+          - 'null'
+        thread_id:
+          type:
+          - string
+          - 'null'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailAttachment'
+      example:
+        message_id: <demo-0001@meridianlabs.org>
+        from: client@meridianlabs.org
+        to:
+        - brain@inbound.meridianlabs.org
+        cc: []
+        subject: Onboarding target confirmed
+        date: '2026-11-14T14:30:00Z'
+        text: Following our call, we confirm the onboarding target at 5 weeks.
+        attachments: []
+    SupersedeLink:
+      type: object
+      required:
+      - fact_id
+      - supersedes
+      properties:
+        fact_id:
+          type: string
+          description: The new fact.
+        supersedes:
+          type: string
+          description: The older fact it replaces.
+    InboundEmailResult:
+      type: object
+      required:
+      - message_id
+      - document_id
+      - facts_created
+      - supersedes_created
+      properties:
+        message_id:
+          type: string
+        routed_project_id:
+          type:
+          - string
+          - 'null'
+          description: Null when no rule matched, the email is then stored at organisation scope.
+        rule_id:
+          type:
+          - string
+          - 'null'
+        document_id:
+          type: string
+        facts_created:
+          type: array
+          items:
+            type: string
+        supersedes_created:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupersedeLink'
+        audit_event_id:
+          type:
+          - string
+          - 'null'
+    RuleTestResult:
+      type: object
+      required:
+      - matched
+      properties:
+        matched:
+          type: boolean
+        routed_project_id:
+          type:
+          - string
+          - 'null'
+        rule_id:
+          type:
+          - string
+          - 'null'
+        reason:
+          type:
+          - string
+          - 'null'
+    MailPollRequest:
+      type: object
+      properties:
+        project_id:
+          type:
+          - string
+          - 'null'
+          description: Poll this project mailbox. Absent or null polls the organisation mailbox.
+      example:
+        project_id: proj-clearpath
+    MailPollResult:
+      type: object
+      required:
+      - polled
+      - results
+      properties:
+        polled:
+          type: integer
+          description: Number of messages fetched from the mocked inbox.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/InboundEmailResult'
+    ReceivedMessage:
+      type: object
+      required:
+      - message_id
+      - from
+      - subject
+      - date
+      properties:
+        message_id:
+          type: string
+        project_id:
+          type:
+          - string
+          - 'null'
+        from:
+          type: string
+        subject:
+          type: string
+        date:
+          type: string
+          format: date-time
+        rule_id:
+          type:
+          - string
+          - 'null'
+        document_id:
+          type:
+          - string
+          - 'null'
+    MessagePage:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceivedMessage'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    DocumentVersion:
+      type: object
+      required:
+      - document_id
+      - version
+      properties:
+        document_id:
+          type: string
+        version:
+          type: integer
+          minimum: 1
+        version_label:
+          type:
+          - string
+          - 'null'
+        uploaded_at:
+          type: string
+          format: date-time
+        supersedes_document_id:
+          type:
+          - string
+          - 'null'
+        facts_superseded:
+          type: array
+          description: Ids of facts of the previous version that this version superseded.
+          items:
+            type: string
+    DocumentVersionCreate:
+      type: object
+      required:
+      - text
+      properties:
+        version_label:
+          type: string
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        text:
+          type: string
+      example:
+        version_label: v2
+        text: 'Onboarding SLA: 5 weeks.'
+    DocumentVersionResult:
+      type: object
+      required:
+      - version
+      - facts_created
+      - supersedes_created
+      properties:
+        version:
+          $ref: '#/components/schemas/DocumentVersion'
+        facts_created:
+          type: array
+          items:
+            type: string
+        supersedes_created:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupersedeLink'
   examples:
     FactM103:
       value:
